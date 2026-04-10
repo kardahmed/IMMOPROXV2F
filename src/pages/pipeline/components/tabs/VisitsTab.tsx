@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+// native <select> used instead of base-ui Select for pre-selected values
 import { StatusBadge, EmptyState, Modal } from '@/components/common'
 import { VISIT_STATUS_LABELS } from '@/types'
 import type { VisitStatus } from '@/types'
@@ -122,18 +122,19 @@ function CreateVisitModal({ isOpen, onClose, onSubmit, loading }: {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div><Label className="text-xs text-immo-text-secondary">{t('field.date')} *</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} /></div>
-          <div><Label className="text-xs text-immo-text-secondary">{t('field.date')}</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} /></div>
+          <div><Label className="text-xs text-immo-text-secondary">Heure</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} /></div>
         </div>
         <div>
           <Label className="text-xs text-immo-text-secondary">{t('field.type')}</Label>
-          <Select value={type} onValueChange={(v) => { if (v) setType(v) }}>
-            <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
-            <SelectContent className="border-immo-border-default bg-immo-bg-card">
-              <SelectItem value="on_site">Sur site</SelectItem>
-              <SelectItem value="office">Au bureau</SelectItem>
-              <SelectItem value="virtual">Virtuelle</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}
+          >
+            <option value="on_site">Sur site</option>
+            <option value="office">Au bureau</option>
+            <option value="virtual">Virtuelle</option>
+          </select>
         </div>
         <div><Label className="text-xs text-immo-text-secondary">{t('field.notes')}</Label><Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes..." className={inputClass} /></div>
         <div className="flex justify-end gap-3 pt-2">

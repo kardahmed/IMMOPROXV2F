@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+// native <select> used instead of base-ui Select
 import { StatusBadge, EmptyState, Modal } from '@/components/common'
 import { formatPrice } from '@/lib/constants'
 import { PAYMENT_STATUS_LABELS } from '@/types'
@@ -249,14 +249,11 @@ function CreateChargeModal({ isOpen, onClose, onSubmit, loading }: {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-xs text-immo-text-secondary">{t('field.type')}</Label>
-            <Select value={type} onValueChange={(v) => { if (v) setType(v) }}>
-              <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
-              <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                {['notaire', 'agence', 'promotion', 'enregistrement', 'autre'].map(tp => (
-                  <SelectItem key={tp} value={tp}>{tp}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select value={type} onChange={(e) => setType(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+              {['notaire', 'agence', 'promotion', 'enregistrement', 'autre'].map(tp => (
+                <option key={tp} value={tp}>{tp}</option>
+              ))}
+            </select>
           </div>
           <div><Label className="text-xs text-immo-text-secondary">{t('field.amount')} *</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} /></div>
         </div>
@@ -264,13 +261,10 @@ function CreateChargeModal({ isOpen, onClose, onSubmit, loading }: {
           <div><Label className="text-xs text-immo-text-secondary">{t('field.date')}</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} /></div>
           <div>
             <Label className="text-xs text-immo-text-secondary">{t('field.status')}</Label>
-            <Select value={status} onValueChange={(v) => { if (v) setStatus(v) }}>
-              <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
-              <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                <SelectItem value="pending">{t('status.pending')}</SelectItem>
-                <SelectItem value="paid">{t('status.paid')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+              <option value="pending">{t('status.pending')}</option>
+              <option value="paid">{t('status.paid')}</option>
+            </select>
           </div>
         </div>
         <div className="flex justify-end gap-3 pt-2">

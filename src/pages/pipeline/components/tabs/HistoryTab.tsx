@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+// native <select> used instead of base-ui Select
 import { EmptyState, Modal } from '@/components/common'
 import { HISTORY_TYPE_LABELS } from '@/types'
 import type { HistoryType } from '@/types'
@@ -140,14 +140,11 @@ export function HistoryTab({ clientId }: { clientId: string }) {
         <div className="space-y-3">
           <div>
             <Label className="text-xs text-immo-text-secondary">{t('field.type')}</Label>
-            <Select value={addType} onValueChange={(v) => { if (v) setAddType(v) }}>
-              <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
-              <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                {['note', 'call', 'sms', 'email', 'whatsapp_message'].map((tp) => (
-                  <SelectItem key={tp} value={tp}>{HISTORY_TYPE_LABELS[tp as HistoryType]?.label ?? tp}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select value={addType} onChange={(e) => setAddType(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+              {['note', 'call', 'sms', 'email', 'whatsapp_message'].map((tp) => (
+                <option key={tp} value={tp}>{HISTORY_TYPE_LABELS[tp as HistoryType]?.label ?? tp}</option>
+              ))}
+            </select>
           </div>
           <div>
             <Label className="text-xs text-immo-text-secondary">{t('field.description')} *</Label>
