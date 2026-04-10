@@ -40,7 +40,7 @@ export function usePipelineStats() {
 
       // Fetch settings, clients, tasks in parallel
       const [settingsRes, clientsRes, tasksRes] = await Promise.all([
-        supabase.from('tenant_settings').select('*').eq('tenant_id', tenantId).single(),
+        supabase.from('tenant_settings').select('*').eq('tenant_id', tenantId).maybeSingle(),
         (() => {
           let q = supabase.from('clients').select('id, pipeline_stage, confirmed_budget, last_contact_at, created_at, is_priority, interest_level').eq('tenant_id', tenantId)
           if (isAgent && userId) q = q.eq('agent_id', userId)

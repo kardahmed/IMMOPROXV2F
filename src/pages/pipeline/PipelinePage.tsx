@@ -14,6 +14,7 @@ import {
   List,
   SlidersHorizontal,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useClients } from '@/hooks/useClients'
 import { usePipelineStats } from '@/hooks/usePipelineStats'
 import type { PipelineAlert } from '@/hooks/usePipelineStats'
@@ -44,6 +45,7 @@ import { StageChangeDialog } from './components/StageChangeDialog'
 type ViewMode = 'kanban' | 'cards' | 'table'
 
 export function PipelinePage() {
+  const navigate = useNavigate()
   const { clients: rawClients, isLoading: loadingClients, updateClientStage } = useClients()
   const { data: stats, isLoading: loadingStats } = usePipelineStats()
   const { canManageProjects } = usePermissions()
@@ -186,12 +188,14 @@ export function PipelinePage() {
     )
   }
 
-  function handleViewClient(_clientId: string) {
-    // TODO: navigate to client detail or open side panel
+  function handleViewClient(clientId: string) {
+    navigate(`/pipeline/clients/${clientId}`)
   }
 
-  function handlePriorityAction(_clientId: string, _action: string) {
-    // TODO: implement quick actions
+  function handlePriorityAction(clientId: string, action: string) {
+    if (action === 'view') {
+      navigate(`/pipeline/clients/${clientId}`)
+    }
   }
 
   const isLoading = loadingClients || loadingStats

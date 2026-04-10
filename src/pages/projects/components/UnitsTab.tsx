@@ -1,4 +1,7 @@
 import { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { handleSupabaseError } from '@/lib/errors'
 import {
   Home,
   CheckCircle,
@@ -65,6 +68,7 @@ const SUBTYPE_OPTIONS = [
 ]
 
 export function UnitsTab() {
+  const qc = useQueryClient()
   const { units: rawUnits, isLoading, updateUnitStatus } = useUnits()
   const { projects } = useProjects()
   const { canManageProjects, canDeleteData } = usePermissions()
@@ -332,7 +336,11 @@ export function UnitsTab() {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={async () => {
-          // TODO: implement delete unit
+          if (deleteId) {
+            const { error } = await supabase.from('units').delete().eq('id', deleteId)
+            if (error) handleSupabaseError(error)
+            else qc.invalidateQueries({ queryKey: ['units'] })
+          }
           setDeleteId(null)
         }}
         title="Supprimer cette unité ?"

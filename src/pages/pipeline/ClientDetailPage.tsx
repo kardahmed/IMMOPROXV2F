@@ -50,6 +50,7 @@ import { format } from 'date-fns'
 import { PipelineTimeline } from './components/PipelineTimeline'
 import { QuickActions } from './components/QuickActions'
 import { ClientTabs } from './components/ClientTabs'
+import { ClientFormModal } from './components/ClientFormModal'
 
 // Avatar color from name
 function nameToColor(name: string): string {
@@ -69,6 +70,7 @@ export function ClientDetailPage() {
 
   const [showInfo, setShowInfo] = useState(true)
   const [stageConfirm, setStageConfirm] = useState<PipelineStage | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   // Fetch client
   const { data: rawClient, isLoading } = useQuery({
@@ -145,11 +147,6 @@ export function ClientDetailPage() {
 
   async function handleQuickAction(action: string) {
     if (!client || !userId) return
-
-    if (action === 'reassign' || action === 'ai_task') {
-      // TODO: open specific modals
-      return
-    }
 
     await addHistoryEntry({
       client_id: client.id,
@@ -243,13 +240,26 @@ export function ClientDetailPage() {
               <MoreHorizontal className="h-4 w-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="border-immo-border-default bg-immo-bg-card">
-              <DropdownMenuItem className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
+              <DropdownMenuItem
+                onClick={() => setShowEditModal(true)}
+                className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover"
+              >
                 Modifier le client
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                Générer un document
+              <DropdownMenuItem
+                onClick={() => navigate(`/pipeline/clients/${clientId}?from=${returnTo}#documents`)}
+                className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover"
+              >
+                Generer un document
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-sm text-immo-status-red focus:bg-immo-status-red-bg">
+              <DropdownMenuItem
+                onClick={() => {
+                  if (client) {
+                    updateClientStage.mutate({ clientId: client.id, newStage: 'perdue' })
+                  }
+                }}
+                className="text-sm text-immo-status-red focus:bg-immo-status-red-bg"
+              >
                 Marquer comme perdu
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -325,6 +335,9 @@ export function ClientDetailPage() {
 
       {/* Client tabs: Visites, Réservation, Vente, etc. */}
       <ClientTabs clientId={client.id} tenantId={client.tenant_id} />
+
+      {/* Edit client modal */}
+      <ClientFormModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} client={client} />
 
       {/* Stage change confirm */}
       <ConfirmDialog
