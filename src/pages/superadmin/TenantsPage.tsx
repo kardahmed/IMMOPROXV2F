@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, Edit, LogIn, Ban } from 'lucide-react'
+import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { KPICard, LoadingSpinner } from '@/components/common'

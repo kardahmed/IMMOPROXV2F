@@ -87,7 +87,7 @@ export function TenantDetailPage() {
 
   if (loadingTenant || !tenant) return <LoadingSpinner size="lg" className="h-96" />
 
-  const ROLE_COLORS: Record<string, string> = { super_admin: 'blue', admin: 'green', agent: 'orange' }
+  const ROLE_COLORS: Record<string, 'blue' | 'green' | 'orange' | 'red' | 'muted'> = { super_admin: 'blue', admin: 'green', agent: 'orange' }
 
   return (
     <div className="space-y-6">

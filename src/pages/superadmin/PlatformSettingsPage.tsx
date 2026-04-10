@@ -46,7 +46,7 @@ export function PlatformSettingsPage() {
         support_email: supportEmail,
         maintenance_mode: maintenance,
         updated_at: new Date().toISOString(),
-      }).eq('id', settings.id)
+      } as never).eq('id', settings.id)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => {
