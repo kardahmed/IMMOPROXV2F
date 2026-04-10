@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { HealthAlertsBanner } from './components/HealthAlertsBanner'
 
 const NAV_ITEMS = [
   { to: '/admin', icon: Building2, labelKey: 'Tenants', end: true },
@@ -94,6 +95,9 @@ export function SuperAdminLayout() {
             </button>
           </div>
         )}
+
+        {/* Health alerts */}
+        <HealthAlertsBanner />
 
         <div className="p-6">
           <Outlet />

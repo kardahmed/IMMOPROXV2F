@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn } from 'lucide-react'
+import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { KPICard, LoadingSpinner } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { CreateTenantModal } from './components/CreateTenantModal'
+import { useTenantHealth } from './hooks/useTenantHealth'
+import type { HealthStatus } from './hooks/useTenantHealth'
 
 interface TenantRow {
   id: string
@@ -67,11 +69,16 @@ export function TenantsPage() {
     },
   })
 
+  // Health data
+  const { data: healthData } = useTenantHealth()
+  const healthMap = new Map(healthData?.tenants.map(h => [h.tenant_id, h]) ?? [])
+
   // KPIs
   const totalTenants = tenants.length
   const activeTenants = tenants.filter(t => t.agents_count > 0).length
   const totalUsers = tenants.reduce((s, t) => s + t.agents_count, 0)
   const totalClients = tenants.reduce((s, t) => s + t.clients_count, 0)
+  const criticalCount = healthData?.critical_count ?? 0
 
   // Filter
   const filtered = tenants.filter(t =>
@@ -102,11 +109,12 @@ export function TenantsPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <KPICard label="Total Tenants" value={totalTenants} accent="blue" icon={<Building2 className="h-5 w-5 text-[#7C3AED]" />} />
         <KPICard label="Tenants actifs" value={activeTenants} accent="green" icon={<UserCheck className="h-5 w-5 text-[#00D4A0]" />} />
         <KPICard label="Total Utilisateurs" value={totalUsers} accent="blue" icon={<Users className="h-5 w-5 text-[#3782FF]" />} />
         <KPICard label="Total Clients" value={totalClients} accent="orange" icon={<Briefcase className="h-5 w-5 text-[#FF9A1E]" />} />
+        <KPICard label="Alertes critiques" value={criticalCount} accent={criticalCount > 0 ? 'red' : 'green'} icon={<AlertTriangle className={`h-5 w-5 ${criticalCount > 0 ? 'text-[#FF4949]' : 'text-[#00D4A0]'}`} />} />
       </div>
 
       {/* Search */}
@@ -125,7 +133,7 @@ export function TenantsPage() {
         <table className="w-full">
           <thead>
             <tr className="bg-[#0F1830]">
-              {['Nom', 'Email', 'Tel', 'Wilaya', 'Agents', 'Clients', 'Projets', 'Biens', 'Cree le', 'Actions'].map(h => (
+              {['Nom', 'Sante', 'Email', 'Wilaya', 'Agents', 'Clients', 'Projets', 'Biens', 'Cree le', 'Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#7F96B7]">{h}</th>
               ))}
             </tr>
@@ -134,8 +142,8 @@ export function TenantsPage() {
             {filtered.map(t => (
               <tr key={t.id} className="bg-[#0A1030] transition-colors hover:bg-[#0F1830]">
                 <td className="px-4 py-3.5 text-sm font-medium text-white">{t.name}</td>
+                <td className="px-4 py-3.5"><HealthBadge status={healthMap.get(t.id)?.status ?? 'healthy'} issues={healthMap.get(t.id)?.issues ?? []} /></td>
                 <td className="px-4 py-3.5 text-xs text-[#7F96B7]">{t.email ?? '-'}</td>
-                <td className="px-4 py-3.5 text-xs text-[#7F96B7]">{t.phone ?? '-'}</td>
                 <td className="px-4 py-3.5 text-xs text-[#7F96B7]">{t.wilaya ?? '-'}</td>
                 <td className="px-4 py-3.5 text-center text-sm text-white">{t.agents_count}</td>
                 <td className="px-4 py-3.5 text-center text-sm text-white">{t.clients_count}</td>
@@ -162,6 +170,31 @@ export function TenantsPage() {
       </div>
 
       <CreateTenantModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSuccess={refetch} />
+    </div>
+  )
+}
+
+const HEALTH_STYLES: Record<HealthStatus, { bg: string; text: string; label: string }> = {
+  healthy: { bg: 'bg-[#00D4A0]/10', text: 'text-[#00D4A0]', label: 'OK' },
+  warning: { bg: 'bg-[#FF9A1E]/10', text: 'text-[#FF9A1E]', label: 'Attention' },
+  critical: { bg: 'bg-[#FF4949]/10', text: 'text-[#FF4949]', label: 'Critique' },
+}
+
+function HealthBadge({ status, issues }: { status: HealthStatus; issues: string[] }) {
+  const style = HEALTH_STYLES[status]
+  return (
+    <div className="group relative">
+      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${style.bg} ${style.text}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${status === 'healthy' ? 'bg-[#00D4A0]' : status === 'warning' ? 'bg-[#FF9A1E]' : 'bg-[#FF4949]'}`} />
+        {style.label}
+      </span>
+      {issues.length > 0 && (
+        <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-lg border border-[#1E325A] bg-[#0F1830] p-2 shadow-xl group-hover:block">
+          {issues.map((issue, i) => (
+            <p key={i} className="text-[11px] text-[#7F96B7]">{issue}</p>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home, AlertTriangle, Power } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
@@ -10,10 +10,12 @@ import { formatPriceCompact } from '@/lib/constants'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { UserManagementPanel } from './components/UserManagementPanel'
+import toast from 'react-hot-toast'
 
 export function TenantDetailPage() {
   const { tenantId } = useParams<{ tenantId: string }>()
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { enterTenant } = useSuperAdminStore()
 
   // Tenant info
@@ -75,6 +77,33 @@ export function TenantDetailPage() {
     enabled: !!tenantId,
   })
 
+  // Tenant maintenance status
+  const { data: tenantSettings } = useQuery({
+    queryKey: ['super-admin-tenant-settings', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase.from('tenant_settings').select('maintenance_mode, maintenance_message').eq('tenant_id', tenantId!).single()
+      return data as { maintenance_mode: boolean; maintenance_message: string } | null
+    },
+    enabled: !!tenantId,
+  })
+
+  const toggleMaintenance = useMutation({
+    mutationFn: async () => {
+      const newMode = !(tenantSettings?.maintenance_mode ?? false)
+      const { error } = await supabase.from('tenant_settings')
+        .update({ maintenance_mode: newMode } as never)
+        .eq('tenant_id', tenantId!)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['super-admin-tenant-settings', tenantId] })
+      const wasOn = tenantSettings?.maintenance_mode ?? false
+      toast.success(wasOn ? 'Maintenance desactivee' : 'Maintenance activee')
+    },
+  })
+
+  const isMaintenance = tenantSettings?.maintenance_mode ?? false
+
   if (loadingTenant || !tenant) return <LoadingSpinner size="lg" className="h-96" />
 
   return (
@@ -88,11 +117,35 @@ export function TenantDetailPage() {
           <h1 className="text-2xl font-bold text-white">{tenant.name as string}</h1>
           <p className="text-sm text-[#7F96B7]">{tenant.email as string} · {tenant.wilaya as string ?? '-'}</p>
         </div>
-        <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }}
-          className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]">
-          Acceder au tenant
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => toggleMaintenance.mutate()}
+            disabled={toggleMaintenance.isPending}
+            className={isMaintenance
+              ? 'border border-[#FF4949]/30 bg-[#FF4949]/10 text-[#FF4949] hover:bg-[#FF4949]/20'
+              : 'border border-[#1E325A] bg-transparent text-[#7F96B7] hover:bg-[#1E325A] hover:text-white'
+            }
+          >
+            <Power className="mr-1.5 h-4 w-4" />
+            {isMaintenance ? 'Desactiver maintenance' : 'Maintenance'}
+          </Button>
+          <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }}
+            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]">
+            Acceder au tenant
+          </Button>
+        </div>
       </div>
+
+      {/* Maintenance banner */}
+      {isMaintenance && (
+        <div className="flex items-center gap-3 rounded-xl border border-[#FF4949]/30 bg-[#320F0F]/50 px-4 py-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-[#FF4949]" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-[#FF4949]">Mode maintenance actif</p>
+            <p className="text-[11px] text-[#FF9A9A]">Les utilisateurs de ce tenant ne peuvent pas acceder a l'application</p>
+          </div>
+        </div>
+      )}
 
       {/* KPIs */}
       {kpis && (
