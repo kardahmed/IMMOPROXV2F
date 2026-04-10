@@ -15,7 +15,7 @@ type FormData = z.infer<typeof schema>
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { signIn, isAuthenticated } = useAuth()
+  const { signIn, isAuthenticated, role } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,7 +29,8 @@ export function LoginPage() {
   })
 
   if (isAuthenticated) {
-    navigate('/dashboard', { replace: true })
+    const target = role === 'super_admin' ? '/admin' : '/dashboard'
+    navigate(target, { replace: true })
     return null
   }
 
@@ -38,7 +39,7 @@ export function LoginPage() {
     setLoading(true)
     try {
       await signIn(data.email, data.password)
-      navigate('/dashboard', { replace: true })
+      // Role-based redirect is handled by the isAuthenticated check above on re-render
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de connexion')
     } finally {

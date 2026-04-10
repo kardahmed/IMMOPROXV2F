@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RoleRoute } from '@/components/auth/RoleRoute'
+import { SuperAdminRoute } from '@/components/auth/SuperAdminRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 
@@ -22,6 +23,13 @@ const ReportsPage = lazy(() => import('@/pages/reports/ReportsPage').then(m => (
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
 
+// Super Admin pages
+const SuperAdminLayout = lazy(() => import('@/pages/superadmin/SuperAdminLayout').then(m => ({ default: m.SuperAdminLayout })))
+const TenantsPage = lazy(() => import('@/pages/superadmin/TenantsPage').then(m => ({ default: m.TenantsPage })))
+const TenantDetailPage = lazy(() => import('@/pages/superadmin/TenantDetailPage').then(m => ({ default: m.TenantDetailPage })))
+const GlobalStatsPage = lazy(() => import('@/pages/superadmin/GlobalStatsPage').then(m => ({ default: m.GlobalStatsPage })))
+const PlatformSettingsPage = lazy(() => import('@/pages/superadmin/PlatformSettingsPage').then(m => ({ default: m.PlatformSettingsPage })))
+
 function PageLoader() {
   return <LoadingSpinner size="lg" className="h-screen" />
 }
@@ -33,6 +41,17 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<LoginPage />} />
 
+        {/* Super Admin routes — /admin/* */}
+        <Route element={<SuperAdminRoute />}>
+          <Route path="/admin" element={<SuperAdminLayout />}>
+            <Route index element={<TenantsPage />} />
+            <Route path="tenants/:tenantId" element={<TenantDetailPage />} />
+            <Route path="stats" element={<GlobalStatsPage />} />
+            <Route path="settings" element={<PlatformSettingsPage />} />
+          </Route>
+        </Route>
+
+        {/* App routes — /dashboard, /pipeline, etc. */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             {/* Accessible to all authenticated users */}
