@@ -9,6 +9,7 @@ import { useSuperAdminStore } from '@/store/superAdminStore'
 import { formatPriceCompact } from '@/lib/constants'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { UserManagementPanel } from './components/UserManagementPanel'
 
 export function TenantDetailPage() {
   const { tenantId } = useParams<{ tenantId: string }>()
@@ -52,17 +53,6 @@ export function TenantDetailPage() {
     enabled: !!tenantId,
   })
 
-  // Users
-  const { data: users = [] } = useQuery({
-    queryKey: ['super-admin-tenant-users', tenantId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('users').select('*').eq('tenant_id', tenantId!).order('created_at', { ascending: false })
-      if (error) { handleSupabaseError(error); throw error }
-      return data as Array<Record<string, unknown>>
-    },
-    enabled: !!tenantId,
-  })
-
   // Projects
   const { data: projects = [] } = useQuery({
     queryKey: ['super-admin-tenant-projects', tenantId],
@@ -86,8 +76,6 @@ export function TenantDetailPage() {
   })
 
   if (loadingTenant || !tenant) return <LoadingSpinner size="lg" className="h-96" />
-
-  const ROLE_COLORS: Record<string, 'blue' | 'green' | 'orange' | 'red' | 'muted'> = { super_admin: 'blue', admin: 'green', agent: 'orange' }
 
   return (
     <div className="space-y-6">
@@ -120,27 +108,8 @@ export function TenantDetailPage() {
       )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        {/* Users */}
-        <div className="rounded-xl border border-[#1E325A] bg-[#0A1030]">
-          <div className="border-b border-[#1E325A] px-5 py-4">
-            <h3 className="text-sm font-semibold text-white">Utilisateurs ({users.length})</h3>
-          </div>
-          <div className="max-h-[400px] divide-y divide-[#1E325A] overflow-y-auto">
-            {users.map(u => (
-              <div key={u.id as string} className="flex items-center gap-3 px-5 py-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#7C3AED]/15 text-xs font-semibold text-[#7C3AED]">
-                  {(u.first_name as string)?.[0]}{(u.last_name as string)?.[0]}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-white">{u.first_name as string} {u.last_name as string}</p>
-                  <p className="text-[11px] text-[#7F96B7]">{u.email as string}</p>
-                </div>
-                <StatusBadge label={u.role as string} type={ROLE_COLORS[u.role as string] ?? 'muted'} />
-                <StatusBadge label={u.status as string} type={u.status === 'active' ? 'green' : 'red'} />
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Users — full management panel */}
+        <UserManagementPanel tenantId={tenantId!} />
 
         {/* Projects */}
         <div className="rounded-xl border border-[#1E325A] bg-[#0A1030]">

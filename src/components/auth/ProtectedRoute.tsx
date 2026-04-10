@@ -1,8 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, role } = useAuth()
+  const { inspectedTenantId } = useSuperAdminStore()
 
   if (isLoading) {
     return (
@@ -19,5 +21,11 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />
   }
 
+  // Super admin without inspection mode → redirect to /admin
+  if (role === 'super_admin' && !inspectedTenantId) {
+    return <Navigate to="/admin" replace />
+  }
+
   return <Outlet />
 }
+
