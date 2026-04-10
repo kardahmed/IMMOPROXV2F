@@ -3,27 +3,6 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import type { User } from '@/types'
 
-async function fetchUserProfile(userId: string): Promise<User | null> {
-  try {
-    console.log('[Auth] Fetching profile for', userId)
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    if (error) {
-      console.error('[Auth] Profile fetch error:', error.message)
-      return null
-    }
-    console.log('[Auth] Profile OK — role:', data.role, 'tenant:', data.tenant_id)
-    return data as User
-  } catch (err) {
-    console.error('[Auth] Profile exception:', err)
-    return null
-  }
-}
-
 export function useAuth() {
   const {
     session,
@@ -37,64 +16,75 @@ export function useAuth() {
     reset,
   } = useAuthStore()
 
+  // Effect 1: Listen to auth state changes (sync only — no await)
   useEffect(() => {
-    let mounted = true
-    let profileLoaded = false
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s)
+      if (!s) setLoading(false)
+    })
 
-    async function loadProfile(userId: string) {
-      if (profileLoaded) return
-      profileLoaded = true
-
-      const profile = await fetchUserProfile(userId)
-      if (!mounted) return
-
-      if (profile?.status === 'inactive') {
-        await supabase.auth.signOut()
-        reset()
-        return
-      }
-
-      setUserProfile(profile)
-      setLoading(false)
-      console.log('[Auth] State set — loading=false, role=', profile?.role ?? 'null')
-    }
-
-    async function init() {
-      console.log('[Auth] init')
-      const { data: { session: s } } = await supabase.auth.getSession()
-      if (!mounted) return
-
-      if (s?.user) {
-        setSession(s)
-        await loadProfile(s.user.id)
-      } else {
-        setSession(null)
-        setLoading(false)
-      }
-    }
-
-    init()
-
+    // Listen for changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, s) => {
-        if (!mounted) return
-        console.log('[Auth] event:', event)
-
-        if (event === 'SIGNED_OUT') { reset(); return }
-        if (event === 'TOKEN_REFRESHED' && s) { setSession(s); return }
-
-        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && s?.user) {
-          setSession(s)
-          await loadProfile(s.user.id)
-        }
+      (_event, s) => {
+        // IMPORTANT: only set session state here, NO async work
+        setSession(s)
+        if (!s) reset()
       },
     )
 
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
+    return () => subscription.unsubscribe()
+  }, [setSession, setLoading, reset])
+
+  // Effect 2: When session changes, load the user profile
+  useEffect(() => {
+    if (!session?.user) return
+
+    let cancelled = false
+    const userId = session.user.id
+
+    async function loadProfile() {
+      console.log('[Auth] Loading profile for', userId)
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .single()
+
+        if (cancelled) return
+
+        if (error) {
+          console.error('[Auth] Profile error:', error.message)
+          setUserProfile(null)
+          setLoading(false)
+          return
+        }
+
+        const profile = data as User
+        console.log('[Auth] Profile OK — role:', profile.role)
+
+        if (profile.status === 'inactive') {
+          await supabase.auth.signOut()
+          reset()
+          return
+        }
+
+        setUserProfile(profile)
+        setLoading(false)
+      } catch (err) {
+        console.error('[Auth] Profile exception:', err)
+        if (!cancelled) {
+          setUserProfile(null)
+          setLoading(false)
+        }
+      }
     }
-  }, [setSession, setUserProfile, setLoading, reset])
+
+    loadProfile()
+
+    return () => { cancelled = true }
+  }, [session?.user?.id, setUserProfile, setLoading, reset])
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
