@@ -44,7 +44,6 @@ export function useAuth() {
     const userId = session.user.id
 
     async function loadProfile() {
-      console.log('[Auth] Loading profile for', userId)
       try {
         const { data, error } = await supabase
           .from('users')
@@ -62,7 +61,6 @@ export function useAuth() {
         }
 
         const profile = data as User
-        console.log('[Auth] Profile OK — role:', profile.role)
 
         if (profile.status === 'inactive') {
           await supabase.auth.signOut()
