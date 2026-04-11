@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CheckCircle, Clock, Send, Phone, MessageCircle, Mail, AlertTriangle,
-  Zap, SkipForward, Calendar, Settings,
+  Zap, SkipForward, Calendar, Settings, FileText, Save, Plus, Trash2, Sparkles,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
@@ -24,7 +24,7 @@ interface ClientTask {
   agent?: { first_name: string; last_name: string } | null
 }
 
-type TabKey = 'today' | 'overdue' | 'upcoming' | 'completed' | 'config'
+type TabKey = 'today' | 'overdue' | 'upcoming' | 'completed' | 'messages' | 'config'
 
 const STATUS_MAP: Record<string, { label: string; type: 'green' | 'orange' | 'blue' | 'muted' | 'red' }> = {
   pending: { label: 'A faire', type: 'orange' },
@@ -155,6 +155,7 @@ export function TasksPage() {
     { key: 'overdue', label: 'En retard', count: overdueCount, icon: AlertTriangle },
     { key: 'upcoming', label: 'A venir', count: upcomingCount, icon: Clock },
     { key: 'completed', label: 'Terminees', count: completedCount, icon: CheckCircle },
+    { key: 'messages', label: 'Messages', count: 0, icon: FileText },
     { key: 'config', label: 'Configuration', count: 0, icon: Settings },
   ]
 
@@ -187,7 +188,7 @@ export function TasksPage() {
           ))}
         </div>
 
-        {tab !== 'config' && (
+        {!['config', 'messages'].includes(tab) && (
           <div className="flex gap-2">
             {!isAgent && <FilterDropdown label="Agent" options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
             <FilterDropdown label="Etape" options={stageOptions} value={stageFilter} onChange={setStageFilter} />
@@ -198,8 +199,11 @@ export function TasksPage() {
       {/* Config tab */}
       {tab === 'config' && <TaskConfigSection />}
 
+      {/* Messages tab */}
+      {tab === 'messages' && <MessagesTemplateTab tenantId={tenantId!} />}
+
       {/* Task list */}
-      {tab !== 'config' && (
+      {!['config', 'messages'].includes(tab) && (
         <div className="space-y-2">
           {filtered.length === 0 && (
             <div className="py-12 text-center">
@@ -306,6 +310,220 @@ export function TasksPage() {
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+/* ═══ Messages Template Tab ═══ */
+
+interface MsgTpl {
+  id: string; stage: string; trigger_type: string; channel: string
+  body: string; mode: string; variables_used: string[]; attached_file_types: string[]
+}
+
+const STAGE_ORDER_MSG = ['accueil','visite_a_gerer','visite_confirmee','visite_terminee','negociation','reservation','vente','relancement','perdue']
+const TRIGGER_LABELS: Record<string, string> = {
+  welcome: 'Bienvenue', catalogue: 'Envoi catalogue', relance_1: 'Relance 1', relance_2: 'Relance 2 (SMS)',
+  confirm_visite: 'Confirmation visite', rappel_j1: 'Rappel J-1', rappel_jourj: 'Rappel jour J',
+  no_show: 'No-show', post_visite: 'Suivi post-visite', simulation: 'Simulation prix',
+  collect_cin: 'Collecte CIN', felicitations: 'Felicitations vente', rappel_echeance: 'Rappel echeance',
+  retard_paiement: 'Retard paiement', raison_perte: 'Raison perte',
+}
+const CHANNEL_LABELS_MSG: Record<string, string> = { whatsapp: 'WhatsApp', sms: 'SMS', email: 'Email', call: 'Appel' }
+const VARIABLES_LIST = ['{client_nom}','{client_prenom}','{client_phone}','{client_budget}','{agent_nom}','{agent_prenom}','{agent_phone}','{agence}','{projet}','{prix_min}','{unite_visitee}','{prix_unite}','{date_visite}','{heure_visite}','{adresse_projet}','{lien_maps}','{montant_echeance}','{date_echeance}','{apport}','{nb_echeances}']
+
+function MessagesTemplateTab({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient()
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editBody, setEditBody] = useState('')
+  const [editChannel, setEditChannel] = useState('whatsapp')
+  const [editMode, setEditMode] = useState('template')
+
+  const { data: messages = [], isLoading } = useQuery({
+    queryKey: ['all-message-templates', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase.from('message_templates').select('*').eq('tenant_id', tenantId).order('sort_order')
+      return (data ?? []) as MsgTpl[]
+    },
+  })
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!editId) return
+      const { error } = await supabase.from('message_templates').update({
+        body: editBody, channel: editChannel, mode: editMode, updated_at: new Date().toISOString(),
+      } as never).eq('id', editId)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['all-message-templates'] }); setEditId(null); toast.success('Message sauvegarde') },
+  })
+
+  const addMutation = useMutation({
+    mutationFn: async ({ stage, trigger }: { stage: string; trigger: string }) => {
+      const { error } = await supabase.from('message_templates').insert({
+        tenant_id: tenantId, stage, trigger_type: trigger, channel: 'whatsapp',
+        body: `Bonjour {client_prenom},\n\n[Votre message ici]\n\nCordialement,\n{agent_prenom}`,
+        mode: 'template', variables_used: ['{client_prenom}', '{agent_prenom}'],
+      } as never)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['all-message-templates'] }); toast.success('Template ajoute') },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('message_templates').delete().eq('id', id)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['all-message-templates'] }); toast.success('Supprime') },
+  })
+
+  function startEdit(msg: MsgTpl) {
+    setEditId(msg.id); setEditBody(msg.body); setEditChannel(msg.channel); setEditMode(msg.mode)
+  }
+
+  if (isLoading) return <LoadingSpinner size="lg" className="h-64" />
+
+  // Group by stage
+  const grouped = new Map<string, MsgTpl[]>()
+  for (const m of messages) {
+    const list = grouped.get(m.stage) ?? []
+    list.push(m)
+    grouped.set(m.stage, list)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-immo-text-primary">Templates de messages</h2>
+          <p className="text-sm text-immo-text-secondary">Personnalisez les messages WhatsApp, SMS et email envoyes a chaque etape.</p>
+        </div>
+      </div>
+
+      {STAGE_ORDER_MSG.map(stage => {
+        const stageMsgs = grouped.get(stage) ?? []
+        if (stageMsgs.length === 0 && !editId) return null
+        const stageInfo = PIPELINE_STAGES[stage as keyof typeof PIPELINE_STAGES]
+        if (!stageInfo) return null
+
+        return (
+          <div key={stage} className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+            <div className="flex items-center justify-between bg-immo-bg-primary px-5 py-3 border-b border-immo-border-default">
+              <div className="flex items-center gap-2">
+                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stageInfo.color }} />
+                <span className="text-sm font-semibold text-immo-text-primary">{stageInfo.label}</span>
+                <span className="text-[10px] text-immo-text-muted">({stageMsgs.length} messages)</span>
+              </div>
+              <button onClick={() => addMutation.mutate({ stage, trigger: `custom_${Date.now()}` })}
+                className="flex items-center gap-1 rounded-md border border-immo-border-default px-2 py-1 text-[10px] font-medium text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+                <Plus className="h-3 w-3" /> Ajouter
+              </button>
+            </div>
+
+            <div className="divide-y divide-immo-border-default">
+              {stageMsgs.map(msg => (
+                <div key={msg.id}>
+                  {editId === msg.id ? (
+                    /* Edit mode */
+                    <div className="p-4 space-y-3 bg-immo-accent-green/[0.02]">
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <div className="flex gap-2 mb-2">
+                            <select value={editChannel} onChange={e => setEditChannel(e.target.value)}
+                              className="h-7 rounded-md border border-immo-border-default bg-immo-bg-primary px-2 text-[11px] text-immo-text-primary">
+                              <option value="whatsapp">WhatsApp</option>
+                              <option value="sms">SMS</option>
+                              <option value="email">Email</option>
+                            </select>
+                            <select value={editMode} onChange={e => setEditMode(e.target.value)}
+                              className="h-7 rounded-md border border-immo-border-default bg-immo-bg-primary px-2 text-[11px] text-immo-text-primary">
+                              <option value="template">Template fixe</option>
+                              <option value="ai">Generation IA</option>
+                            </select>
+                          </div>
+                          {editMode === 'template' ? (
+                            <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={6}
+                              className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 text-sm text-immo-text-primary font-mono" />
+                          ) : (
+                            <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                                <span className="text-[11px] font-semibold text-purple-600">Mode IA</span>
+                              </div>
+                              <p className="text-xs text-purple-600">Le message sera genere automatiquement par l'IA en fonction du profil client et du playbook.</p>
+                              <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={3} placeholder="Instructions supplementaires pour l'IA (optionnel)..."
+                                className="mt-2 w-full rounded-md border border-purple-200 bg-white p-2 text-xs text-purple-700 placeholder:text-purple-300" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {editMode === 'template' && (
+                        <div>
+                          <p className="text-[9px] font-medium text-immo-text-muted mb-1.5">Variables (cliquer pour inserer)</p>
+                          <div className="flex flex-wrap gap-1">
+                            {VARIABLES_LIST.map(v => (
+                              <button key={v} onClick={() => setEditBody(prev => prev + v)}
+                                className="rounded border border-immo-border-default bg-immo-bg-primary px-1.5 py-0.5 text-[9px] text-immo-accent-blue hover:bg-immo-accent-blue/10">
+                                {v}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}
+                          className="flex items-center gap-1 rounded-lg bg-immo-accent-green px-3 py-1.5 text-xs font-semibold text-white hover:bg-immo-accent-green/90">
+                          <Save className="h-3 w-3" /> Sauvegarder
+                        </button>
+                        <button onClick={() => setEditId(null)} className="rounded-lg border border-immo-border-default px-3 py-1.5 text-xs text-immo-text-muted">Annuler</button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* View mode */
+                    <div className="flex items-start gap-3 px-5 py-3 hover:bg-immo-bg-card-hover transition-colors">
+                      <div className={`mt-0.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold shrink-0 ${
+                        msg.channel === 'whatsapp' ? 'bg-[#25D366]/10 text-[#25D366]' :
+                        msg.channel === 'sms' ? 'bg-immo-status-orange/10 text-immo-status-orange' :
+                        'bg-immo-accent-blue/10 text-immo-accent-blue'
+                      }`}>
+                        {msg.channel === 'whatsapp' ? <MessageCircle className="h-2.5 w-2.5" /> : msg.channel === 'sms' ? <Mail className="h-2.5 w-2.5" /> : <Mail className="h-2.5 w-2.5" />}
+                        {CHANNEL_LABELS_MSG[msg.channel] ?? msg.channel}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-semibold text-immo-text-primary">{TRIGGER_LABELS[msg.trigger_type] ?? msg.trigger_type}</span>
+                          {msg.mode === 'ai' && <span className="flex items-center gap-0.5 rounded-full bg-purple-100 px-1.5 py-0.5 text-[8px] font-semibold text-purple-600"><Sparkles className="h-2 w-2" /> IA</span>}
+                        </div>
+                        <p className="text-[11px] text-immo-text-muted line-clamp-2 font-mono whitespace-pre-line">
+                          {msg.body || (msg.mode === 'ai' ? 'Genere automatiquement par l\'IA' : 'Message vide')}
+                        </p>
+                        {msg.attached_file_types.length > 0 && (
+                          <div className="flex gap-1 mt-1">
+                            {msg.attached_file_types.map(f => <span key={f} className="rounded bg-immo-accent-blue/10 px-1.5 py-0.5 text-[8px] text-immo-accent-blue">📎 {f}</span>)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-1 shrink-0">
+                        <button onClick={() => startEdit(msg)} className="rounded-md p-1.5 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-accent-blue">
+                          <FileText className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => deleteMutation.mutate(msg.id)} className="rounded-md p-1.5 text-immo-text-muted hover:bg-immo-status-red/10 hover:text-immo-status-red">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
