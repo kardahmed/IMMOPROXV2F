@@ -108,18 +108,56 @@ Deno.serve(async (req) => {
       return json({ error: 'No AI key configured and no default script found' }, 404)
     }
 
-    // 6. Call Claude API
-    const prompt = `Analyse ce dossier client immobilier et genere un script d'appel personnalise.
+    // 6. Load playbook
+    const { data: playbook } = await supabase
+      .from('sale_playbooks')
+      .select('methodology, objective, tone, closing_phrases, objection_rules, custom_instructions')
+      .eq('tenant_id', client.tenant_id as string)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle()
+
+    const playbookContext = playbook ? `
+PLAYBOOK DE VENTE (A RESPECTER ABSOLUMENT):
+- Methodologie: ${(playbook as Record<string, unknown>).methodology ?? 'custom'}
+- Objectif: ${(playbook as Record<string, unknown>).objective ?? 'Qualifier et obtenir un rendez-vous visite'}
+- Ton de voix: ${(playbook as Record<string, unknown>).tone ?? 'Professionnel'}
+- Instructions: ${(playbook as Record<string, unknown>).custom_instructions ?? ''}
+
+REGLES D'OBJECTION (integrer dans les conditions de chaque question):
+${JSON.stringify((playbook as Record<string, unknown>).objection_rules ?? [], null, 2)}
+
+PHRASES DE CLOSING (utiliser dans l'outro):
+${JSON.stringify((playbook as Record<string, unknown>).closing_phrases ?? [], null, 2)}
+` : ''
+
+    // 7. Call Claude API
+    const prompt = `Tu es un expert en vente immobiliere. Analyse ce dossier client et genere un script d'appel personnalise et strategique.
+
+${playbookContext}
 
 Dossier client:
 ${JSON.stringify(dossier, null, 2)}
 
 Genere un script JSON avec:
-1. "intro": texte d'introduction personnalise (2-3 phrases, basee sur la derniere interaction)
-2. "questions": array de 3-5 questions de qualification adaptees a l'etape "${client.pipeline_stage}". Chaque question: { "id": "q1", "question": "...", "type": "select|radio|text|number|checkbox|date", "options": [...] si applicable, "maps_to": champ client optionnel }
-3. "talking_points": array de 2-3 arguments de vente adaptes au profil
-4. "outro": texte de conclusion (1-2 phrases)
-5. "suggested_action": prochaine action recommandee (ex: "Planifier une visite samedi")
+1. "intro": texte d'introduction personnalise (2-3 phrases). Mentionne la derniere interaction si pertinente. Respecte le ton du playbook.
+2. "questions": array de 4-6 questions de qualification adaptees a l'etape "${client.pipeline_stage}". Chaque question:
+   {
+     "id": "q1",
+     "question": "...",
+     "type": "select|radio|text|number|checkbox|date",
+     "options": [...] si applicable,
+     "maps_to": champ client optionnel (confirmed_budget, desired_unit_types, interest_level, payment_method, address),
+     "conditions": [
+       { "if": "reponse_specifique", "then_say": "ce que l'agent dit si le client repond ca" },
+       { "if": "autre_reponse", "then_say": "reponse alternative" },
+       { "if_default": true, "then_say": "reponse par defaut si aucune condition ne matche" }
+     ]
+   }
+   IMPORTANT: Chaque question DOIT avoir des conditions. Si le client refuse de repondre (budget, timing...), la condition doit guider l'agent vers une alternative.
+3. "talking_points": array de 3-4 arguments de vente adaptes au profil et au playbook
+4. "outro": texte de conclusion avec phrase de closing du playbook. L'objectif est TOUJOURS d'obtenir une date de visite.
+5. "suggested_action": prochaine action recommandee (ex: "Planifier visite mardi 10h")
 
 REPONDS UNIQUEMENT avec le JSON, pas de texte autour.`
 

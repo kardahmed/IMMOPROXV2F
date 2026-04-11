@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette } from 'lucide-react'
+import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles } from 'lucide-react'
 import {
   CompanySection,
   PipelineSection,
@@ -11,12 +11,14 @@ import {
   LanguageSection,
   SecuritySection,
 } from './sections'
+import { PlaybookSection } from './sections/PlaybookSection'
 
-type Section = 'company' | 'pipeline' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
+type Section = 'company' | 'pipeline' | 'playbook' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
 const SECTION_ICONS: Record<Section, typeof Building2> = {
   company: Building2,
   pipeline: GitBranch,
+  playbook: Sparkles,
   branding: Palette,
   reservations: Bookmark,
   templates: FileText,
@@ -25,11 +27,12 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   security: Shield,
 }
 
-const SECTION_KEYS: Section[] = ['company', 'pipeline', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
+const SECTION_KEYS: Section[] = ['company', 'pipeline', 'playbook', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
 const SECTION_LABELS: Record<Section, string> = {
   company: 'Agence',
   pipeline: 'Pipeline',
+  playbook: 'Playbook IA',
   branding: 'Personnalisation',
   reservations: 'Reservations',
   templates: 'Documents',
@@ -69,6 +72,7 @@ export function SettingsPage() {
       <div className="min-w-0 flex-1">
         {section === 'company' && <CompanySection />}
         {section === 'pipeline' && <PipelineSection />}
+        {section === 'playbook' && <PlaybookSection />}
         {section === 'branding' && <BrandingSection />}
         {section === 'reservations' && <ReservationsSection />}
         {section === 'templates' && <TemplatesSection />}

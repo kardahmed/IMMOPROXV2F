@@ -1,12 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { X, Phone, Clock, Sparkles, CheckCircle, Lightbulb, ArrowRight } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { X, Phone, Clock, Sparkles, CheckCircle, Lightbulb, ArrowRight, Calendar, AlertTriangle, MessageCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { handleSupabaseError } from '@/lib/errors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PIPELINE_STAGES } from '@/types'
 import type { PipelineStage } from '@/types'
 import toast from 'react-hot-toast'
+
+interface ScriptCondition {
+  if?: string
+  if_default?: boolean
+  then_say: string
+  then_next?: string
+}
 
 interface ScriptQuestion {
   id: string
@@ -14,6 +22,12 @@ interface ScriptQuestion {
   type: 'text' | 'number' | 'select' | 'radio' | 'checkbox' | 'date'
   options?: string[]
   maps_to?: string
+  conditions?: ScriptCondition[]
+}
+
+interface ObjectionRule {
+  trigger: string
+  response: string
 }
 
 interface CallScriptModalProps {
@@ -93,6 +107,58 @@ export function CallScriptModal({
     },
     enabled: isOpen,
   })
+
+  // Fetch playbook for objection handling
+  const { data: playbook } = useQuery({
+    queryKey: ['sale-playbook', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase.from('sale_playbooks').select('*').eq('tenant_id', tenantId).eq('is_active', true).limit(1).maybeSingle()
+      return data as { objective: string; tone: string; closing_phrases: string[]; objection_rules: ObjectionRule[]; custom_instructions: string } | null
+    },
+    enabled: isOpen && !!tenantId,
+  })
+
+  const [showVisitForm, setShowVisitForm] = useState(false)
+  const [visitDate, setVisitDate] = useState('')
+  const [visitTime, setVisitTime] = useState('')
+  const [activeObjection, setActiveObjection] = useState<string | null>(null)
+
+  // Create visit from call script
+  const createVisit = useMutation({
+    mutationFn: async () => {
+      if (!visitDate || !visitTime) return
+      const { error } = await supabase.from('visits').insert({
+        tenant_id: tenantId, client_id: clientId, agent_id: agentId,
+        scheduled_at: `${visitDate}T${visitTime}:00`,
+        visit_type: 'on_site', status: 'planned',
+      } as never)
+      if (error) { handleSupabaseError(error); throw error }
+      await supabase.from('history').insert({
+        tenant_id: tenantId, client_id: clientId, agent_id: agentId,
+        type: 'visit_planned', title: `Visite planifiee depuis appel — ${visitDate} ${visitTime}`,
+      } as never)
+      // Move to visite_a_gerer if in accueil
+      if (clientStage === 'accueil') {
+        await supabase.from('clients').update({ pipeline_stage: 'visite_a_gerer' } as never).eq('id', clientId)
+      }
+    },
+    onSuccess: () => {
+      toast.success('Visite planifiee !')
+      setShowVisitForm(false)
+      qc.invalidateQueries({ queryKey: ['client-visits'] })
+      qc.invalidateQueries({ queryKey: ['clients'] })
+    },
+  })
+
+  // Get conditional response for a question based on answer
+  function getConditionalResponse(q: ScriptQuestion, answer: string | string[]): string | null {
+    if (!q.conditions?.length) return null
+    const val = Array.isArray(answer) ? answer[0] : answer
+    const match = q.conditions.find(c => c.if === val)
+    if (match) return match.then_say
+    const fallback = q.conditions.find(c => c.if_default)
+    return fallback?.then_say ?? null
+  }
 
   function setAnswer(qId: string, value: string | string[]) {
     setAnswers(prev => ({ ...prev, [qId]: value }))
@@ -280,6 +346,16 @@ export function CallScriptModal({
                           })}
                         </div>
                       )}
+
+                      {/* Conditional response */}
+                      {answers[q.id] && getConditionalResponse(q, answers[q.id]) && (
+                        <div className="mt-3 rounded-lg border border-immo-accent-green/20 bg-immo-accent-green/5 p-3">
+                          <div className="flex items-start gap-2">
+                            <MessageCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-immo-accent-green" />
+                            <p className="text-xs leading-relaxed text-immo-accent-green">{getConditionalResponse(q, answers[q.id])}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -354,6 +430,64 @@ export function CallScriptModal({
               ))}
             </div>
           </div>
+
+          {/* Propose visit */}
+          <div className="mb-4">
+            {!showVisitForm ? (
+              <Button onClick={() => setShowVisitForm(true)} className="w-full border border-immo-accent-blue/30 bg-immo-accent-blue/5 text-xs font-semibold text-immo-accent-blue hover:bg-immo-accent-blue/10">
+                <Calendar className="mr-1.5 h-3.5 w-3.5" /> Proposer une visite
+              </Button>
+            ) : (
+              <div className="rounded-lg border border-immo-accent-blue/30 bg-immo-accent-blue/5 p-3 space-y-2">
+                <p className="text-[10px] font-semibold text-immo-accent-blue">Planifier une visite</p>
+                <Input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className="h-8 text-xs border-immo-border-default" />
+                <select value={visitTime} onChange={e => setVisitTime(e.target.value)} className="h-8 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-2 text-xs text-immo-text-primary">
+                  <option value="">Heure</option>
+                  {['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <div className="flex gap-2">
+                  <Button onClick={() => createVisit.mutate()} disabled={!visitDate || !visitTime || createVisit.isPending} className="flex-1 h-7 bg-immo-accent-blue text-[10px] text-white">
+                    {createVisit.isPending ? '...' : 'Confirmer visite'}
+                  </Button>
+                  <Button onClick={() => setShowVisitForm(false)} className="h-7 border border-immo-border-default bg-transparent text-[10px] text-immo-text-muted">Annuler</Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Objection handling */}
+          {playbook?.objection_rules && playbook.objection_rules.length > 0 && (
+            <div className="mb-4">
+              <label className="mb-2 block text-[10px] font-medium text-immo-text-muted">Objection du client ?</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {playbook.objection_rules.map(rule => (
+                  <button key={rule.trigger} onClick={() => setActiveObjection(activeObjection === rule.trigger ? null : rule.trigger)}
+                    className={`rounded-md border px-2 py-1 text-[10px] font-medium transition-all ${activeObjection === rule.trigger ? 'border-immo-status-orange/50 bg-immo-status-orange/10 text-immo-status-orange' : 'border-immo-border-default text-immo-text-muted hover:border-immo-status-orange/30'}`}>
+                    <AlertTriangle className="mr-1 inline h-2.5 w-2.5" />
+                    {rule.trigger === 'trop_cher' ? 'Trop cher' : rule.trigger === 'pas_budget' ? 'Pas de budget' : rule.trigger === 'reflechir' ? 'Veut reflechir' : rule.trigger === 'concurrent' ? 'Concurrent' : rule.trigger === 'pas_maintenant' ? 'Pas maintenant' : rule.trigger}
+                  </button>
+                ))}
+              </div>
+              {activeObjection && (
+                <div className="rounded-lg border border-immo-status-orange/20 bg-immo-status-orange/5 p-3">
+                  <p className="text-[10px] font-semibold text-immo-status-orange mb-1">Reponse suggeree :</p>
+                  <p className="text-xs leading-relaxed text-immo-text-primary">{playbook.objection_rules.find(r => r.trigger === activeObjection)?.response}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Closing phrases */}
+          {playbook?.closing_phrases && playbook.closing_phrases.length > 0 && (
+            <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
+              <p className="text-[10px] font-semibold text-purple-600 mb-2">Phrases de closing</p>
+              {playbook.closing_phrases.map((phrase, i) => (
+                <p key={i} className="text-xs text-purple-700 mb-1 flex items-start gap-1.5">
+                  <span className="text-purple-400 mt-0.5">→</span> {phrase}
+                </p>
+              ))}
+            </div>
+          )}
 
           {/* AI suggestion */}
           {script?.suggested_action && (
