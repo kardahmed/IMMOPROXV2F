@@ -14,12 +14,22 @@ interface PageData {
   accent_color: string
   cover_image_url: string | null
   form_fields: string[]
+  custom_questions: CustomQuestion[]
   slug: string
   meta_pixel_id: string | null
   google_tag_id: string | null
   tiktok_pixel_id: string | null
   project: { name: string; location: string | null } | null
   tenant: { name: string; phone: string | null; email: string | null; logo_url: string | null } | null
+}
+
+interface CustomQuestion {
+  id: string
+  label: string
+  type: 'text' | 'select' | 'textarea' | 'number' | 'date' | 'tel' | 'email' | 'checkbox'
+  options?: string[]
+  required?: boolean
+  placeholder?: string
 }
 
 export function PublicLandingPage() {
@@ -41,6 +51,7 @@ export function PublicLandingPage() {
   })
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ full_name: '', phone: '', email: '', budget: '', unit_type: '', message: '', website_url: '' })
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({})
 
   const { data: page, isLoading } = useQuery({
     queryKey: ['public-landing', slug],
@@ -87,6 +98,7 @@ export function PublicLandingPage() {
         accent_color: d.accent_color ?? '#0579DA',
         cover_image_url: d.cover_image_url,
         form_fields: d.form_fields ?? ['full_name', 'phone', 'email', 'budget', 'message'],
+        custom_questions: (d.custom_questions ?? []) as CustomQuestion[],
         slug: d.slug,
         meta_pixel_id: d.meta_pixel_id,
         google_tag_id: d.google_tag_id,
@@ -154,6 +166,7 @@ export function PublicLandingPage() {
           event_id: eventId,
           website_url: form.website_url, // honeypot
           agent_slug: params.get('agent') || undefined,
+          custom_answers: Object.keys(customAnswers).length > 0 ? customAnswers : undefined,
         }),
       })
 
@@ -317,6 +330,63 @@ export function PublicLandingPage() {
                 <label className="mb-1 block text-xs font-medium text-[#425466]">Message</label>
                 <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} rows={3} className="w-full resize-none rounded-lg border border-[#E3E8EF] bg-white p-4 text-sm text-[#0A2540] outline-none focus:border-[color:var(--accent)]" style={{ '--accent': accent } as React.CSSProperties} placeholder="Votre message..." />
               </div>
+            )}
+
+            {/* Custom questions */}
+            {page.custom_questions.length > 0 && (
+              <>
+                <div className="border-t border-[#E3E8EF] pt-4">
+                  <p className="mb-3 text-xs font-semibold text-[#425466]">Questions supplementaires</p>
+                </div>
+                {page.custom_questions.map(q => (
+                  <div key={q.id}>
+                    <label className="mb-1 block text-xs font-medium text-[#425466]">
+                      {q.label} {q.required && '*'}
+                    </label>
+                    {q.type === 'select' && q.options ? (
+                      <select
+                        value={customAnswers[q.id] ?? ''}
+                        onChange={e => setCustomAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                        required={q.required}
+                        className="h-11 w-full rounded-lg border border-[#E3E8EF] bg-white px-4 text-sm text-[#0A2540] outline-none"
+                      >
+                        <option value="">Selectionnez</option>
+                        {q.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    ) : q.type === 'textarea' ? (
+                      <textarea
+                        value={customAnswers[q.id] ?? ''}
+                        onChange={e => setCustomAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                        required={q.required}
+                        rows={3}
+                        placeholder={q.placeholder}
+                        className="w-full resize-none rounded-lg border border-[#E3E8EF] bg-white p-4 text-sm text-[#0A2540] outline-none focus:border-[color:var(--accent)]"
+                        style={{ '--accent': accent } as React.CSSProperties}
+                      />
+                    ) : q.type === 'checkbox' ? (
+                      <label className="flex items-center gap-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={customAnswers[q.id] === 'true'}
+                          onChange={e => setCustomAnswers(prev => ({ ...prev, [q.id]: e.target.checked ? 'true' : 'false' }))}
+                          className="h-4 w-4 rounded border-[#E3E8EF]"
+                        />
+                        <span className="text-sm text-[#0A2540]">{q.placeholder ?? 'Oui'}</span>
+                      </label>
+                    ) : (
+                      <input
+                        type={q.type ?? 'text'}
+                        value={customAnswers[q.id] ?? ''}
+                        onChange={e => setCustomAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                        required={q.required}
+                        placeholder={q.placeholder}
+                        className="h-11 w-full rounded-lg border border-[#E3E8EF] bg-white px-4 text-sm text-[#0A2540] outline-none focus:border-[color:var(--accent)]"
+                        style={{ '--accent': accent } as React.CSSProperties}
+                      />
+                    )}
+                  </div>
+                ))}
+              </>
             )}
           </div>
 

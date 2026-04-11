@@ -9,8 +9,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { Plus, Trash2, GripVertical } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { SectionEditor } from './components/SectionEditor'
+
+interface CustomQuestion {
+  id: string
+  label: string
+  type: 'text' | 'select' | 'textarea' | 'number' | 'date' | 'checkbox'
+  options?: string[]
+  required?: boolean
+  placeholder?: string
+}
 
 const inputClass = 'border-immo-border-default bg-immo-bg-primary text-immo-text-primary'
 const labelClass = 'text-[11px] font-medium text-immo-text-muted'
@@ -55,6 +65,8 @@ export function LandingPageEditor({ isOpen, onClose, editPage }: LandingPageEdit
   const [googleMeasurementId, setGoogleMeasurementId] = useState('')
   const [tiktokPixelId, setTiktokPixelId] = useState('')
   const [tiktokAccessToken, setTiktokAccessToken] = useState('')
+  // Custom questions
+  const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([])
   // Multi-lang + A/B
   const [language, setLanguage] = useState('fr')
   const [variant, setVariant] = useState('A')
@@ -79,6 +91,7 @@ export function LandingPageEditor({ isOpen, onClose, editPage }: LandingPageEdit
       setGoogleMeasurementId(editPage.google_measurement_id as string || '')
       setTiktokPixelId(editPage.tiktok_pixel_id as string || '')
       setTiktokAccessToken(editPage.tiktok_access_token as string || '')
+      setCustomQuestions((editPage.custom_questions as CustomQuestion[]) ?? [])
       setLanguage(editPage.language as string || 'fr')
       setVariant(editPage.variant as string || 'A')
       setAbTestGroup(editPage.ab_test_group as string || '')
@@ -88,6 +101,7 @@ export function LandingPageEditor({ isOpen, onClose, editPage }: LandingPageEdit
       setMetaPixelId(''); setMetaAccessToken(''); setMetaTestCode('')
       setGoogleTagId(''); setGoogleApiSecret(''); setGoogleMeasurementId('')
       setTiktokPixelId(''); setTiktokAccessToken('')
+      setCustomQuestions([])
       setLanguage('fr'); setVariant('A'); setAbTestGroup('')
     }
   }, [editPage, isOpen])
@@ -117,6 +131,7 @@ export function LandingPageEditor({ isOpen, onClose, editPage }: LandingPageEdit
         google_measurement_id: googleMeasurementId || null,
         tiktok_pixel_id: tiktokPixelId || null,
         tiktok_access_token: tiktokAccessToken || null,
+        custom_questions: customQuestions.length > 0 ? customQuestions : [],
         language,
         variant,
         ab_test_group: abTestGroup || null,
@@ -165,6 +180,77 @@ export function LandingPageEditor({ isOpen, onClose, editPage }: LandingPageEdit
             <SectionEditor pageId={String(editPage!.id)} />
           </>
         )}
+
+        <Separator className="bg-immo-border-default" />
+
+        {/* Section: Custom Questions */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-immo-accent-green">Questions personnalisees</h4>
+            <Button onClick={() => setCustomQuestions(prev => [...prev, { id: `q${Date.now()}`, label: '', type: 'text', required: false }])} size="sm" className="h-7 bg-immo-accent-green text-[10px] text-white">
+              <Plus className="mr-1 h-3 w-3" /> Ajouter
+            </Button>
+          </div>
+          <p className="mb-3 text-[10px] text-immo-text-muted">Ces questions s'affichent apres les champs standard du formulaire (nom, telephone, email, budget).</p>
+
+          {customQuestions.length === 0 && (
+            <div className="rounded-lg border border-dashed border-immo-border-default bg-immo-bg-primary p-4 text-center text-xs text-immo-text-muted">
+              Aucune question supplementaire. Cliquez "Ajouter" pour creer une question.
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {customQuestions.map((q, idx) => (
+              <div key={q.id} className="flex gap-2 rounded-lg border border-immo-border-default bg-immo-bg-primary p-3">
+                <GripVertical className="mt-1 h-4 w-4 shrink-0 cursor-grab text-immo-text-muted" />
+                <div className="flex-1 space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2">
+                      <Input value={q.label} onChange={e => {
+                        const next = [...customQuestions]; next[idx] = { ...next[idx], label: e.target.value }; setCustomQuestions(next)
+                      }} placeholder="Libelle de la question" className="h-8 text-xs border-immo-border-default bg-immo-bg-card" />
+                    </div>
+                    <select value={q.type} onChange={e => {
+                      const next = [...customQuestions]; next[idx] = { ...next[idx], type: e.target.value as CustomQuestion['type'] }; setCustomQuestions(next)
+                    }} className="h-8 rounded-md border border-immo-border-default bg-immo-bg-card px-2 text-xs text-immo-text-primary">
+                      <option value="text">Texte</option>
+                      <option value="select">Liste deroulante</option>
+                      <option value="textarea">Zone de texte</option>
+                      <option value="number">Nombre</option>
+                      <option value="date">Date</option>
+                      <option value="checkbox">Case a cocher</option>
+                    </select>
+                  </div>
+
+                  {q.type === 'select' && (
+                    <div>
+                      <Input value={(q.options ?? []).join(', ')} onChange={e => {
+                        const next = [...customQuestions]; next[idx] = { ...next[idx], options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }; setCustomQuestions(next)
+                      }} placeholder="Options separees par virgule (ex: Oui, Non, Peut-etre)" className="h-8 text-xs border-immo-border-default bg-immo-bg-card" />
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 text-[10px] text-immo-text-muted">
+                      <input type="checkbox" checked={q.required ?? false} onChange={e => {
+                        const next = [...customQuestions]; next[idx] = { ...next[idx], required: e.target.checked }; setCustomQuestions(next)
+                      }} className="h-3 w-3 rounded" />
+                      Obligatoire
+                    </label>
+                    <Input value={q.placeholder ?? ''} onChange={e => {
+                      const next = [...customQuestions]; next[idx] = { ...next[idx], placeholder: e.target.value }; setCustomQuestions(next)
+                    }} placeholder="Placeholder (optionnel)" className="h-7 flex-1 text-[10px] border-immo-border-default bg-immo-bg-card" />
+                  </div>
+                </div>
+
+                <button onClick={() => setCustomQuestions(prev => prev.filter((_, i) => i !== idx))}
+                  className="mt-1 shrink-0 rounded p-1 text-immo-text-muted hover:bg-immo-status-red/10 hover:text-immo-status-red">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <Separator className="bg-immo-border-default" />
 
