@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Search, Bell } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { Input } from '@/components/ui/input'
 import { LanguageSwitch } from '@/components/common/LanguageSwitch'
+import { NotificationBell } from '@/components/common/NotificationBell'
 
 interface TopbarProps {
   title: string
@@ -39,12 +40,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
         <LanguageSwitch />
 
         {/* Notifications */}
-        <button className="relative rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-immo-status-orange text-[10px] font-bold text-white">
-            3
-          </span>
-        </button>
+        <NotificationBell />
 
         {/* Avatar */}
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-immo-accent-blue/15 text-xs font-semibold text-immo-accent-blue">

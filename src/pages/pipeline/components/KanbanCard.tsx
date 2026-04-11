@@ -73,8 +73,8 @@ interface KanbanCardProps {
   selected?: boolean
   onSelect?: (id: string) => void
   isDragging?: boolean
-  onDragStart: () => void
-  onDragEnd: () => void
+  onDragStart?: () => void
+  onDragEnd?: () => void
 }
 
 export function KanbanCard({
@@ -84,8 +84,6 @@ export function KanbanCard({
   selected = false,
   onSelect,
   isDragging = false,
-  onDragStart,
-  onDragEnd,
 }: KanbanCardProps) {
   const navigate = useNavigate()
 
@@ -96,12 +94,6 @@ export function KanbanCard({
 
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move'
-        onDragStart()
-      }}
-      onDragEnd={onDragEnd}
       onClick={(e) => {
         if (e.shiftKey && onSelect) { onSelect(client.id); return }
         navigate(`/pipeline/clients/${client.id}`)
