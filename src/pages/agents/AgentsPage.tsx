@@ -15,9 +15,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { USER_ROLE_LABELS } from '@/types'
@@ -306,13 +303,10 @@ function CreateAgentModal({ isOpen, onClose, tenantId }: { isOpen: boolean; onCl
         </div>
         <div>
           <Label className="text-[11px] font-medium text-immo-text-muted">Rôle *</Label>
-          <Select value={role} onValueChange={(v) => { if (v) setRole(v as 'admin' | 'agent') }}>
-            <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue /></SelectTrigger>
-            <SelectContent className="border-immo-border-default bg-immo-bg-card">
-              <SelectItem value="agent" className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">Agent commercial</SelectItem>
-              <SelectItem value="admin" className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">Administrateur</SelectItem>
-            </SelectContent>
-          </Select>
+          <select value={role} onChange={(e) => setRole(e.target.value as 'admin' | 'agent')} className={`mt-1 h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+            <option value="agent">Agent commercial</option>
+            <option value="admin">Administrateur</option>
+          </select>
         </div>
         <div className="flex justify-end gap-3 border-t border-immo-border-default pt-4">
           <Button variant="ghost" onClick={resetAndClose} className="text-immo-text-secondary hover:bg-immo-bg-card-hover">Annuler</Button>

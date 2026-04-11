@@ -12,9 +12,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import {
   SOURCE_LABELS, UNIT_TYPE_LABELS, INTEREST_LEVEL_LABELS,
   PAYMENT_METHOD_LABELS,
 } from '@/types'
@@ -208,13 +205,11 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                 control={control}
                 name="client_type"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => { if (v) field.onChange(v) }}>
-                    <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
-                    <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                      <SelectItem value="individual" className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">Particulier</SelectItem>
-                      <SelectItem value="company" className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">Entreprise</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+                    <option value="">—</option>
+                    <option value="individual">Particulier</option>
+                    <option value="company">Entreprise</option>
+                  </select>
                 )}
               />
             </Field>
@@ -237,18 +232,10 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                 control={control}
                 name="source"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => { if (v) field.onChange(v) }}>
-                    <SelectTrigger className={`${inputClass} ${errors.source ? 'border-immo-status-red' : ''}`}>
-                      <SelectValue placeholder="Sélectionner la source" />
-                    </SelectTrigger>
-                    <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                      {Object.entries(SOURCE_LABELS).map(([val, label]) => (
-                        <SelectItem key={val} value={val} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass} ${errors.source ? 'border-immo-status-red' : ''}`}>
+                    <option value="">Selectionner la source</option>
+                    {Object.entries(SOURCE_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                  </select>
                 )}
               />
             </Field>
@@ -301,16 +288,10 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                 control={control}
                 name="interest_level"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => { if (v) field.onChange(v) }}>
-                    <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
-                    <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                      {Object.entries(INTEREST_LEVEL_LABELS).map(([val, meta]) => (
-                        <SelectItem key={val} value={val} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                          {meta.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+                    <option value="">—</option>
+                    {Object.entries(INTEREST_LEVEL_LABELS).map(([val, meta]) => <option key={val} value={val}>{meta.label}</option>)}
+                  </select>
                 )}
               />
             </Field>
@@ -320,16 +301,10 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                 control={control}
                 name="payment_method"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => { if (v) field.onChange(v) }}>
-                    <SelectTrigger className={inputClass}><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                      {Object.entries(PAYMENT_METHOD_LABELS).map(([val, label]) => (
-                        <SelectItem key={val} value={val} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+                    <option value="">—</option>
+                    {Object.entries(PAYMENT_METHOD_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                  </select>
                 )}
               />
             </Field>
@@ -344,18 +319,10 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                 control={control}
                 name="agent_id"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => { if (v) field.onChange(v) }}>
-                    <SelectTrigger className={`${inputClass} ${errors.agent_id ? 'border-immo-status-red' : ''}`}>
-                      <SelectValue placeholder="Sélectionner l'agent" />
-                    </SelectTrigger>
-                    <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                      {agents.map((a) => (
-                        <SelectItem key={a.id} value={a.id} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                          {a.first_name} {a.last_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass} ${errors.agent_id ? 'border-immo-status-red' : ''}`}>
+                    <option value="">Selectionner l'agent</option>
+                    {agents.map(a => <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>)}
+                  </select>
                 )}
               />
             </Field>

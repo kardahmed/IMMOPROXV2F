@@ -13,9 +13,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import { GOAL_METRIC_LABELS } from '@/types'
 import type { GoalMetric, GoalPeriod, GoalStatus } from '@/types'
 import { formatPriceCompact } from '@/lib/constants'
@@ -366,44 +363,24 @@ function CreateGoalModal({ isOpen, onClose, agents, tenantId }: {
       <div className="space-y-4">
         <div>
           <Label className={labelClass}>Agent *</Label>
-          <Select value={agentId} onValueChange={(v) => { if (v) setAgentId(v) }}>
-            <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue placeholder="Sélectionner l'agent" /></SelectTrigger>
-            <SelectContent className="border-immo-border-default bg-immo-bg-card">
-              {agents.map(a => (
-                <SelectItem key={a.id} value={a.id} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                  {a.first_name} {a.last_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className={`mt-1 h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+            <option value="">Selectionner l'agent</option>
+            {agents.map(a => <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>)}
+          </select>
         </div>
 
         <div>
           <Label className={labelClass}>Métrique *</Label>
-          <Select value={metric} onValueChange={(v) => { if (v) setMetric(v as GoalMetric) }}>
-            <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue /></SelectTrigger>
-            <SelectContent className="border-immo-border-default bg-immo-bg-card">
-              {Object.entries(GOAL_METRIC_LABELS).map(([val, label]) => (
-                <SelectItem key={val} value={val} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select value={metric} onChange={(e) => setMetric(e.target.value as GoalMetric)} className={`mt-1 h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+            {Object.entries(GOAL_METRIC_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+          </select>
         </div>
 
         <div>
           <Label className={labelClass}>Période *</Label>
-          <Select value={period} onValueChange={(v) => { if (v) setPeriod(v as GoalPeriod) }}>
-            <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue /></SelectTrigger>
-            <SelectContent className="border-immo-border-default bg-immo-bg-card">
-              {Object.entries(PERIOD_LABELS).map(([val, label]) => (
-                <SelectItem key={val} value={val} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select value={period} onChange={(e) => setPeriod(e.target.value as GoalPeriod)} className={`mt-1 h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+            {Object.entries(PERIOD_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+          </select>
           <p className="mt-1 text-[10px] text-immo-text-muted">
             {format(dates.start, 'dd/MM/yyyy')} → {format(dates.end, 'dd/MM/yyyy')}
           </p>
