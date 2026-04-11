@@ -103,7 +103,10 @@ export function TaskConfigSection() {
     setExpandedStages(prev => { const n = new Set(prev); n.has(stage) ? n.delete(stage) : n.add(stage); return n })
   }
 
-  const stages = [...new Set(templates.map(t => t.stage))]
+  // Order stages by pipeline order, not alphabetically
+  const STAGE_ORDER = ['accueil','visite_a_gerer','visite_confirmee','visite_terminee','negociation','reservation','vente','relancement','perdue']
+  const stagesSet = new Set(templates.map(t => t.stage))
+  const stages = STAGE_ORDER.filter(s => stagesSet.has(s))
 
   return (
     <div className="space-y-6">
