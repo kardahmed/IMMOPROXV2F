@@ -13,6 +13,7 @@ import {
   Settings,
   Globe,
   LogOut,
+  CheckSquare,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
@@ -31,6 +32,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
   Settings,
   Globe,
+  CheckSquare,
 }
 
 // Map nav path → i18n key
@@ -38,6 +40,7 @@ const NAV_KEYS: Record<string, string> = {
   '/dashboard': 'nav.dashboard',
   '/projects': 'nav.projects',
   '/pipeline': 'nav.pipeline',
+  '/tasks': 'Taches',
   '/planning': 'nav.planning',
   '/dossiers': 'nav.dossiers',
   '/goals': 'nav.goals',

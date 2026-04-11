@@ -11,6 +11,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: 'LayoutDashboard', roles: 'all' },
   { label: 'Projets', path: '/projects', icon: 'Building2', roles: 'all' },
   { label: 'Pipeline', path: '/pipeline', icon: 'GitBranch', roles: 'all' },
+  { label: 'Taches', path: '/tasks', icon: 'CheckSquare', roles: 'all' },
   { label: 'Planning', path: '/planning', icon: 'Calendar', roles: 'all' },
   { label: 'Dossiers', path: '/dossiers', icon: 'FolderOpen', roles: 'all' },
   { label: 'Objectifs', path: '/goals', icon: 'Target', roles: 'all' },

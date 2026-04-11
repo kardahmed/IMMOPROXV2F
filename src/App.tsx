@@ -42,6 +42,8 @@ const ChangelogPage = lazy(() => import('@/pages/superadmin/ChangelogPage').then
 const MonitoringPage = lazy(() => import('@/pages/superadmin/MonitoringPage').then(m => ({ default: m.MonitoringPage })))
 const PlansConfigPage = lazy(() => import('@/pages/superadmin/PlansConfigPage').then(m => ({ default: m.PlansConfigPage })))
 
+const TasksPage = lazy(() => import('@/pages/tasks/TasksPage').then(m => ({ default: m.TasksPage })))
+
 // Landing pages
 const PublicLandingPage = lazy(() => import('@/pages/landing/PublicLandingPage').then(m => ({ default: m.PublicLandingPage })))
 
@@ -85,6 +87,7 @@ function App() {
             <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="/pipeline" element={<PipelinePage />} />
             <Route path="/pipeline/clients/:clientId" element={<ClientDetailPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/dossiers" element={<DossiersPage />} />
 
