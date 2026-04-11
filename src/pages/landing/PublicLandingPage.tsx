@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { MapPin, Phone, Mail, CheckCircle, Building2 } from 'lucide-react'
+import { MapPin, Phone, CheckCircle, Building2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { SectionRenderer } from './components/sections/SectionRenderer'
 import type { SectionData } from './components/sections/SectionRenderer'
@@ -223,9 +223,18 @@ export function PublicLandingPage() {
       </div>
 
       {/* Dynamic sections */}
-      {sections.length > 0 && <SectionRenderer sections={sections} accent={accent} />}
+      {sections.length > 0 && (
+        <SectionRenderer
+          sections={sections}
+          accent={accent}
+          slug={page.slug}
+          formFields={fields}
+          tenantName={page.tenant?.name ?? undefined}
+        />
+      )}
 
-      {/* Form */}
+      {/* Form (only if no form section exists in dynamic sections) */}
+      {!sections.some(s => s.type === 'form') && (
       <div className="mx-auto -mt-4 max-w-lg px-4 pb-16">
         <form id="landing-form" onSubmit={handleSubmit} className="rounded-2xl border border-[#E3E8EF] bg-white p-8 shadow-lg shadow-black/[0.03]">
           <h2 className="mb-6 text-center text-lg font-semibold text-[#0A2540]">Demander des informations</h2>
@@ -302,11 +311,17 @@ export function PublicLandingPage() {
             <p className="font-medium">{page.tenant.name}</p>
             <div className="mt-1 flex items-center justify-center gap-4">
               {page.tenant.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {page.tenant.phone}</span>}
-              {page.tenant.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {page.tenant.email}</span>}
             </div>
           </div>
         )}
       </div>
+      )}
+
+      {/* Footer (always visible) */}
+      {page.tenant && !sections.some(s => s.type === 'form') && (
+        <div className="pb-8" />
+      )}
     </div>
   )
 }
+

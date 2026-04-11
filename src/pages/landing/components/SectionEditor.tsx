@@ -21,6 +21,7 @@ const SECTION_TYPES = [
   { type: 'testimonials', label: 'Avis clients', icon: '⭐' },
   { type: 'faq', label: 'FAQ', icon: '❓' },
   { type: 'cta', label: 'Appel a l\'action', icon: '🚀' },
+  { type: 'form', label: 'Formulaire de contact', icon: '📝' },
 ]
 
 interface Section {

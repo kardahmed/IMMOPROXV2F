@@ -7,6 +7,7 @@ import { PricingSection } from './PricingSection'
 import { TestimonialsSection } from './TestimonialsSection'
 import { FAQSection } from './FAQSection'
 import { CTASection } from './CTASection'
+import { FormSection } from './FormSection'
 
 export interface SectionData {
   id: string
@@ -20,9 +21,13 @@ export interface SectionData {
 interface SectionRendererProps {
   sections: SectionData[]
   accent: string
+  /** Required for form section */
+  slug?: string
+  formFields?: string[]
+  tenantName?: string
 }
 
-export function SectionRenderer({ sections, accent }: SectionRendererProps) {
+export function SectionRenderer({ sections, accent, slug, formFields, tenantName }: SectionRendererProps) {
   const visible = sections.filter(s => s.is_visible).sort((a, b) => a.sort_order - b.sort_order)
 
   return (
@@ -40,6 +45,16 @@ export function SectionRenderer({ sections, accent }: SectionRendererProps) {
           case 'testimonials': return <TestimonialsSection {...props} />
           case 'faq': return <FAQSection {...props} />
           case 'cta': return <CTASection {...props} />
+          case 'form': return (
+            <FormSection
+              key={section.id}
+              title={section.title ?? undefined}
+              accent={accent}
+              slug={slug ?? ''}
+              fields={formFields ?? ['full_name', 'phone', 'email', 'budget', 'message']}
+              tenantName={tenantName}
+            />
+          )
           default: return null
         }
       })}
