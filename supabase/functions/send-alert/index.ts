@@ -127,6 +127,47 @@ serve(async (req: Request) => {
               })
             }
           }
+        } else if (alert.channel === 'slack' && alert.webhook_url) {
+          try {
+            await fetch(alert.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: `🚨 *IMMO PRO-X Alerte*\n${message}`,
+                blocks: [
+                  { type: 'header', text: { type: 'plain_text', text: '🚨 IMMO PRO-X Alerte' } },
+                  { type: 'section', text: { type: 'mrkdwn', text: `*Type:* ${alert.type}\n*Message:* ${message}\n*Seuil:* ${alert.threshold}` } },
+                ],
+              }),
+            })
+          } catch {
+            await supabase.from('super_admin_logs').insert({
+              action: 'error',
+              details: { message: `Slack alert failed: ${alert.type}` },
+            })
+          }
+        } else if (alert.channel === 'discord' && alert.webhook_url) {
+          try {
+            await fetch(alert.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                content: `🚨 **IMMO PRO-X Alerte**`,
+                embeds: [{
+                  title: alert.type,
+                  description: message,
+                  color: 0xCD3D64,
+                  fields: [{ name: 'Seuil', value: String(alert.threshold), inline: true }],
+                  timestamp: new Date().toISOString(),
+                }],
+              }),
+            })
+          } catch {
+            await supabase.from('super_admin_logs').insert({
+              action: 'error',
+              details: { message: `Discord alert failed: ${alert.type}` },
+            })
+          }
         } else if (alert.channel === 'webhook' && alert.webhook_url) {
           try {
             await fetch(alert.webhook_url, {

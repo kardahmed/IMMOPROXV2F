@@ -276,20 +276,28 @@ function AlertsSection() {
                     >
                       <option value="email">Email</option>
                       <option value="telegram">Telegram</option>
+                      <option value="slack">Slack</option>
+                      <option value="discord">Discord</option>
                       <option value="webhook">Webhook</option>
                     </select>
                   </div>
 
-                  {/* Webhook URL */}
-                  {(alert.channel === 'webhook' || alert.channel === 'telegram') && (
+                  {/* Webhook URL (shown for telegram, slack, discord, webhook) */}
+                  {['webhook', 'telegram', 'slack', 'discord'].includes(alert.channel) && (
                     <div>
                       <Label className="text-[10px] font-medium text-immo-text-muted">
-                        {alert.channel === 'telegram' ? 'Bot Token / Chat ID' : 'Webhook URL'}
+                        {alert.channel === 'telegram' ? 'Bot Token : Chat ID' :
+                         alert.channel === 'slack' ? 'Slack Webhook URL' :
+                         alert.channel === 'discord' ? 'Discord Webhook URL' : 'Webhook URL'}
                       </Label>
                       <Input
                         value={alert.webhook_url ?? ''}
                         onChange={e => updateAlert.mutate({ id: alert.id, webhook_url: e.target.value || null })}
-                        placeholder={alert.channel === 'telegram' ? 'bot_token:chat_id' : 'https://...'}
+                        placeholder={
+                          alert.channel === 'telegram' ? 'bot_token:chat_id' :
+                          alert.channel === 'slack' ? 'https://hooks.slack.com/services/...' :
+                          alert.channel === 'discord' ? 'https://discord.com/api/webhooks/...' : 'https://...'
+                        }
                         className="mt-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
                       />
                     </div>
