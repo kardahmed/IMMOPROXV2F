@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Calendar, Bookmark, DollarSign, CreditCard, FileText, Receipt,
-  StickyNote, ListTodo, Clock,
+  StickyNote, ListTodo, Clock, CheckSquare,
 } from 'lucide-react'
 import {
   VisitsTab,
@@ -16,6 +16,9 @@ import {
   TasksTab,
   HistoryTab,
 } from './tabs'
+import { ClientTasksTab } from './ClientTasksTab'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 
 interface ClientTabsProps {
   clientId: string
@@ -24,7 +27,7 @@ interface ClientTabsProps {
 
 const TAB_KEYS = [
   'visits', 'reservation', 'sale', 'schedule', 'payment',
-  'documents', 'charges', 'notes', 'tasks', 'history',
+  'documents', 'charges', 'notes', 'tasks', 'auto_tasks', 'history',
 ] as const
 
 type TabKey = (typeof TAB_KEYS)[number]
@@ -39,12 +42,22 @@ const TAB_ICONS: Record<TabKey, typeof Calendar> = {
   charges: Receipt,
   notes: StickyNote,
   tasks: ListTodo,
+  auto_tasks: CheckSquare,
   history: Clock,
 }
 
 export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<TabKey>('visits')
+
+  // Fetch client info for tasks tab
+  const { data: clientInfo } = useQuery({
+    queryKey: ['client-info-tabs', clientId],
+    queryFn: async () => {
+      const { data } = await supabase.from('clients').select('full_name, phone, pipeline_stage').eq('id', clientId).single()
+      return data as { full_name: string; phone: string; pipeline_stage: string } | null
+    },
+  })
 
   return (
     <div>
@@ -80,6 +93,9 @@ export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
         {activeTab === 'charges' && <ChargesTab clientId={clientId} tenantId={tenantId} />}
         {activeTab === 'notes' && <NotesTab clientId={clientId} />}
         {activeTab === 'tasks' && <TasksTab clientId={clientId} tenantId={tenantId} />}
+        {activeTab === 'auto_tasks' && clientInfo && (
+          <ClientTasksTab clientId={clientId} clientName={clientInfo.full_name} clientPhone={clientInfo.phone} clientStage={clientInfo.pipeline_stage} tenantId={tenantId} />
+        )}
         {activeTab === 'history' && <HistoryTab clientId={clientId} />}
       </div>
     </div>

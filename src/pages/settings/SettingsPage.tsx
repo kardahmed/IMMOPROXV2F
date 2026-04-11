@@ -12,13 +12,15 @@ import {
   SecuritySection,
 } from './sections'
 import { PlaybookSection } from './sections/PlaybookSection'
+import { TaskConfigSection } from './sections/TaskConfigSection'
 
-type Section = 'company' | 'pipeline' | 'playbook' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
+type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
 const SECTION_ICONS: Record<Section, typeof Building2> = {
   company: Building2,
   pipeline: GitBranch,
   playbook: Sparkles,
+  tasks: Bell,
   branding: Palette,
   reservations: Bookmark,
   templates: FileText,
@@ -27,12 +29,13 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   security: Shield,
 }
 
-const SECTION_KEYS: Section[] = ['company', 'pipeline', 'playbook', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
+const SECTION_KEYS: Section[] = ['company', 'pipeline', 'playbook', 'tasks', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
 const SECTION_LABELS: Record<Section, string> = {
   company: 'Agence',
   pipeline: 'Pipeline',
   playbook: 'Playbook IA',
+  tasks: 'Taches auto',
   branding: 'Personnalisation',
   reservations: 'Reservations',
   templates: 'Documents',
@@ -73,6 +76,7 @@ export function SettingsPage() {
         {section === 'company' && <CompanySection />}
         {section === 'pipeline' && <PipelineSection />}
         {section === 'playbook' && <PlaybookSection />}
+        {section === 'tasks' && <TaskConfigSection />}
         {section === 'branding' && <BrandingSection />}
         {section === 'reservations' && <ReservationsSection />}
         {section === 'templates' && <TemplatesSection />}
