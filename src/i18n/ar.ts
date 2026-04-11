@@ -9,6 +9,7 @@ export const ar = {
     goals: 'الأهداف',
     performance: 'الأداء',
     agents: 'الوكلاء',
+    landing: 'صفحات الالتقاط',
     reports: 'التقارير',
     settings: 'الإعدادات',
   },

@@ -9,6 +9,7 @@ export const fr = {
     goals: 'Objectifs',
     performance: 'Performance',
     agents: 'Agents',
+    landing: 'Pages capture',
     reports: 'Rapports',
     settings: 'Paramètres',
   },
