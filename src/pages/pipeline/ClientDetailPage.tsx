@@ -279,7 +279,17 @@ export function ClientDetailPage() {
       </div>
 
       {/* Quick actions */}
-      <QuickActions onAction={handleQuickAction} />
+      <QuickActions
+        clientId={client.id}
+        clientName={client.full_name}
+        clientPhone={client.phone}
+        clientEmail={client.email}
+        tenantId={client.tenant_id}
+        agentId={userId ?? ''}
+        agentName={agentName ?? undefined}
+        projectName={client.interested_projects?.[0] && projectMap ? projectMap.get(client.interested_projects[0]) ?? undefined : undefined}
+        onAction={handleQuickAction}
+      />
 
       {/* Pipeline timeline */}
       <div className="pt-2 pb-4">
