@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/hooks/useAuth'
+import { useTranslation } from 'react-i18next'
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react'
 
 const schema = z.object({
@@ -15,6 +16,7 @@ type FormData = z.infer<typeof schema>
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { signIn, isAuthenticated, role } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -70,7 +72,7 @@ export function LoginPage() {
               <p className="text-xs text-[#8898AA]">v2.0</p>
             </div>
           </div>
-          <p className="text-sm text-[#425466]">Connectez-vous a votre espace</p>
+          <p className="text-sm text-[#425466]">{t('login.connect_to')}</p>
         </div>
 
         {/* Separator */}
@@ -81,7 +83,7 @@ export function LoginPage() {
           {/* Email */}
           <div>
             <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-[#425466]">
-              Adresse email
+              {t('login.email_label')}
             </label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8898AA]" />
@@ -104,7 +106,7 @@ export function LoginPage() {
           {/* Password */}
           <div>
             <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-[#425466]">
-              Mot de passe
+              {t('login.password_label')}
             </label>
             <div className="relative">
               <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8898AA]" />
@@ -141,11 +143,11 @@ export function LoginPage() {
             {loading ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                <span>Connexion en cours...</span>
+                <span>{t('login.loading')}</span>
               </>
             ) : (
               <>
-                <span>Connexion</span>
+                <span>{t('login.submit')}</span>
                 <LogIn className="h-4 w-4" />
               </>
             )}
@@ -154,7 +156,7 @@ export function LoginPage() {
 
         {/* Footer */}
         <p className="mt-6 text-center text-[13px] text-[#8898AA]">
-          Premiere connexion ? Contactez votre administrateur
+          {t('login.first_login')}
         </p>
       </div>
     </div>

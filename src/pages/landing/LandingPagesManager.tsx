@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, ExternalLink, Copy, Pencil, Trash2, Eye, EyeOff, Layout } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
@@ -27,6 +28,7 @@ interface LandingPage {
 }
 
 export function LandingPagesManager() {
+  const { t } = useTranslation()
   const tenantId = useAuthStore(s => s.tenantId)
   const qc = useQueryClient()
   const [showEditor, setShowEditor] = useState(false)
@@ -72,7 +74,7 @@ export function LandingPagesManager() {
   function copyLink(slug: string) {
     const url = `${window.location.origin}/p/${slug}`
     navigator.clipboard.writeText(url)
-    toast.success('Lien copie !')
+    toast.success(t('landing_page.link_copied'))
   }
 
   async function handleTemplateSelect(template: Template) {
@@ -109,32 +111,32 @@ export function LandingPagesManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-immo-text-primary">Pages de capture</h2>
-          <p className="text-xs text-immo-text-muted">Landing pages pour vos campagnes publicitaires</p>
+          <h2 className="text-lg font-bold text-immo-text-primary">{t('landing_page.pages_capture')}</h2>
+          <p className="text-xs text-immo-text-muted">{t('landing_page.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setShowTemplates(true)} variant="ghost" className="border border-immo-border-default text-immo-text-secondary hover:bg-immo-bg-card-hover">
-            <Layout className="mr-1.5 h-4 w-4" /> Depuis un template
+            <Layout className="mr-1.5 h-4 w-4" /> {t('landing_page.from_template')}
           </Button>
           <Button onClick={() => { setEditPage(null); setShowEditor(true) }} className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
-            <Plus className="mr-1.5 h-4 w-4" /> Page vide
+            <Plus className="mr-1.5 h-4 w-4" /> {t('landing_page.new_page')}
           </Button>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-4">
-        <KPICard label="Pages actives" value={pages.filter(p => p.is_active).length} accent="blue" />
-        <KPICard label="Vues totales" value={totalViews} accent="blue" />
-        <KPICard label="Leads captures" value={totalSubmissions} accent="green" />
-        <KPICard label="Taux conversion" value={`${conversionRate}%`} accent={Number(conversionRate) > 5 ? 'green' : 'orange'} />
+        <KPICard label="{t('landing_page.active_pages')}" value={pages.filter(p => p.is_active).length} accent="blue" />
+        <KPICard label="{t('landing_page.total_views')}" value={totalViews} accent="blue" />
+        <KPICard label="{t('landing_page.leads_captured')}" value={totalSubmissions} accent="green" />
+        <KPICard label="{t('landing_page.conversion_rate')}" value={`${conversionRate}%`} accent={Number(conversionRate) > 5 ? 'green' : 'orange'} />
       </div>
 
       {/* Pages list */}
       {pages.length === 0 ? (
         <div className="rounded-xl border border-immo-border-default bg-immo-bg-card py-16 text-center">
-          <p className="text-sm text-immo-text-muted">Aucune page de capture</p>
-          <p className="mt-1 text-xs text-immo-text-muted">Creez votre premiere landing page pour capturer des leads</p>
+          <p className="text-sm text-immo-text-muted">{t('landing_page.no_pages')}</p>
+          <p className="mt-1 text-xs text-immo-text-muted">{t('landing_page.create_first')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -205,8 +207,8 @@ export function LandingPagesManager() {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={() => deleteId && deletePage.mutate(deleteId)}
-        title="Supprimer cette page ?"
-        description="Les statistiques seront perdues. Les leads deja captures resteront dans le pipeline."
+        title="{t('landing_page.confirm_delete')}"
+        description="{t('landing_page.delete_desc')}"
         confirmVariant="danger"
         loading={deletePage.isPending}
       />

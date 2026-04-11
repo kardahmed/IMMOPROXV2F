@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Users, Calendar, DollarSign, Target, Clock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { KPICard, LoadingSpinner } from '@/components/common'
@@ -8,6 +9,7 @@ import { format, isToday, isTomorrow, isAfter } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 export function AgentDashboard() {
+  const { t } = useTranslation()
   const userId = useAuthStore(s => s.session?.user?.id)
   const tenantId = useAuthStore(s => s.tenantId)
 
@@ -63,21 +65,21 @@ export function AgentDashboard() {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KPICard label="Mes clients" value={data.totalClients} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
-        <KPICard label="Visites aujourd'hui" value={data.todayVisits} accent="orange" icon={<Calendar className="h-5 w-5 text-immo-status-orange" />} />
-        <KPICard label="CA ce mois" value={formatPriceCompact(data.monthRevenue)} accent="green" icon={<DollarSign className="h-5 w-5 text-immo-accent-green" />} />
-        <KPICard label="Ventes ce mois" value={data.monthSales} accent="green" subtitle={data.goalTarget ? `Objectif: ${data.goalTarget}` : undefined} icon={<Target className="h-5 w-5 text-immo-accent-green" />} />
+        <KPICard label={t('agent_dashboard.my_clients')} value={data.totalClients} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
+        <KPICard label={t('agent_dashboard.visits_today')} value={data.todayVisits} accent="orange" icon={<Calendar className="h-5 w-5 text-immo-status-orange" />} />
+        <KPICard label={t('agent_dashboard.revenue_month')} value={formatPriceCompact(data.monthRevenue)} accent="green" icon={<DollarSign className="h-5 w-5 text-immo-accent-green" />} />
+        <KPICard label={t('agent_dashboard.sales_month')} value={data.monthSales} accent="green" subtitle={data.goalTarget ? `Objectif: ${data.goalTarget}` : undefined} icon={<Target className="h-5 w-5 text-immo-accent-green" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Upcoming visits */}
         <div className="rounded-xl border border-immo-border-default bg-immo-bg-card shadow-sm">
           <div className="border-b border-immo-border-default px-5 py-4">
-            <h3 className="text-sm font-semibold text-immo-text-primary">Prochaines visites</h3>
+            <h3 className="text-sm font-semibold text-immo-text-primary">{t('agent_dashboard.next_visits')}</h3>
           </div>
           <div className="max-h-[300px] divide-y divide-immo-border-default overflow-y-auto">
             {data.upcoming.length === 0 ? (
-              <div className="py-8 text-center text-sm text-immo-text-muted">Aucune visite prevue</div>
+              <div className="py-8 text-center text-sm text-immo-text-muted">{t('agent_dashboard.no_visits')}</div>
             ) : (
               data.upcoming.map(v => {
                 const dt = new Date(v.scheduled_at)
@@ -101,11 +103,11 @@ export function AgentDashboard() {
         {/* Clients to relaunch */}
         <div className="rounded-xl border border-immo-border-default bg-immo-bg-card shadow-sm">
           <div className="border-b border-immo-border-default px-5 py-4">
-            <h3 className="text-sm font-semibold text-immo-text-primary">Clients a relancer</h3>
+            <h3 className="text-sm font-semibold text-immo-text-primary">{t('agent_dashboard.clients_relaunch')}</h3>
           </div>
           <div className="max-h-[300px] divide-y divide-immo-border-default overflow-y-auto">
             {data.toRelaunch.length === 0 ? (
-              <div className="py-8 text-center text-sm text-immo-text-muted">Tous les clients sont a jour</div>
+              <div className="py-8 text-center text-sm text-immo-text-muted">{t('agent_dashboard.all_caught_up')}</div>
             ) : (
               data.toRelaunch.map(c => (
                 <div key={c.id} className="flex items-center gap-3 px-5 py-3">
@@ -113,7 +115,7 @@ export function AgentDashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-immo-text-primary">{c.full_name}</p>
                     <p className="text-[11px] text-immo-text-muted">
-                      {c.last_contact_at ? `Dernier contact: ${format(new Date(c.last_contact_at), 'dd/MM')}` : 'Jamais contacte'}
+                      {c.last_contact_at ? t('agent_dashboard.last_contact_on', { date: format(new Date(c.last_contact_at), 'dd/MM') }) : t('agent_dashboard.never_contacted')}
                     </p>
                   </div>
                   {c.confirmed_budget && (
