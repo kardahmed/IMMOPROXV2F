@@ -125,9 +125,55 @@ export function ScheduleTab({ clientId }: { clientId: string }) {
 }
 
 /* ═══ Payment ═══ */
-export function PaymentTab({ clientId: _clientId }: { clientId: string }) {
+export function PaymentTab({ clientId }: { clientId: string }) {
   const { t } = useTranslation()
-  return <EmptyState icon={<CreditCard className="h-10 w-10" />} title={t('common.no_data')} />
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ['client-payments', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('payment_schedules')
+        .select('*, sales(units(code))')
+        .eq('status', 'paid')
+        .order('due_date', { ascending: false })
+      if (error) return []
+      // Filter client-side since we can't easily join through sale→client
+      return (data ?? []) as unknown as Array<Record<string, unknown>>
+    },
+  })
+
+  const totalPaid = payments.reduce((s, p) => s + ((p.amount as number) ?? 0), 0)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="rounded-lg border border-immo-border-default bg-immo-bg-primary px-4 py-2">
+          <p className="text-[10px] text-immo-text-muted">{t('common.total')} paye</p>
+          <p className="text-lg font-bold text-immo-accent-green">{formatPrice(totalPaid)}</p>
+        </div>
+      </div>
+
+      {payments.length === 0 ? (
+        <EmptyState icon={<CreditCard className="h-10 w-10" />} title={t('common.no_data')} />
+      ) : (
+        <div className="space-y-2">
+          {payments.map(p => (
+            <div key={p.id as string} className="flex items-center gap-3 rounded-lg border border-immo-border-default bg-immo-bg-card px-4 py-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-immo-accent-green/10">
+                <CreditCard className="h-4 w-4 text-immo-accent-green" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-immo-text-primary">{formatPrice(p.amount as number)}</p>
+                <p className="text-[11px] text-immo-text-muted">
+                  Echeance #{p.installment_number as number} · {format(new Date(p.due_date as string), 'dd/MM/yyyy')}
+                </p>
+              </div>
+              <StatusBadge label={t('status.paid')} type="green" />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 /* ═══ Documents ═══ */
