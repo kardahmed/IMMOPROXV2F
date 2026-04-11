@@ -33,6 +33,9 @@ const TenantDetailPage = lazy(() => import('@/pages/superadmin/TenantDetailPage'
 const GlobalStatsPage = lazy(() => import('@/pages/superadmin/GlobalStatsPage').then(m => ({ default: m.GlobalStatsPage })))
 const PlatformSettingsPage = lazy(() => import('@/pages/superadmin/PlatformSettingsPage').then(m => ({ default: m.PlatformSettingsPage })))
 const AuditLogsPage = lazy(() => import('@/pages/superadmin/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })))
+const BillingPage = lazy(() => import('@/pages/superadmin/BillingPage').then(m => ({ default: m.BillingPage })))
+const MessagesPage = lazy(() => import('@/pages/superadmin/MessagesPage').then(m => ({ default: m.MessagesPage })))
+const SupportPage = lazy(() => import('@/pages/superadmin/SupportPage').then(m => ({ default: m.SupportPage })))
 
 // Landing pages
 const PublicLandingPage = lazy(() => import('@/pages/landing/PublicLandingPage').then(m => ({ default: m.PublicLandingPage })))
@@ -55,6 +58,9 @@ function App() {
             <Route index element={<TenantsPage />} />
             <Route path="tenants/:tenantId" element={<TenantDetailPage />} />
             <Route path="logs" element={<AuditLogsPage />} />
+            <Route path="billing" element={<BillingPage />} />
+            <Route path="messages" element={<MessagesPage />} />
+            <Route path="support" element={<SupportPage />} />
             <Route path="stats" element={<GlobalStatsPage />} />
             <Route path="settings" element={<PlatformSettingsPage />} />
           </Route>

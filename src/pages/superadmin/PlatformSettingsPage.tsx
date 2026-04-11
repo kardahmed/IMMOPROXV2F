@@ -19,7 +19,7 @@ export function PlatformSettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from('platform_settings').select('*').limit(1).single()
       if (error) { handleSupabaseError(error); throw error }
-      return data as { id: string; platform_name: string; version: string; support_email: string; maintenance_mode: boolean }
+      return data as { id: string; platform_name: string; version: string; support_email: string; maintenance_mode: boolean; anthropic_api_key: string | null; openai_api_key: string | null; default_ai_provider: string }
     },
   })
 
@@ -27,6 +27,9 @@ export function PlatformSettingsPage() {
   const [version, setVersion] = useState('')
   const [supportEmail, setSupportEmail] = useState('')
   const [maintenance, setMaintenance] = useState(false)
+  const [anthropicKey, setAnthropicKey] = useState('')
+  const [openaiKey, setOpenaiKey] = useState('')
+  const [aiProvider, setAiProvider] = useState('anthropic')
 
   useEffect(() => {
     if (settings) {
@@ -34,6 +37,9 @@ export function PlatformSettingsPage() {
       setVersion(settings.version)
       setSupportEmail(settings.support_email)
       setMaintenance(settings.maintenance_mode)
+      setAnthropicKey(settings.anthropic_api_key ?? '')
+      setOpenaiKey(settings.openai_api_key ?? '')
+      setAiProvider(settings.default_ai_provider ?? 'anthropic')
     }
   }, [settings])
 
@@ -45,6 +51,9 @@ export function PlatformSettingsPage() {
         version,
         support_email: supportEmail,
         maintenance_mode: maintenance,
+        anthropic_api_key: anthropicKey || null,
+        openai_api_key: openaiKey || null,
+        default_ai_provider: aiProvider,
         updated_at: new Date().toISOString(),
       } as never).eq('id', settings.id)
       if (error) { handleSupabaseError(error); throw error }
@@ -98,10 +107,36 @@ export function PlatformSettingsPage() {
           </div>
         </div>
 
+        {/* AI Configuration */}
+        <div className="mt-6 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-[#7C3AED]">Configuration IA</h3>
+          <p className="mb-3 text-[11px] text-immo-text-muted">Les cles API sont utilisees par toutes les fonctionnalites IA de la plateforme. Les tenants y accedent selon leur plan.</p>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-[11px] font-medium text-immo-text-muted">Fournisseur IA par defaut</Label>
+              <select value={aiProvider} onChange={e => setAiProvider(e.target.value)} className="mt-1 h-9 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary">
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="openai">OpenAI (GPT)</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-immo-text-muted">Cle API Anthropic</Label>
+              <Input type="password" value={anthropicKey} onChange={e => setAnthropicKey(e.target.value)} placeholder="sk-ant-..." className={inputClass} />
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-immo-text-muted">Cle API OpenAI</Label>
+              <Input type="password" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." className={inputClass} />
+            </div>
+            <p className="text-[10px] text-immo-text-muted">
+              Acces IA par plan : Free = aucun | Starter = suggestions | Pro = suggestions + scripts + documents | Enterprise = tout
+            </p>
+          </div>
+        </div>
+
         <Button
           onClick={() => save.mutate()}
           disabled={save.isPending}
-          className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
+          className="mt-4 bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
         >
           {save.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
         </Button>
