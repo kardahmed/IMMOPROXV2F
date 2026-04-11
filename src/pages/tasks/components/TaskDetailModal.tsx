@@ -221,7 +221,7 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
               <button onClick={copyMessage} className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors">
                 <Copy className="h-3.5 w-3.5 text-immo-text-muted" /> Copier le message
               </button>
-              <button onClick={() => navigate(`/pipeline/clients/${task.client_id}`)} className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors">
+              <button onClick={() => navigate(`/pipeline/clients/${task.client_id}?tab=auto_tasks`)} className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors">
                 <ExternalLink className="h-3.5 w-3.5 text-immo-text-muted" /> Voir Dossier Client
               </button>
               <button onClick={openWhatsApp} className="flex items-center gap-1.5 rounded-lg border border-[#25D366]/30 bg-[#25D366]/5 px-3 py-2 text-xs font-medium text-[#25D366] hover:bg-[#25D366]/10 transition-colors">

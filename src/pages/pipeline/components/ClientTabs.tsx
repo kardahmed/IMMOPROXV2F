@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Calendar, Bookmark, DollarSign, CreditCard, FileText, Receipt,
@@ -48,7 +49,16 @@ const TAB_ICONS: Record<TabKey, typeof Calendar> = {
 
 export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState<TabKey>('visits')
+  const [searchParams] = useSearchParams()
+  const urlTab = searchParams.get('tab') as TabKey | null
+  const [activeTab, setActiveTab] = useState<TabKey>(urlTab && TAB_KEYS.includes(urlTab as typeof TAB_KEYS[number]) ? urlTab : 'visits')
+
+  // Sync with URL param
+  useEffect(() => {
+    if (urlTab && TAB_KEYS.includes(urlTab as typeof TAB_KEYS[number])) {
+      setActiveTab(urlTab)
+    }
+  }, [urlTab])
 
   // Fetch client info for tasks tab
   const { data: clientInfo } = useQuery({

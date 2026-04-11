@@ -333,7 +333,7 @@ export function TasksPage() {
                   <div className="flex items-center gap-2 mt-0.5">
                     {/* Client name */}
                     {task.client && (
-                      <button onClick={() => navigate(`/pipeline/clients/${task.client_id}`)}
+                      <button onClick={() => navigate(`/pipeline/clients/${task.client_id}?tab=auto_tasks`)}
                         className="text-[10px] font-medium text-immo-accent-blue hover:underline">
                         {task.client.full_name}
                       </button>
