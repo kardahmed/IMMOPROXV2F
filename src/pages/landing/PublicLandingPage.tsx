@@ -45,12 +45,33 @@ export function PublicLandingPage() {
   const { data: page, isLoading } = useQuery({
     queryKey: ['public-landing', slug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Try slug first, then check if current hostname matches a tenant's custom_domain
+      let query = supabase
         .from('landing_pages')
         .select('*, projects(name, location), tenants(name, phone, email, logo_url)')
-        .eq('slug', slug!)
         .eq('is_active', true)
-        .single()
+
+      if (slug) {
+        query = query.eq('slug', slug)
+      }
+
+      // If no slug (root of custom domain), find by host
+      const hostname = window.location.hostname
+      if (!slug && hostname !== 'localhost' && !hostname.includes('supabase') && !hostname.includes('vercel')) {
+        // Lookup tenant by custom_domain, then find their first active landing page
+        const { data: tenantData } = await supabase.from('tenants').select('id').eq('custom_domain' as never, hostname).single()
+        if (tenantData) {
+          query = supabase
+            .from('landing_pages')
+            .select('*, projects(name, location), tenants(name, phone, email, logo_url)')
+            .eq('tenant_id', (tenantData as unknown as { id: string }).id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+        }
+      }
+
+      const { data, error } = await query.single()
       if (error) throw error
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

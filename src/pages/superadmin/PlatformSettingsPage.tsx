@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Save, AlertTriangle } from 'lucide-react'
+import { Save, AlertTriangle, Bell, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { LoadingSpinner } from '@/components/common'
@@ -140,6 +140,173 @@ export function PlatformSettingsPage() {
         >
           {save.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
         </Button>
+      </div>
+
+      {/* Alerts Configuration */}
+      <AlertsSection />
+    </div>
+  )
+}
+
+/* ─── Alerts Section ─── */
+
+interface PlatformAlert {
+  id: string
+  type: string
+  threshold: number
+  channel: string
+  webhook_url: string | null
+  is_active: boolean
+}
+
+const ALERT_TYPES = [
+  { value: 'payment_overdue', label: 'Paiements en retard' },
+  { value: 'tenant_inactive', label: 'Tenant inactif (jours)' },
+  { value: 'error_spike', label: 'Pic d\'erreurs' },
+  { value: 'new_signup', label: 'Nouvelle inscription' },
+  { value: 'storage_limit', label: 'Limite stockage (%)' },
+]
+
+function AlertsSection() {
+  const qc = useQueryClient()
+
+  const { data: alerts = [] } = useQuery({
+    queryKey: ['platform-alerts'],
+    queryFn: async () => {
+      const { data } = await supabase.from('platform_alerts').select('*').order('created_at')
+      return (data ?? []) as PlatformAlert[]
+    },
+  })
+
+  const addAlert = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('platform_alerts').insert({
+        type: 'payment_overdue',
+        threshold: 5,
+        channel: 'email',
+        is_active: true,
+      } as never)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['platform-alerts'] }); toast.success('Alerte ajoutee') },
+  })
+
+  const updateAlert = useMutation({
+    mutationFn: async (alert: Partial<PlatformAlert> & { id: string }) => {
+      const { id, ...payload } = alert
+      const { error } = await supabase.from('platform_alerts').update(payload as never).eq('id', id)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['platform-alerts'] }),
+  })
+
+  const deleteAlert = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('platform_alerts').delete().eq('id', id)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['platform-alerts'] }); toast.success('Alerte supprimee') },
+  })
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-immo-text-primary">Alertes plateforme</h2>
+          <p className="text-sm text-immo-text-secondary">Configurez des alertes automatiques par email ou webhook</p>
+        </div>
+        <Button onClick={() => addAlert.mutate()} disabled={addAlert.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+          <Plus className="mr-1.5 h-4 w-4" /> Ajouter
+        </Button>
+      </div>
+
+      {alerts.length === 0 && (
+        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-8 text-center">
+          <Bell className="mx-auto mb-2 h-8 w-8 text-immo-text-muted" />
+          <p className="text-sm text-immo-text-secondary">Aucune alerte configuree</p>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {alerts.map(alert => (
+          <div key={alert.id} className="rounded-xl border border-immo-border-default bg-immo-bg-card p-4">
+            <div className="flex items-start gap-3">
+              {/* Active toggle */}
+              <button
+                onClick={() => updateAlert.mutate({ id: alert.id, is_active: !alert.is_active })}
+                className={`mt-1 flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${alert.is_active ? 'bg-immo-accent-green' : 'bg-immo-border-default'}`}
+              >
+                <div className={`h-4 w-4 rounded-full bg-white transition-transform ${alert.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
+              </button>
+
+              <div className="flex-1 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Type */}
+                  <div>
+                    <Label className="text-[10px] font-medium text-immo-text-muted">Type</Label>
+                    <select
+                      value={alert.type}
+                      onChange={e => updateAlert.mutate({ id: alert.id, type: e.target.value })}
+                      className="mt-1 h-9 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary"
+                    >
+                      {ALERT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Threshold */}
+                  <div>
+                    <Label className="text-[10px] font-medium text-immo-text-muted">Seuil</Label>
+                    <Input
+                      type="number"
+                      value={alert.threshold}
+                      onChange={e => updateAlert.mutate({ id: alert.id, threshold: parseInt(e.target.value) || 0 })}
+                      className="mt-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Channel */}
+                  <div>
+                    <Label className="text-[10px] font-medium text-immo-text-muted">Canal</Label>
+                    <select
+                      value={alert.channel}
+                      onChange={e => updateAlert.mutate({ id: alert.id, channel: e.target.value })}
+                      className="mt-1 h-9 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary"
+                    >
+                      <option value="email">Email</option>
+                      <option value="telegram">Telegram</option>
+                      <option value="webhook">Webhook</option>
+                    </select>
+                  </div>
+
+                  {/* Webhook URL */}
+                  {(alert.channel === 'webhook' || alert.channel === 'telegram') && (
+                    <div>
+                      <Label className="text-[10px] font-medium text-immo-text-muted">
+                        {alert.channel === 'telegram' ? 'Bot Token / Chat ID' : 'Webhook URL'}
+                      </Label>
+                      <Input
+                        value={alert.webhook_url ?? ''}
+                        onChange={e => updateAlert.mutate({ id: alert.id, webhook_url: e.target.value || null })}
+                        placeholder={alert.channel === 'telegram' ? 'bot_token:chat_id' : 'https://...'}
+                        className="mt-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Delete */}
+              <button
+                onClick={() => deleteAlert.mutate(alert.id)}
+                className="mt-1 rounded-lg p-1.5 text-immo-text-muted hover:bg-immo-status-red/10 hover:text-immo-status-red"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

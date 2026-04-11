@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home, AlertTriangle, Power } from 'lucide-react'
+import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home, AlertTriangle, Power, Globe, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
@@ -11,6 +11,7 @@ import { formatPriceCompact } from '@/lib/constants'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { UserManagementPanel } from './components/UserManagementPanel'
+import { Input } from '@/components/ui/input'
 import { PlanBadge } from './components/PlanBadge'
 import { ChangePlanModal } from './components/ChangePlanModal'
 import { DuplicateConfigModal } from './components/DuplicateConfigModal'
@@ -24,6 +25,8 @@ export function TenantDetailPage() {
   const { enterTenant } = useSuperAdminStore()
   const [showChangePlan, setShowChangePlan] = useState(false)
   const [showDuplicate, setShowDuplicate] = useState(false)
+  const [customDomain, setCustomDomain] = useState('')
+  const [domainDirty, setDomainDirty] = useState(false)
 
   // Tenant info
   const { data: tenant, isLoading: loadingTenant } = useQuery({
@@ -234,6 +237,12 @@ export function TenantDetailPage() {
         </div>
       </div>
 
+      {/* Custom Domain + Export */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <CustomDomainPanel tenantId={tenantId!} customDomain={customDomain} setCustomDomain={setCustomDomain} domainDirty={domainDirty} setDomainDirty={setDomainDirty} tenant={tenant} />
+        <ExportPanel tenantId={tenantId!} tenantName={tenant.name as string} />
+      </div>
+
       {/* Duplicate config modal */}
       <DuplicateConfigModal
         isOpen={showDuplicate}
@@ -250,6 +259,125 @@ export function TenantDetailPage() {
         tenantName={tenant.name as string}
         currentPlan={((tenant.plan as string) ?? 'free') as PlanKey}
       />
+    </div>
+  )
+}
+
+/* ─── Custom Domain Panel ─── */
+
+function CustomDomainPanel({ tenantId, customDomain, setCustomDomain, domainDirty, setDomainDirty, tenant }: {
+  tenantId: string
+  customDomain: string
+  setCustomDomain: (v: string) => void
+  domainDirty: boolean
+  setDomainDirty: (v: boolean) => void
+  tenant: Record<string, unknown>
+}) {
+  const qc = useQueryClient()
+
+  useEffect(() => {
+    setCustomDomain((tenant.custom_domain as string) ?? '')
+  }, [tenant.custom_domain, setCustomDomain])
+
+  const saveDomain = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('tenants').update({ custom_domain: customDomain || null } as never).eq('id', tenantId)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['super-admin-tenant', tenantId] })
+      setDomainDirty(false)
+      toast.success('Domaine enregistre')
+    },
+  })
+
+  return (
+    <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <Globe className="h-5 w-5 text-[#7C3AED]" />
+        <h3 className="text-sm font-semibold text-immo-text-primary">Domaine custom</h3>
+      </div>
+      <p className="mb-3 text-[11px] text-immo-text-muted">
+        Les landing pages de ce tenant seront aussi accessibles via ce domaine. Le client doit configurer un CNAME vers votre domaine principal.
+      </p>
+      <div className="flex gap-2">
+        <Input
+          value={customDomain}
+          onChange={e => { setCustomDomain(e.target.value); setDomainDirty(true) }}
+          placeholder="landing.monagence.com"
+          className="flex-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
+        />
+        <Button
+          onClick={() => saveDomain.mutate()}
+          disabled={saveDomain.isPending || !domainDirty}
+          className="bg-[#7C3AED] text-white hover:bg-[#6D28D9] disabled:opacity-50"
+        >
+          Enregistrer
+        </Button>
+      </div>
+      {customDomain && (
+        <div className="mt-3 rounded-lg bg-immo-bg-primary p-3">
+          <p className="text-[10px] font-medium text-immo-text-muted">Configuration DNS requise</p>
+          <p className="mt-1 font-mono text-xs text-immo-text-primary">
+            {customDomain} → CNAME → {window.location.hostname}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── Export Panel ─── */
+
+function ExportPanel({ tenantId, tenantName }: { tenantId: string; tenantName: string }) {
+  const [exporting, setExporting] = useState(false)
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
+
+  async function handleExport() {
+    setExporting(true)
+    setDownloadUrl(null)
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-tenant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({ tenant_id: tenantId }),
+      })
+      if (!res.ok) throw new Error('Export failed')
+      const data = await res.json()
+      setDownloadUrl(data.download_url)
+      toast.success('Export genere')
+    } catch {
+      toast.error('Erreur lors de l\'export')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <Download className="h-5 w-5 text-[#7C3AED]" />
+        <h3 className="text-sm font-semibold text-immo-text-primary">Export donnees</h3>
+      </div>
+      <p className="mb-3 text-[11px] text-immo-text-muted">
+        Exporter toutes les donnees de {tenantName} (clients, projets, unites, ventes, historique) au format JSON.
+      </p>
+      <Button
+        onClick={handleExport}
+        disabled={exporting}
+        className="border border-[#7C3AED]/30 bg-transparent text-[#7C3AED] hover:bg-[#7C3AED]/10"
+      >
+        {exporting ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#7C3AED] border-t-transparent" /> : <Download className="mr-1.5 h-4 w-4" />}
+        {exporting ? 'Export en cours...' : 'Exporter'}
+      </Button>
+      {downloadUrl && (
+        <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block text-xs text-immo-accent-blue hover:underline">
+          Telecharger le fichier
+        </a>
+      )}
     </div>
   )
 }
