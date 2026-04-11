@@ -23,6 +23,9 @@ const ReportsPage = lazy(() => import('@/pages/reports/ReportsPage').then(m => (
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
 
+// Landing pages
+const LandingPagesManager = lazy(() => import('@/pages/landing/LandingPagesManager').then(m => ({ default: m.LandingPagesManager })))
+
 // Super Admin pages
 const SuperAdminLayout = lazy(() => import('@/pages/superadmin/SuperAdminLayout').then(m => ({ default: m.SuperAdminLayout })))
 const TenantsPage = lazy(() => import('@/pages/superadmin/TenantsPage').then(m => ({ default: m.TenantsPage })))
@@ -30,6 +33,9 @@ const TenantDetailPage = lazy(() => import('@/pages/superadmin/TenantDetailPage'
 const GlobalStatsPage = lazy(() => import('@/pages/superadmin/GlobalStatsPage').then(m => ({ default: m.GlobalStatsPage })))
 const PlatformSettingsPage = lazy(() => import('@/pages/superadmin/PlatformSettingsPage').then(m => ({ default: m.PlatformSettingsPage })))
 const AuditLogsPage = lazy(() => import('@/pages/superadmin/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })))
+
+// Landing pages
+const PublicLandingPage = lazy(() => import('@/pages/landing/PublicLandingPage').then(m => ({ default: m.PublicLandingPage })))
 
 function PageLoader() {
   return <LoadingSpinner size="lg" className="h-screen" />
@@ -41,6 +47,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/p/:slug" element={<PublicLandingPage />} />
 
         {/* Super Admin routes — /admin/* */}
         <Route element={<SuperAdminRoute />}>
@@ -67,6 +74,7 @@ function App() {
 
             {/* Admin & super_admin only */}
             <Route element={<RoleRoute allowedRoles={['admin', 'super_admin']} />}>
+              <Route path="/landing" element={<LandingPagesManager />} />
               <Route path="/goals" element={<GoalsPage />} />
               <Route path="/performance" element={<PerformancePage />} />
               <Route path="/agents" element={<AgentsPage />} />

@@ -16,6 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Objectifs', path: '/goals', icon: 'Target', roles: 'all' },
   { label: 'Performance', path: '/performance', icon: 'TrendingUp', roles: 'all' },
   { label: 'Agents', path: '/agents', icon: 'Users', roles: ['admin', 'super_admin'] },
+  { label: 'Pages capture', path: '/landing', icon: 'Globe', roles: ['admin', 'super_admin'] },
   { label: 'Rapports', path: '/reports', icon: 'BarChart3', roles: 'all' },
   { label: 'Paramètres', path: '/settings', icon: 'Settings', roles: ['admin', 'super_admin'] },
 ]

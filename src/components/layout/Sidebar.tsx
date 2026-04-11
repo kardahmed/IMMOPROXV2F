@@ -11,6 +11,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  Globe,
   LogOut,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -29,6 +30,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Users,
   BarChart3,
   Settings,
+  Globe,
 }
 
 // Map nav path → i18n key
@@ -41,6 +43,7 @@ const NAV_KEYS: Record<string, string> = {
   '/goals': 'nav.goals',
   '/performance': 'nav.performance',
   '/agents': 'nav.agents',
+  '/landing': 'nav.landing',
   '/reports': 'nav.reports',
   '/settings': 'nav.settings',
 }
