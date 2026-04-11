@@ -13,6 +13,7 @@ import { StatsCounterSection } from './StatsCounterSection'
 import { ComparatorSection } from './ComparatorSection'
 import { CreditCalculatorSection } from './CreditCalculatorSection'
 import { MultiStepFormSection } from './MultiStepFormSection'
+import { AnimateOnScroll } from './AnimateOnScroll'
 import { WhatsAppWidget } from './WhatsAppWidget'
 import { SocialProofPopup } from './SocialProofSection'
 
@@ -45,20 +46,25 @@ export function SectionRenderer({ sections, accent, slug, tenantName, tenantPhon
       {visible.map(section => {
         const props = { key: section.id, title: section.title ?? undefined, content: section.content as never, accent }
 
+        // Wrap non-hero sections with scroll animation
+        const wrap = (node: React.ReactNode, anim: 'fade-up' | 'fade-in' | 'zoom-in' = 'fade-up') => (
+          <AnimateOnScroll key={section.id} animation={anim}>{node}</AnimateOnScroll>
+        )
+
         switch (section.type) {
           case 'hero': return <HeroSection {...props} />
-          case 'gallery': return <GallerySection {...props} />
-          case 'features': return <FeaturesSection {...props} />
-          case 'video': return <VideoSection {...props} />
-          case 'virtual_tour': return <VirtualTourSection {...props} />
-          case 'pricing': return <PricingSection {...props} />
-          case 'testimonials': return <TestimonialsSection {...props} />
-          case 'faq': return <FAQSection {...props} />
+          case 'gallery': return wrap(<GallerySection {...props} />, 'fade-in')
+          case 'features': return wrap(<FeaturesSection {...props} />)
+          case 'video': return wrap(<VideoSection {...props} />, 'zoom-in')
+          case 'virtual_tour': return wrap(<VirtualTourSection {...props} />, 'zoom-in')
+          case 'pricing': return wrap(<PricingSection {...props} />)
+          case 'testimonials': return wrap(<TestimonialsSection {...props} />)
+          case 'faq': return wrap(<FAQSection {...props} />)
           case 'cta': return <CTASection {...props} />
           case 'countdown': return <CountdownSection {...props} />
-          case 'stats': return <StatsCounterSection {...props} />
-          case 'comparator': return <ComparatorSection {...props} />
-          case 'calculator': return <CreditCalculatorSection {...props} />
+          case 'stats': return wrap(<StatsCounterSection {...props} />)
+          case 'comparator': return wrap(<ComparatorSection {...props} />)
+          case 'calculator': return wrap(<CreditCalculatorSection {...props} />)
           case 'form': return (
             <FormSection key={section.id} title={section.title ?? undefined} accent={accent} slug={slug ?? ''} content={section.content as never} tenantName={tenantName} />
           )

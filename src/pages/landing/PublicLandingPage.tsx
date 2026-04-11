@@ -5,6 +5,7 @@ import { MapPin, Phone, CheckCircle, Building2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { SectionRenderer } from './components/sections/SectionRenderer'
 import type { SectionData } from './components/sections/SectionRenderer'
+import { SEOHead } from './components/SEOHead'
 
 interface PageData {
   id: string
@@ -195,8 +196,15 @@ export function PublicLandingPage() {
 
   const fields = page.form_fields || ['full_name', 'phone', 'email', 'budget', 'message']
 
+  // Find hero section background as OG image
+  const heroSection = sections.find(s => s.type === 'hero')
+  const ogImage = (heroSection?.content as Record<string, string>)?.background_image ?? page.cover_image_url ?? undefined
+
   return (
     <div className="min-h-screen bg-[#F6F9FC]">
+      {/* SEO */}
+      <SEOHead title={page.title} description={page.description} ogImage={ogImage} slug={page.slug} tenantName={page.tenant?.name ?? undefined} />
+
       {/* Hero */}
       <div className="relative overflow-hidden py-16 px-4" style={{ background: `linear-gradient(135deg, ${accent}15, ${accent}05)` }}>
         <div className="mx-auto max-w-2xl text-center">

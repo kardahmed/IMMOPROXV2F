@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, ExternalLink, Copy, Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Plus, ExternalLink, Copy, Pencil, Trash2, Eye, EyeOff, Layout } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
@@ -8,6 +8,8 @@ import { KPICard, LoadingSpinner, StatusBadge, ConfirmDialog } from '@/component
 import { Button } from '@/components/ui/button'
 import toast from 'react-hot-toast'
 import { LandingPageEditor } from './LandingPageEditor'
+import { TemplateSelector } from './components/TemplateSelector'
+import type { Template } from './components/TemplateSelector'
 
 interface LandingPage {
   id: string
@@ -30,8 +32,9 @@ export function LandingPagesManager() {
   const [showEditor, setShowEditor] = useState(false)
   const [editPage, setEditPage] = useState<LandingPage | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [showTemplates, setShowTemplates] = useState(false)
 
-  const { data: pages = [], isLoading } = useQuery({
+  const { data: pages = [], isLoading, refetch } = useQuery({
     queryKey: ['landing-pages', tenantId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -72,6 +75,33 @@ export function LandingPagesManager() {
     toast.success('Lien copie !')
   }
 
+  async function handleTemplateSelect(template: Template) {
+    // Create page
+    const slug = template.id + '-' + Date.now().toString(36)
+    const { data: newPage, error } = await supabase.from('landing_pages').insert({
+      tenant_id: tenantId, slug, title: template.name, description: template.description,
+      accent_color: template.accent, is_active: true, default_source: 'facebook_ads',
+    } as never).select('id').single()
+
+    if (error || !newPage) { toast.error('Erreur creation'); return }
+    const pageId = (newPage as { id: string }).id
+
+    // Create sections
+    for (let i = 0; i < template.sections.length; i++) {
+      const s = template.sections[i]
+      await supabase.from('landing_page_sections').insert({
+        page_id: pageId, type: s.type, sort_order: i, title: s.title, content: s.content,
+      } as never)
+    }
+
+    toast.success(`Page "${template.name}" creee depuis le template`)
+    refetch()
+    // Open editor
+    const created = { id: pageId, slug, title: template.name } as unknown as LandingPage
+    setEditPage(created)
+    setShowEditor(true)
+  }
+
   if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
 
   return (
@@ -82,9 +112,14 @@ export function LandingPagesManager() {
           <h2 className="text-lg font-bold text-immo-text-primary">Pages de capture</h2>
           <p className="text-xs text-immo-text-muted">Landing pages pour vos campagnes publicitaires</p>
         </div>
-        <Button onClick={() => { setEditPage(null); setShowEditor(true) }} className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
-          <Plus className="mr-1.5 h-4 w-4" /> Nouvelle page
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowTemplates(true)} variant="ghost" className="border border-immo-border-default text-immo-text-secondary hover:bg-immo-bg-card-hover">
+            <Layout className="mr-1.5 h-4 w-4" /> Depuis un template
+          </Button>
+          <Button onClick={() => { setEditPage(null); setShowEditor(true) }} className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
+            <Plus className="mr-1.5 h-4 w-4" /> Page vide
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -158,6 +193,9 @@ export function LandingPagesManager() {
           })}
         </div>
       )}
+
+      {/* Template selector */}
+      <TemplateSelector isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelect={handleTemplateSelect} />
 
       {/* Editor modal */}
       <LandingPageEditor isOpen={showEditor} onClose={() => { setShowEditor(false); setEditPage(null) }} editPage={editPage as unknown as Record<string, unknown> | null} />
