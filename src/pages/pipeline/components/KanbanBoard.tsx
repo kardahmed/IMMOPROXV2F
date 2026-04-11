@@ -15,6 +15,8 @@ interface KanbanBoardProps {
   onViewClient: (clientId: string) => void
   onAddClient: (stage: PipelineStage) => void
   compact?: boolean
+  selectedIds?: Set<string>
+  onSelectClient?: (id: string) => void
 }
 
 export function KanbanBoard({
@@ -22,6 +24,8 @@ export function KanbanBoard({
   onMoveClient,
   onAddClient,
   compact = false,
+  selectedIds,
+  onSelectClient,
 }: KanbanBoardProps) {
   const { tenantId } = useAuthStore()
   const [dragging, setDragging] = useState<string | null>(null)
@@ -212,6 +216,8 @@ export function KanbanBoard({
                     client={toCardClient(client)}
                     urgentDays={urgentDays}
                     compact={compact}
+                    selected={selectedIds?.has(client.id)}
+                    onSelect={onSelectClient}
                     isDragging={dragging === client.id}
                     onDragStart={() => handleDragStart(client.id)}
                     onDragEnd={handleDragEnd}

@@ -70,6 +70,8 @@ interface KanbanCardProps {
   client: KanbanCardClient
   urgentDays: number
   compact?: boolean
+  selected?: boolean
+  onSelect?: (id: string) => void
   isDragging?: boolean
   onDragStart: () => void
   onDragEnd: () => void
@@ -79,6 +81,8 @@ export function KanbanCard({
   client,
   urgentDays,
   compact = false,
+  selected = false,
+  onSelect,
   isDragging = false,
   onDragStart,
   onDragEnd,
@@ -98,13 +102,32 @@ export function KanbanCard({
         onDragStart()
       }}
       onDragEnd={onDragEnd}
-      onClick={() => navigate(`/pipeline/clients/${client.id}`)}
+      onClick={(e) => {
+        if (e.shiftKey && onSelect) { onSelect(client.id); return }
+        navigate(`/pipeline/clients/${client.id}`)
+      }}
       className={`group relative cursor-pointer rounded-lg border bg-immo-bg-card p-3 transition-all ${
-        isDragging
-          ? 'border-immo-accent-green/50 opacity-50 shadow-lg'
-          : 'border-immo-border-default hover:border-immo-border-glow/40 hover:shadow-md hover:shadow-immo-accent-green/5'
+        selected
+          ? 'border-immo-accent-green ring-1 ring-immo-accent-green/30'
+          : isDragging
+            ? 'border-immo-accent-green/50 opacity-50 shadow-lg'
+            : 'border-immo-border-default hover:border-immo-border-glow/40 hover:shadow-md hover:shadow-immo-accent-green/5'
       }`}
     >
+      {/* Select checkbox (visible on hover or when selected) */}
+      {onSelect && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSelect(client.id) }}
+          className={`absolute left-1.5 top-1.5 z-10 flex h-4 w-4 items-center justify-center rounded border transition-all ${
+            selected
+              ? 'border-immo-accent-green bg-immo-accent-green'
+              : 'border-immo-border-default opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          {selected && <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>}
+        </button>
+      )}
+
       {/* Drag handle (visible on hover) */}
       <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100">
         <GripVertical className="h-3.5 w-3.5 text-immo-text-muted" />

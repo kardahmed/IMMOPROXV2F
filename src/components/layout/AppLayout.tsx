@@ -12,7 +12,9 @@ export function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar title={title} subtitle={subtitle} />
         <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
+          <div className="animate-in fade-in duration-200">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

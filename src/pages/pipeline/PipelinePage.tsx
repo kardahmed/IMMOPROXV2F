@@ -12,7 +12,6 @@ import {
   Kanban,
   LayoutGrid,
   List,
-  SlidersHorizontal,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useClients } from '@/hooks/useClients'
@@ -34,6 +33,8 @@ import type { PipelineStage, Client } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { handleSupabaseError } from '@/lib/errors'
+import toast from 'react-hot-toast'
 import { AlertBar } from './components/AlertBar'
 import { PrioritySlider } from './components/PrioritySlider'
 import { StageProgress } from './components/StageProgress'
@@ -43,6 +44,8 @@ import { TableView } from './components/TableView'
 import { ClientFormModal } from './components/ClientFormModal'
 import { StageChangeDialog } from './components/StageChangeDialog'
 import { ClientSidePanel } from './components/ClientSidePanel'
+import { AdvancedFilters, EMPTY_FILTERS } from './components/AdvancedFilters'
+import type { AdvancedFilterValues } from './components/AdvancedFilters'
 
 type ViewMode = 'kanban' | 'cards' | 'table'
 
@@ -110,6 +113,9 @@ export function PipelinePage() {
   const [alertFilter, setAlertFilter] = useState<string[] | null>(null)
   const [showClientForm, setShowClientForm] = useState(false)
   const [sidePanelClientId, setSidePanelClientId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [reassignAgent, setReassignAgent] = useState('')
+  const [advFilters, setAdvFilters] = useState<AdvancedFilterValues>(EMPTY_FILTERS)
   const [pendingMove, setPendingMove] = useState<{ clientId: string; clientName: string; fromStage: PipelineStage; toStage: PipelineStage } | null>(null)
 
   // Filter clients
@@ -120,9 +126,17 @@ export function PipelinePage() {
         const q = search.toLowerCase()
         if (!c.full_name.toLowerCase().includes(q) && !c.phone.toLowerCase().includes(q)) return false
       }
+      // Advanced filters
+      if (advFilters.agentId && c.agent_id !== advFilters.agentId) return false
+      if (advFilters.source && c.source !== advFilters.source) return false
+      if (advFilters.interestLevel && c.interest_level !== advFilters.interestLevel) return false
+      if (advFilters.isPriority === 'true' && !c.is_priority) return false
+      if (advFilters.isPriority === 'false' && c.is_priority) return false
+      if (advFilters.budgetMin && (c.confirmed_budget ?? 0) < Number(advFilters.budgetMin)) return false
+      if (advFilters.budgetMax && (c.confirmed_budget ?? Infinity) > Number(advFilters.budgetMax)) return false
       return true
     })
-  }, [clients, search, alertFilter])
+  }, [clients, search, alertFilter, advFilters])
 
   // Group by stage
   const clientsByStage = useMemo(() => {
@@ -199,6 +213,31 @@ export function PipelinePage() {
   function handlePriorityAction(clientId: string, action: string) {
     if (action === 'view') {
       navigate(`/pipeline/clients/${clientId}`)
+    }
+  }
+
+  function toggleSelect(clientId: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(clientId)) next.delete(clientId)
+      else next.add(clientId)
+      return next
+    })
+  }
+
+  async function handleBatchReassign() {
+    if (!reassignAgent || selectedIds.size === 0) return
+    const ids = Array.from(selectedIds)
+    const { error } = await supabase
+      .from('clients')
+      .update({ agent_id: reassignAgent } as never)
+      .in('id', ids)
+    if (error) {
+      handleSupabaseError(error)
+    } else {
+      toast.success(`${ids.length} client(s) reassigne(s)`)
+      setSelectedIds(new Set())
+      setReassignAgent('')
     }
   }
 
@@ -304,13 +343,7 @@ export function PipelinePage() {
           value={projectFilter}
           onChange={setProjectFilter}
         />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover"
-        >
-          <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" /> Filtres avancés
-        </Button>
+        <AdvancedFilters filters={advFilters} onChange={setAdvFilters} onClear={() => setAdvFilters(EMPTY_FILTERS)} />
         <Button
           variant="ghost"
           size="sm"
@@ -380,6 +413,8 @@ export function PipelinePage() {
           onViewClient={handleViewClient}
           onAddClient={() => {}}
           compact={compact}
+          selectedIds={selectedIds}
+          onSelectClient={toggleSelect}
         />
       )}
 
@@ -402,6 +437,39 @@ export function PipelinePage() {
           urgentDays={urgentDays}
           onChangeStage={(id, stage) => updateClientStage.mutate({ clientId: id, newStage: stage })}
         />
+      )}
+
+      {/* Batch reassign bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-[220px] right-0 z-30 flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card px-6 py-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-immo-accent-green/10 px-3 py-1 text-sm font-semibold text-immo-accent-green">
+              {selectedIds.size} client(s)
+            </span>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-immo-text-muted hover:text-immo-text-primary">
+              Deselectionner tout
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={reassignAgent}
+              onChange={(e) => setReassignAgent(e.target.value)}
+              className="h-9 rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary"
+            >
+              <option value="">Reassigner a...</option>
+              {agentMap && Array.from(agentMap.entries()).map(([id, name]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
+            </select>
+            <Button
+              onClick={handleBatchReassign}
+              disabled={!reassignAgent}
+              className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90 disabled:opacity-50"
+            >
+              Reassigner
+            </Button>
+          </div>
+        </div>
       )}
 
       <ClientFormModal isOpen={showClientForm} onClose={() => setShowClientForm(false)} />
