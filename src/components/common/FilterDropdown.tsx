@@ -1,11 +1,3 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-
 interface FilterOption {
   value: string
   label: string
@@ -20,21 +12,17 @@ interface FilterDropdownProps {
 
 export function FilterDropdown({ label, options, value, onChange }: FilterDropdownProps) {
   return (
-    <Select value={value} onValueChange={(v) => { if (v) onChange(v) }}>
-      <SelectTrigger className="h-9 w-[180px] border-immo-border-default bg-immo-bg-primary text-sm text-immo-text-primary focus:ring-immo-accent-green">
-        <SelectValue placeholder={label} />
-      </SelectTrigger>
-      <SelectContent className="border-immo-border-default bg-immo-bg-card">
-        {options.map((opt) => (
-          <SelectItem
-            key={opt.value}
-            value={opt.value}
-            className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover focus:text-immo-text-primary"
-          >
-            {opt.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-9 rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary outline-none focus:border-immo-accent-green"
+      aria-label={label}
+    >
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
   )
 }
