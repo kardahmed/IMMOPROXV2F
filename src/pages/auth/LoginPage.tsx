@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -157,6 +157,9 @@ export function LoginPage() {
         {/* Footer */}
         <p className="mt-6 text-center text-[13px] text-[#8898AA]">
           {t('login.first_login')}
+        </p>
+        <p className="mt-2 text-center text-[13px] text-[#8898AA]">
+          Pas encore de compte ? <Link to="/register" className="font-medium text-[#0579DA] hover:underline">S'inscrire</Link>
         </p>
       </div>
     </div>

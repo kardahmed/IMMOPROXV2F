@@ -140,7 +140,7 @@ export function AgentDetailPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
         <KPICard label="Clients" value={stats?.clients ?? 0} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Visites (mois)" value={stats?.visits ?? 0} accent="blue" icon={<Calendar className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Réservations" value={stats?.reservations ?? 0} accent="orange" icon={<Bookmark className="h-4 w-4 text-immo-status-orange" />} />

@@ -125,7 +125,7 @@ export function LandingPagesManager() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KPICard label={t('landing_page.active_pages')} value={pages.filter(p => p.is_active).length} accent="blue" />
         <KPICard label={t('landing_page.total_views')} value={totalViews} accent="blue" />
         <KPICard label={t('landing_page.leads_captured')} value={totalSubmissions} accent="green" />

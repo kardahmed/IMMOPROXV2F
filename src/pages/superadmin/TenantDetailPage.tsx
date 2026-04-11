@@ -174,7 +174,7 @@ export function TenantDetailPage() {
 
       {/* KPIs */}
       {kpis && (
-        <div className="grid grid-cols-4 gap-4 xl:grid-cols-7">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-7">
           <KPICard label="Agents" value={kpis.agents} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
           <KPICard label="Clients" value={kpis.clients} accent="orange" icon={<Briefcase className="h-5 w-5 text-immo-status-orange" />} />
           <KPICard label="Projets" value={kpis.projects} accent="blue" icon={<Building2 className="h-5 w-5 text-[#7C3AED]" />} />

@@ -111,7 +111,7 @@ export function PaymentSchedulePanel({ saleId, totalPrice, clientName }: Props) 
   return (
     <div className="space-y-4">
       {/* Header KPIs */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="rounded-lg bg-immo-accent-green/10 p-3 text-center">
           <p className="text-[10px] font-medium text-immo-text-muted">Paye</p>
           <p className="text-sm font-bold text-immo-accent-green">{formatPrice(totalPaid)}</p>

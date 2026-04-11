@@ -29,7 +29,7 @@ const DOC_TYPES = [
 
 interface Props {
   clientId: string
-  clientName: string
+  clientName?: string
   cinVerified?: boolean
 }
 

@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Bookmark, DollarSign, CreditCard, FileText, Receipt,
-  ListTodo, Clock, Plus, CheckCircle, Eye, Bot,
+  Bookmark, DollarSign, CreditCard, Receipt,
+  ListTodo, Clock, Plus, CheckCircle, Bot,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
@@ -13,6 +13,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 // native <select> used instead of base-ui Select
 import { StatusBadge, EmptyState, Modal } from '@/components/common'
+import { ClientDocuments } from '../ClientDocuments'
+
+function ClientDocumentsWrapper({ clientId }: { clientId: string }) {
+  return <ClientDocuments clientId={clientId} />
+}
 import { formatPrice } from '@/lib/constants'
 import { PAYMENT_STATUS_LABELS } from '@/types'
 import type { PaymentStatus, TaskStatus } from '@/types'
@@ -178,33 +183,8 @@ export function PaymentTab({ clientId }: { clientId: string }) {
 
 /* ═══ Documents ═══ */
 export function DocumentsTab({ clientId }: { clientId: string }) {
-  const { t } = useTranslation()
-  const { data: docs = [] } = useQuery({
-    queryKey: ['client-documents', clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('documents').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
-      if (error) { handleSupabaseError(error); throw error }
-      return data as unknown as Array<Record<string, unknown>>
-    },
-  })
-
-  if (docs.length === 0) return <EmptyState icon={<FileText className="h-10 w-10" />} title={t('common.no_data')} />
-
-  return (
-    <div className="space-y-2">
-      {docs.map((d) => (
-        <a key={d.id as string} href={d.url as string} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-lg border border-immo-border-default bg-immo-bg-card px-4 py-3 hover:border-immo-border-glow/30">
-          <FileText className="h-5 w-5 text-immo-accent-blue" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-immo-text-primary">{d.name as string}</p>
-            <p className="text-[11px] text-immo-text-muted">{d.type as string} · {format(new Date(d.created_at as string), 'dd/MM/yyyy')}</p>
-          </div>
-          <Eye className="h-4 w-4 text-immo-text-muted" />
-        </a>
-      ))}
-    </div>
-  )
+  // Use the storage-based ClientDocuments component
+  return <ClientDocumentsWrapper clientId={clientId} />
 }
 
 /* ═══ Charges ═══ */
