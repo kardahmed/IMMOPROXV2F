@@ -229,6 +229,7 @@ export function PublicLandingPage() {
           accent={accent}
           slug={page.slug}
           tenantName={page.tenant?.name ?? undefined}
+          tenantPhone={page.tenant?.phone ?? undefined}
         />
       )}
 

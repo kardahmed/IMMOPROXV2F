@@ -15,14 +15,21 @@ const labelClass = 'text-[11px] font-medium text-immo-text-muted'
 const SECTION_TYPES = [
   { type: 'hero', label: 'Hero (image/video de fond)', icon: '🖼️' },
   { type: 'gallery', label: 'Galerie photos', icon: '📸' },
-  { type: 'features', label: 'Caracteristiques', icon: '✅' },
+  { type: 'features', label: 'Equipements / Caracteristiques', icon: '✅' },
   { type: 'video', label: 'Video YouTube/Vimeo', icon: '🎬' },
   { type: 'virtual_tour', label: 'Visite virtuelle 360', icon: '🏠' },
   { type: 'pricing', label: 'Grille de prix', icon: '💰' },
+  { type: 'stats', label: 'Compteur stats anime', icon: '📊' },
+  { type: 'comparator', label: 'Comparateur de biens', icon: '⚖️' },
+  { type: 'calculator', label: 'Calculateur de credit', icon: '🧮' },
+  { type: 'countdown', label: 'Compte a rebours', icon: '⏱️' },
   { type: 'testimonials', label: 'Avis clients', icon: '⭐' },
   { type: 'faq', label: 'FAQ', icon: '❓' },
   { type: 'cta', label: 'Appel a l\'action', icon: '🚀' },
-  { type: 'form', label: 'Formulaire de contact', icon: '📝' },
+  { type: 'form', label: 'Formulaire classique', icon: '📝' },
+  { type: 'multi_step_form', label: 'Formulaire multi-etapes', icon: '📋' },
+  { type: 'whatsapp', label: 'Widget WhatsApp flottant', icon: '💬' },
+  { type: 'social_proof', label: 'Notifications social proof', icon: '🔔' },
 ]
 
 interface Section {
@@ -288,6 +295,87 @@ function ContentEditor({ type, content, onUpdate }: { type: string; content: Rec
 
     case 'form':
       return <FormFieldsEditor content={content} onUpdate={onUpdate} />
+
+    case 'multi_step_form':
+      return (
+        <div className="space-y-2">
+          <p className="text-[10px] text-immo-text-muted">Le formulaire multi-etapes utilise un format progressif (type → budget → coordonnees). Configuration par defaut optimisee pour la conversion.</p>
+          <div><Label className="text-[10px] text-immo-text-muted">Texte du bouton final</Label><Input value={(content.submit_label as string) ?? ''} onChange={e => set('submit_label', e.target.value)} placeholder="Envoyer" className={inputClass} /></div>
+          <div><Label className="text-[10px] text-immo-text-muted">Message de succes</Label><Input value={(content.success_message as string) ?? ''} onChange={e => set('success_message', e.target.value)} placeholder="Merci !" className={inputClass} /></div>
+        </div>
+      )
+
+    case 'countdown':
+      return (
+        <div className="space-y-2">
+          <div><Label className="text-[10px] text-immo-text-muted">Date de fin</Label><Input type="datetime-local" value={(content.end_date as string) ?? ''} onChange={e => set('end_date', e.target.value)} className={inputClass} /></div>
+          <div><Label className="text-[10px] text-immo-text-muted">Texte d'accroche</Label><Input value={(content.label as string) ?? ''} onChange={e => set('label', e.target.value)} placeholder="Offre de lancement limitee" className={inputClass} /></div>
+          <div><Label className="text-[10px] text-immo-text-muted">Unites restantes (optionnel)</Label><Input type="number" value={String((content.units_left as number) ?? '')} onChange={e => set('units_left', Number(e.target.value) || null)} placeholder="12" className={inputClass} /></div>
+        </div>
+      )
+
+    case 'stats':
+      return (
+        <div className="space-y-2">
+          <Label className="text-[10px] text-immo-text-muted">Statistiques (une par ligne : valeur | suffixe | label)</Label>
+          <textarea
+            value={((content.items as Array<{value:number;suffix?:string;label:string}>) ?? []).map(i => `${i.value} | ${i.suffix ?? ''} | ${i.label}`).join('\n')}
+            onChange={e => set('items', e.target.value.split('\n').filter(l => l.trim()).map(line => {
+              const [v, s, l] = line.split('|').map(x => x.trim())
+              return { value: Number(v) || 0, suffix: s || undefined, label: l || '' }
+            }))}
+            rows={4} placeholder="150 | | Unites vendues&#10;42 | | Familles logees&#10;98 | % | Satisfaction&#10;3 | | Projets livres" className={`w-full rounded-md border p-2 text-xs ${inputClass}`}
+          />
+        </div>
+      )
+
+    case 'comparator':
+      return (
+        <div className="space-y-2">
+          <Label className="text-[10px] text-immo-text-muted">Biens a comparer (un par ligne : type | surface | pieces | prix | features separees par virgules)</Label>
+          <textarea
+            value={((content.items as Array<{type:string;surface:string;rooms:string;price:number;features:string[]}>) ?? []).map(i => `${i.type} | ${i.surface} | ${i.rooms} | ${i.price} | ${i.features.join(',')}`).join('\n')}
+            onChange={e => set('items', e.target.value.split('\n').filter(l => l.trim()).map(line => {
+              const [type, surface, rooms, price, features] = line.split('|').map(x => x.trim())
+              return { type, surface, rooms, price: Number(price) || 0, features: (features ?? '').split(',').map(f => f.trim()).filter(Boolean) }
+            }))}
+            rows={4} placeholder="F2 | 65 m² | 2 pieces | 6500000 | Balcon,Parking&#10;F3 | 85 m² | 3 pieces | 8500000 | Balcon,Parking,Cuisine equipee" className={`w-full rounded-md border p-2 text-xs ${inputClass}`}
+          />
+        </div>
+      )
+
+    case 'calculator':
+      return (
+        <div className="space-y-2">
+          <div><Label className="text-[10px] text-immo-text-muted">Prix par defaut (DA)</Label><Input type="number" value={String((content.default_price as number) ?? '')} onChange={e => set('default_price', Number(e.target.value) || null)} placeholder="10000000" className={inputClass} /></div>
+          <div><Label className="text-[10px] text-immo-text-muted">Taux par defaut (%)</Label><Input type="number" step="0.1" value={String((content.default_rate as number) ?? '')} onChange={e => set('default_rate', Number(e.target.value) || null)} placeholder="6.5" className={inputClass} /></div>
+          <div><Label className="text-[10px] text-immo-text-muted">Duree par defaut (annees)</Label><Input type="number" value={String((content.default_years as number) ?? '')} onChange={e => set('default_years', Number(e.target.value) || null)} placeholder="20" className={inputClass} /></div>
+        </div>
+      )
+
+    case 'whatsapp':
+      return (
+        <div className="space-y-2">
+          <div><Label className="text-[10px] text-immo-text-muted">Numero WhatsApp</Label><Input value={(content.phone as string) ?? ''} onChange={e => set('phone', e.target.value)} placeholder="0555 123 456" className={inputClass} /></div>
+          <div><Label className="text-[10px] text-immo-text-muted">Message pre-rempli</Label><Input value={(content.message as string) ?? ''} onChange={e => set('message', e.target.value)} placeholder="Bonjour, je suis interesse..." className={inputClass} /></div>
+        </div>
+      )
+
+    case 'social_proof':
+      return (
+        <div className="space-y-2">
+          <Label className="text-[10px] text-immo-text-muted">Notifications (une par ligne : nom | action | temps)</Label>
+          <textarea
+            value={((content.items as Array<{name:string;action:string;time:string}>) ?? []).map(i => `${i.name} | ${i.action} | ${i.time}`).join('\n')}
+            onChange={e => set('items', e.target.value.split('\n').filter(l => l.trim()).map(line => {
+              const [name, action, time] = line.split('|').map(x => x.trim())
+              return { name, action, time }
+            }))}
+            rows={4} placeholder="Mohammed A. | vient de reserver un F3 | il y a 5 min&#10;Fatima Z. | a visite le chantier | il y a 1h" className={`w-full rounded-md border p-2 text-xs ${inputClass}`}
+          />
+          <div><Label className="text-[10px] text-immo-text-muted">Intervalle entre popups (secondes)</Label><Input type="number" value={String((content.interval as number) ?? 30)} onChange={e => set('interval', Number(e.target.value) || 30)} className={inputClass} /></div>
+        </div>
+      )
 
     default:
       return <p className="text-xs text-immo-text-muted">Section non configurable</p>
@@ -591,6 +679,13 @@ function getDefaultContent(type: string): Record<string, unknown> {
       success_message: '',
       legal_text: '',
     }
+    case 'multi_step_form': return { steps: [], submit_label: 'Envoyer', success_message: '' }
+    case 'countdown': return { end_date: '', label: '', units_left: null }
+    case 'stats': return { items: [] }
+    case 'comparator': return { items: [] }
+    case 'calculator': return { default_price: 10000000, default_rate: 6.5, default_years: 20 }
+    case 'whatsapp': return { phone: '', message: '' }
+    case 'social_proof': return { items: [], interval: 30 }
     default: return {}
   }
 }
