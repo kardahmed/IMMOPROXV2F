@@ -235,6 +235,74 @@
     .ft-col a:hover{color:var(--blue)}
     .ft-bot{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-top:1px solid rgba(255,255,255,.05);font-size:11px;color:rgba(255,255,255,.2)}
 
+    /* ═══ GLOW EFFECT on mockup ═══ */
+    .app-mock::before{content:'';position:absolute;inset:-2px;background:linear-gradient(135deg,var(--blue),var(--cyan),var(--blue));border-radius:16px;z-index:-1;filter:blur(20px);opacity:.4;animation:glow-pulse 4s ease-in-out infinite}
+    @keyframes glow-pulse{0%,100%{opacity:.3;filter:blur(20px)}50%{opacity:.5;filter:blur(30px)}}
+
+    /* ═══ ANIMATED COUNTERS ═══ */
+    .stats-row{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;padding:60px 0}
+    .stat-item{text-align:center}
+    .stat-num{font-size:48px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:13px;color:var(--gray);margin-top:4px}
+    .stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+    /* ═══ COMPARISON TABLE ═══ */
+    .compare{padding:80px 0;background:var(--light)}
+    .cmp-table{width:100%;border-collapse:collapse;max-width:800px;margin:0 auto;background:var(--white);border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.04)}
+    .cmp-table th,.cmp-table td{padding:14px 20px;text-align:center;font-size:14px;border-bottom:1px solid var(--border)}
+    .cmp-table th{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:var(--light)}
+    .cmp-table th.hl{background:var(--blue);color:#fff}
+    .cmp-table td:first-child{text-align:left;font-weight:600;color:var(--dark)}
+    .cmp-table td.yes{color:var(--green);font-weight:700}
+    .cmp-table td.no{color:var(--muted)}
+    .cmp-table td.hl{background:rgba(5,121,218,.03);font-weight:700;color:var(--blue)}
+
+    /* ═══ FAQ ═══ */
+    .faq{padding:80px 0}
+    .faq-list{max-width:700px;margin:0 auto}
+    .faq-item{border-bottom:1px solid var(--border)}
+    .faq-q{display:flex;align-items:center;justify-content:space-between;padding:18px 0;cursor:pointer;font-size:15px;font-weight:600;color:var(--dark);transition:color .2s}
+    .faq-q:hover{color:var(--blue)}
+    .faq-q .arrow{font-size:20px;color:var(--muted);transition:transform .3s}
+    .faq-q.open .arrow{transform:rotate(45deg);color:var(--blue)}
+    .faq-a{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.16,1,.3,1)}
+    .faq-a.open{max-height:300px}
+    .faq-a p{padding:0 0 18px;font-size:14px;line-height:1.7;color:var(--gray)}
+
+    /* ═══ TRUST BADGES ═══ */
+    .trust{padding:48px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .trust-row{display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
+    .trust-item{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--gray)}
+    .trust-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+    /* ═══ WHATSAPP FLOAT ═══ */
+    .wa-float{position:fixed;bottom:24px;right:24px;z-index:100;display:flex;align-items:center;gap:10px;background:#25D366;color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 4px 20px rgba(37,211,102,.35);cursor:pointer;transition:all .3s;text-decoration:none}
+    .wa-float:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(37,211,102,.45)}
+    .wa-float svg{width:22px;height:22px}
+
+    /* ═══ MOBILE PREVIEW ═══ */
+    .mobile-sec{padding:80px 0}
+    .mobile-inner{display:flex;align-items:center;justify-content:center;gap:60px}
+    .phone-frame{width:280px;height:560px;border-radius:36px;border:8px solid var(--dark);background:var(--dark);overflow:hidden;position:relative;box-shadow:0 24px 60px rgba(10,37,64,.2)}
+    .phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:24px;background:var(--dark);border-radius:0 0 16px 16px;z-index:2}
+    .phone-screen{width:100%;height:100%;background:#0d1520;overflow:hidden;padding-top:24px}
+    .phone-screen .mini-dash{padding:12px;transform:scale(.95);transform-origin:top left}
+    .mobile-txt{max-width:420px}
+    .mobile-txt h2{font-size:clamp(24px,3vw,34px);font-weight:800;margin-bottom:12px}
+    .mobile-txt p{font-size:15px;line-height:1.7;color:var(--gray);margin-bottom:20px}
+    .mobile-feat{list-style:none}
+    .mobile-feat li{display:flex;gap:8px;margin-bottom:10px;font-size:14px;color:var(--gray)}
+    .mobile-feat .ck{color:var(--green);font-weight:700}
+
+    /* ═══ TYPEWRITER ═══ */
+    .typewriter{overflow:hidden;border-right:3px solid var(--blue-l);white-space:nowrap;animation:typing 3s steps(30,end) forwards,blink .7s step-end infinite}
+    @keyframes typing{from{width:0}to{width:100%}}
+    @keyframes blink{from,to{border-color:transparent}50%{border-color:var(--blue-l)}}
+
+    /* ═══ PARALLAX ═══ */
+    .parallax-wrap{overflow:hidden}
+    .parallax-slow{transition:transform .1s linear}
+
     /* ═══ RESPONSIVE ═══ */
     @media(max-width:960px){
       .sp-i{grid-template-columns:1fr!important;gap:32px}.split.alt .sp-i{direction:ltr}
@@ -242,6 +310,8 @@
       .p-grid{grid-template-columns:1fr 1fr}.t-grid{grid-template-columns:1fr}
       .nav-lk{display:none}.fb{display:none}.dash-side{display:none}
       .ba-grid{grid-template-columns:1fr;gap:16px}.ba-arrow{transform:rotate(90deg)}
+      .mobile-inner{flex-direction:column}.stats-row{gap:24px}.trust-row{gap:20px}
+      .cmp-table{font-size:12px}.cmp-table th,.cmp-table td{padding:10px 12px}
       .counters{gap:24px}.counter .num{font-size:28px}
     }
     @media(max-width:640px){
@@ -274,7 +344,7 @@
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="ctn hero-c">
-    <h1 class="rv">L'infrastructure CRM<br>pour <span class="hl">l'immobilier</span></h1>
+    <h1 class="rv">L'infrastructure CRM<br>pour <span class="hl typewriter" style="display:inline-block">l'immobilier</span></h1>
     <p class="sub rv rv-1">Pipeline de vente, landing pages, tracking publicitaire et intelligence artificielle. La plateforme tout-en-un pour les promoteurs immobiliers.</p>
     <div class="hero-btn rv rv-2"><a href="/register" class="btn btn-p">Demarrer maintenant →</a><a href="#features" class="btn btn-g">Explorer les fonctionnalites</a></div>
     <p class="hero-note rv rv-2">Essai gratuit · Sans carte bancaire · Configuration en 2 minutes</p>
@@ -531,6 +601,119 @@
   </div>
 </section>
 
+<!-- ANIMATED STATS -->
+<section style="background:var(--light)">
+  <div class="ctn">
+    <div class="stats-row">
+      <div class="stat-item rv"><div class="stat-num" data-target="150">0</div><div class="stat-label">Millions DA geres</div><div class="stat-sub">en volume de transactions</div></div>
+      <div class="stat-item rv rv-1"><div class="stat-num" data-target="15000">0</div><div class="stat-label">Leads captures</div><div class="stat-sub">via landing pages</div></div>
+      <div class="stat-item rv rv-2"><div class="stat-num" data-target="2500">0</div><div class="stat-label">Biens geres</div><div class="stat-sub">appartements, villas, locaux</div></div>
+      <div class="stat-item rv rv-3"><div class="stat-num" data-target="98">0</div><div class="stat-label">% Satisfaction</div><div class="stat-sub">note client moyenne</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BADGES -->
+<section class="trust">
+  <div class="ctn">
+    <div class="trust-row">
+      <div class="trust-item rv"><div class="trust-icon" style="background:rgba(0,212,160,.1)">🔒</div>Securise SSL 256-bit</div>
+      <div class="trust-item rv rv-1"><div class="trust-icon" style="background:rgba(5,121,218,.1)">🇩🇿</div>Support Algerien</div>
+      <div class="trust-item rv rv-2"><div class="trust-icon" style="background:rgba(124,58,237,.1)">🇪🇺</div>Donnees en Europe</div>
+      <div class="trust-item rv rv-3"><div class="trust-icon" style="background:rgba(6,182,212,.1)">⚡</div>Uptime 99.9%</div>
+      <div class="trust-item rv rv-4"><div class="trust-icon" style="background:rgba(245,166,35,.1)">🛡️</div>Backups quotidiens</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON TABLE -->
+<section class="compare" id="compare">
+  <div class="ctn">
+    <div class="s-head">
+      <div class="tag rv">Comparatif</div>
+      <h2 class="rv rv-1">Pourquoi choisir IMMO PRO-X ?</h2>
+      <p class="rv rv-2">Comparez avec vos outils actuels.</p>
+    </div>
+    <table class="cmp-table rv rv-3">
+      <thead>
+        <tr><th>Fonctionnalite</th><th>Cahier / Excel</th><th>CRM generique</th><th class="hl">IMMO PRO-X</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Pipeline de vente immobilier</td><td class="no">—</td><td class="no">Generique</td><td class="hl yes">✓ 9 etapes specialisees</td></tr>
+        <tr><td>Landing pages avec tracking</td><td class="no">—</td><td class="no">—</td><td class="hl yes">✓ 17 types de sections</td></tr>
+        <tr><td>Facebook / Google CAPI</td><td class="no">—</td><td class="no">—</td><td class="hl yes">✓ Integre nativement</td></tr>
+        <tr><td>Scripts d'appel IA</td><td class="no">—</td><td class="no">—</td><td class="hl yes">✓ Avec playbook configurable</td></tr>
+        <tr><td>Echeancier de paiement</td><td class="no">Manuel</td><td class="no">Plugin payant</td><td class="hl yes">✓ Automatise + relances</td></tr>
+        <tr><td>Gestion multi-projets</td><td class="no">Difficile</td><td class="yes">✓</td><td class="hl yes">✓ Avec unites + plans</td></tr>
+        <tr><td>WhatsApp en 1 clic</td><td class="no">—</td><td class="no">—</td><td class="hl yes">✓ Message pre-ecrit</td></tr>
+        <tr><td>Adapte marche algerien</td><td class="no">—</td><td class="no">—</td><td class="hl yes">✓ DA, wilayas, normes</td></tr>
+        <tr><td>Prix</td><td>Gratuit</td><td>50-200$/mois</td><td class="hl" style="color:var(--green);font-weight:800">A partir de 0 DA</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- MOBILE PREVIEW -->
+<section class="mobile-sec">
+  <div class="ctn">
+    <div class="mobile-inner">
+      <div class="rv">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="mini-dash">
+              <div style="font-size:11px;font-weight:800;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--blue-l)" stroke-width="2.5"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>IMMO PRO-X</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+                <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px"><div style="font-size:16px;font-weight:800;color:var(--blue-l)">12</div><div style="font-size:7px;color:rgba(255,255,255,.35)">Clients</div></div>
+                <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px"><div style="font-size:16px;font-weight:800;color:var(--green)">3</div><div style="font-size:7px;color:rgba(255,255,255,.35)">Ventes</div></div>
+              </div>
+              <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.4);margin-bottom:6px">TACHES DU JOUR</div>
+              <div style="background:rgba(255,255,255,.05);border-radius:6px;padding:6px;margin-bottom:4px;display:flex;align-items:center;gap:6px"><div style="width:5px;height:5px;border-radius:50%;background:#25D366"></div><div style="font-size:7px;color:rgba(255,255,255,.5)">Envoyer catalogue — Karim B.</div></div>
+              <div style="background:rgba(255,255,255,.05);border-radius:6px;padding:6px;margin-bottom:4px;display:flex;align-items:center;gap:6px"><div style="width:5px;height:5px;border-radius:50%;background:var(--blue-l)"></div><div style="font-size:7px;color:rgba(255,255,255,.5)">Rappeler Samira — Visite</div></div>
+              <div style="background:rgba(255,255,255,.05);border-radius:6px;padding:6px;margin-bottom:4px;display:flex;align-items:center;gap:6px"><div style="width:5px;height:5px;border-radius:50%;background:var(--green)"></div><div style="font-size:7px;color:rgba(255,255,255,.5)">Confirmer RDV notaire</div></div>
+              <div style="background:rgba(0,212,160,.1);border:1px solid rgba(0,212,160,.2);border-radius:6px;padding:8px;margin-top:8px;text-align:center"><div style="font-size:8px;font-weight:700;color:var(--green)">📞 Appeler le prochain client</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mobile-txt rv rv-1">
+        <div class="tag" style="margin-bottom:14px">Mobile</div>
+        <h2>Votre CRM dans la poche</h2>
+        <p>Vos agents sont sur le terrain. IMMO PRO-X s'adapte a tous les ecrans — smartphone, tablette, desktop.</p>
+        <ul class="mobile-feat">
+          <li><span class="ck">✓</span> Pipeline complet sur mobile</li>
+          <li><span class="ck">✓</span> Appels et WhatsApp en 1 clic</li>
+          <li><span class="ck">✓</span> Taches du jour avec notifications</li>
+          <li><span class="ck">✓</span> Fiche client complete hors bureau</li>
+          <li><span class="ck">✓</span> Photos et documents sur le terrain</li>
+        </ul>
+        <a href="/register" class="btn btn-p" style="margin-top:12px">Tester sur mobile →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="ctn">
+    <div class="s-head">
+      <div class="tag rv">FAQ</div>
+      <h2 class="rv rv-1">Questions frequentes</h2>
+      <p class="rv rv-2">Tout ce que vous devez savoir avant de commencer.</p>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Est-ce que c'est vraiment gratuit pour commencer ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, le plan Free est 100% gratuit sans limite de temps. Il inclut 2 agents, 1 projet et 50 clients. Aucune carte bancaire requise.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Combien de temps pour configurer la plateforme ?<span class="arrow">+</span></div><div class="faq-a"><p>En moyenne 15 minutes. Creez votre compte, ajoutez vos projets et unites, invitez vos agents. La prise en main est intuitive et nous fournissons un guide de demarrage rapide.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Mes donnees sont-elles securisees ?<span class="arrow">+</span></div><div class="faq-a"><p>Absolument. Vos donnees sont stockees sur des serveurs securises en Europe (Supabase/AWS), chiffrees en transit (SSL) et au repos. Backups automatiques quotidiens.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Puis-je importer mes clients depuis Excel ?<span class="arrow">+</span></div><div class="faq-a"><p>La fonctionnalite d'import CSV est en cours de developpement. En attendant, notre equipe peut vous aider a migrer vos donnees gratuitement lors de la mise en place.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Le tracking Facebook/Google est-il inclus ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, l'integration Meta Pixel, Google Tag et TikTok Pixel est incluse dans tous les plans avec landing pages. Le tracking Conversion API (server-side) est aussi integre pour un suivi precis.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Les paiements sont-ils en dinars algeriens ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, tous les prix sont en DA. Le paiement se fait par virement bancaire CCP/baridi ou par versement direct. Nous envoyons une facture chaque mois.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Puis-je changer de plan a tout moment ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, vous pouvez upgrader ou downgrader a tout moment. Le changement prend effet immediatement et le prorata est calcule automatiquement.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Y a-t-il un support technique ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, support par WhatsApp et email pour tous les plans. Le plan Enterprise inclut un support dedie avec un interlocuteur attribue.</p></div></div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA FINAL -->
 <section class="cta-end">
   <div class="glow g1"></div><div class="glow g2"></div>
@@ -558,10 +741,29 @@
   </div>
 </footer>
 
+<!-- WhatsApp floating button -->
+<a href="https://wa.me/213555000000?text=Bonjour%2C%20je%20suis%20interesse%20par%20IMMO%20PRO-X" target="_blank" class="wa-float">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  Une question ?
+</a>
+
 <script>
+// Scroll reveal
 const o=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){el.target.classList.add('v');o.unobserve(el.target)}})},{threshold:.08,rootMargin:'0px 0px -40px 0px'});
 document.querySelectorAll('.rv').forEach(el=>o.observe(el));
+
+// Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'})})});
+
+// Animated counters
+const counterObs=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){const el=entry.target;const target=parseInt(el.dataset.target);const duration=2000;const start=performance.now();function update(now){const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);el.textContent=Math.floor(eased*target).toLocaleString('fr');if(p<1)requestAnimationFrame(update)}requestAnimationFrame(update);counterObs.unobserve(el)}})},{threshold:.5});
+document.querySelectorAll('.stat-num[data-target]').forEach(el=>counterObs.observe(el));
+
+// Parallax effect on scroll
+window.addEventListener('scroll',()=>{const s=window.scrollY;document.querySelectorAll('.parallax-slow').forEach(el=>{el.style.transform=`translateY(${s*0.03}px)`})},{passive:true});
+
+// Micro-animation on feature card hover
+document.querySelectorAll('.b-card').forEach(card=>{const ico=card.querySelector('.b-ico');if(ico){card.addEventListener('mouseenter',()=>{ico.style.transform='scale(1.15) rotate(5deg)';ico.style.transition='transform .3s'});card.addEventListener('mouseleave',()=>{ico.style.transform='scale(1) rotate(0)'})}});
 </script>
 </body>
 </html>
