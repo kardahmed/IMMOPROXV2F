@@ -64,7 +64,7 @@ export function LoginPage() {
         {/* Logo + Title */}
         <div className="mb-6 flex flex-col items-center">
           <div className="mb-4 flex items-center gap-3">
-            <img src="/logo-180.png" alt="IMMO PRO-X" className="h-11 w-11 rounded-[10px]" />
+            <img src="/logo-180.png" alt="IMMO PRO-X" className="h-11 w-11" />
             <div>
               <h1 className="text-xl font-bold tracking-tight text-[#0A2540]">IMMO PRO-X</h1>
               <p className="text-xs text-[#8898AA]">v2.0</p>

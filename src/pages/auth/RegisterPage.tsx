@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Building2, ArrowRight, Check } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -100,7 +100,7 @@ export function RegisterPage() {
       <div className="hidden w-[400px] flex-col justify-between bg-gradient-to-b from-[#0579DA] to-[#0456A0] p-10 text-white lg:flex">
         <div>
           <div className="flex items-center gap-3">
-            <Building2 className="h-8 w-8" />
+            <img src="/logo-180.png" alt="IMMO PRO-X" className="h-10 w-10" />
             <span className="text-xl font-bold">IMMO PRO-X</span>
           </div>
           <p className="mt-4 text-sm text-white/70">La plateforme CRM immobilier complete pour les promoteurs algeriens.</p>

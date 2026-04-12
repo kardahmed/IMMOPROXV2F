@@ -30,9 +30,7 @@ export function SuperAdminLayout() {
       <aside className="flex w-[240px] shrink-0 flex-col border-r border-immo-border-default/50 bg-immo-bg-card">
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#7C3AED]">
-            <span className="text-sm font-bold text-white">IP</span>
-          </div>
+          <img src="/logo-180.png" alt="IMMO PRO-X" className="h-9 w-9" />
           <div>
             <h1 className="text-sm font-bold text-immo-text-primary">IMMO PRO-X</h1>
             <span className="rounded-sm bg-[#7C3AED]/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#7C3AED]">

@@ -62,7 +62,7 @@ export function Sidebar() {
     <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-immo-border-default bg-immo-bg-sidebar rtl:border-l rtl:border-r-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5">
-        <img src="/logo-180.png" alt="IMMO PRO-X" className="h-9 w-9 rounded-lg" />
+        <img src="/logo-180.png" alt="IMMO PRO-X" className="h-9 w-9" />
         <div>
           <div className="text-sm font-bold tracking-tight text-immo-text-primary">
             {t('common.app_name')}

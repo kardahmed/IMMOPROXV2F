@@ -4,7 +4,6 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RoleRoute } from '@/components/auth/RoleRoute'
 import { SuperAdminRoute } from '@/components/auth/SuperAdminRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Lazy-loaded pages for code splitting
@@ -48,7 +47,12 @@ const TasksPage = lazy(() => import('@/pages/tasks/TasksPage').then(m => ({ defa
 const PublicLandingPage = lazy(() => import('@/pages/landing/PublicLandingPage').then(m => ({ default: m.PublicLandingPage })))
 
 function PageLoader() {
-  return <LoadingSpinner size="lg" className="h-screen" />
+  return (
+    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-immo-bg-primary">
+      <img src="/logo-180.png" alt="IMMO PRO-X" className="h-14 w-14 animate-pulse" />
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" />
+    </div>
+  )
 }
 
 function App() {
