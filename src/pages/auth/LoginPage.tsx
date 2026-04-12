@@ -23,7 +23,6 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [demoLoading, setDemoLoading] = useState(false)
 
   const {
     register,
@@ -48,18 +47,6 @@ export function LoginPage() {
       setError(err instanceof Error ? err.message : 'Erreur de connexion')
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function loginDemo() {
-    setDemoLoading(true)
-    setError('')
-    try {
-      await signIn('admin.elfeth@gmail.com', 'demo123456')
-    } catch {
-      setError('Compte demo indisponible')
-    } finally {
-      setDemoLoading(false)
     }
   }
 
@@ -231,21 +218,6 @@ export function LoginPage() {
                 )}
               </button>
             </form>
-
-            {/* Divider */}
-            <div className="my-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-[#E3E8EF]" />
-              <span className="text-[10px] font-medium text-[#8898AA]">OU</span>
-              <div className="h-px flex-1 bg-[#E3E8EF]" />
-            </div>
-
-            {/* Demo login */}
-            <button onClick={loginDemo} disabled={demoLoading}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#E3E8EF] bg-[#F6F9FC] text-sm font-medium text-[#425466] transition-all hover:border-[#0579DA]/30 hover:bg-[#0579DA]/5 hover:text-[#0579DA] disabled:opacity-60">
-              {demoLoading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0579DA] border-t-transparent" /> :
-                <><Zap className="h-4 w-4" /> Tester avec un compte demo</>
-              }
-            </button>
 
             {/* Footer links */}
             <div className="mt-5 space-y-2 text-center">
