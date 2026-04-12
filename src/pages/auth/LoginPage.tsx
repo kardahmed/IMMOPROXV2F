@@ -32,10 +32,24 @@ export function LoginPage() {
     resolver: zodResolver(schema),
   })
 
-  if (isAuthenticated) {
+  // Only redirect when BOTH authenticated AND profile/role loaded
+  if (isAuthenticated && role) {
     const target = role === 'super_admin' ? '/admin' : '/dashboard'
     navigate(target, { replace: true })
     return null
+  }
+
+  // Show loading if authenticated but profile not yet loaded
+  if (isAuthenticated && !role) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#F6F9FC]">
+        <div className="flex flex-col items-center gap-4">
+          <img src="/logo-180.png" alt="IMMO PRO-X" className="h-12 w-12 animate-pulse" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0579DA] border-t-transparent" />
+          <p className="text-xs text-[#8898AA]">Connexion en cours...</p>
+        </div>
+      </div>
+    )
   }
 
   async function onSubmit(data: FormData) {

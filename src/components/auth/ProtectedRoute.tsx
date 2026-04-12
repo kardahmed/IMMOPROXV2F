@@ -11,8 +11,9 @@ export function ProtectedRoute() {
     return (
       <div className="flex h-screen items-center justify-center bg-immo-bg-primary">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-3 border-immo-accent-green border-t-transparent" />
-          <p className="text-sm text-immo-text-muted">Chargement...</p>
+          <img src="/logo-180.png" alt="IMMO PRO-X" className="h-12 w-12 animate-pulse" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" />
+          <p className="text-xs text-immo-text-muted">Connexion en cours...</p>
         </div>
       </div>
     )
