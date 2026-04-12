@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useBranding } from '@/hooks/useBranding'
 import { getVisibleNavItems } from '@/lib/navigation'
 import { Separator } from '@/components/ui/separator'
 
@@ -56,16 +57,17 @@ export function Sidebar() {
   const location = useLocation()
   const { signOut } = useAuth()
   const { userProfile, role } = useAuthStore()
+  const { logoUrl, appName } = useBranding()
   const navItems = getVisibleNavItems(role)
 
   return (
     <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-immo-border-default bg-immo-bg-sidebar rtl:border-l rtl:border-r-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5">
-        <img src="/logo-180.png" alt="IMMO PRO-X" className="h-9 w-9" />
+        <img src={logoUrl} alt={appName} className="h-9 w-9 rounded-lg object-contain" />
         <div>
           <div className="text-sm font-bold tracking-tight text-immo-text-primary">
-            {t('common.app_name')}
+            {appName}
           </div>
           <div className="text-[10px] text-immo-text-muted">{t('common.version')}</div>
         </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { useBranding } from '@/hooks/useBranding'
 import { Input } from '@/components/ui/input'
 import { LanguageSwitch } from '@/components/common/LanguageSwitch'
 import { NotificationBell } from '@/components/common/NotificationBell'
@@ -16,6 +17,7 @@ interface TopbarProps {
 export function Topbar({ title, subtitle }: TopbarProps) {
   const { t } = useTranslation()
   const { userProfile, tenantId } = useAuthStore()
+  useBranding() // Apply CSS variables for custom color
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; type: string }>>([])
