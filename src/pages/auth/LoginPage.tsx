@@ -240,8 +240,13 @@ export function LoginPage() {
             </div>
           </div>
 
+          {/* Back to marketing */}
+          <p className="mt-4 text-center">
+            <a href="/marketing/index.html" className="text-xs text-[#8898AA] hover:text-[#0579DA]">← Retour au site</a>
+          </p>
+
           {/* Legal */}
-          <div className="mt-4 flex justify-center gap-4 text-[10px] text-[#8898AA]">
+          <div className="mt-2 flex justify-center gap-4 text-[10px] text-[#8898AA]">
             <a href="#" className="hover:text-[#425466]">Conditions d'utilisation</a>
             <span>·</span>
             <a href="#" className="hover:text-[#425466]">Politique de confidentialite</a>

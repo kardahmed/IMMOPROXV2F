@@ -317,6 +317,9 @@ export function RegisterPage() {
           <p className="mt-4 text-center text-[13px] text-[#8898AA]">
             Deja inscrit ? <Link to="/login" className="font-medium text-[#0579DA] hover:underline">Se connecter</Link>
           </p>
+          <p className="mt-2 text-center">
+            <a href="/marketing/index.html" className="text-xs text-[#8898AA] hover:text-[#0579DA]">← Retour au site</a>
+          </p>
           <div className="mt-2 flex justify-center gap-4 text-[10px] text-[#8898AA]">
             <a href="#" className="hover:text-[#425466]">CGU</a>
             <span>·</span>
