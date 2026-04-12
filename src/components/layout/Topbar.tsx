@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search } from 'lucide-react'
+import { Search, Moon, Sun } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useBranding } from '@/hooks/useBranding'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import { Input } from '@/components/ui/input'
 import { LanguageSwitch } from '@/components/common/LanguageSwitch'
 import { NotificationBell } from '@/components/common/NotificationBell'
@@ -18,6 +19,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
   const { t } = useTranslation()
   const { userProfile, tenantId } = useAuthStore()
   useBranding() // Apply CSS variables for custom color
+  const { isDark, setTheme } = useDarkMode()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; type: string }>>([])
@@ -69,6 +71,12 @@ export function Topbar({ title, subtitle }: TopbarProps) {
             </div>
           )}
         </div>
+
+        {/* Dark mode toggle */}
+        <button onClick={() => setTheme(isDark ? 'light' : 'dark')} title={isDark ? 'Mode clair' : 'Mode sombre'}
+          className="rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
 
         {/* Language switch */}
         <LanguageSwitch />

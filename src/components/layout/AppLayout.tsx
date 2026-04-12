@@ -5,6 +5,8 @@ import { useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { supabase } from '@/lib/supabase'
 
 function AnnouncementBanner() {
@@ -40,6 +42,8 @@ function AnnouncementBanner() {
 
 export function AppLayout() {
   const { title, subtitle } = usePageMeta()
+  useKeyboardShortcuts()
+  usePushNotifications()
 
   return (
     <div className="flex h-screen overflow-hidden bg-immo-bg-primary">
