@@ -91,14 +91,14 @@
     .act-item .ai-time{font-size:8px;color:var(--muted)}
 
     /* Floating badges */
-    .fb{position:absolute;background:rgba(255,255,255,.07);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;z-index:10;color:#fff}
+    .fb{position:absolute;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 14px;z-index:10;color:var(--dark);box-shadow:0 8px 24px rgba(10,37,64,.12)}
     .fb-1{top:60px;left:-50px;animation:flt 5s ease-in-out infinite}
     .fb-2{top:30px;right:-40px;animation:flt 5s ease-in-out infinite 1.5s}
     .fb-3{bottom:80px;left:-35px;animation:flt 5s ease-in-out infinite 3s}
     @keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
     .fb .fr{display:flex;align-items:center;gap:8px}
     .fb .fi{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
-    .fb .ft{font-size:11px;font-weight:700}.fb .fs{font-size:9px;color:rgba(255,255,255,.45)}
+    .fb .ft{font-size:11px;font-weight:700;color:var(--dark)}.fb .fs{font-size:9px;color:var(--muted)}
 
     /* ═══ LOGOS TICKER ═══ */
     .logos{padding:48px 0;border-bottom:1px solid var(--border);overflow:hidden}
