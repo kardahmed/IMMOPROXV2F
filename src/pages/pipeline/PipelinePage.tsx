@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useClients } from '@/hooks/useClients'
+import { useAutoTasks } from '@/hooks/useAutoTasks'
 import { exportToCsv } from '@/lib/exportCsv'
 import { usePipelineStats } from '@/hooks/usePipelineStats'
 import type { PipelineAlert } from '@/hooks/usePipelineStats'
@@ -52,6 +53,7 @@ type ViewMode = 'kanban' | 'cards' | 'table'
 export function PipelinePage() {
   const navigate = useNavigate()
   const { clients: rawClients, isLoading: loadingClients, updateClientStage } = useClients()
+  const { generateForStage } = useAutoTasks()
   const { data: stats, isLoading: loadingStats } = usePipelineStats()
   const { canManageProjects } = usePermissions()
 
@@ -189,6 +191,8 @@ export function PipelinePage() {
       { clientId: pendingMove.clientId, newStage: pendingMove.toStage },
       {
         onSuccess: () => {
+          // Auto-generate tasks for new stage + cancel old
+          generateForStage.mutate({ clientId: pendingMove.clientId, newStage: pendingMove.toStage, oldStage: pendingMove.fromStage })
           // If note provided, add to history
           if (note) {
             supabase.from('history').insert({

@@ -54,6 +54,7 @@ import { ClientFormModal } from './components/ClientFormModal'
 import { PlanVisitModal } from './components/modals/PlanVisitModal'
 import { AISuggestionsModal } from './components/modals/AISuggestionsModal'
 import { ReassignModal } from './components/modals/ReassignModal'
+import { useAutoTasks } from '@/hooks/useAutoTasks'
 
 // Avatar color from name
 function nameToColor(name: string): string {
@@ -145,9 +146,17 @@ export function ClientDetailPage() {
     setStageConfirm(newStage)
   }
 
+  const { generateForStage } = useAutoTasks()
+
   function confirmStageChange() {
     if (!client || !stageConfirm) return
-    updateClientStage.mutate({ clientId: client.id, newStage: stageConfirm })
+    const oldStage = client.pipeline_stage
+    updateClientStage.mutate({ clientId: client.id, newStage: stageConfirm }, {
+      onSuccess: () => {
+        // Auto-generate tasks for new stage + cancel old stage tasks
+        generateForStage.mutate({ clientId: client.id, newStage: stageConfirm, oldStage })
+      },
+    })
     setStageConfirm(null)
   }
 

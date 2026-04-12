@@ -10,6 +10,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
 // import { Button } from '@/components/ui/button'
 import { PIPELINE_STAGES } from '@/types'
+import { calculateUrgencyScore, suggestNextAction } from '@/hooks/useTaskScoring'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
@@ -50,6 +51,10 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
 
   const [tone, setTone] = useState('professional')
   const [generatingAI, setGeneratingAI] = useState(false)
+  const [clientResponse, setClientResponse] = useState('')
+  const [reminderDays, setReminderDays] = useState('')
+  const urgencyScore = calculateUrgencyScore(task)
+  const nextAction = task.client ? suggestNextAction({ pipeline_stage: task.client.pipeline_stage, last_contact_at: null, confirmed_budget: null, visit_note: null }) : ''
 
   // Fetch agent + tenant info
   const { data: context } = useQuery({
@@ -111,7 +116,9 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
 
   const completeTask = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('client_tasks').update({ status: 'completed', completed_at: new Date().toISOString(), executed_at: new Date().toISOString(), message_sent: message } as never).eq('id', task.id)
+      const { error } = await supabase.from('client_tasks').update({ status: 'completed', completed_at: new Date().toISOString(), executed_at: new Date().toISOString(), message_sent: message, client_response: clientResponse || null } as never).eq('id', task.id)
+      // Log sent message
+      await supabase.from('sent_messages_log').insert({ tenant_id: task.tenant_id, client_id: task.client_id, agent_id: userId, task_id: task.id, channel: task.channel, message } as never)
       if (error) { handleSupabaseError(error); throw error }
       await supabase.from('history').insert({ tenant_id: task.tenant_id, client_id: task.client_id, agent_id: userId, type: task.channel === 'whatsapp' ? 'whatsapp_message' : task.channel === 'sms' ? 'sms' : 'call', title: `Tache executee: ${task.title}` } as never)
       await supabase.from('clients').update({ last_contact_at: new Date().toISOString() } as never).eq('id', task.client_id)
@@ -190,6 +197,9 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${task.priority === 'high' || task.priority === 'urgent' ? 'bg-immo-status-red/10 text-immo-status-red' : 'bg-immo-bg-primary text-immo-text-muted'}`}>
                 Priorite: {task.priority}
               </span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${urgencyScore >= 70 ? 'bg-immo-status-red/10 text-immo-status-red' : urgencyScore >= 40 ? 'bg-immo-status-orange/10 text-immo-status-orange' : 'bg-immo-accent-green/10 text-immo-accent-green'}`}>
+                Urgence: {urgencyScore}/100
+              </span>
             </div>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-immo-text-muted hover:bg-immo-bg-card-hover"><X className="h-5 w-5" /></button>
@@ -253,6 +263,38 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
             </div>
             <textarea value={message} onChange={e => setMessage(e.target.value)} rows={6}
               className="w-full rounded-xl border border-immo-border-default bg-immo-bg-primary p-4 text-sm text-immo-text-primary leading-relaxed focus:border-immo-accent-green focus:outline-none" />
+          </div>
+
+          {/* Suggestion */}
+          {nextAction && (
+            <div className="rounded-lg border border-immo-accent-blue/20 bg-immo-accent-blue/5 px-3 py-2">
+              <p className="text-[10px] font-semibold text-immo-accent-blue">Prochaine action suggeree</p>
+              <p className="text-xs text-immo-text-primary">{nextAction}</p>
+            </div>
+          )}
+
+          {/* Client response */}
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold text-immo-text-muted">Reponse du client (apres execution)</label>
+            <textarea value={clientResponse} onChange={e => setClientResponse(e.target.value)} rows={2} placeholder="Ex: Interesse, veut visiter samedi..."
+              className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 text-xs text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:outline-none" />
+          </div>
+
+          {/* Reminder */}
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-semibold text-immo-text-muted">Rappel dans</label>
+            <select value={reminderDays} onChange={e => setReminderDays(e.target.value)}
+              className="h-7 rounded-md border border-immo-border-default bg-immo-bg-primary px-2 text-xs text-immo-text-primary">
+              <option value="">Pas de rappel</option>
+              <option value="1">1 jour</option>
+              <option value="2">2 jours</option>
+              <option value="3">3 jours</option>
+              <option value="5">5 jours</option>
+              <option value="7">1 semaine</option>
+              <option value="14">2 semaines</option>
+              <option value="30">1 mois</option>
+            </select>
+            {reminderDays && <span className="text-[10px] text-immo-accent-green">Un rappel sera cree automatiquement</span>}
           </div>
 
           {/* Client phone */}
