@@ -91,8 +91,8 @@ export function RegisterPage() {
             </div>
           </div>
           <h2 className="mt-8 text-2xl font-extrabold leading-tight">
-            Rejoignez +50 promoteurs<br/>
-            <span style={{background:'linear-gradient(135deg,#3BA3FF,#06B6D4)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>qui vendent mieux</span>
+            +107 appartements vendus<br/>
+            <span style={{background:'linear-gradient(135deg,#3BA3FF,#06B6D4)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>grace a IMMO PRO-X</span>
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-white/55">
             Creez votre compte en 2 minutes et commencez a gerer vos projets immobiliers avec les meilleurs outils.

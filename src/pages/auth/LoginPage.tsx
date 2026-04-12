@@ -108,9 +108,9 @@ export function LoginPage() {
           </div>
           {/* Stats */}
           <div className="flex gap-6">
-            <div><div className="text-lg" style={{fontWeight:900}}>+50</div><div className="text-[9px] text-white/30">Promoteurs</div></div>
+            <div><div className="text-lg" style={{fontWeight:900}}>+107</div><div className="text-[9px] text-white/30">Ventes</div></div>
             <div><div className="text-lg" style={{fontWeight:900}}>+15K</div><div className="text-[9px] text-white/30">Leads</div></div>
-            <div><div className="text-lg" style={{fontWeight:900}}>98%</div><div className="text-[9px] text-white/30">Satisfaction</div></div>
+            <div><div className="text-lg" style={{fontWeight:900}}>87%</div><div className="text-[9px] text-white/30">Satisfaction</div></div>
           </div>
           <p className="text-[9px] text-white/15">© 2026 IMMO PRO-X. Concu en Algerie.</p>
         </div>
