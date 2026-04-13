@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle, Calendar } from 'lucide-react'
+import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle, Calendar, ToggleLeft } from 'lucide-react'
 import {
   CompanySection,
   PipelineSection,
@@ -16,8 +16,9 @@ import { TaskConfigSection } from './sections/TaskConfigSection'
 import { WhatsAppSection } from './sections/WhatsAppSection'
 import { VisitScheduleSection } from './sections/VisitScheduleSection'
 import { PermissionProfilesSection } from './sections/PermissionProfilesSection'
+import { FeaturesSection } from './sections/FeaturesSection'
 
-type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'visits' | 'profiles' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
+type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'visits' | 'profiles' | 'features' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
 const SECTION_ICONS: Record<Section, typeof Building2> = {
   company: Building2,
@@ -26,6 +27,7 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   tasks: Bell,
   visits: Calendar,
   profiles: Shield,
+  features: ToggleLeft,
   whatsapp: MessageCircle,
   branding: Palette,
   reservations: Bookmark,
@@ -35,7 +37,7 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   security: Shield,
 }
 
-const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'profiles', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
+const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'profiles', 'features', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
 const SECTION_LABELS: Record<Section, string> = {
   company: 'Agence',
@@ -44,6 +46,7 @@ const SECTION_LABELS: Record<Section, string> = {
   tasks: 'Taches auto',
   visits: 'Visites',
   profiles: 'Permissions',
+  features: 'Fonctionnalites',
   whatsapp: 'WhatsApp',
   branding: 'Personnalisation',
   reservations: 'Reservations',
@@ -87,6 +90,7 @@ export function SettingsPage() {
         {section === 'tasks' && <TaskConfigSection />}
         {section === 'visits' && <VisitScheduleSection />}
         {section === 'profiles' && <PermissionProfilesSection />}
+        {section === 'features' && <FeaturesSection />}
         {section === 'whatsapp' && <WhatsAppSection />}
         {section === 'branding' && <BrandingSection />}
         {section === 'reservations' && <ReservationsSection />}
