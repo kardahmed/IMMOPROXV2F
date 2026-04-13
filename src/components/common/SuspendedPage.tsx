@@ -11,7 +11,7 @@ export function SuspendedPage() {
         <p className="mt-2 text-sm text-immo-text-muted">
           Votre compte a ete suspendu. Veuillez contacter le support pour plus d'informations.
         </p>
-        <a href="mailto:support@immoprox.com" className="mt-4 inline-block rounded-lg bg-immo-accent-green px-4 py-2 text-sm font-semibold text-white hover:bg-immo-accent-green/90">
+        <a href="mailto:support@immoprox.io" className="mt-4 inline-block rounded-lg bg-immo-accent-green px-4 py-2 text-sm font-semibold text-white hover:bg-immo-accent-green/90">
           Contacter le support
         </a>
       </div>

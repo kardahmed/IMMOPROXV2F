@@ -86,7 +86,7 @@ export function PlatformSettingsPage() {
 
         <div>
           <Label className="text-[11px] font-medium text-immo-text-secondary">Email de support</Label>
-          <Input type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@immoprox.com" className={inputClass} />
+          <Input type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@immoprox.io" className={inputClass} />
         </div>
 
         <div className="rounded-lg border border-immo-border-default p-4">
