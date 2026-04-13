@@ -725,9 +725,20 @@ export function CallScriptModal({
   )
 }
 
-// Mini availability calendar component
+// Mini availability calendar — reads tenant visit settings
 function AvailabilityMini({ agentId, tenantId }: { agentId: string; tenantId: string }) {
-  const { data: slots } = useQuery({
+  // Load tenant visit settings
+  const { data: visitSettings } = useQuery({
+    queryKey: ['tenant-visit-settings', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase.from('tenant_settings').select('work_days, visit_slots, visit_duration_minutes').eq('tenant_id', tenantId).single()
+      return data as { work_days: number[] | null; visit_slots: string[] | null; visit_duration_minutes: number | null } | null
+    },
+    staleTime: 300_000,
+  })
+
+  // Load existing visits
+  const { data: existingVisits } = useQuery({
     queryKey: ['agent-availability', agentId],
     queryFn: async () => {
       const now = new Date()
@@ -746,27 +757,28 @@ function AvailabilityMini({ agentId, tenantId }: { agentId: string; tenantId: st
     staleTime: 60_000,
   })
 
-  // Build next 5 working days (Dim-Jeu in Algeria)
-  const days: Array<{ date: Date; label: string; shortDay: string; slots: string[]; occupiedSlots: string[] }> = []
-  const HOURS = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+  const workDays = visitSettings?.work_days ?? [0, 1, 2, 3, 4]
+  const timeSlots = visitSettings?.visit_slots ?? ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+  const duration = visitSettings?.visit_duration_minutes ?? 45
   const DAY_NAMES = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
+  // Build next 5 working days based on tenant settings
+  const days: Array<{ label: string; shortDay: string; slots: string[]; occupiedSlots: string[] }> = []
   let d = new Date()
   d.setHours(0, 0, 0, 0)
   let count = 0
   while (count < 5) {
     d = new Date(d.getTime() + 86400000)
     const dow = d.getDay()
-    if (dow === 5 || dow === 6) continue // Ven/Sam = fermé
+    if (!workDays.includes(dow)) continue
     const dateStr = d.toISOString().split('T')[0]
-    const occupied = (slots ?? [])
+    const occupied = (existingVisits ?? [])
       .filter(s => s.scheduled_at.startsWith(dateStr))
-      .map(s => { const h = new Date(s.scheduled_at); return `${h.getHours().toString().padStart(2, '0')}:00` })
+      .map(s => { const h = new Date(s.scheduled_at); return `${h.getHours().toString().padStart(2, '0')}:${h.getMinutes().toString().padStart(2, '0')}` })
     days.push({
-      date: new Date(d),
       label: `${d.getDate()}/${d.getMonth() + 1}`,
       shortDay: DAY_NAMES[dow],
-      slots: HOURS,
+      slots: timeSlots,
       occupiedSlots: occupied,
     })
     count++
@@ -774,7 +786,10 @@ function AvailabilityMini({ agentId, tenantId }: { agentId: string; tenantId: st
 
   return (
     <div className="mb-4 rounded-lg border border-immo-accent-blue/20 bg-immo-accent-blue/5 p-3">
-      <p className="text-[10px] font-semibold text-immo-accent-blue mb-2">Disponibilites cette semaine</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-semibold text-immo-accent-blue">Disponibilites</p>
+        <span className="text-[8px] text-immo-text-muted">Visite: {duration} min</span>
+      </div>
       <div className="flex gap-1">
         {days.map(day => (
           <div key={day.label} className="flex-1 text-center">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle } from 'lucide-react'
+import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle, Calendar } from 'lucide-react'
 import {
   CompanySection,
   PipelineSection,
@@ -14,14 +14,16 @@ import {
 // PlaybookSection moved to Super Admin
 import { TaskConfigSection } from './sections/TaskConfigSection'
 import { WhatsAppSection } from './sections/WhatsAppSection'
+import { VisitScheduleSection } from './sections/VisitScheduleSection'
 
-type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
+type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'visits' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
 const SECTION_ICONS: Record<Section, typeof Building2> = {
   company: Building2,
   pipeline: GitBranch,
   playbook: Sparkles,
   tasks: Bell,
+  visits: Calendar,
   whatsapp: MessageCircle,
   branding: Palette,
   reservations: Bookmark,
@@ -31,13 +33,14 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   security: Shield,
 }
 
-const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
+const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
 const SECTION_LABELS: Record<Section, string> = {
   company: 'Agence',
   pipeline: 'Pipeline',
   playbook: 'Playbook IA',
   tasks: 'Taches auto',
+  visits: 'Visites',
   whatsapp: 'WhatsApp',
   branding: 'Personnalisation',
   reservations: 'Reservations',
@@ -79,6 +82,7 @@ export function SettingsPage() {
         {section === 'company' && <CompanySection />}
         {section === 'pipeline' && <PipelineSection />}
         {section === 'tasks' && <TaskConfigSection />}
+        {section === 'visits' && <VisitScheduleSection />}
         {section === 'whatsapp' && <WhatsAppSection />}
         {section === 'branding' && <BrandingSection />}
         {section === 'reservations' && <ReservationsSection />}
