@@ -169,6 +169,40 @@
     --sidebar-ring: #0579DA;
   }
 
+  .dark {
+    --background: #0d1117;
+    --foreground: #e6edf3;
+    --card: #161b22;
+    --card-foreground: #e6edf3;
+    --popover: #161b22;
+    --popover-foreground: #e6edf3;
+    --primary: #58a6ff;
+    --primary-foreground: #0d1117;
+    --secondary: #1c2128;
+    --secondary-foreground: #e6edf3;
+    --muted: #1c2128;
+    --muted-foreground: #484f58;
+    --accent: #58a6ff;
+    --accent-foreground: #0d1117;
+    --destructive: #f85149;
+    --border: #21262d;
+    --input: #21262d;
+    --ring: #58a6ff;
+    --chart-1: #58a6ff;
+    --chart-2: #3fb950;
+    --chart-3: #d29922;
+    --chart-4: #f85149;
+    --chart-5: #484f58;
+    --sidebar: #0d1117;
+    --sidebar-foreground: #e6edf3;
+    --sidebar-primary: #58a6ff;
+    --sidebar-primary-foreground: #0d1117;
+    --sidebar-accent: #1c2128;
+    --sidebar-accent-foreground: #e6edf3;
+    --sidebar-border: #21262d;
+    --sidebar-ring: #58a6ff;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
