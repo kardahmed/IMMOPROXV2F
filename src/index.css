@@ -138,32 +138,37 @@
     scroll-behavior: smooth;
   }
 
-  /* ─── Custom scrollbar ─── */
+  /* ─── Custom scrollbar (respects dark mode via CSS vars) ─── */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #F6F9FC;
+    background: var(--scrollbar-track, #F6F9FC);
   }
   ::-webkit-scrollbar-thumb {
-    background: #C1C9D2;
+    background: var(--scrollbar-thumb, #C1C9D2);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #0579DA;
+    background: var(--color-immo-accent-blue, #0579DA);
   }
 
   /* Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #C1C9D2 #F6F9FC;
+    scrollbar-color: var(--scrollbar-thumb, #C1C9D2) var(--scrollbar-track, #F6F9FC);
+  }
+
+  /* ─── Dark mode global fixes ─── */
+  .dark input, .dark select, .dark textarea {
+    color-scheme: dark;
   }
 
   /* ─── Selection ─── */
   ::selection {
     background: rgba(5, 121, 218, 0.15);
-    color: #0A2540;
+    color: var(--color-immo-text-primary, #0A2540);
   }
 
   /* ─── Focus ring ─── */
