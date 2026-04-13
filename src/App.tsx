@@ -56,14 +56,13 @@ function PageLoader() {
   )
 }
 
-// Redirect to marketing site or dashboard if authenticated
-function MarketingRedirect() {
-  // Check if there's a Supabase session in localStorage
+// Landing page component — loads marketing HTML inline
+const MarketingPage = lazy(() => import('@/pages/marketing/MarketingPage').then(m => ({ default: m.MarketingPage })))
+
+function HomeRedirect() {
   const hasSession = Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
   if (hasSession) return <Navigate to="/dashboard" replace />
-  // Not logged in → show marketing site
-  window.location.href = '/marketing/index.html'
-  return null
+  return <MarketingPage />
 }
 
 function App() {
@@ -71,7 +70,7 @@ function App() {
     <ErrorBoundary>
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={<MarketingRedirect />} />
+        <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/p/:slug" element={<PublicLandingPage />} />
