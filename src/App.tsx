@@ -44,6 +44,7 @@ const PlaybookAdminPage = lazy(() => import('@/pages/superadmin/PlaybookAdminPag
 const WhatsAppPage = lazy(() => import('@/pages/superadmin/WhatsAppPage').then(m => ({ default: m.WhatsAppPage })))
 
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage').then(m => ({ default: m.TasksPage })))
+const MarketingROIPage = lazy(() => import('@/pages/marketing-roi/MarketingROIPage').then(m => ({ default: m.MarketingROIPage })))
 
 // Landing pages
 const PublicLandingPage = lazy(() => import('@/pages/landing/PublicLandingPage').then(m => ({ default: m.PublicLandingPage })))
@@ -115,6 +116,7 @@ function App() {
               <Route path="/agents" element={<AgentsPage />} />
               <Route path="/agents/:agentId" element={<AgentDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/marketing-roi" element={<MarketingROIPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

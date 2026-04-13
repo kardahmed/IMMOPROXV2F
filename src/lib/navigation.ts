@@ -21,6 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Agents', path: '/agents', icon: 'Users', roles: ['admin', 'super_admin'], requiredPermission: 'agents.view' },
   { label: 'Pages capture', path: '/landing', icon: 'Globe', roles: ['admin', 'super_admin'], requiredPermission: 'landing.view' },
   { label: 'Rapports', path: '/reports', icon: 'BarChart3', roles: 'all', requiredPermission: 'reports.view' },
+  { label: 'ROI Marketing', path: '/marketing-roi', icon: 'Target', roles: ['admin', 'super_admin'] },
   { label: 'Paramètres', path: '/settings', icon: 'Settings', roles: ['admin', 'super_admin'], requiredPermission: 'settings.view' },
 ]
 
