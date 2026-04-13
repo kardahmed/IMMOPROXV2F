@@ -54,7 +54,8 @@ const NAV_KEYS: Record<string, string> = {
   '/settings': 'nav.settings',
 }
 
-export function Sidebar() {
+// Shared sidebar content (used by both desktop and mobile)
+function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { t } = useTranslation()
   const location = useLocation()
   const { signOut } = useAuth()
@@ -64,7 +65,7 @@ export function Sidebar() {
   const navItems = getVisibleNavItems(role, can)
 
   return (
-    <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-immo-border-default bg-immo-bg-sidebar rtl:border-l rtl:border-r-0">
+    <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5">
         <img src={logoUrl} alt={appName} className="h-9 w-9 rounded-lg object-contain" />
@@ -88,6 +89,7 @@ export function Sidebar() {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onNavClick}
               className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 isActive
                   ? 'bg-immo-accent-green/10 text-immo-accent-green'
@@ -141,6 +143,37 @@ export function Sidebar() {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// Desktop sidebar wrapper
+export function Sidebar() {
+  return (
+    <aside className="hidden md:flex h-screen w-[220px] shrink-0 flex-col border-r border-immo-border-default bg-immo-bg-sidebar rtl:border-l rtl:border-r-0">
+      <SidebarContent />
     </aside>
+  )
+}
+
+// Mobile sidebar (drawer overlay)
+import { useSidebarStore } from '@/hooks/useMobile'
+
+export function MobileSidebar() {
+  const { isOpen, close } = useSidebarStore()
+
+  return (
+    <>
+      {/* Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={close} />
+      )}
+      {/* Drawer */}
+      <aside className={`fixed left-0 top-0 z-50 h-screen w-[260px] border-r border-immo-border-default bg-immo-bg-sidebar transition-transform duration-300 md:hidden rtl:left-auto rtl:right-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
+      }`}>
+        <SidebarContent onNavClick={close} />
+      </aside>
+    </>
   )
 }

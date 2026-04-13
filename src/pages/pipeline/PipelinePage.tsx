@@ -467,7 +467,7 @@ export function PipelinePage() {
 
       {/* Batch reassign bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-[220px] right-0 z-30 flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card px-6 py-3 shadow-lg">
+        <div className="fixed bottom-0 left-0 md:left-[220px] right-0 z-30 flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card px-3 md:px-6 py-3 shadow-lg">
           <div className="flex items-center gap-3">
             <span className="rounded-full bg-immo-accent-green/10 px-3 py-1 text-sm font-semibold text-immo-accent-green">
               {selectedIds.size} client(s)

@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, Moon, Sun } from 'lucide-react'
+import { Search, Moon, Sun, Menu } from 'lucide-react'
+import { useMobile, useSidebarStore } from '@/hooks/useMobile'
 import { useAuthStore } from '@/store/authStore'
 import { useBranding } from '@/hooks/useBranding'
 import { useDarkMode } from '@/hooks/useDarkMode'
@@ -18,8 +19,10 @@ interface TopbarProps {
 export function Topbar({ title, subtitle }: TopbarProps) {
   const { t } = useTranslation()
   const { userProfile, tenantId } = useAuthStore()
-  useBranding() // Apply CSS variables for custom color
+  useBranding()
   const { isDark, setTheme } = useDarkMode()
+  const { isMobile } = useMobile()
+  const { toggle: toggleSidebar } = useSidebarStore()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; type: string }>>([])
@@ -35,19 +38,26 @@ export function Topbar({ title, subtitle }: TopbarProps) {
   }, [tenantId])
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-immo-border-default bg-immo-bg-sidebar px-6">
-      {/* Left: page title */}
-      <div>
-        <h1 className="text-lg font-semibold text-immo-text-primary">{title}</h1>
-        {subtitle && (
-          <p className="text-xs text-immo-text-muted">{subtitle}</p>
+    <header className="flex h-14 md:h-16 shrink-0 items-center justify-between border-b border-immo-border-default bg-immo-bg-sidebar px-3 md:px-6">
+      {/* Left: hamburger (mobile) + page title */}
+      <div className="flex items-center gap-3">
+        {isMobile && (
+          <button onClick={toggleSidebar} className="rounded-lg p-2 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+            <Menu className="h-5 w-5" />
+          </button>
         )}
+        <div>
+          <h1 className="text-base md:text-lg font-semibold text-immo-text-primary">{title}</h1>
+          {subtitle && !isMobile && (
+            <p className="text-xs text-immo-text-muted">{subtitle}</p>
+          )}
+        </div>
       </div>
 
       {/* Right: search + lang + notifs + avatar */}
-      <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="relative">
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Search — hidden on mobile, icon only on tablet */}
+        <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-immo-text-muted rtl:left-auto rtl:right-3" />
           <Input
             type="text"
@@ -56,7 +66,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
             onBlur={() => setTimeout(() => setShowResults(false), 200)}
             onFocus={() => searchResults.length > 0 && setShowResults(true)}
             placeholder={t('common.search_placeholder')}
-            className="h-9 w-[240px] border-immo-border-default bg-immo-bg-primary pl-9 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:ring-immo-accent-green rtl:pl-3 rtl:pr-9"
+            className="h-9 w-[180px] lg:w-[240px] border-immo-border-default bg-immo-bg-primary pl-9 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:ring-immo-accent-green rtl:pl-3 rtl:pr-9"
           />
           {showResults && (
             <div className="absolute top-full left-0 z-50 mt-1 w-[300px] rounded-lg border border-immo-border-default bg-immo-bg-card shadow-lg">
@@ -78,8 +88,8 @@ export function Topbar({ title, subtitle }: TopbarProps) {
           {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
 
-        {/* Language switch */}
-        <LanguageSwitch />
+        {/* Language switch — hidden on mobile */}
+        <div className="hidden md:block"><LanguageSwitch /></div>
 
         {/* Notifications */}
         <NotificationBell />

@@ -361,9 +361,9 @@ export function CallScriptModal({
       </div>
 
       {/* Body */}
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row overflow-hidden">
         {/* Left: Script */}
-        <div className="flex-[3] overflow-y-auto border-r border-immo-border-default p-6">
+        <div className="flex-[3] overflow-y-auto border-b md:border-b-0 md:border-r border-immo-border-default p-3 md:p-6">
           {loadingScript ? (
             <div className="flex items-center gap-3 py-8">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" />
@@ -557,7 +557,7 @@ export function CallScriptModal({
         </div>
 
         {/* Right: Responses summary */}
-        <div className="flex w-[380px] shrink-0 flex-col overflow-hidden bg-immo-bg-card">
+        <div className="flex w-full md:w-[380px] shrink-0 flex-col overflow-hidden bg-immo-bg-card">
           <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <h3 className="mb-4 text-sm font-bold text-immo-text-primary">Recapitulatif</h3>
 

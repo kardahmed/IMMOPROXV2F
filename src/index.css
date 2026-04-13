@@ -216,6 +216,27 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Mobile safe areas (iPhone notch, Android nav bar) */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    body {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
+
+  /* Touch targets minimum 44px on mobile */
+  @media (max-width: 768px) {
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Exceptions for small inline elements */
+    .no-min-touch, table button, table a {
+      min-height: unset;
+      min-width: unset;
+    }
   }
 
   /* ─── Custom scrollbar (respects dark mode via CSS vars) ─── */
