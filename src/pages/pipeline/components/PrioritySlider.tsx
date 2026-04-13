@@ -33,7 +33,8 @@ export function PrioritySlider({ clients, onAction }: PrioritySliderProps) {
 
   return (
     <div>
-      <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-immo-text-primary">
+        <span className="rounded-md bg-immo-status-orange/10 px-2 py-0.5 text-[10px] font-bold text-immo-status-orange">VIP</span>
         Clients prioritaires ({clients.length})
       </h3>
       <div className="flex gap-3 overflow-x-auto pb-2">
@@ -49,8 +50,9 @@ export function PrioritySlider({ clients, onAction }: PrioritySliderProps) {
             >
               {/* Header */}
               <div className="mb-2 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-immo-accent-green/15 text-xs font-semibold text-immo-accent-green">
+                <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-immo-status-orange/15 text-xs font-semibold text-immo-status-orange">
                   {c.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-immo-status-orange text-[6px] font-bold text-white">V</span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-immo-text-primary">{c.full_name}</p>

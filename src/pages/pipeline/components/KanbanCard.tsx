@@ -64,6 +64,7 @@ export interface KanbanCardClient {
   created_at: string
   days_in_stage: number
   is_urgent: boolean
+  is_priority?: boolean
 }
 
 interface KanbanCardProps {
@@ -140,6 +141,10 @@ export function KanbanCard({
             <p className="truncate text-sm font-medium text-immo-text-primary">
               {client.full_name}
             </p>
+            {/* VIP badge */}
+            {client.is_priority && (
+              <span className="shrink-0 rounded bg-immo-status-orange/15 px-1.5 py-0.5 text-[8px] font-bold text-immo-status-orange">VIP</span>
+            )}
             {/* Urgent alert */}
             {client.is_urgent && (
               <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-immo-status-red" />

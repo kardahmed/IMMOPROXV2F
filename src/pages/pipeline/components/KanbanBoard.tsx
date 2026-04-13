@@ -114,6 +114,7 @@ export function KanbanBoard({
       agent_name: c.agent_id && agentMap ? agentMap.get(c.agent_id) ?? null : null,
       project_name: projectName, created_at: c.created_at, days_in_stage: daysInStage,
       is_urgent: daysInStage > urgentDays && !['vente', 'perdue'].includes(c.pipeline_stage),
+      is_priority: c.is_priority,
     }
   }
 
