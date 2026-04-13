@@ -39,7 +39,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import toast from 'react-hot-toast'
 import { AlertBar } from './components/AlertBar'
 import { PrioritySlider } from './components/PrioritySlider'
-import { StageProgress } from './components/StageProgress'
+// StageProgress moved to Analytics tab
 import { KanbanBoard } from './components/KanbanBoard'
 import { CardsView } from './components/CardsView'
 import { TableView } from './components/TableView'
@@ -111,6 +111,7 @@ export function PipelinePage() {
 
   const urgentDays = 7 // fallback, pipeline stats provides the real value
 
+  const [pipelineTab, setPipelineTab] = useState<'pipeline' | 'analytics'>('pipeline')
   const [search, setSearch] = useState('')
   const [projectFilter, setProjectFilter] = useState('all')
   const [view, setView] = useState<ViewMode>('kanban')
@@ -256,6 +257,22 @@ export function PipelinePage() {
 
   return (
     <div className="space-y-5">
+      {/* Tabs: Pipeline | Analytique */}
+      <div className="flex gap-1 border-b border-immo-border-default">
+        <button onClick={() => setPipelineTab('pipeline')}
+          className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${pipelineTab === 'pipeline' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+          <Kanban className="h-3.5 w-3.5" /> Pipeline
+        </button>
+        <button onClick={() => setPipelineTab('analytics')}
+          className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${pipelineTab === 'analytics' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+          <BarChart3 className="h-3.5 w-3.5" /> Repartition par etape
+        </button>
+      </div>
+
+      {pipelineTab === 'analytics' ? (
+        <PipelineAnalytics />
+      ) : (
+      <>
       {/* 1. Alerts */}
       {stats?.alerts && stats.alerts.length > 0 && (
         <AlertBar alerts={stats.alerts} onAlertClick={handleAlertClick} />
@@ -333,8 +350,7 @@ export function PipelinePage() {
       {/* 3. Priority clients slider */}
       <PrioritySlider clients={priorityClients} onAction={handlePriorityAction} />
 
-      {/* 4. Stage progress */}
-      {stats && <StageProgress stats={stats.stageStats} />}
+      {/* Stage progress moved to Analytics tab */}
 
       {/* 5. Filters toolbar */}
       <div className="flex flex-wrap items-center gap-3">
@@ -390,7 +406,6 @@ export function PipelinePage() {
             { mode: 'kanban' as ViewMode, icon: Kanban, label: 'Kanban' },
             { mode: 'cards' as ViewMode, icon: LayoutGrid, label: 'Cartes' },
             { mode: 'table' as ViewMode, icon: List, label: 'Tableau' },
-            { mode: 'analytics' as ViewMode, icon: BarChart3, label: 'Analytique' },
           ]).map(({ mode, icon: Icon }) => (
             <button
               key={mode}
@@ -447,7 +462,8 @@ export function PipelinePage() {
         />
       )}
 
-      {view === 'analytics' && <PipelineAnalytics />}
+      </>
+      )}
 
       {/* Batch reassign bar */}
       {selectedIds.size > 0 && (
