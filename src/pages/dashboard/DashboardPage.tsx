@@ -17,8 +17,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { fr as frLocale } from 'date-fns/locale'
 import { ar as arLocale } from 'date-fns/locale'
 import { AgentDashboard } from './AgentDashboard'
-import { OnboardingWizard } from '@/components/common/OnboardingWizard'
-import { TrialBanner } from '@/components/common/TrialBanner'
+// OnboardingWizard + TrialBanner are rendered in AppLayout, not here
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation()
@@ -37,12 +36,6 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Trial banner */}
-      <TrialBanner />
-
-      {/* Onboarding wizard */}
-      <OnboardingWizard />
-
       {/* Section 1 — KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         <KPICard
