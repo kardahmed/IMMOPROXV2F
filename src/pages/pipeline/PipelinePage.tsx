@@ -12,6 +12,7 @@ import {
   Kanban,
   LayoutGrid,
   List,
+  BarChart3,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useClients } from '@/hooks/useClients'
@@ -48,7 +49,9 @@ import { ClientSidePanel } from './components/ClientSidePanel'
 import { AdvancedFilters, EMPTY_FILTERS } from './components/AdvancedFilters'
 import type { AdvancedFilterValues } from './components/AdvancedFilters'
 
-type ViewMode = 'kanban' | 'cards' | 'table'
+import { PipelineAnalytics } from './components/PipelineAnalytics'
+
+type ViewMode = 'kanban' | 'cards' | 'table' | 'analytics'
 
 export function PipelinePage() {
   const navigate = useNavigate()
@@ -387,6 +390,7 @@ export function PipelinePage() {
             { mode: 'kanban' as ViewMode, icon: Kanban, label: 'Kanban' },
             { mode: 'cards' as ViewMode, icon: LayoutGrid, label: 'Cartes' },
             { mode: 'table' as ViewMode, icon: List, label: 'Tableau' },
+            { mode: 'analytics' as ViewMode, icon: BarChart3, label: 'Analytique' },
           ]).map(({ mode, icon: Icon }) => (
             <button
               key={mode}
@@ -442,6 +446,8 @@ export function PipelinePage() {
           onChangeStage={(id, stage) => updateClientStage.mutate({ clientId: id, newStage: stage })}
         />
       )}
+
+      {view === 'analytics' && <PipelineAnalytics />}
 
       {/* Batch reassign bar */}
       {selectedIds.size > 0 && (
