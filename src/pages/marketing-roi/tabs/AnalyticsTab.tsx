@@ -28,14 +28,14 @@ export function AnalyticsTab() {
     queryKey: ['marketing-roi', tenantId, period],
     queryFn: async () => {
       const [expensesRes, clientsRes, visitsRes, reservationsRes, salesRes] = await Promise.all([
-        supabase.from('marketing_expenses').select('amount, category, project_id').eq('tenant_id', tenantId!).gte('expense_date', dateStr),
+        supabase.from('marketing_expenses').select('amount, category, project_id, expense_date').eq('tenant_id', tenantId!).gte('expense_date', dateStr),
         supabase.from('clients').select('id, source, pipeline_stage, created_at').eq('tenant_id', tenantId!).gte('created_at', dateFrom.toISOString()),
         supabase.from('visits').select('id, client_id, status').eq('tenant_id', tenantId!).in('status', ['completed', 'confirmed']).gte('created_at', dateFrom.toISOString()),
         supabase.from('reservations').select('id').eq('tenant_id', tenantId!).gte('created_at', dateFrom.toISOString()),
         supabase.from('sales').select('id, final_price, client_id').eq('tenant_id', tenantId!).eq('status', 'active').gte('created_at', dateFrom.toISOString()),
       ])
 
-      const expenses = (expensesRes.data ?? []) as Array<{ amount: number; category: string; project_id: string | null }>
+      const expenses = (expensesRes.data ?? []) as Array<{ amount: number; category: string; project_id: string | null; expense_date: string }>
       const clients = (clientsRes.data ?? []) as Array<{ id: string; source: string; pipeline_stage: string; created_at: string }>
       const visits = (visitsRes.data ?? []) as Array<{ id: string; client_id: string; status: string }>
       const reservations = (reservationsRes.data ?? []) as Array<{ id: string }>
@@ -74,7 +74,7 @@ export function AnalyticsTab() {
 
       const bySource = [...sources.entries()].map(([source, data]) => ({
         source, label: SOURCE_LABELS[source] ?? source, ...data,
-        cpl: data.leads > 0 ? totalSpent * (data.leads / totalLeads) / data.leads : 0,
+        cpl: totalLeads > 0 ? totalSpent / totalLeads : 0, // Global CPL (no per-source expense tracking)
         conversionRate: data.leads > 0 ? (data.sales / data.leads) * 100 : 0,
       })).sort((a, b) => b.leads - a.leads)
 
@@ -84,7 +84,7 @@ export function AnalyticsTab() {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
         const monthNames = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec']
-        const monthExpenses = expenses.reduce((s, ex) => s + ex.amount, 0) / 6 // approximate monthly
+        const monthExpenses = expenses.filter(ex => ex.expense_date?.startsWith(key)).reduce((s, ex) => s + ex.amount, 0)
         const monthLeads = clients.filter(c => c.created_at.startsWith(key)).length
         cplTrend.push({ month: monthNames[d.getMonth()], cpl: monthLeads > 0 ? monthExpenses / monthLeads : 0 })
       }

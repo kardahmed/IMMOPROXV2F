@@ -70,16 +70,16 @@ export function PipelineAnalytics() {
           return new Date(c.last_contact_at).getTime() < fiveDaysAgo
         }).length
 
-        // Conversion rate: clients who moved to next stage / total who were in this stage
+        // Conversion rate: clients who moved past this stage / clients who were in this stage
         const nextStage = STAGES_ORDER[idx + 1]
         let conversionRate = 0
         if (nextStage && idx < 7) {
-          const nextCount = clients.filter(c => {
+          const movedPast = clients.filter(c => {
             const cIdx = STAGES_ORDER.indexOf(c.pipeline_stage as PipelineStage)
             return cIdx > idx
           }).length
-          const totalFromStage = stageClients.length + nextCount
-          conversionRate = totalFromStage > 0 ? (nextCount / totalFromStage) * 100 : 0
+          const totalWhoWereHere = stageClients.length + movedPast
+          conversionRate = totalWhoWereHere > 0 ? (movedPast / totalWhoWereHere) * 100 : 0
         }
 
         return {
