@@ -20,6 +20,8 @@ import {
 import { USER_ROLE_LABELS } from '@/types'
 import { usePlanEnforcement } from '@/hooks/usePlanEnforcement'
 import { PlanLimitBanner } from '@/components/common/PlanLimitBanner'
+import { PermissionProfilesSection } from '@/pages/settings/sections/PermissionProfilesSection'
+import { Shield } from 'lucide-react'
 import type { UserRole } from '@/types'
 import { MoreHorizontal } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -55,6 +57,7 @@ export function AgentsPage() {
   const { canAddAgent, usage, limits } = usePlanEnforcement()
   const qc = useQueryClient()
 
+  const [activeTab, setActiveTab] = useState<'agents' | 'permissions'>('agents')
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [deactivateId, setDeactivateId] = useState<string | null>(null)
@@ -129,6 +132,24 @@ export function AgentsPage() {
 
   return (
     <div className="space-y-5">
+      {/* Tabs: Agents | Permissions */}
+      {canManageAgents && (
+        <div className="flex gap-1 border-b border-immo-border-default">
+          <button onClick={() => setActiveTab('agents')}
+            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${activeTab === 'agents' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+            <Users className="h-3.5 w-3.5" /> Agents
+          </button>
+          <button onClick={() => setActiveTab('permissions')}
+            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${activeTab === 'permissions' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+            <Shield className="h-3.5 w-3.5" /> Profils de permissions
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'permissions' ? (
+        <PermissionProfilesSection />
+      ) : (
+      <>
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KPICard label="Total agents" value={total} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
@@ -240,6 +261,8 @@ export function AgentsPage() {
         confirmVariant="danger"
         loading={deactivate.isPending}
       />
+      </>
+      )}
     </div>
   )
 }

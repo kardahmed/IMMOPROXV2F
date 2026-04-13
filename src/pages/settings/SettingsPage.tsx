@@ -37,7 +37,7 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   security: Shield,
 }
 
-const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'profiles', 'features', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
+const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'features', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
 const SECTION_LABELS: Record<Section, string> = {
   company: 'Agence',
