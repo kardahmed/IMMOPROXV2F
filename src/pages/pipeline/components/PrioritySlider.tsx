@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import {
   Phone,
   MessageCircle,
@@ -29,6 +30,7 @@ function daysSince(date: string | null): number {
 }
 
 export function PrioritySlider({ clients, onAction }: PrioritySliderProps) {
+  const navigate = useNavigate()
   if (clients.length === 0) return null
 
   return (
@@ -46,7 +48,8 @@ export function PrioritySlider({ clients, onAction }: PrioritySliderProps) {
           return (
             <div
               key={c.id}
-              className="w-[220px] shrink-0 rounded-xl border border-immo-border-default bg-immo-bg-card p-3"
+              onClick={() => navigate(`/pipeline/clients/${c.id}`)}
+              className="w-[220px] shrink-0 cursor-pointer rounded-xl border border-immo-border-default bg-immo-bg-card p-3 transition-all hover:border-immo-status-orange/40 hover:shadow-md"
             >
               {/* Header */}
               <div className="mb-2 flex items-center gap-2">
