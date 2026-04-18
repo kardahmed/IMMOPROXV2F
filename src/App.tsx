@@ -9,6 +9,12 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 // Lazy-loaded pages for code splitting
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage').then(m => ({ default: m.RegisterPage })))
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
+const AcceptInvitePage = lazy(() => import('@/pages/auth/AcceptInvitePage').then(m => ({ default: m.AcceptInvitePage })))
+const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage').then(m => ({ default: m.ProfilePage })))
+const ChangelogViewPage = lazy(() => import('@/pages/changelog/ChangelogViewPage').then(m => ({ default: m.ChangelogViewPage })))
+const IntegrationsPage = lazy(() => import('@/pages/integrations/IntegrationsPage').then(m => ({ default: m.IntegrationsPage })))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })))
 const ProjectsPage = lazy(() => import('@/pages/projects/ProjectsPage').then(m => ({ default: m.ProjectsPage })))
 const ProjectDetailPage = lazy(() => import('@/pages/projects/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })))
@@ -75,6 +81,9 @@ function App() {
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/accept-invite" element={<AcceptInvitePage />} />
         <Route path="/p/:slug" element={<PublicLandingPage />} />
 
         {/* Super Admin routes — /admin/* */}
@@ -109,6 +118,8 @@ function App() {
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/dossiers" element={<DossiersPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/changelog" element={<ChangelogViewPage />} />
 
             {/* Admin & super_admin only */}
             <Route element={<RoleRoute allowedRoles={['admin', 'super_admin']} />}>
@@ -119,6 +130,7 @@ function App() {
               <Route path="/agents/:agentId" element={<AgentDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/marketing-roi" element={<MarketingROIPage />} />
+              <Route path="/integrations" element={<IntegrationsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

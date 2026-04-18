@@ -9,6 +9,7 @@ import {
   Wallet,
   Plus,
   Download,
+  Upload,
   Kanban,
   LayoutGrid,
   List,
@@ -44,6 +45,7 @@ import { KanbanBoard } from './components/KanbanBoard'
 import { CardsView } from './components/CardsView'
 import { TableView } from './components/TableView'
 import { ClientFormModal } from './components/ClientFormModal'
+import { ImportClientsModal } from '@/components/pipeline/ImportClientsModal'
 import { SmartStageDialog } from './components/SmartStageDialog'
 import { ClientSidePanel } from './components/ClientSidePanel'
 import { AdvancedFilters, EMPTY_FILTERS } from './components/AdvancedFilters'
@@ -118,6 +120,7 @@ export function PipelinePage() {
   const [compact, setCompact] = useState(() => localStorage.getItem('pipeline-compact') === 'true')
   const [alertFilter, setAlertFilter] = useState<string[] | null>(null)
   const [showClientForm, setShowClientForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [sidePanelClientId, setSidePanelClientId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [reassignAgent, setReassignAgent] = useState('')
@@ -385,6 +388,14 @@ export function PipelinePage() {
         >
           <Download className="mr-1.5 h-3.5 w-3.5" /> Export
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover"
+          onClick={() => setShowImport(true)}
+        >
+          <Upload className="mr-1.5 h-3.5 w-3.5" /> Importer CSV
+        </Button>
 
         {/* Compact toggle */}
         {view === 'kanban' && (
@@ -499,6 +510,7 @@ export function PipelinePage() {
       )}
 
       <ClientFormModal isOpen={showClientForm} onClose={() => setShowClientForm(false)} />
+      <ImportClientsModal isOpen={showImport} onClose={() => setShowImport(false)} />
 
       {/* Stage change confirmation dialog */}
       {/* Client side panel */}

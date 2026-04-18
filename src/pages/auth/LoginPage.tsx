@@ -172,9 +172,9 @@ export function LoginPage() {
                   <label htmlFor="password" className="text-[12px] text-[#425466]" style={{fontWeight:600}}>
                     {t('login.password_label')}
                   </label>
-                  <button type="button" className="text-[11px] text-[#0579DA] hover:underline" style={{fontWeight:600}}>
+                  <Link to="/forgot-password" className="text-[11px] text-[#0579DA] hover:underline" style={{fontWeight:600}}>
                     Mot de passe oublie ?
-                  </button>
+                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8898AA]" />

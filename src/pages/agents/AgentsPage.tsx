@@ -277,34 +277,36 @@ function CreateAgentModal({ isOpen, onClose, tenantId }: { isOpen: boolean; onCl
 
   const create = useMutation({
     mutationFn: async () => {
-      // Generate temp password
-      const tempPassword = `Immo${Date.now().toString(36).slice(-6)}!`
+      // Generate invitation token + insert row
+      const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 16)
+      const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString()
 
-      // Create auth user via Supabase
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email,
-        password: tempPassword,
-        options: { data: { first_name: firstName, last_name: lastName } },
-      })
-      if (authErr) { handleSupabaseError(authErr); throw authErr }
-      if (!authData.user) throw new Error('User creation failed')
-
-      // Insert in users table
-      const { error: userErr } = await supabase.from('users').insert({
-        id: authData.user.id,
+      const { data: invitation, error: invErr } = await supabase.from('invitations').insert({
         tenant_id: tenantId,
+        email,
         first_name: firstName,
         last_name: lastName,
-        email,
         phone: phone || null,
         role,
-        status: 'active',
-      } as never)
-      if (userErr) { handleSupabaseError(userErr); throw userErr }
+        token,
+        expires_at: expiresAt,
+      } as never).select('id, token').single()
+      if (invErr) { handleSupabaseError(invErr); throw invErr }
+
+      // Fire-and-forget email — uses the existing send-email function
+      const link = `${window.location.origin}/accept-invite?token=${(invitation as { token: string }).token}`
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: email,
+          subject: 'Invitation IMMO PRO-X',
+          body: `<p>Bonjour ${firstName},</p><p>Vous avez ete invite(e) a rejoindre IMMO PRO-X en tant que <strong>${role}</strong>.</p><p>Cliquez sur le lien ci-dessous pour creer votre compte :</p><p><a href="${link}" style="background:#0579DA;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">Accepter l'invitation</a></p><p style="color:#8898AA;font-size:12px">Ce lien expire le ${new Date(expiresAt).toLocaleDateString('fr-FR')}.</p>`,
+          tenant_id: tenantId,
+        },
+      })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['agents-list'] })
-      toast.success('Agent créé — un email de bienvenue a été envoyé')
+      toast.success('Invitation envoyee par email')
       resetAndClose()
     },
   })
@@ -315,7 +317,7 @@ function CreateAgentModal({ isOpen, onClose, tenantId }: { isOpen: boolean; onCl
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Ajouter un agent" subtitle="Créer un nouveau compte agent" size="sm">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title="Inviter un agent" subtitle="Un email d'invitation sera envoye" size="sm">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -345,7 +347,7 @@ function CreateAgentModal({ isOpen, onClose, tenantId }: { isOpen: boolean; onCl
         <div className="flex justify-end gap-3 border-t border-immo-border-default pt-4">
           <Button variant="ghost" onClick={resetAndClose} className="text-immo-text-secondary hover:bg-immo-bg-card-hover">Annuler</Button>
           <Button onClick={() => create.mutate()} disabled={!firstName || !lastName || !email || create.isPending} className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-            {create.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" /> : 'Créer le compte'}
+            {create.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" /> : 'Envoyer l\'invitation'}
           </Button>
         </div>
       </div>

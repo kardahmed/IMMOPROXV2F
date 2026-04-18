@@ -6,6 +6,7 @@ import { Sidebar, MobileSidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { TrialBanner } from '@/components/common/TrialBanner'
 import { OnboardingWizard } from '@/components/common/OnboardingWizard'
+import { HelpWidget } from '@/components/common/HelpWidget'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -67,6 +68,7 @@ export function AppLayout() {
           </div>
         </main>
       </div>
+      <HelpWidget />
     </div>
   )
 }

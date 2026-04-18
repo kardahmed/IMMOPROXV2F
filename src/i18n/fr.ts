@@ -13,6 +13,8 @@ export const fr = {
     reports: 'Rapports',
     tasks: 'Tâches',
     marketing_roi: 'ROI Marketing',
+    integrations: 'Intégrations',
+    changelog: 'Nouveautés',
     settings: 'Paramètres',
   },
 
@@ -28,6 +30,13 @@ export const fr = {
     agents_subtitle: "Gestion de l'équipe commerciale",
     reports_subtitle: 'Rapports et statistiques',
     settings_subtitle: "Configuration de l'agence",
+    integrations_subtitle: 'Clés API et webhooks',
+    changelog_subtitle: 'Dernières mises à jour de la plateforme',
+  },
+
+  profile: {
+    title: 'Mon profil',
+    subtitle: 'Gérez vos informations et la sécurité de votre compte',
   },
 
   // Actions

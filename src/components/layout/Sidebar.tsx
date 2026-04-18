@@ -14,6 +14,8 @@ import {
   Globe,
   LogOut,
   CheckSquare,
+  Key,
+  Sparkles,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
@@ -35,6 +37,8 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Settings,
   Globe,
   CheckSquare,
+  Key,
+  Sparkles,
 }
 
 // Map nav path → i18n key
@@ -51,6 +55,8 @@ const NAV_KEYS: Record<string, string> = {
   '/landing': 'nav.landing',
   '/reports': 'nav.reports',
   '/marketing-roi': 'nav.marketing_roi',
+  '/integrations': 'nav.integrations',
+  '/changelog': 'nav.changelog',
   '/settings': 'nav.settings',
 }
 

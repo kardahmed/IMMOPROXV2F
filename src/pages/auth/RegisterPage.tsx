@@ -33,6 +33,7 @@ export function RegisterPage() {
   const [form, setForm] = useState({
     companyName: '', email: '', password: '', firstName: '', lastName: '', phone: '', wilaya: '',
   })
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   function set(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -42,11 +43,17 @@ export function RegisterPage() {
     if (!form.companyName || !form.email || !form.password || !form.firstName || !form.lastName) {
       toast.error('Veuillez remplir tous les champs obligatoires'); return
     }
+    if (!termsAccepted) {
+      toast.error('Vous devez accepter les CGU et la politique de confidentialite'); return
+    }
     setLoading(true)
     try {
       const { data: authData, error: authErr } = await supabase.auth.signUp({
         email: form.email, password: form.password,
-        options: { data: { first_name: form.firstName, last_name: form.lastName } },
+        options: {
+          data: { first_name: form.firstName, last_name: form.lastName },
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       })
       if (authErr) throw authErr
       if (!authData.user) throw new Error('Erreur creation compte')
@@ -63,10 +70,11 @@ export function RegisterPage() {
         id: authData.user.id, tenant_id: tenantId, email: form.email,
         first_name: form.firstName, last_name: form.lastName, phone: form.phone || null,
         role: 'admin', status: 'active', last_activity: new Date().toISOString(),
+        terms_accepted_at: new Date().toISOString(),
       } as never)
       await supabase.from('tenant_settings').insert({ tenant_id: tenantId } as never)
 
-      toast.success('Compte créé avec succès !')
+      toast.success('Compte cree ! Verifiez votre email pour confirmer votre inscription.')
       navigate('/login')
     } catch (err) {
       toast.error((err as Error).message ?? 'Erreur lors de l\'inscription')
@@ -340,20 +348,26 @@ export function RegisterPage() {
                   </div>
                 </div>
 
+                <label className="mt-5 flex cursor-pointer items-start gap-2.5">
+                  <button type="button" onClick={() => setTermsAccepted(!termsAccepted)}
+                    className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-2 transition-all ${termsAccepted ? 'border-[#0579DA] bg-[#0579DA]' : 'border-[#D0D5DD]'}`}>
+                    {termsAccepted && <Check className="h-3 w-3 text-white" />}
+                  </button>
+                  <span className="text-[11px] leading-relaxed text-[#425466]">
+                    J'accepte les <a href="/marketing/cgu.html" target="_blank" rel="noopener noreferrer" className="text-[#0579DA] hover:underline">CGU</a> et la <a href="/marketing/confidentialite.html" target="_blank" rel="noopener noreferrer" className="text-[#0579DA] hover:underline">politique de confidentialite</a> d'IMMO PRO-X.
+                  </span>
+                </label>
+
                 <div className="mt-5 flex gap-3">
                   <button onClick={() => setStep('info')}
                     className="flex h-11 items-center gap-1.5 rounded-xl border border-[#E3E8EF] bg-white px-5 text-sm font-medium text-[#425466] transition-all hover:bg-[#F0F4F8]">
                     <ArrowLeft className="h-4 w-4" /> Retour
                   </button>
-                  <button onClick={handleSubmit} disabled={loading}
+                  <button onClick={handleSubmit} disabled={loading || !termsAccepted}
                     className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#0579DA] text-sm font-bold text-white transition-all hover:bg-[#0460B8] hover:shadow-lg hover:shadow-[#0579DA]/20 disabled:opacity-50">
                     {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Check className="h-4 w-4" /> Creer mon compte</>}
                   </button>
                 </div>
-
-                <p className="mt-4 text-center text-[10px] text-[#8898AA]">
-                  En creant votre compte, vous acceptez nos <a href="#" className="text-[#0579DA] hover:underline">CGU</a> et notre <a href="#" className="text-[#0579DA] hover:underline">politique de confidentialite</a>.
-                </p>
               </div>
             )}
           </div>

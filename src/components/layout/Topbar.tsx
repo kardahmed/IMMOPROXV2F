@@ -94,11 +94,12 @@ export function Topbar({ title, subtitle }: TopbarProps) {
         {/* Notifications */}
         <NotificationBell />
 
-        {/* Avatar */}
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-immo-accent-blue/15 text-xs font-semibold text-immo-accent-blue">
+        {/* Avatar — links to Profile */}
+        <button onClick={() => navigate('/profile')} title="Mon profil"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-immo-accent-blue/15 text-xs font-semibold text-immo-accent-blue transition-all hover:ring-2 hover:ring-immo-accent-blue/30">
           {userProfile?.first_name?.[0]}
           {userProfile?.last_name?.[0]}
-        </div>
+        </button>
       </div>
     </header>
   )
