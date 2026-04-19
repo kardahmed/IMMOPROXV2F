@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { DollarSign, TrendingUp, TrendingDown, Users, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner, GlobeAnalytics } from '@/components/common'
+import { KPICard, LoadingSpinner } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { format, subMonths, startOfMonth, endOfMonth, differenceInDays } from 'date-fns'
 
@@ -123,17 +123,6 @@ export function GlobalStatsPage() {
         <KPICard label="Churn rate" value={`${data.churnRate.toFixed(1)}%`} accent={data.churnRate > 10 ? 'red' : data.churnRate > 5 ? 'orange' : 'green'} icon={<TrendingDown className="h-5 w-5 text-immo-status-red" />} />
         <KPICard label="LTV moyen" value={formatPriceCompact(data.ltv)} accent="green" icon={<ArrowUpRight className="h-5 w-5 text-immo-accent-green" />} />
       </div>
-
-      {/* Geographic distribution */}
-      <GlobeAnalytics
-        title="Couverture geographique"
-        subtitle="Activite des tenants a travers l'Algerie"
-        stats={[
-          { label: 'Tenants actifs', value: data.activeTenants },
-          { label: 'Total clients', value: data.totalClients },
-          { label: 'Ventes', value: data.totalSales },
-        ]}
-      />
 
       {/* Secondary KPIs */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
