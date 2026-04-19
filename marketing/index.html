@@ -54,6 +54,24 @@
     .hero-btn{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
     .hero-note{font-size:12px;color:rgba(255,255,255,.3);margin-bottom:48px}
 
+    /* Globe section */
+    .globe-wrap{margin:0 auto 56px;max-width:920px}
+    .globe-card{display:grid;grid-template-columns:1fr 1.1fr;gap:36px;align-items:center;padding:32px;border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,.02) 100%);backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 80px rgba(0,0,0,.25)}
+    .globe-canvas-wrap{position:relative;aspect-ratio:1;max-width:340px;margin:0 auto;width:100%}
+    .globe-side{color:#fff}
+    .globe-tag{display:inline-block;background:rgba(0,212,160,.12);color:var(--green);font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+    .globe-h{font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:10px;line-height:1.2}
+    .globe-p{font-size:14px;line-height:1.65;color:rgba(255,255,255,.55);margin-bottom:18px}
+    .globe-cities{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .globe-city{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.7);font-weight:500}
+    .globe-dot{width:8px;height:8px;border-radius:50%;background:var(--blue-l);box-shadow:0 0 12px var(--blue-l);animation:pulse 2s infinite}
+    .globe-city:nth-child(2) .globe-dot{animation-delay:.3s}
+    .globe-city:nth-child(3) .globe-dot{animation-delay:.6s}
+    .globe-city:nth-child(4) .globe-dot{animation-delay:.9s}
+    .globe-city:nth-child(5) .globe-dot{animation-delay:1.2s}
+    .globe-city:nth-child(6) .globe-dot{animation-delay:1.5s}
+    @keyframes pulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+
     /* Counters */
     .counters{display:flex;justify-content:center;gap:48px;margin-bottom:56px}
     .counter{text-align:center}
@@ -320,6 +338,8 @@
       .mobile-inner{flex-direction:column}.stats-row{gap:24px}.trust-row{gap:20px}
       .cmp-table{font-size:12px}.cmp-table th,.cmp-table td{padding:10px 12px}
       .counters{gap:24px}.counter .num{font-size:28px}
+      .globe-card{grid-template-columns:1fr;gap:24px;padding:24px}
+      .globe-canvas-wrap{max-width:260px}
     }
     @media(max-width:640px){
       .bento,.p-grid{grid-template-columns:1fr}
@@ -348,6 +368,11 @@
       .faq-q{padding:16px}.faq-a{padding:0 16px 16px}
       .cta-end{padding:60px 0}
       .cta-end h2{font-size:26px}
+      .globe-card{padding:20px;gap:20px}
+      .globe-canvas-wrap{max-width:220px}
+      .globe-h{font-size:20px}
+      .globe-cities{grid-template-columns:1fr 1fr;gap:6px}
+      .globe-city{font-size:12px}
     }
     @media(max-width:380px){
       .hero h1{font-size:28px}
@@ -380,6 +405,26 @@
     <p class="sub rv rv-1">Pipeline de vente, landing pages, tracking publicitaire et intelligence artificielle. La plateforme tout-en-un pour les promoteurs immobiliers.</p>
     <div class="hero-btn rv rv-2"><a href="/register" class="btn btn-p">Demarrer maintenant →</a><a href="#features" class="btn btn-g">Explorer les fonctionnalites</a></div>
     <p class="hero-note rv rv-2">Essai gratuit · Sans carte bancaire · Configuration en 2 minutes</p>
+
+    <!-- Globe — Algeria coverage -->
+    <div class="globe-wrap rv rv-3">
+      <div class="globe-card">
+        <div class="globe-canvas-wrap"><canvas id="immo-globe" style="width:100%;height:100%;aspect-ratio:1;contain:layout paint size"></canvas></div>
+        <div class="globe-side">
+          <div class="globe-tag">Couverture nationale</div>
+          <h3 class="globe-h">Pense pour les 48 wilayas</h3>
+          <p class="globe-p">Gestion multi-projets, multi-villes, multi-agents. Devises et formats algeriens. Donnees hebergees pour servir le marche local rapidement.</p>
+          <div class="globe-cities">
+            <div class="globe-city"><span class="globe-dot"></span>Alger</div>
+            <div class="globe-city"><span class="globe-dot"></span>Oran</div>
+            <div class="globe-city"><span class="globe-dot"></span>Constantine</div>
+            <div class="globe-city"><span class="globe-dot"></span>Annaba</div>
+            <div class="globe-city"><span class="globe-dot"></span>Setif</div>
+            <div class="globe-city"><span class="globe-dot"></span>Tlemcen</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Capability highlights -->
     <div class="counters rv rv-3">
@@ -751,6 +796,51 @@ setTimeout(typewrite,1000);
 
 // Micro-animation on feature card hover
 document.querySelectorAll('.b-card').forEach(card=>{const ico=card.querySelector('.b-ico');if(ico){card.addEventListener('mouseenter',()=>{ico.style.transform='scale(1.15) rotate(5deg)';ico.style.transition='transform .3s'});card.addEventListener('mouseleave',()=>{ico.style.transform='scale(1) rotate(0)'})}});
+</script>
+
+<!-- Cobe globe — Algeria-centered, no external network call (CSS dots fallback if JS disabled) -->
+<script type="module">
+  import createGlobe from 'https://esm.sh/cobe@2.0.1'
+  const canvas = document.getElementById('immo-globe')
+  if (canvas) {
+    let phi = 4.55 // ~ Algeria longitude (3°E) facing camera
+    const ALG_THETA = 0.45 // ~ Algeria latitude (28°N)
+    let width = 0
+    const onResize = () => { width = canvas.offsetWidth }
+    window.addEventListener('resize', onResize); onResize()
+
+    const cities = [
+      { location: [36.7538, 3.0588], size: 0.10, name: 'Alger' },
+      { location: [35.6911, -0.6417], size: 0.09, name: 'Oran' },
+      { location: [36.3650, 6.6147], size: 0.09, name: 'Constantine' },
+      { location: [36.9000, 7.7667], size: 0.07, name: 'Annaba' },
+      { location: [36.1900, 5.4100], size: 0.07, name: 'Setif' },
+      { location: [34.8884, -1.3150], size: 0.06, name: 'Tlemcen' },
+      { location: [35.5500, 6.1700], size: 0.06, name: 'Batna' },
+      { location: [27.8741, -0.2942], size: 0.05, name: 'Adrar' },
+      { location: [22.7850, 5.5228], size: 0.05, name: 'Tamanrasset' },
+      { location: [31.6500, -2.1500], size: 0.05, name: 'Bechar' },
+    ]
+    const globe = createGlobe(canvas, {
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+      width: width * 2, height: width * 2,
+      phi, theta: ALG_THETA, dark: 1, diffuse: 1.2,
+      mapSamples: 16000, mapBrightness: 6,
+      baseColor: [0.18, 0.25, 0.45],
+      markerColor: [0.02, 0.83, 0.63], // immo green
+      glowColor: [0.05, 0.47, 0.85],   // immo blue
+      markers: cities.map(c => ({ location: c.location, size: c.size })),
+      onRender: (state) => {
+        // slow rotate but stay centered on Algeria
+        phi += 0.003
+        state.phi = phi
+        state.width = width * 2
+        state.height = width * 2
+      },
+    })
+    setTimeout(() => { canvas.style.opacity = '1' }, 80)
+    canvas.style.opacity = '0'; canvas.style.transition = 'opacity .8s ease'
+  }
 </script>
 </body>
 </html>
