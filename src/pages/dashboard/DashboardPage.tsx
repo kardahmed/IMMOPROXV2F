@@ -228,10 +228,32 @@ export function DashboardPage() {
       {/* Row 5 — Agent performance */}
       {data.agentPerformance.length > 0 && (
         <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
-          <div className="border-b border-immo-border-default px-5 py-4">
+          <div className="border-b border-immo-border-default px-4 py-3 md:px-5 md:py-4">
             <h3 className="text-sm font-semibold text-immo-text-primary">{t('dashboard.agent_performance')}</h3>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="space-y-2 p-3 md:hidden">
+            {data.agentPerformance.sort((a, b) => b.revenue - a.revenue).map(agent => (
+              <div key={agent.id} className="flex flex-col gap-2 rounded-lg border border-immo-border-default bg-immo-bg-primary p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-immo-accent-blue/15 text-xs font-semibold text-immo-accent-blue">
+                    {agent.first_name[0]}{agent.last_name[0]}
+                  </div>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-immo-text-primary">{agent.first_name} {agent.last_name}</span>
+                  <span className="text-sm font-semibold text-immo-accent-green">{formatPriceCompact(agent.revenue)}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-[11px]">
+                  <div><span className="text-immo-text-muted">Reservations</span><br/><StatusBadge label={String(agent.reservations_count)} type={agent.reservations_count > 0 ? 'orange' : 'muted'} /></div>
+                  <div><span className="text-immo-text-muted">Ventes</span><br/><StatusBadge label={String(agent.sales_count)} type={agent.sales_count > 0 ? 'green' : 'muted'} /></div>
+                  <div className="text-right"><span className="text-immo-text-muted">Activite</span><br/><span className="text-immo-text-secondary">
+                    {agent.last_activity ? formatDistanceToNow(new Date(agent.last_activity), { addSuffix: true, locale: dateLocale }) : '-'}
+                  </span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full">
               <thead>
                 <tr className="bg-immo-bg-card-hover">

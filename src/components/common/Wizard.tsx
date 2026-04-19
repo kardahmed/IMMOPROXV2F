@@ -84,10 +84,10 @@ export function Wizard({
       </div>
 
       {/* Content area */}
-      <div className={sidebar ? 'flex gap-6' : ''}>
-        <div className={sidebar ? 'flex-1' : 'w-full'}>{children}</div>
+      <div className={sidebar ? 'flex flex-col gap-6 lg:flex-row' : ''}>
+        <div className={sidebar ? 'min-w-0 flex-1' : 'w-full'}>{children}</div>
         {sidebar && (
-          <div className="w-[320px] shrink-0 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <div className="w-full shrink-0 rounded-xl border border-immo-border-default bg-immo-bg-card p-5 lg:w-[320px]">
             {sidebar}
           </div>
         )}

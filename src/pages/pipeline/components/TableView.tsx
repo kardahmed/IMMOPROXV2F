@@ -75,7 +75,56 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-xl border border-immo-border-default">
+      {/* Mobile cards (<768px) */}
+      <div className="space-y-2 md:hidden">
+        {paged.length === 0 ? (
+          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card py-12 text-center text-sm text-immo-text-muted">Aucun client</div>
+        ) : (
+          paged.map((c) => {
+            const stage = PIPELINE_STAGES[c.pipeline_stage]
+            const days = daysInStageMap.get(c.id) ?? 0
+            const agentName = c.agent_id ? agentMap.get(c.agent_id) ?? '-' : '-'
+            const projectName = c.interested_projects?.[0] ? projectMap.get(c.interested_projects[0]) ?? '-' : '-'
+            return (
+              <button key={c.id} onClick={() => navigate(`/pipeline/clients/${c.id}`)}
+                className="flex w-full flex-col gap-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-3 text-left transition-colors hover:bg-immo-bg-card-hover">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-semibold text-immo-text-primary">{c.full_name}</p>
+                      {c.is_priority && <span className="h-2 w-2 shrink-0 rounded-full bg-immo-status-orange" />}
+                    </div>
+                    <p className="truncate text-xs text-immo-text-muted">{c.phone}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                    style={{ backgroundColor: stage.color + '20', color: stage.color }}>
+                    {stage.label}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-immo-text-muted">
+                  <div className="truncate"><span className="opacity-60">Source: </span>{SOURCE_LABELS[c.source as ClientSource] ?? c.source}</div>
+                  <div className="truncate"><span className="opacity-60">Projet: </span>{projectName}</div>
+                  <div className="truncate"><span className="opacity-60">Agent: </span>{agentName}</div>
+                  <div className="truncate"><span className="opacity-60">Budget: </span>
+                    <span className="font-semibold text-immo-accent-green">
+                      {c.confirmed_budget != null ? formatPriceCompact(c.confirmed_budget) : '-'}
+                    </span>
+                  </div>
+                  <div className={`truncate ${days > urgentDays ? 'text-immo-status-red' : days > 3 ? 'text-immo-status-orange' : ''}`}>
+                    <span className="opacity-60">Jours: </span><span className="font-semibold">{days}j</span>
+                  </div>
+                  <div className="truncate"><span className="opacity-60">Contact: </span>
+                    {c.last_contact_at ? new Date(c.last_contact_at).toLocaleDateString('fr-FR') : '-'}
+                  </div>
+                </div>
+              </button>
+            )
+          })
+        )}
+      </div>
+
+      {/* Desktop/tablet table (>=768px) */}
+      <div className="hidden overflow-hidden rounded-xl border border-immo-border-default md:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -160,7 +209,7 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination (desktop) */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card-hover px-4 py-2.5">
             <span className="text-xs text-immo-text-muted">
@@ -206,6 +255,21 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
           </div>
         )}
       </div>
+
+      {/* Pagination mobile */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-immo-border-default bg-immo-bg-card px-3 py-2 md:hidden">
+          <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}
+            className="h-9 px-3 text-xs text-immo-text-muted disabled:opacity-30">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xs text-immo-text-muted">{page + 1} / {totalPages}</span>
+          <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}
+            className="h-9 px-3 text-xs text-immo-text-muted disabled:opacity-30">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

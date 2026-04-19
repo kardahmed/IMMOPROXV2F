@@ -59,7 +59,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen" style={{fontFamily:"'Inter',-apple-system,sans-serif"}}>
       {/* Left — Dark branding (same as marketing hero) */}
-      <div className="hidden w-[480px] shrink-0 flex-col justify-between overflow-hidden p-10 text-white lg:flex" style={{background:'linear-gradient(165deg,#050D1A 0%,#0A2540 35%,#0B3D6F 65%,#0579DA 100%)',position:'relative'}}>
+      <div className="hidden w-[420px] shrink-0 flex-col justify-between overflow-hidden p-10 text-white lg:flex xl:w-[480px]" style={{background:'linear-gradient(165deg,#050D1A 0%,#0A2540 35%,#0B3D6F 65%,#0579DA 100%)',position:'relative'}}>
         {/* Grid overlay */}
         <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)',backgroundSize:'40px 40px',maskImage:'radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%)'}} />
         <div style={{position:'absolute',top:'-100px',right:'-100px',width:'300px',height:'300px',borderRadius:'50%',background:'rgba(5,121,218,.3)',filter:'blur(80px)'}} />

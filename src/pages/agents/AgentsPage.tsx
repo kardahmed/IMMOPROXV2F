@@ -163,7 +163,7 @@ export function AgentsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-3">
-        <SearchInput placeholder="Rechercher un agent..." value={search} onChange={setSearch} className="w-[260px]" />
+        <SearchInput placeholder="Rechercher un agent..." value={search} onChange={setSearch} className="w-full sm:w-[260px]" />
         {canManageAgents && (
           <Button
             onClick={() => setShowCreate(true)}

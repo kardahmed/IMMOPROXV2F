@@ -361,7 +361,7 @@ export function PipelinePage() {
           placeholder="Nom, téléphone..."
           value={search}
           onChange={setSearch}
-          className="w-[240px]"
+          className="w-full sm:w-[240px]"
         />
         <FilterDropdown
           label="Projet"
@@ -478,20 +478,20 @@ export function PipelinePage() {
 
       {/* Batch reassign bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 md:left-[220px] right-0 z-30 flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card px-3 md:px-6 py-3 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-wrap items-center justify-between gap-3 border-t border-immo-border-default bg-immo-bg-card px-3 py-3 shadow-lg md:left-[220px] md:px-6">
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-immo-accent-green/10 px-3 py-1 text-sm font-semibold text-immo-accent-green">
+            <span className="rounded-full bg-immo-accent-green/10 px-3 py-1 text-xs font-semibold text-immo-accent-green md:text-sm">
               {selectedIds.size} client(s)
             </span>
             <button onClick={() => setSelectedIds(new Set())} className="text-xs text-immo-text-muted hover:text-immo-text-primary">
-              Deselectionner tout
+              Tout deselectionner
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
             <select
               value={reassignAgent}
               onChange={(e) => setReassignAgent(e.target.value)}
-              className="h-9 rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary"
+              className="h-9 flex-1 rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary sm:flex-none"
             >
               <option value="">Reassigner a...</option>
               {agentMap && Array.from(agentMap.entries()).map(([id, name]) => (

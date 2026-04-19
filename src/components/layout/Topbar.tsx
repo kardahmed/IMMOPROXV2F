@@ -66,10 +66,10 @@ export function Topbar({ title, subtitle }: TopbarProps) {
             onBlur={() => setTimeout(() => setShowResults(false), 200)}
             onFocus={() => searchResults.length > 0 && setShowResults(true)}
             placeholder={t('common.search_placeholder')}
-            className="h-9 w-[180px] lg:w-[240px] border-immo-border-default bg-immo-bg-primary pl-9 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:ring-immo-accent-green rtl:pl-3 rtl:pr-9"
+            className="h-9 w-[160px] md:w-[180px] lg:w-[240px] border-immo-border-default bg-immo-bg-primary pl-9 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:ring-immo-accent-green rtl:pl-3 rtl:pr-9"
           />
           {showResults && (
-            <div className="absolute top-full left-0 z-50 mt-1 w-[300px] rounded-lg border border-immo-border-default bg-immo-bg-card shadow-lg">
+            <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[240px] max-w-[90vw] rounded-lg border border-immo-border-default bg-immo-bg-card shadow-lg md:w-[300px]">
               {searchResults.map(r => (
                 <button key={r.id} onClick={() => { navigate(`/pipeline/clients/${r.id}`); setShowResults(false); setSearchQuery('') }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-immo-text-primary hover:bg-immo-bg-card-hover">

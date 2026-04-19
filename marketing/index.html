@@ -323,12 +323,37 @@
     }
     @media(max-width:640px){
       .bento,.p-grid{grid-template-columns:1fr}
-      .hero-btn{flex-direction:column;align-items:center}
-      .counters{flex-direction:column;gap:20px}
+      .hero-btn{flex-direction:column;align-items:center;width:100%}
+      .hero-btn .btn{width:100%;justify-content:center}
+      .counters{flex-direction:column;gap:16px}
       .ft-top{grid-template-columns:1fr!important;gap:28px;text-align:center}
       .ft-brand{align-items:center}.ft-soc{justify-content:center}
       .ft-bot{flex-direction:column;gap:8px;text-align:center}
       .kpi-row{grid-template-columns:1fr 1fr}
+      .nav-r .btn-sm:first-child{display:none}
+      .ctn{padding:0 16px}
+      .nav-i{padding:0 12px;height:52px}
+      .hero{padding:120px 0 60px}
+      .hero h1{font-size:32px;line-height:1.15;margin:0 auto 16px}
+      .hero .sub{font-size:14px;margin:0 auto 24px}
+      .app-mock{margin-top:32px}
+      .s-head{margin-bottom:32px}
+      .s-head h2{font-size:24px}
+      .s-head p{font-size:14px}
+      .b-card{padding:20px}
+      .p-card{padding:20px}
+      .stats-row{flex-direction:column;gap:24px;text-align:center}
+      .trust-row{flex-direction:column;gap:24px}
+      .cmp-table{display:block;overflow-x:auto;white-space:nowrap}
+      .faq-q{padding:16px}.faq-a{padding:0 16px 16px}
+      .cta-end{padding:60px 0}
+      .cta-end h2{font-size:26px}
+    }
+    @media(max-width:380px){
+      .hero h1{font-size:28px}
+      .nav-l{font-size:14px}
+      .nav-l img{height:24px;width:24px}
+      .btn-sm{padding:8px 14px;font-size:11px}
     }
 
     .rv{opacity:0;transform:translateY(28px);transition:all .7s cubic-bezier(.16,1,.3,1)}
@@ -356,18 +381,18 @@
     <div class="hero-btn rv rv-2"><a href="/register" class="btn btn-p">Demarrer maintenant →</a><a href="#features" class="btn btn-g">Explorer les fonctionnalites</a></div>
     <p class="hero-note rv rv-2">Essai gratuit · Sans carte bancaire · Configuration en 2 minutes</p>
 
-    <!-- Animated counters -->
+    <!-- Capability highlights -->
     <div class="counters rv rv-3">
-      <div class="counter"><div class="num"><span>+</span>50</div><div class="lab">Ventes realisees</div></div>
-      <div class="counter"><div class="num"><span>+</span>15 000</div><div class="lab">Leads captures</div></div>
-      <div class="counter"><div class="num"><span>+</span>2 500</div><div class="lab">Biens geres</div></div>
-      <div class="counter"><div class="num">98<span>%</span></div><div class="lab">Satisfaction</div></div>
+      <div class="counter"><div class="num">9</div><div class="lab">Etapes de pipeline</div></div>
+      <div class="counter"><div class="num">14</div><div class="lab">Jours d'essai gratuit</div></div>
+      <div class="counter"><div class="num">2</div><div class="lab">Langues (FR / AR)</div></div>
+      <div class="counter"><div class="num">24/7</div><div class="lab">Acces cloud securise</div></div>
     </div>
 
     <!-- Real app mockup -->
     <div class="app-mock rv rv-4">
       <div class="app-win">
-        <div class="app-bar"><div class="app-d r"></div><div class="app-d y"></div><div class="app-d g"></div><div class="app-url">app.immoprox.io/projects</div></div>
+        <div class="app-bar"><div class="app-d r"></div><div class="app-d y"></div><div class="app-d g"></div><div class="app-url">votre-agence.immoprox.io</div></div>
         <img src="/screenshots/projects.png" alt="IMMO PRO-X — Gestion des projets" style="width:100%;display:block">
       </div>
       <div class="fb fb-1"><div class="fr"><div class="fi" style="background:rgba(0,212,160,.15)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D4A0" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div><div><div class="ft">Vente confirmee</div><div class="fs">F4 · 18.5M DA</div></div></div></div>
@@ -547,23 +572,23 @@
 <!-- TESTIMONIALS -->
 <section class="testi" id="testimonials">
   <div class="ctn">
-    <div class="s-head"><div class="tag rv" style="background:rgba(0,212,160,.12);color:var(--green)">Temoignages</div><h2 class="rv rv-1" style="color:#fff">Des promoteurs comme vous<br>font confiance a IMMO PRO-X</h2><p class="rv rv-2" style="color:rgba(255,255,255,.4)">Ils ont transforme leur activite avec notre plateforme.</p></div>
+    <div class="s-head"><div class="tag rv" style="background:rgba(0,212,160,.12);color:var(--green)">Concu pour</div><h2 class="rv rv-1" style="color:#fff">Pense pour les promoteurs<br>et agences immobilieres en Algerie</h2><p class="rv rv-2" style="color:rgba(255,255,255,.4)">Une plateforme tout-en-un pour structurer votre activite commerciale.</p></div>
     <div class="t-grid">
-      <div class="t-c rv"><div class="t-stars">★★★★★</div><div class="t-q">"On est passe d'Excel a IMMO PRO-X. 8 agents, un seul outil. On a double nos ventes en 3 mois. L'essai gratuit nous a convaincus en une semaine."</div><div class="t-a"><div class="t-av">YM</div><div><div class="t-nm">Youcef Mebarki</div><div class="t-rl">DG — Groupe Batiplan, Oran</div></div></div></div>
-      <div class="t-c rv rv-1"><div class="t-stars">★★★★★</div><div class="t-q">"Les landing pages avec tracking Facebook ont change notre acquisition. On sait exactement combien chaque campagne rapporte. ROI visible immediatement."</div><div class="t-a"><div class="t-av">SB</div><div><div class="t-nm">Sofiane Belkadi</div><div class="t-rl">Dir. commercial — Atlas Immo, Alger</div></div></div></div>
-      <div class="t-c rv rv-2"><div class="t-stars">★★★★★</div><div class="t-q">"L'IA qui genere les scripts d'appel, c'est un game changer. Nouveaux agents operationnels le jour 1. Le suivi echeancier nous fait gagner des heures."</div><div class="t-a"><div class="t-av">NF</div><div><div class="t-nm">Nadir Ferhat</div><div class="t-rl">Gerant — Promo Horizon, Constantine</div></div></div></div>
+      <div class="t-c rv"><div class="t-stars" style="color:var(--green)">▎</div><div class="t-q">Pour les <strong>petites agences</strong> qui veulent passer d'Excel a un CRM dedie a l'immobilier neuf : pipeline visuel, fiches clients, suivi des visites en quelques clics.</div><div class="t-a"><div class="t-av" style="background:rgba(0,212,160,.15);color:var(--green)">PA</div><div><div class="t-nm">Petites agences</div><div class="t-rl">2 a 5 agents</div></div></div></div>
+      <div class="t-c rv rv-1"><div class="t-stars" style="color:var(--blue)">▎</div><div class="t-q">Pour les <strong>promoteurs ambitieux</strong> avec plusieurs projets : landing pages dediees, tracking publicitaire, IA pour les scripts d'appel et les relances automatiques.</div><div class="t-a"><div class="t-av" style="background:rgba(5,121,218,.15);color:var(--blue)">PR</div><div><div class="t-nm">Promoteurs</div><div class="t-rl">3 a 15 projets actifs</div></div></div></div>
+      <div class="t-c rv rv-2"><div class="t-stars" style="color:#7C3AED">▎</div><div class="t-q">Pour les <strong>groupes immobiliers</strong> : multi-agences, multi-projets, branding personnalise, API et integrations sur mesure, support dedie.</div><div class="t-a"><div class="t-av" style="background:rgba(124,58,237,.15);color:#7C3AED">GR</div><div><div class="t-nm">Groupes</div><div class="t-rl">Plusieurs agences</div></div></div></div>
     </div>
   </div>
 </section>
 
-<!-- ANIMATED STATS -->
+<!-- WHY US -->
 <section style="background:var(--light)">
   <div class="ctn">
     <div class="stats-row">
-      <div class="stat-item rv"><div class="stat-num" data-target="150">0</div><div class="stat-label">Millions DA geres</div><div class="stat-sub">en volume de transactions</div></div>
-      <div class="stat-item rv rv-1"><div class="stat-num" data-target="15000">0</div><div class="stat-label">Leads captures</div><div class="stat-sub">via landing pages</div></div>
-      <div class="stat-item rv rv-2"><div class="stat-num" data-target="2500">0</div><div class="stat-label">Biens geres</div><div class="stat-sub">appartements, villas, locaux</div></div>
-      <div class="stat-item rv rv-3"><div class="stat-num" data-target="98">0</div><div class="stat-label">% Satisfaction</div><div class="stat-sub">note client moyenne</div></div>
+      <div class="stat-item rv"><div class="stat-num" style="font-size:36px">🇩🇿</div><div class="stat-label">100% algerien</div><div class="stat-sub">FR + AR (RTL), wilayas, paiements DA</div></div>
+      <div class="stat-item rv rv-1"><div class="stat-num" style="font-size:36px">⚡</div><div class="stat-label">Cloud rapide</div><div class="stat-sub">aucune installation, mise a jour continue</div></div>
+      <div class="stat-item rv rv-2"><div class="stat-num" style="font-size:36px">🤖</div><div class="stat-label">IA integree</div><div class="stat-sub">scripts d'appel et taches generes</div></div>
+      <div class="stat-item rv rv-3"><div class="stat-num" style="font-size:36px">🔒</div><div class="stat-label">Donnees privees</div><div class="stat-sub">chaque agence isolee, RGPD/Loi 18-07</div></div>
     </div>
   </div>
 </section>
@@ -672,9 +697,7 @@
         <div class="ft-logo"><img src="/favicon.png" alt="" style="width:24px;height:24px;border-radius:5px"> IMMO <span>PRO-X</span></div>
         <p class="ft-desc">La plateforme CRM tout-en-un pour les promoteurs immobiliers algeriens.</p>
         <div class="ft-soc">
-          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
-          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
-          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+          <a href="https://wa.me/213542766068" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
         </div>
       </div>
       <div class="ft-col"><h4>Produit</h4><a href="#features">Pipeline</a><a href="#features">Landing pages</a><a href="#integrations">Integrations</a><a href="#pricing">Tarifs</a></div>

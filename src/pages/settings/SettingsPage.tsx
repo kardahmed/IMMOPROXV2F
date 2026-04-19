@@ -61,9 +61,22 @@ export function SettingsPage() {
   const [section, setSection] = useState<Section>('company')
 
   return (
-    <div className="flex gap-6">
-      {/* Side menu */}
-      <div className="w-[220px] shrink-0 space-y-1">
+    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+      {/* Mobile: select dropdown */}
+      <div className="lg:hidden">
+        <select
+          value={section}
+          onChange={(e) => setSection(e.target.value as Section)}
+          className="h-11 w-full rounded-lg border border-immo-border-default bg-immo-bg-card px-3 text-sm text-immo-text-primary focus:border-immo-accent-green focus:outline-none"
+        >
+          {SECTION_KEYS.map((key) => (
+            <option key={key} value={key}>{t(SECTION_LABELS[key])}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Desktop: side menu */}
+      <div className="hidden w-[220px] shrink-0 space-y-1 lg:block">
         {SECTION_KEYS.map((key) => {
           const Icon = SECTION_ICONS[key]
           return (

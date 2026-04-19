@@ -96,7 +96,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
               key={item.path}
               to={item.path}
               onClick={onNavClick}
-              className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+              className={`group relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors md:min-h-0 ${
                 isActive
                   ? 'bg-immo-accent-green/10 text-immo-accent-green'
                   : 'text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
@@ -175,7 +175,7 @@ export function MobileSidebar() {
         <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={close} />
       )}
       {/* Drawer */}
-      <aside className={`fixed left-0 top-0 z-50 h-screen w-[260px] border-r border-immo-border-default bg-immo-bg-sidebar transition-transform duration-300 md:hidden rtl:left-auto rtl:right-0 ${
+      <aside className={`fixed left-0 top-0 z-50 h-screen w-[280px] max-w-[85vw] border-r border-immo-border-default bg-immo-bg-sidebar transition-transform duration-300 md:hidden rtl:left-auto rtl:right-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
       }`}>
         <SidebarContent onNavClick={close} />

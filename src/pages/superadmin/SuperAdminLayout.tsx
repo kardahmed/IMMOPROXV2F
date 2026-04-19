@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail } from 'lucide-react'
+import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { HealthAlertsBanner } from './components/HealthAlertsBanner'
@@ -26,20 +27,27 @@ export function SuperAdminLayout() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const { inspectedTenantId, inspectedTenantName, leaveTenant } = useSuperAdminStore()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
     <div className="flex h-screen bg-immo-bg-primary">
+      {/* Mobile overlay */}
+      {mobileOpen && <div onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-black/50 lg:hidden" />}
+
       {/* Sidebar */}
-      <aside className="flex w-[240px] shrink-0 flex-col border-r border-immo-border-default/50 bg-immo-bg-card">
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[260px] max-w-[85vw] shrink-0 flex-col border-r border-immo-border-default/50 bg-immo-bg-card transition-transform lg:static lg:w-[240px] lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5">
           <img src="/logo-180.png" alt="IMMO PRO-X" className="h-9 w-9" />
-          <div>
+          <div className="flex-1">
             <h1 className="text-sm font-bold text-immo-text-primary">IMMO PRO-X</h1>
             <span className="rounded-sm bg-[#7C3AED]/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#7C3AED]">
               Super Admin
             </span>
           </div>
+          <button onClick={() => setMobileOpen(false)} className="rounded-lg p-1 text-immo-text-muted hover:bg-immo-bg-card-hover lg:hidden" aria-label="Fermer">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="my-2 mx-5 h-px bg-immo-border-default/50" />
@@ -51,8 +59,9 @@ export function SuperAdminLayout() {
               key={to}
               to={to}
               end={'end' in rest}
+              onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                `flex min-h-[44px] items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors lg:min-h-0 ${
                   isActive
                     ? 'bg-[#7C3AED]/15 font-medium text-[#7C3AED]'
                     : 'text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
@@ -91,11 +100,14 @@ export function SuperAdminLayout() {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         {/* Topbar with search */}
-        <div className="flex items-center justify-between border-b border-immo-border-default/50 bg-immo-bg-card px-6 py-3">
-          <GlobalSearch />
+        <div className="flex items-center justify-between gap-2 border-b border-immo-border-default/50 bg-immo-bg-card px-3 py-3 md:px-6">
+          <button onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-immo-text-muted hover:bg-immo-bg-card-hover lg:hidden" aria-label="Menu">
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="min-w-0 flex-1"><GlobalSearch /></div>
           <div className="flex items-center gap-3">
             <NotificationCenter />
-            <span className="text-xs text-immo-text-muted">Super Admin Panel</span>
+            <span className="hidden text-xs text-immo-text-muted md:inline">Super Admin Panel</span>
           </div>
         </div>
 

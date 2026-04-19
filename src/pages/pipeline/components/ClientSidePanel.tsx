@@ -57,7 +57,7 @@ export function ClientSidePanel({ clientId, onClose }: ClientSidePanelProps) {
 
   if (!clientId) return null
   if (!client) return (
-    <div className="fixed inset-y-0 right-0 z-40 w-[400px] border-l border-immo-border-default bg-immo-bg-card shadow-xl">
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[100vw] border-l border-immo-border-default bg-immo-bg-card shadow-xl sm:w-[400px] sm:max-w-[90vw]">
       <div className="flex h-full items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" />
       </div>
@@ -72,7 +72,7 @@ export function ClientSidePanel({ clientId, onClose }: ClientSidePanelProps) {
   const waLink = `https://wa.me/${client.phone.replace(/[\s\-\(\)]/g, '').replace(/^0/, '213')}`
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 flex w-[400px] flex-col border-l border-immo-border-default bg-immo-bg-card shadow-xl">
+    <div className="fixed inset-y-0 right-0 z-40 flex w-full max-w-[100vw] flex-col border-l border-immo-border-default bg-immo-bg-card shadow-xl sm:w-[400px] sm:max-w-[90vw]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-4">
         <h3 className="text-sm font-semibold text-immo-text-primary">Apercu client</h3>

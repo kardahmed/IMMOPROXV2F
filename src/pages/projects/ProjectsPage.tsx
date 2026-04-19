@@ -275,13 +275,13 @@ export function ProjectsPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
           <SearchInput
             placeholder="Rechercher un projet..."
             value={search}
             onChange={setSearch}
-            className="w-[260px]"
+            className="w-full sm:w-[260px]"
           />
           <FilterDropdown
             label={t('projects_extra.filter_status')}

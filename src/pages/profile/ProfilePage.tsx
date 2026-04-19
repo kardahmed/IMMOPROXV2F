@@ -50,8 +50,31 @@ export function ProfilePage() {
         <p className="text-sm text-immo-text-secondary">Gerez vos informations personnelles et la securite de votre compte.</p>
       </div>
 
-      <div className="flex gap-6">
-        <div className="w-[220px] shrink-0 space-y-1">
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        {/* Mobile tabs (horizontal scroll) */}
+        <div className="-mx-3 flex gap-1 overflow-x-auto px-3 pb-1 lg:hidden">
+          {TABS.map(t => {
+            const Icon = t.icon
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs transition-colors ${
+                  tab === t.key
+                    ? t.key === 'danger'
+                      ? 'bg-[#CD3D64]/10 font-medium text-[#CD3D64]'
+                      : 'bg-immo-accent-green/10 font-medium text-immo-accent-green'
+                    : 'text-immo-text-secondary hover:bg-immo-bg-card-hover'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+        {/* Desktop sidebar */}
+        <div className="hidden w-[220px] shrink-0 space-y-1 lg:block">
           {TABS.map(t => {
             const Icon = t.icon
             return (
@@ -107,9 +130,9 @@ function InfoTab({ profile, onSaved }: { profile: { id: string; first_name: stri
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-immo-border bg-immo-bg-card p-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-immo-border bg-immo-bg-card p-4 md:p-6">
       <h2 className="text-base font-bold text-immo-text-primary">Informations personnelles</h2>
-      <div className="mt-5 grid grid-cols-2 gap-4">
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-semibold text-immo-text-secondary">Prenom</label>
           <input {...register('first_name')}
@@ -152,7 +175,7 @@ function EmailTab({ currentEmail }: { currentEmail: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-immo-border bg-immo-bg-card p-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-immo-border bg-immo-bg-card p-4 md:p-6">
       <h2 className="text-base font-bold text-immo-text-primary">Changer d'email</h2>
       <p className="mt-1 text-xs text-immo-text-secondary">Email actuel : <span className="font-semibold text-immo-text-primary">{currentEmail}</span></p>
       <div className="mt-5">
@@ -187,7 +210,7 @@ function PasswordTab() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-immo-border bg-immo-bg-card p-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-immo-border bg-immo-bg-card p-4 md:p-6">
       <h2 className="text-base font-bold text-immo-text-primary">Changer de mot de passe</h2>
       <div className="mt-5 space-y-4">
         {(['current', 'next', 'confirm'] as const).map(key => {

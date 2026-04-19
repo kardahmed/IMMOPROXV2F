@@ -14,7 +14,7 @@ export function HelpWidget() {
   return (
     <>
       {open && (
-        <div className="fixed bottom-20 right-4 z-[9998] w-[320px] rounded-2xl border border-immo-border-default bg-immo-bg-card p-4 shadow-2xl shadow-black/30">
+        <div className="fixed bottom-20 right-4 z-[9998] w-[calc(100vw-2rem)] max-w-[320px] rounded-2xl border border-immo-border-default bg-immo-bg-card p-4 shadow-2xl shadow-black/30">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-bold text-immo-text-primary">Centre d'aide</h3>
             <button onClick={() => setOpen(false)} className="text-immo-text-muted hover:text-immo-text-primary">

@@ -34,19 +34,19 @@ export function Modal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent
-        className={`border-immo-border-default bg-immo-bg-card p-0 ${SIZES[size]}`}
+        className={`max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] overflow-hidden border-immo-border-default bg-immo-bg-card p-0 ${SIZES[size]}`}
       >
-        <DialogHeader className="border-b border-immo-border-default px-6 py-4">
-          <DialogTitle className="text-lg font-semibold text-immo-text-primary">
+        <DialogHeader className="border-b border-immo-border-default px-4 py-3 md:px-6 md:py-4">
+          <DialogTitle className="text-base font-semibold text-immo-text-primary md:text-lg">
             {title}
           </DialogTitle>
           {subtitle && (
-            <DialogDescription className="text-sm text-immo-text-muted">
+            <DialogDescription className="text-xs text-immo-text-muted md:text-sm">
               {subtitle}
             </DialogDescription>
           )}
         </DialogHeader>
-        <div className="px-6 py-5">{children}</div>
+        <div className="max-h-[calc(100dvh-9rem)] overflow-y-auto px-4 py-4 md:px-6 md:py-5">{children}</div>
       </DialogContent>
     </Dialog>
   )

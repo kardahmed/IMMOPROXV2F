@@ -102,7 +102,8 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-hidden rounded-xl border border-immo-border-default">
-      <table className="w-full">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[640px]">
         <thead>
           <tr className="bg-immo-bg-card-hover">
             {columns.map((col) => (
@@ -136,10 +137,11 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
+      </div>
 
       {/* Pagination */}
       {showPagination && (
-        <div className="flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card px-4 py-2.5">
+        <div className="flex flex-col items-center gap-2 border-t border-immo-border-default bg-immo-bg-card px-4 py-2.5 sm:flex-row sm:justify-between">
           <span className="text-xs text-immo-text-muted">
             {t('common.showing', { count: total })}
           </span>

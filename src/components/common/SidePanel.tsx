@@ -28,19 +28,19 @@ export function SidePanel({
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
       <SheetContent
         side={side}
-        className="w-[480px] border-immo-border-default bg-immo-bg-card p-0 sm:max-w-[480px]"
+        className="w-full max-w-[100vw] border-immo-border-default bg-immo-bg-card p-0 sm:w-[480px] sm:max-w-[90vw]"
       >
-        <SheetHeader className="border-b border-immo-border-default px-6 py-4">
-          <SheetTitle className="text-lg font-semibold text-immo-text-primary">
+        <SheetHeader className="border-b border-immo-border-default px-4 py-3 md:px-6 md:py-4">
+          <SheetTitle className="text-base font-semibold text-immo-text-primary md:text-lg">
             {title}
           </SheetTitle>
           {subtitle && (
-            <SheetDescription className="text-sm text-immo-text-muted">
+            <SheetDescription className="text-xs text-immo-text-muted md:text-sm">
               {subtitle}
             </SheetDescription>
           )}
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">{children}</div>
       </SheetContent>
     </Sheet>
   )
