@@ -44,7 +44,9 @@ export function ChangelogViewPage() {
                   {new Date(e.published_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
               </div>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-immo-text-secondary">{e.body}</p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-immo-text-secondary">
+                {e.body.replace(/\\n/g, '\n')}
+              </p>
             </article>
           ))}
         </div>

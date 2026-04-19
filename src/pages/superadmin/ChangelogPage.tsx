@@ -54,7 +54,7 @@ export function ChangelogPage() {
               <h3 className="text-sm font-semibold text-immo-text-primary">{e.title}</h3>
               <span className="ml-auto text-xs text-immo-text-muted">{format(new Date(e.published_at), 'dd/MM/yyyy')}</span>
             </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-immo-text-secondary">{e.body}</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-immo-text-secondary">{e.body.replace(/\\n/g, '\n')}</p>
           </div>
         ))}
         {entries.length === 0 && <p className="py-12 text-center text-sm text-immo-text-muted">Aucune release note</p>}
