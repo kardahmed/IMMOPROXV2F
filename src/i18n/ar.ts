@@ -14,6 +14,7 @@ export const ar = {
     tasks: 'المهام',
     marketing_roi: 'عائد التسويق',
     integrations: 'التكاملات',
+    billing: 'الفوترة',
     changelog: 'المستجدات',
     settings: 'الإعدادات',
   },
@@ -31,6 +32,7 @@ export const ar = {
     reports_subtitle: 'التقارير والإحصائيات',
     settings_subtitle: 'إعدادات الوكالة',
     integrations_subtitle: 'مفاتيح API والويب هوكس',
+    billing_subtitle: 'الخطة والدفعات والسجل',
     changelog_subtitle: 'آخر تحديثات المنصة',
   },
 

@@ -15,6 +15,7 @@ const AcceptInvitePage = lazy(() => import('@/pages/auth/AcceptInvitePage').then
 const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage').then(m => ({ default: m.ProfilePage })))
 const ChangelogViewPage = lazy(() => import('@/pages/changelog/ChangelogViewPage').then(m => ({ default: m.ChangelogViewPage })))
 const IntegrationsPage = lazy(() => import('@/pages/integrations/IntegrationsPage').then(m => ({ default: m.IntegrationsPage })))
+const TenantBillingPage = lazy(() => import('@/pages/billing/BillingPage').then(m => ({ default: m.BillingPage })))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })))
 const ProjectsPage = lazy(() => import('@/pages/projects/ProjectsPage').then(m => ({ default: m.ProjectsPage })))
 const ProjectDetailPage = lazy(() => import('@/pages/projects/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })))
@@ -131,6 +132,7 @@ function App() {
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/marketing-roi" element={<MarketingROIPage />} />
               <Route path="/integrations" element={<IntegrationsPage />} />
+              <Route path="/billing" element={<TenantBillingPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

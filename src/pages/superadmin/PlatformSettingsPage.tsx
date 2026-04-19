@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Save, AlertTriangle, Bell, Plus, Trash2 } from 'lucide-react'
+import { Save, AlertTriangle, Bell, Plus, Trash2, MessageCircle, Building2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { LoadingSpinner } from '@/components/common'
@@ -19,7 +19,12 @@ export function PlatformSettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from('platform_settings').select('*').limit(1).single()
       if (error) { handleSupabaseError(error); throw error }
-      return data as { id: string; platform_name: string; version: string; support_email: string; maintenance_mode: boolean; anthropic_api_key: string | null; openai_api_key: string | null; default_ai_provider: string }
+      return data as {
+        id: string; platform_name: string; version: string; support_email: string; maintenance_mode: boolean;
+        anthropic_api_key: string | null; openai_api_key: string | null; default_ai_provider: string;
+        billing_whatsapp: string | null; bank_name: string | null; bank_rib: string | null; bank_iban: string | null;
+        bank_swift: string | null; bank_account_holder: string | null; ccp_account: string | null; billing_instructions: string | null;
+      }
     },
   })
 
@@ -30,6 +35,14 @@ export function PlatformSettingsPage() {
   const [anthropicKey, setAnthropicKey] = useState('')
   const [openaiKey, setOpenaiKey] = useState('')
   const [aiProvider, setAiProvider] = useState('anthropic')
+  const [billingWhatsapp, setBillingWhatsapp] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [bankRib, setBankRib] = useState('')
+  const [bankIban, setBankIban] = useState('')
+  const [bankSwift, setBankSwift] = useState('')
+  const [bankAccountHolder, setBankAccountHolder] = useState('')
+  const [ccpAccount, setCcpAccount] = useState('')
+  const [billingInstructions, setBillingInstructions] = useState('')
 
   useEffect(() => {
     if (settings) {
@@ -40,6 +53,14 @@ export function PlatformSettingsPage() {
       setAnthropicKey(settings.anthropic_api_key ?? '')
       setOpenaiKey(settings.openai_api_key ?? '')
       setAiProvider(settings.default_ai_provider ?? 'anthropic')
+      setBillingWhatsapp(settings.billing_whatsapp ?? '')
+      setBankName(settings.bank_name ?? '')
+      setBankRib(settings.bank_rib ?? '')
+      setBankIban(settings.bank_iban ?? '')
+      setBankSwift(settings.bank_swift ?? '')
+      setBankAccountHolder(settings.bank_account_holder ?? '')
+      setCcpAccount(settings.ccp_account ?? '')
+      setBillingInstructions(settings.billing_instructions ?? '')
     }
   }, [settings])
 
@@ -54,6 +75,14 @@ export function PlatformSettingsPage() {
         anthropic_api_key: anthropicKey || null,
         openai_api_key: openaiKey || null,
         default_ai_provider: aiProvider,
+        billing_whatsapp: billingWhatsapp || null,
+        bank_name: bankName || null,
+        bank_rib: bankRib || null,
+        bank_iban: bankIban || null,
+        bank_swift: bankSwift || null,
+        bank_account_holder: bankAccountHolder || null,
+        ccp_account: ccpAccount || null,
+        billing_instructions: billingInstructions || null,
         updated_at: new Date().toISOString(),
       } as never).eq('id', settings.id)
       if (error) { handleSupabaseError(error); throw error }
@@ -130,6 +159,58 @@ export function PlatformSettingsPage() {
             <p className="text-[10px] text-immo-text-muted">
               Acces IA par plan : Free = aucun | Starter = suggestions | Pro = suggestions + scripts + documents | Enterprise = tout
             </p>
+          </div>
+        </div>
+
+        {/* Billing & payment config */}
+        <div className="mt-6 rounded-lg border border-immo-accent-green/20 bg-immo-accent-green/5 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-immo-accent-green" />
+            <h3 className="text-sm font-semibold text-immo-accent-green">Facturation & paiements</h3>
+          </div>
+          <p className="mb-3 text-[11px] text-immo-text-muted">
+            Infos partagees avec les tenants lors d'une demande de paiement manuel (virement / CCP / especes). Le numero WhatsApp recoit les demandes.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-[11px] font-medium text-immo-text-muted">Numero WhatsApp (format international, chiffres uniquement)</Label>
+              <div className="relative">
+                <MessageCircle className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-immo-accent-green" />
+                <Input value={billingWhatsapp} onChange={e => setBillingWhatsapp(e.target.value)} placeholder="213542766068" className={`${inputClass} pl-9`} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-[11px] font-medium text-immo-text-muted">Nom beneficiaire</Label>
+                <Input value={bankAccountHolder} onChange={e => setBankAccountHolder(e.target.value)} placeholder="IMMO PRO-X SARL" className={inputClass} />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-immo-text-muted">Banque</Label>
+                <Input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="CPA / BEA / BNA..." className={inputClass} />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-immo-text-muted">RIB (20 chiffres)</Label>
+                <Input value={bankRib} onChange={e => setBankRib(e.target.value)} placeholder="000 00000 0000000000 00" className={inputClass} />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-immo-text-muted">IBAN</Label>
+                <Input value={bankIban} onChange={e => setBankIban(e.target.value)} placeholder="DZ..." className={inputClass} />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-immo-text-muted">Code SWIFT / BIC</Label>
+                <Input value={bankSwift} onChange={e => setBankSwift(e.target.value)} placeholder="CPAZXXX" className={inputClass} />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-immo-text-muted">Compte CCP</Label>
+                <Input value={ccpAccount} onChange={e => setCcpAccount(e.target.value)} placeholder="0000000 00 cle" className={inputClass} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-immo-text-muted">Instructions affichees aux tenants</Label>
+              <textarea value={billingInstructions} onChange={e => setBillingInstructions(e.target.value)} rows={2}
+                placeholder="Apres virement, envoyez la preuve par WhatsApp pour activation immediate."
+                className={`mt-1 w-full rounded-md border ${inputClass} p-2 text-sm`} />
+            </div>
           </div>
         </div>
 

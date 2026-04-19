@@ -28,7 +28,7 @@ export function TrialBanner() {
     return (
       <div className="flex items-center justify-between bg-immo-status-red px-4 py-2">
         <span className="text-xs font-semibold text-white">Votre essai gratuit a expire. Passez a un plan pour continuer.</span>
-        <a href="/settings" className="rounded-md bg-white/20 px-3 py-1 text-xs font-medium text-white hover:bg-white/30">Upgrader</a>
+        <a href="/billing" className="rounded-md bg-white/20 px-3 py-1 text-xs font-medium text-white hover:bg-white/30">Upgrader</a>
       </div>
     )
   }
@@ -38,7 +38,7 @@ export function TrialBanner() {
       <span className="flex items-center gap-2 text-xs font-semibold text-white">
         <Clock className="h-3.5 w-3.5" /> Essai gratuit : {trialInfo.daysLeft} jour(s) restant(s)
       </span>
-      <a href="/settings" className="rounded-md bg-white/20 px-3 py-1 text-xs font-medium text-white hover:bg-white/30">Voir les plans</a>
+      <a href="/billing" className="rounded-md bg-white/20 px-3 py-1 text-xs font-medium text-white hover:bg-white/30">Voir les plans</a>
     </div>
   )
 }

@@ -12,6 +12,7 @@ const PAGE_KEYS: Record<string, { titleKey: string; subtitleKey: string }> = {
   '/agents': { titleKey: 'nav.agents', subtitleKey: 'page.agents_subtitle' },
   '/reports': { titleKey: 'nav.reports', subtitleKey: 'page.reports_subtitle' },
   '/integrations': { titleKey: 'nav.integrations', subtitleKey: 'page.integrations_subtitle' },
+  '/billing': { titleKey: 'nav.billing', subtitleKey: 'page.billing_subtitle' },
   '/changelog': { titleKey: 'nav.changelog', subtitleKey: 'page.changelog_subtitle' },
   '/profile': { titleKey: 'profile.title', subtitleKey: 'profile.subtitle' },
   '/settings': { titleKey: 'nav.settings', subtitleKey: 'page.settings_subtitle' },

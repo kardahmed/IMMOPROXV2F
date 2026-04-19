@@ -16,6 +16,7 @@ import {
   CheckSquare,
   Key,
   Sparkles,
+  CreditCard,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
@@ -39,6 +40,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   CheckSquare,
   Key,
   Sparkles,
+  CreditCard,
 }
 
 // Map nav path → i18n key
@@ -56,6 +58,7 @@ const NAV_KEYS: Record<string, string> = {
   '/reports': 'nav.reports',
   '/marketing-roi': 'nav.marketing_roi',
   '/integrations': 'nav.integrations',
+  '/billing': 'nav.billing',
   '/changelog': 'nav.changelog',
   '/settings': 'nav.settings',
 }

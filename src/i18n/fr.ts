@@ -14,6 +14,7 @@ export const fr = {
     tasks: 'Tâches',
     marketing_roi: 'ROI Marketing',
     integrations: 'Intégrations',
+    billing: 'Facturation',
     changelog: 'Nouveautés',
     settings: 'Paramètres',
   },
@@ -31,6 +32,7 @@ export const fr = {
     reports_subtitle: 'Rapports et statistiques',
     settings_subtitle: "Configuration de l'agence",
     integrations_subtitle: 'Clés API et webhooks',
+    billing_subtitle: 'Plan, paiements et historique',
     changelog_subtitle: 'Dernières mises à jour de la plateforme',
   },
 
