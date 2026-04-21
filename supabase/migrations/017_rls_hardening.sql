@@ -32,7 +32,7 @@ ALTER TABLE platform_messages ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "platform_messages_tenant_read" ON platform_messages
   FOR SELECT USING (
-    tenant_id IS NULL OR tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid())
+    to_tenant_id IS NULL OR to_tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid())
   );
 
 CREATE POLICY "platform_messages_super_admin_all" ON platform_messages
