@@ -5,9 +5,9 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 Deno.serve(async (req) => {
-  // Auth: service role key required
+  // Authorization is handled by the Supabase gateway (JWT verification).
   const authHeader = req.headers.get('Authorization')
-  if (authHeader !== `Bearer ${supabaseServiceKey}`) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
   }
 
