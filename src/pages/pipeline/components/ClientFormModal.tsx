@@ -16,10 +16,11 @@ import {
   PAYMENT_METHOD_LABELS,
 } from '@/types'
 import type { Client, ClientSource, InterestLevel, PaymentMethod } from '@/types'
+import { isValidAlgerianPhone, ALGERIAN_PHONE_HELP } from '@/lib/validation'
 
 const schema = z.object({
   full_name: z.string().min(2, 'Nom requis (min 2 caractères)'),
-  phone: z.string().min(8, 'Téléphone requis (min 8 chiffres)'),
+  phone: z.string().refine(isValidAlgerianPhone, { message: `Numero algerien invalide (${ALGERIAN_PHONE_HELP})` }),
   email: z.string().email('Email invalide').or(z.literal('')).optional(),
   nin_cin: z.string().optional(),
   client_type: z.string().optional(),

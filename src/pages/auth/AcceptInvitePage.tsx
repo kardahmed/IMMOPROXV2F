@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Lock, CheckCircle2, AlertCircle, Save } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { checkRateLimit, recordAttempt, INVITE_RATE_LIMIT, formatRemainingTime } from '@/lib/rateLimit'
 
 const schema = z.object({
   first_name: z.string().min(1, 'Prenom requis'),
@@ -28,12 +29,25 @@ export function AcceptInvitePage() {
   useEffect(() => {
     (async () => {
       if (!token) { setStatus('invalid'); return }
+
+      // Rate-limit invalid token attempts per-browser
+      const check = checkRateLimit('accept-invite', INVITE_RATE_LIMIT)
+      if (!check.allowed) {
+        setError(`Trop de tentatives. Reessayez dans ${formatRemainingTime(check.remainingMs)}.`)
+        setStatus('invalid')
+        return
+      }
+
       const { data, error } = await supabase
         .from('invitations')
         .select('email, tenant_id, role, expires_at, accepted_at, tenants(name)')
         .eq('token', token)
         .single()
-      if (error || !data) { setStatus('invalid'); return }
+      if (error || !data) {
+        recordAttempt('accept-invite', false, INVITE_RATE_LIMIT)
+        setStatus('invalid'); return
+      }
+      recordAttempt('accept-invite', true, INVITE_RATE_LIMIT)
       const row = data as unknown as { email: string; tenant_id: string; role: string; expires_at: string; accepted_at: string | null; tenants?: { name: string } }
       if (row.accepted_at) { setError('Invitation deja utilisee'); setStatus('invalid'); return }
       if (new Date(row.expires_at).getTime() < Date.now()) { setError('Invitation expiree'); setStatus('invalid'); return }

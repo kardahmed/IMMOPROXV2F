@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/hooks/useAuth'
 import { useTranslation } from 'react-i18next'
+import { checkRateLimit, recordAttempt, LOGIN_RATE_LIMIT, formatRemainingTime } from '@/lib/rateLimit'
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, Check, BarChart3, Globe, Zap, Shield, Star, ArrowLeft } from 'lucide-react'
 
 const schema = z.object({
@@ -50,10 +51,24 @@ export function LoginPage() {
 
   async function onSubmit(data: FormData) {
     setError('')
+    const rateLimitKey = `login:${data.email.toLowerCase()}`
+    const check = checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT)
+    if (!check.allowed) {
+      setError(`Trop de tentatives. Reessayez dans ${formatRemainingTime(check.remainingMs)}.`)
+      return
+    }
     setLoading(true)
-    try { await signIn(data.email, data.password) }
-    catch (err) { setError(err instanceof Error ? err.message : 'Erreur de connexion') }
-    finally { setLoading(false) }
+    try {
+      await signIn(data.email, data.password)
+      recordAttempt(rateLimitKey, true, LOGIN_RATE_LIMIT)
+    } catch (err) {
+      recordAttempt(rateLimitKey, false, LOGIN_RATE_LIMIT)
+      const after = checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT)
+      const baseMsg = err instanceof Error ? err.message : 'Erreur de connexion'
+      setError(after.attemptsLeft > 0
+        ? `${baseMsg} (${after.attemptsLeft} tentative${after.attemptsLeft > 1 ? 's' : ''} restante${after.attemptsLeft > 1 ? 's' : ''})`
+        : `Trop de tentatives. Reessayez dans ${formatRemainingTime(LOGIN_RATE_LIMIT.lockoutMs)}.`)
+    } finally { setLoading(false) }
   }
 
   return (

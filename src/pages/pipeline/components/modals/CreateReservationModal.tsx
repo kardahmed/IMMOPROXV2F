@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { emitEvent } from '@/lib/emitEvent'
 import { useAuthStore } from '@/store/authStore'
 import { useProjects } from '@/hooks/useProjects'
 import { Modal } from '@/components/common'
@@ -225,6 +226,13 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
       qc.invalidateQueries({ queryKey: ['units'] })
       qc.invalidateQueries({ queryKey: ['pipeline-stats'] })
       toast.success('Réservation créée avec succès')
+      if (client) {
+        emitEvent(client.tenant_id, 'reservation.created', {
+          client_id: client.id,
+          project_id: projectId,
+          unit_ids: selectedUnits,
+        })
+      }
       resetAndClose()
     },
   })

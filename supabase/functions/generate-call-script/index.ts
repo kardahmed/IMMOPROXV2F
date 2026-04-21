@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { rateLimitResponse } from '../_shared/rateLimit.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -16,6 +17,11 @@ Deno.serve(async (req) => {
     new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
   try {
+    // Rate-limit per IP (20 req/min for AI scripts — protects quota)
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? 'unknown'
+    const rateLimited = rateLimitResponse(ip, 20, 60_000)
+    if (rateLimited) return rateLimited
+
     // 1. Verify JWT
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) return json({ error: 'Missing authorization' }, 401)

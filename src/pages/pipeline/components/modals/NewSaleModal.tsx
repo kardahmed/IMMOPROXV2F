@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { emitEvent } from '@/lib/emitEvent'
 import { useAuthStore } from '@/store/authStore'
 import { useProjects } from '@/hooks/useProjects'
 import { Modal } from '@/components/common'
@@ -283,6 +284,13 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
       qc.invalidateQueries({ queryKey: ['pipeline-stats'] })
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] })
       toast.success('Vente créée avec succès')
+      if (client) {
+        emitEvent(client.tenant_id, 'sale.completed', {
+          client_id: client.id,
+          project_id: formData.projectId,
+          unit_ids: formData.selectedUnits,
+        })
+      }
       handleClose()
     },
   })

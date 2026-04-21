@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { emitEvent } from '@/lib/emitEvent'
 import { useTenant } from './useTenant'
 import toast from 'react-hot-toast'
 import type { Database, PipelineStage, ClientSource } from '@/types'
@@ -72,9 +73,14 @@ export function useClients(filters?: ClientFilters) {
       if (error) { handleSupabaseError(error); throw error }
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['clients'] })
       toast.success('Client ajoute avec succes')
+      emitEvent(tenantId, 'client.created', {
+        id: (data as { id: string } | null)?.id,
+        full_name: (data as { full_name: string } | null)?.full_name,
+        source: (data as { source: string } | null)?.source,
+      })
     },
   })
 
@@ -109,9 +115,13 @@ export function useClients(filters?: ClientFilters) {
       if (error) { handleSupabaseError(error); throw error }
       return data
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['clients'] })
       qc.invalidateQueries({ queryKey: ['history'] })
+      emitEvent(tenantId, 'client.stage_changed', {
+        client_id: variables.clientId,
+        new_stage: variables.newStage,
+      })
     },
   })
 

@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Users, UserCheck, UserX, Plus, Eye, Pencil, Ban, Shield, MoreHorizontal,
+  Users, UserCheck, UserX, Plus, Eye, Pencil, Ban, Shield, MoreHorizontal, MailCheck,
 } from 'lucide-react'
+import { InvitationsSection } from './InvitationsSection'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
@@ -55,7 +56,7 @@ export function AgentsPage() {
   const { canAddAgent, usage, limits } = usePlanEnforcement()
   const qc = useQueryClient()
 
-  const [activeTab, setActiveTab] = useState<'agents' | 'permissions'>('agents')
+  const [activeTab, setActiveTab] = useState<'agents' | 'invitations' | 'permissions'>('agents')
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [deactivateId, setDeactivateId] = useState<string | null>(null)
@@ -137,6 +138,10 @@ export function AgentsPage() {
             className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${activeTab === 'agents' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
             <Users className="h-3.5 w-3.5" /> Agents
           </button>
+          <button onClick={() => setActiveTab('invitations')}
+            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${activeTab === 'invitations' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+            <MailCheck className="h-3.5 w-3.5" /> Invitations
+          </button>
           <button onClick={() => setActiveTab('permissions')}
             className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${activeTab === 'permissions' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
             <Shield className="h-3.5 w-3.5" /> Profils de permissions
@@ -144,7 +149,9 @@ export function AgentsPage() {
         </div>
       )}
 
-      {activeTab === 'permissions' ? (
+      {activeTab === 'invitations' ? (
+        <InvitationsSection />
+      ) : activeTab === 'permissions' ? (
         <PermissionProfilesSection />
       ) : (
       <>

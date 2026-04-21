@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { rateLimitResponse } from '../_shared/rateLimit.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')!
+const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +17,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Rate-limit per IP
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip') ?? 'unknown'
+    const rateLimited = rateLimitResponse(ip, 30, 60_000)
+    if (rateLimited) return rateLimited
+
+    if (!anthropicKey) {
+      return new Response(JSON.stringify({ error: 'AI non configuree sur la plateforme', suggestions: [] }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // 1. Verify user JWT
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {

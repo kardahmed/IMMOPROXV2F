@@ -380,11 +380,11 @@ export function RegisterPage() {
             <a href="/marketing/index.html" className="text-xs text-[#8898AA] hover:text-[#0579DA]">← Retour au site</a>
           </p>
           <div className="mt-2 flex justify-center gap-4 text-[10px] text-[#8898AA]">
-            <a href="#" className="hover:text-[#425466]">CGU</a>
+            <a href="/marketing/cgu.html" className="hover:text-[#425466]">CGU</a>
             <span>·</span>
-            <a href="#" className="hover:text-[#425466]">Confidentialite</a>
+            <a href="/marketing/confidentialite.html" className="hover:text-[#425466]">Confidentialite</a>
             <span>·</span>
-            <a href="#" className="hover:text-[#425466]">Contact</a>
+            <a href="/marketing/contact.html" className="hover:text-[#425466]">Contact</a>
           </div>
         </div>
       </div>
