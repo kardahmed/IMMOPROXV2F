@@ -431,7 +431,7 @@ function TestTab({
   const selectedMeta = TEMPLATE_META.find(t => t.id === template)
 
   return (
-    <div className="max-w-lg space-y-6">
+    <div className="grid gap-6 lg:grid-cols-2">
       <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-6 space-y-5">
         <h3 className="font-semibold text-immo-text-primary flex items-center gap-2">
           <TestTube className="h-4 w-4 text-[#7C3AED]" />
@@ -467,21 +467,6 @@ function TestTab({
           />
         </div>
 
-        {/* Sample data preview */}
-        {selectedMeta && (
-          <div className="rounded-lg bg-immo-bg-primary border border-immo-border-default p-3">
-            <p className="text-[10px] font-medium text-immo-text-muted uppercase tracking-wider mb-2">Donnees exemple utilisees</p>
-            <div className="space-y-1">
-              {Object.entries(selectedMeta.sampleData).map(([key, value]) => (
-                <div key={key} className="flex justify-between text-xs">
-                  <span className="text-immo-text-muted">{key.replace(/_/g, ' ')}</span>
-                  <span className="text-immo-text-primary font-medium">{String(value)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Send button */}
         <Button
           onClick={onSend}
@@ -495,11 +480,27 @@ function TestTab({
           )}
           {isSending ? 'Envoi en cours...' : 'Envoyer le test'}
         </Button>
+
+        <p className="text-xs text-immo-text-muted">
+          L'email sera envoye avec le statut "test" et apparaitra dans l'historique.
+        </p>
       </div>
 
-      <p className="text-xs text-immo-text-muted">
-        L'email sera envoye avec le statut "test" et apparaitra dans l'historique.
-      </p>
+      {/* Sample data preview */}
+      {selectedMeta && (
+        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-6 space-y-3">
+          <h3 className="text-sm font-semibold text-immo-text-primary">Donnees exemple utilisees</h3>
+          <p className="text-xs text-immo-text-muted">Ces valeurs remplacent les variables du template lors de l'envoi de test.</p>
+          <div className="divide-y divide-immo-border-default/60 rounded-lg border border-immo-border-default bg-immo-bg-primary">
+            {Object.entries(selectedMeta.sampleData).map(([key, value]) => (
+              <div key={key} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                <span className="text-immo-text-muted">{key.replace(/_/g, ' ')}</span>
+                <span className="truncate text-immo-text-primary font-medium">{String(value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

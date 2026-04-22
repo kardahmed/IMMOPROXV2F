@@ -117,7 +117,7 @@ export function GlobalStatsPage() {
       </div>
 
       {/* Revenue KPIs */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KPICard label="MRR" value={formatPriceCompact(data.mrr)} accent="green" icon={<DollarSign className="h-5 w-5 text-immo-accent-green" />} />
         <KPICard label="ARR" value={formatPriceCompact(data.arr)} accent="blue" icon={<TrendingUp className="h-5 w-5 text-immo-accent-blue" />} />
         <KPICard label="Churn rate" value={`${data.churnRate.toFixed(1)}%`} accent={data.churnRate > 10 ? 'red' : data.churnRate > 5 ? 'orange' : 'green'} icon={<TrendingDown className="h-5 w-5 text-immo-status-red" />} />
@@ -125,7 +125,7 @@ export function GlobalStatsPage() {
       </div>
 
       {/* Secondary KPIs */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         <KPICard label="Tenants actifs" value={data.activeTenants} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Total clients" value={data.totalClients} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Facture (paye)" value={formatPriceCompact(data.totalPaid)} accent="green" icon={<DollarSign className="h-4 w-4 text-immo-accent-green" />} />
@@ -134,8 +134,8 @@ export function GlobalStatsPage() {
       </div>
 
       {/* Charts row 1: MRR trend + Revenue by plan */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Evolution MRR & Facturation (6 mois)</h3>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={data.mrrByMonth}>
@@ -177,7 +177,7 @@ export function GlobalStatsPage() {
       </div>
 
       {/* Charts row 2: Clients + Sales trends */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Clients captures par mois</h3>
           <ResponsiveContainer width="100%" height={220}>

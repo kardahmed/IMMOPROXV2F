@@ -134,9 +134,9 @@ export function MessagesPage() {
 
       {/* Compose tab */}
       {tab === 'compose' && (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Compose form */}
-          <div className="xl:col-span-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <div className="lg:col-span-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
             <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Nouveau message</h3>
             <div className="space-y-3">
               <div>
@@ -214,7 +214,7 @@ export function MessagesPage() {
 
       {/* Banner tab */}
       {tab === 'banner' && (
-        <div className="max-w-xl space-y-5">
+        <div className="max-w-3xl space-y-5">
           <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
             <div className="mb-3 flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-[#7C3AED]" />

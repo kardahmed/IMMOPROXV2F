@@ -106,7 +106,7 @@ export function MonitoringPage() {
       <h1 className="text-2xl font-bold text-immo-text-primary">Monitoring & Securite</h1>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         <KPICard label="Statut" value={healthStatus} accent={healthColor} icon={<CheckCircle className="h-5 w-5 text-immo-accent-green" />} />
         <KPICard label="Actions (7j)" value={data.totalActions} accent="blue" icon={<Activity className="h-5 w-5 text-immo-accent-blue" />} />
         <KPICard label="Erreurs (total)" value={data.errorCount} accent={data.errorCount > 0 ? 'red' : 'green'} icon={<AlertTriangle className="h-5 w-5 text-immo-status-red" />} />
@@ -143,7 +143,7 @@ export function MonitoringPage() {
           </div>
 
           {/* 7-day trend + errors list */}
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
               <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Tendance 7 jours</h3>
               <ResponsiveContainer width="100%" height={160}>
@@ -175,7 +175,7 @@ export function MonitoringPage() {
           </div>
 
           {/* Action frequency + recent logs */}
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
               <div className="border-b border-immo-border-default px-5 py-3"><h3 className="text-sm font-semibold text-immo-text-primary">Actions frequentes</h3></div>
               <div className="divide-y divide-immo-border-default">

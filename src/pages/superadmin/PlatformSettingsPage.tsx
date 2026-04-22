@@ -73,52 +73,60 @@ export function PlatformSettingsPage() {
         <p className="text-sm text-immo-text-secondary">Configuration globale IMMO PRO-X</p>
       </div>
 
-      <div className="max-w-lg space-y-5 rounded-xl border border-immo-border-default bg-immo-bg-card p-6">
-        <div>
-          <Label className="text-[11px] font-medium text-immo-text-secondary">Nom de la plateforme</Label>
-          <Input value={name} onChange={e => setName(e.target.value)} className={inputClass} />
-        </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* General settings */}
+        <div className="space-y-5 rounded-xl border border-immo-border-default bg-immo-bg-card p-6">
+          <h3 className="text-sm font-semibold text-immo-text-primary">General</h3>
 
-        <div>
-          <Label className="text-[11px] font-medium text-immo-text-secondary">Version</Label>
-          <Input value={version} onChange={e => setVersion(e.target.value)} className={inputClass} />
-        </div>
-
-        <div>
-          <Label className="text-[11px] font-medium text-immo-text-secondary">Email de support</Label>
-          <Input type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@immoprox.io" className={inputClass} />
-        </div>
-
-        <div className="rounded-lg border border-immo-border-default p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className={`h-5 w-5 ${maintenance ? 'text-immo-status-red' : 'text-immo-text-secondary'}`} />
-              <div>
-                <p className="text-sm font-medium text-immo-text-primary">Mode maintenance</p>
-                <p className="text-[11px] text-immo-text-secondary">Bloque l'acces a tous les utilisateurs</p>
-              </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <Label className="text-[11px] font-medium text-immo-text-secondary">Nom de la plateforme</Label>
+              <Input value={name} onChange={e => setName(e.target.value)} className={inputClass} />
             </div>
-            <button
-              onClick={() => setMaintenance(!maintenance)}
-              className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${maintenance ? 'bg-immo-status-red' : 'bg-immo-border-default'}`}
-            >
-              <div className={`h-5 w-5 rounded-full bg-white transition-transform ${maintenance ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
+            <div>
+              <Label className="text-[11px] font-medium text-immo-text-secondary">Version</Label>
+              <Input value={version} onChange={e => setVersion(e.target.value)} className={inputClass} />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-[11px] font-medium text-immo-text-secondary">Email de support</Label>
+            <Input type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@immoprox.io" className={inputClass} />
+          </div>
+
+          <div className="rounded-lg border border-immo-border-default p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className={`h-5 w-5 ${maintenance ? 'text-immo-status-red' : 'text-immo-text-secondary'}`} />
+                <div>
+                  <p className="text-sm font-medium text-immo-text-primary">Mode maintenance</p>
+                  <p className="text-[11px] text-immo-text-secondary">Bloque l'acces a tous les utilisateurs</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setMaintenance(!maintenance)}
+                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${maintenance ? 'bg-immo-status-red' : 'bg-immo-border-default'}`}
+              >
+                <div className={`h-5 w-5 rounded-full bg-white transition-transform ${maintenance ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* AI Configuration */}
-        <div className="mt-6 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-[#7C3AED]">Configuration IA</h3>
-          <p className="mb-3 text-[11px] text-immo-text-muted">Les cles API sont utilisees par toutes les fonctionnalites IA de la plateforme. Les tenants y accedent selon leur plan.</p>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-[11px] font-medium text-immo-text-muted">Fournisseur IA par defaut</Label>
-              <select value={aiProvider} onChange={e => setAiProvider(e.target.value)} className="mt-1 h-9 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary">
-                <option value="anthropic">Anthropic (Claude)</option>
-                <option value="openai">OpenAI (GPT)</option>
-              </select>
-            </div>
+        <div className="space-y-4 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-6">
+          <div>
+            <h3 className="text-sm font-semibold text-[#7C3AED]">Configuration IA</h3>
+            <p className="mt-1 text-[11px] text-immo-text-muted">Les cles API sont utilisees par toutes les fonctionnalites IA de la plateforme. Les tenants y accedent selon leur plan.</p>
+          </div>
+          <div>
+            <Label className="text-[11px] font-medium text-immo-text-muted">Fournisseur IA par defaut</Label>
+            <select value={aiProvider} onChange={e => setAiProvider(e.target.value)} className="mt-1 h-9 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary">
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI (GPT)</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label className="text-[11px] font-medium text-immo-text-muted">Cle API Anthropic</Label>
               <Input type="password" value={anthropicKey} onChange={e => setAnthropicKey(e.target.value)} placeholder="sk-ant-..." className={inputClass} />
@@ -127,16 +135,18 @@ export function PlatformSettingsPage() {
               <Label className="text-[11px] font-medium text-immo-text-muted">Cle API OpenAI</Label>
               <Input type="password" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." className={inputClass} />
             </div>
-            <p className="text-[10px] text-immo-text-muted">
-              Acces IA par plan : Free = aucun | Starter = suggestions | Pro = suggestions + scripts + documents | Enterprise = tout
-            </p>
           </div>
+          <p className="text-[10px] text-immo-text-muted">
+            Acces IA par plan : Free = aucun | Starter = suggestions | Pro = suggestions + scripts + documents | Enterprise = tout
+          </p>
         </div>
+      </div>
 
+      <div>
         <Button
           onClick={() => save.mutate()}
           disabled={save.isPending}
-          className="mt-4 bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
+          className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
         >
           {save.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
         </Button>
@@ -209,7 +219,7 @@ function AlertsSection() {
   })
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-immo-text-primary">Alertes plateforme</h2>
@@ -227,7 +237,7 @@ function AlertsSection() {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="grid gap-3 lg:grid-cols-2">
         {alerts.map(alert => (
           <div key={alert.id} className="rounded-xl border border-immo-border-default bg-immo-bg-card p-4">
             <div className="flex items-start gap-3">

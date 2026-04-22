@@ -125,8 +125,8 @@ export function AuditLogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="space-y-3">
+        <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-immo-text-muted" />
           <input
             value={search}
@@ -136,8 +136,8 @@ export function AuditLogsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1">
-          <Filter className="h-4 w-4 text-immo-text-secondary" />
+        <div className="flex flex-wrap items-center gap-1">
+          <Filter className="mr-1 h-4 w-4 text-immo-text-secondary" />
           {['all', ...Object.keys(ACTION_LABELS)].map(key => (
             <button
               key={key}
@@ -151,6 +151,7 @@ export function AuditLogsPage() {
               {key === 'all' ? 'Tous' : ACTION_LABELS[key]?.label ?? key}
             </button>
           ))}
+          <span className="ml-auto text-xs text-immo-text-muted">{filtered.length} log(s)</span>
         </div>
       </div>
 

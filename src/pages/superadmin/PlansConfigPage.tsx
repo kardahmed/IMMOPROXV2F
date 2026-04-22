@@ -221,7 +221,7 @@ export function PlansConfigPage() {
       )}
 
       {/* Plans grid */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${editPlans.length}, minmax(220px, 1fr))` }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
         {editPlans.map((plan, idx) => {
           const color = PLAN_COLORS[plan.plan] ?? '#0579DA'
           const count = tenantCounts.get(plan.plan) ?? 0

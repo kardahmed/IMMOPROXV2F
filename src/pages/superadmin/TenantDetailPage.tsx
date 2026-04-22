@@ -174,7 +174,7 @@ export function TenantDetailPage() {
 
       {/* KPIs */}
       {kpis && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
           <KPICard label="Agents" value={kpis.agents} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
           <KPICard label="Clients" value={kpis.clients} accent="orange" icon={<Briefcase className="h-5 w-5 text-immo-status-orange" />} />
           <KPICard label="Projets" value={kpis.projects} accent="blue" icon={<Building2 className="h-5 w-5 text-[#7C3AED]" />} />
@@ -185,7 +185,7 @@ export function TenantDetailPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Users — full management panel */}
         <UserManagementPanel tenantId={tenantId!} />
 
@@ -238,7 +238,7 @@ export function TenantDetailPage() {
       </div>
 
       {/* Custom Domain + Export */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <CustomDomainPanel tenantId={tenantId!} customDomain={customDomain} setCustomDomain={setCustomDomain} domainDirty={domainDirty} setDomainDirty={setDomainDirty} tenant={tenant} />
         <ExportPanel tenantId={tenantId!} tenantName={tenant.name as string} />
       </div>

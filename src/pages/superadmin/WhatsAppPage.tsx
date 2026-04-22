@@ -125,7 +125,7 @@ export function WhatsAppPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <KPICard label="Tenants actifs" value={totalAccounts} accent="green" icon={<Users className="h-4 w-4 text-green-500" />} />
         <KPICard label="Messages envoyes" value={totalSent} accent="blue" icon={<Send className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Messages recents" value={totalMessages} accent="green" icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
@@ -144,9 +144,9 @@ export function WhatsAppPage() {
 
       {/* Config tab */}
       {tab === 'config' && config && (
-        <div className="max-w-xl space-y-4 rounded-xl border border-immo-border-default bg-immo-bg-card p-6">
+        <div className="space-y-4 rounded-xl border border-immo-border-default bg-immo-bg-card p-6">
           <h3 className="text-sm font-semibold text-immo-text-primary">Meta Cloud API</h3>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs text-immo-text-muted">WABA ID</label>
               <Input defaultValue={config.waba_id as string} onChange={e => setEditWabaId(e.target.value)} className="text-sm font-mono" />
@@ -159,7 +159,7 @@ export function WhatsAppPage() {
               <label className="mb-1 block text-xs text-immo-text-muted">Numero affiche</label>
               <Input value={config.display_phone as string ?? ''} disabled className="text-sm bg-immo-bg-primary" />
             </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-1 block text-xs text-immo-text-muted">Access Token</label>
               <div className="flex gap-2">
                 <Input
@@ -174,10 +174,10 @@ export function WhatsAppPage() {
               </div>
               <p className="mt-1 text-[10px] text-immo-status-orange">Le token temporaire expire en 24h. Utilisez un System User Token permanent.</p>
             </div>
-            <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending} className="bg-green-500 text-white hover:bg-green-600">
-              <Check className="mr-1.5 h-4 w-4" /> Enregistrer
-            </Button>
           </div>
+          <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending} className="bg-green-500 text-white hover:bg-green-600">
+            <Check className="mr-1.5 h-4 w-4" /> Enregistrer
+          </Button>
         </div>
       )}
 
