@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DollarSign, FileText, AlertTriangle, Check, Send, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { DataTable, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatPriceCompact } from '@/lib/constants'
@@ -44,7 +44,7 @@ export function BillingPage() {
 
   const filtered = statusFilter === 'all' ? invoices : invoices.filter(i => i.status === statusFilter)
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={4} hasTable />
 
   const STATUS_MAP: Record<string, { label: string; type: 'green' | 'orange' | 'red' | 'muted' }> = {
     paid: { label: 'Paye', type: 'green' },

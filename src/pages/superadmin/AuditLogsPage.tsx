@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ScrollText, Search, Download, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { DataTable, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { DataTable, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
@@ -110,7 +110,7 @@ export function AuditLogsPage() {
     URL.revokeObjectURL(url)
   }
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={0} hasTable />
 
   const columns: Column<LogEntry>[] = [
     {

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageSquare, Send, Inbox } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { Card, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { format } from 'date-fns'
@@ -58,7 +58,7 @@ export function SupportPage() {
     closed: { label: 'Ferme', type: 'muted' },
   }
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={0} />
 
   const openCount = tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length
   const filteredTickets = statusFilter === 'all' ? tickets : tickets.filter(t => t.status === statusFilter)

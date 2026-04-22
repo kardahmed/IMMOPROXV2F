@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Check, X, Zap, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { Card, LoadingSpinner, PageHeader } from '@/components/common'
+import { Card, PageHeader, PageSkeleton } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -188,7 +188,7 @@ export function PlansConfigPage() {
     onError: (e) => toast.error((e as Error).message),
   })
 
-  if (isLoading || !plans) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading || !plans) return <PageSkeleton kpiCount={0} />
 
   return (
     <div className="space-y-6">

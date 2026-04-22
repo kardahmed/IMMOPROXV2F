@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle, Settings, Send, Users, TrendingUp, AlertTriangle, Check, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Card, DataTable, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -104,7 +104,7 @@ export function WhatsAppPage() {
   const failedMessages = messages.filter(m => m.status === 'failed').length
   const totalSent = accounts.reduce((s, a) => s + ((a.messages_sent as number) ?? 0), 0)
 
-  if (loadingConfig) return <LoadingSpinner size="lg" className="h-96" />
+  if (loadingConfig) return <PageSkeleton kpiCount={4} />
 
   const TABS = [
     { key: 'config' as const, label: 'Configuration', icon: Settings },

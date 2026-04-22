@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { DataTable, KPICard, LoadingSpinner, PageHeader } from '@/components/common'
+import { DataTable, KPICard, PageHeader, PageSkeleton } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -102,7 +102,7 @@ export function TenantsPage() {
     navigate('/dashboard')
   }
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={5} hasTable />
 
   const columns: Column<TenantRow>[] = [
     { key: 'name', header: 'Nom', render: (t) => <span className="text-sm font-medium text-immo-text-primary">{t.name}</span> },

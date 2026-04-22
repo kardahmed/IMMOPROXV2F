@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Megaphone, ScrollText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Card, EmptyState, LoadingSpinner, Modal, PageHeader } from '@/components/common'
+import { Card, EmptyState, Modal, PageHeader, PageSkeleton } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,7 +35,7 @@ export function ChangelogPage() {
     },
   })
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={0} />
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,5 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail } from 'lucide-react'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { HealthAlertsBanner } from './components/HealthAlertsBanner'
@@ -25,7 +25,14 @@ const NAV_ITEMS = [
 export function SuperAdminLayout() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { inspectedTenantId, inspectedTenantName, leaveTenant } = useSuperAdminStore()
+
+  // Find current page label from NAV_ITEMS (longest matching prefix wins for nested routes like /admin/tenants/:id)
+  const currentPage = [...NAV_ITEMS]
+    .sort((a, b) => b.to.length - a.to.length)
+    .find(item => item.to === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(item.to))
+    ?? (location.pathname.startsWith('/admin/tenants/') ? { labelKey: 'Detail tenant', icon: Building2 } : null)
 
   return (
     <div className="flex h-screen bg-immo-bg-primary">
@@ -97,13 +104,28 @@ export function SuperAdminLayout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        {/* Topbar with search */}
-        <div className="flex items-center justify-between border-b border-immo-border-default/50 bg-immo-bg-card px-6 py-3">
-          <GlobalSearch />
-          <div className="flex items-center gap-3">
-            <NotificationCenter />
-            <span className="text-xs text-immo-text-muted">Super Admin Panel</span>
+        {/* Topbar with breadcrumbs + search */}
+        <div className="flex items-center gap-6 border-b border-immo-border-default/50 bg-immo-bg-card px-6 py-3">
+          {/* Breadcrumbs */}
+          <nav aria-label="Breadcrumb" className="flex min-w-0 shrink items-center gap-1.5 text-xs">
+            <span className="text-immo-text-muted">Super Admin</span>
+            {currentPage && (
+              <>
+                <ChevronRight className="h-3 w-3 shrink-0 text-immo-text-muted" />
+                <span className="flex items-center gap-1.5 truncate font-medium text-immo-text-primary">
+                  <currentPage.icon className="h-3.5 w-3.5 shrink-0 text-[#7C3AED]" />
+                  {currentPage.labelKey}
+                </span>
+              </>
+            )}
+          </nav>
+
+          <div className="flex-1" />
+
+          <div className="hidden md:block">
+            <GlobalSearch />
           </div>
+          <NotificationCenter />
         </div>
 
         {/* Inspection banner */}

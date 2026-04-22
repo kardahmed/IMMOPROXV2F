@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, AlertTriangle, Bell, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { Card, LoadingSpinner, PageHeader } from '@/components/common'
+import { Card, PageHeader, PageSkeleton } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -62,7 +62,7 @@ export function PlatformSettingsPage() {
     },
   })
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={0} />
 
   return (
     <div className="space-y-6">

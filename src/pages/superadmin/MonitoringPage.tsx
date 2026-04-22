@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Activity, AlertTriangle, CheckCircle, Zap, Shield, Cpu, Database } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Card, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, KPICard, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
 import { format, subDays, subHours } from 'date-fns'
 
@@ -90,7 +90,7 @@ export function MonitoringPage() {
     refetchInterval: 60_000,
   })
 
-  if (isLoading || !data) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading || !data) return <PageSkeleton kpiCount={5} />
 
   const healthStatus = data.errorRate > 10 ? 'Critique' : data.errorRate > 2 ? 'Degrade' : 'Operationnel'
   const healthColor = data.errorRate > 10 ? 'red' : data.errorRate > 2 ? 'orange' : 'green'

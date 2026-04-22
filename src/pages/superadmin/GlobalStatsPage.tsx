@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { DollarSign, TrendingUp, TrendingDown, Users, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Card, KPICard, LoadingSpinner, PageHeader } from '@/components/common'
+import { Card, KPICard, PageHeader, PageSkeleton } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { format, subMonths, startOfMonth, endOfMonth, differenceInDays } from 'date-fns'
 
@@ -107,7 +107,7 @@ export function GlobalStatsPage() {
     },
   })
 
-  if (isLoading || !data) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading || !data) return <PageSkeleton kpiCount={5} />
 
   return (
     <div className="space-y-6">

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home, AlertTriangle, Power, Globe, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { Card, KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
+import { Card, KPICard, PageSkeleton, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { formatPriceCompact } from '@/lib/constants'
@@ -114,7 +114,7 @@ export function TenantDetailPage() {
 
   const isMaintenance = tenantSettings?.maintenance_mode ?? false
 
-  if (loadingTenant || !tenant) return <LoadingSpinner size="lg" className="h-96" />
+  if (loadingTenant || !tenant) return <PageSkeleton kpiCount={7} />
 
   return (
     <div className="space-y-6">
