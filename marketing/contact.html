@@ -324,6 +324,239 @@
   <div class="ft-bot"><span>© 2026 IMMO PRO-X</span><span>Concu en Algerie</span></div>
 </div></footer>
 
-<script>const o=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){el.target.classList.add('v');o.unobserve(el.target)}})},{threshold:.08});document.querySelectorAll('.rv').forEach(el=>o.observe(el));</script>
+<script>
+// Scroll-reveal animation (existing behavior)
+const _ioReveal = new IntersectionObserver(entries => {
+  entries.forEach(el => { if (el.isIntersecting) { el.target.classList.add('v'); _ioReveal.unobserve(el.target) } })
+}, { threshold: .08 })
+document.querySelectorAll('.rv').forEach(el => _ioReveal.observe(el))
+
+// ─── Supabase config (anon key is safe to expose — RLS protects data) ──────
+const SUPABASE_URL = 'https://lbnqccsebwiifxcucflg.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxibnFjY3NlYndpaWZ4Y3VjZmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NjQyMDgsImV4cCI6MjA5MTM0MDIwOH0.lo0cNBXpBTbvcxyCtTRjKtPA8I2XAP9Nuj0Xo9Ehjmw'
+
+const $ = (sel, ctx = document) => ctx.querySelector(sel)
+const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel))
+
+// ─── UTM + referrer capture (read once on page load) ──────────────────────
+function captureTracking() {
+  const params = new URLSearchParams(location.search)
+  return {
+    source: params.get('utm_source') || null,
+    medium: params.get('utm_medium') || null,
+    campaign: params.get('utm_campaign') || null,
+    referrer: document.referrer || null,
+    user_agent: navigator.userAgent || null,
+  }
+}
+const _tracking = captureTracking()
+
+// State: id of the lead created in step 1, reused on step 2 update
+let leadId = null
+
+// ─── Supabase REST helpers ────────────────────────────────────────────────
+async function supabaseRequest(method, path, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Prefer': 'return=representation',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Supabase ${method} ${path} failed: ${res.status} ${text}`)
+  }
+  return res.json()
+}
+
+// ─── Error helpers ────────────────────────────────────────────────────────
+function setFieldError(fieldEl, msg) {
+  const wrapper = fieldEl.closest('.field') || fieldEl.parentElement
+  if (wrapper) wrapper.classList.toggle('invalid', !!msg)
+  const slot = wrapper?.querySelector('.err-msg')
+  if (slot) slot.textContent = msg || ''
+}
+function clearFieldError(fieldEl) { setFieldError(fieldEl, '') }
+function showFormError(msg) {
+  const el = $('#form-error')
+  el.textContent = msg
+  el.hidden = !msg
+  if (msg) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+// ─── Validation ───────────────────────────────────────────────────────────
+const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const RE_PHONE = /^[+0-9\s()\-.]{6,}$/
+
+function validateStep1(form) {
+  let ok = true
+  const name = form.full_name
+  const email = form.email
+  const phone = form.phone
+
+  if (!name.value.trim()) { setFieldError(name, 'Champ requis'); ok = false } else clearFieldError(name)
+  if (!RE_EMAIL.test(email.value.trim())) { setFieldError(email, 'Email invalide'); ok = false } else clearFieldError(email)
+  if (!RE_PHONE.test(phone.value.trim())) { setFieldError(phone, 'Numero invalide'); ok = false } else clearFieldError(phone)
+  return ok
+}
+
+function validateStep2(form) {
+  let ok = true
+  // All required radios/selects/texts
+  const required = ['activity_type', 'company_name', 'agents_count', 'wilayas', 'leads_per_month', 'marketing_budget_monthly', 'current_tools', 'decision_maker', 'timeline']
+  for (const name of required) {
+    const el = form.elements[name]
+    if (!el) continue
+    const value = el.value?.trim?.() ?? ''
+    if (!value) {
+      const target = el.length ? el[0] : el
+      setFieldError(target, 'Champ requis')
+      ok = false
+    } else {
+      const target = el.length ? el[0] : el
+      clearFieldError(target)
+    }
+  }
+  // Acquisition channels: at least one
+  const channels = $$('input[name=acquisition_channels]:checked', form)
+  const chField = $('input[name=acquisition_channels]', form)
+  if (channels.length === 0) {
+    setFieldError(chField, 'Cochez au moins un canal')
+    ok = false
+  } else clearFieldError(chField)
+
+  // Conditional decision-maker names
+  const dm = form.decision_maker.value
+  if (dm && dm !== 'me') {
+    const names = form.decision_maker_names
+    if (!names.value.trim()) {
+      setFieldError(names, 'Precisez le(s) nom(s)')
+      ok = false
+    } else clearFieldError(names)
+  }
+  return ok
+}
+
+// ─── Interactive behaviors ────────────────────────────────────────────────
+// Live slider value
+const frustration = $('#f2-frustration')
+const frustrationOut = $('#frustration-value')
+if (frustration) frustration.addEventListener('input', () => { frustrationOut.textContent = frustration.value })
+
+// Reveal decision-maker-names when boss/partners/committee selected
+$$('input[name=decision_maker]').forEach(r => r.addEventListener('change', () => {
+  const field = $('#field-decision-names')
+  const input = $('#f2-dm-names')
+  const needsNames = r.checked && r.value !== 'me'
+  field.classList.toggle('hidden-field', !needsNames)
+  input.required = needsNames
+  if (!needsNames) { input.value = ''; clearFieldError(input) }
+}))
+
+// ─── Step transitions ─────────────────────────────────────────────────────
+const form1 = $('#form-step-1')
+const form2 = $('#form-step-2')
+const progressBar = $('#progress-bar')
+const label1 = $('#label-1')
+const label2 = $('#label-2')
+
+function goToStep(n) {
+  form1.hidden = n !== 1
+  form2.hidden = n !== 2
+  progressBar.classList.toggle('step-2', n === 2)
+  label1.classList.toggle('active', n === 1)
+  label2.classList.toggle('active', n === 2)
+  $('#form-card').scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+$('#btn-back').addEventListener('click', () => {
+  showFormError('')
+  goToStep(1)
+})
+
+// ─── Step 1 submit: create partial lead in Supabase ───────────────────────
+form1.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  showFormError('')
+  if (!validateStep1(form1)) return
+
+  const btn = $('#btn-step-1')
+  btn.disabled = true
+  btn.textContent = 'Envoi...'
+
+  try {
+    const payload = {
+      full_name: form1.full_name.value.trim(),
+      email: form1.email.value.trim().toLowerCase(),
+      phone: form1.phone.value.trim(),
+      step_completed: 1,
+      ..._tracking,
+    }
+    const rows = await supabaseRequest('POST', 'marketing_leads', payload)
+    leadId = rows[0]?.id
+    if (!leadId) throw new Error('No id returned')
+    goToStep(2)
+  } catch (err) {
+    console.error(err)
+    showFormError('Erreur technique — verifiez votre connexion et reessayez.')
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = 'Continuer <span aria-hidden="true">→</span>'
+  }
+})
+
+// ─── Step 2 submit: update lead with qualification data ───────────────────
+form2.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  showFormError('')
+  if (!validateStep2(form2)) return
+  if (!leadId) {
+    showFormError('Session expiree — merci de reprendre depuis l\'etape 1.')
+    goToStep(1)
+    return
+  }
+
+  const btn = $('#btn-step-2')
+  btn.disabled = true
+  btn.textContent = 'Envoi...'
+
+  try {
+    // Parse wilayas from comma-separated input into a TEXT[] array
+    const wilayas = form2.wilayas.value.split(',').map(w => w.trim()).filter(Boolean)
+    // Collect checked acquisition channels into an array
+    const channels = $$('input[name=acquisition_channels]:checked', form2).map(el => el.value)
+
+    const payload = {
+      company_name: form2.company_name.value.trim(),
+      activity_type: form2.activity_type.value,
+      agents_count: form2.agents_count.value,
+      wilayas,
+      leads_per_month: form2.leads_per_month.value,
+      marketing_budget_monthly: form2.marketing_budget_monthly.value,
+      acquisition_channels: channels,
+      current_tools: form2.current_tools.value,
+      decision_maker: form2.decision_maker.value,
+      decision_maker_names: form2.decision_maker_names.value.trim() || null,
+      frustration_score: parseInt(form2.frustration_score.value, 10),
+      timeline: form2.timeline.value,
+      message: form2.message.value.trim() || null,
+      step_completed: 2,
+    }
+
+    await supabaseRequest('PATCH', `marketing_leads?id=eq.${leadId}`, payload)
+    // Pass along a flag so merci.html can greet returning prospects
+    window.location.href = `merci.html?from=form&lead=${leadId}`
+  } catch (err) {
+    console.error(err)
+    showFormError('Erreur d\'envoi — verifiez votre connexion et reessayez.')
+    btn.disabled = false
+    btn.innerHTML = 'Envoyer et prendre RDV <span aria-hidden="true">→</span>'
+  }
+})
+</script>
 </body>
 </html>
