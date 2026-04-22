@@ -100,7 +100,39 @@
 
         <!-- Step 1 form (visible by default) -->
         <form id="form-step-1" class="form-step" novalidate>
-          <!-- content added in sub-task B -->
+          <div>
+            <h2>Demandez une demo</h2>
+            <p class="form-sub">Laissez vos coordonnees — on revient vers vous sous 24h ouvrees avec un creneau.</p>
+          </div>
+
+          <div class="field">
+            <label for="f1-name">Nom complet <span class="req">*</span></label>
+            <input id="f1-name" name="full_name" type="text" required autocomplete="name" placeholder="Votre nom" />
+            <div class="err-msg" data-err-for="f1-name"></div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="f1-email">Email professionnel <span class="req">*</span></label>
+              <input id="f1-email" name="email" type="email" required autocomplete="email" placeholder="vous@agence.com" />
+              <div class="err-msg" data-err-for="f1-email"></div>
+            </div>
+            <div class="field">
+              <label for="f1-phone">Telephone <span class="req">*</span></label>
+              <input id="f1-phone" name="phone" type="tel" required autocomplete="tel" placeholder="0555 12 34 56" />
+              <div class="err-msg" data-err-for="f1-phone"></div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-p" id="btn-step-1">
+              Continuer <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          <p class="form-sub" style="font-size:11px;text-align:center">
+            Vos donnees sont confidentielles — voir <a href="confidentialite.html" style="color:var(--blue)">politique de confidentialite</a>.
+          </p>
         </form>
 
         <!-- Step 2 form (hidden until step 1 is submitted) -->
