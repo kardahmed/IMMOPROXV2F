@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Shield, ShieldCheck, UserX, KeyRound, Trash2, MoreVertical } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { StatusBadge, Modal, ConfirmDialog } from '@/components/common'
+import { Card, StatusBadge, Modal, ConfirmDialog } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -110,7 +110,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
   })
 
   return (
-    <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+    <Card noPadding>
       <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-4">
         <h3 className="text-sm font-semibold text-immo-text-primary">Utilisateurs ({users.length})</h3>
         <Button onClick={() => setShowCreate(true)} size="sm" variant="purple" className="text-xs">
@@ -229,7 +229,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
           }}
         />
       )}
-    </div>
+    </Card>
   )
 }
 

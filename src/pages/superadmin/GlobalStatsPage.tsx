@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { DollarSign, TrendingUp, TrendingDown, Users, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner, PageHeader } from '@/components/common'
+import { Card, KPICard, LoadingSpinner, PageHeader } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { format, subMonths, startOfMonth, endOfMonth, differenceInDays } from 'date-fns'
 
@@ -135,7 +135,7 @@ export function GlobalStatsPage() {
 
       {/* Charts row 1: MRR trend + Revenue by plan */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+        <Card className="lg:col-span-2">
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Evolution MRR & Facturation (6 mois)</h3>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={data.mrrByMonth}>
@@ -147,9 +147,9 @@ export function GlobalStatsPage() {
               <Area type="monotone" dataKey="invoiced" name="Facture" stroke="#0579DA" fill="#0579DA" fillOpacity={0.08} strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+        <Card>
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Revenus par plan</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
@@ -173,12 +173,12 @@ export function GlobalStatsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Charts row 2: Clients + Sales trends */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+        <Card>
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Clients captures par mois</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data.mrrByMonth}>
@@ -189,9 +189,9 @@ export function GlobalStatsPage() {
               <Bar dataKey="clients" name="Clients" fill="#7C3AED" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+        <Card>
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Ventes par mois</h3>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={data.mrrByMonth}>
@@ -202,11 +202,11 @@ export function GlobalStatsPage() {
               <Line type="monotone" dataKey="sales" name="Ventes" stroke="#00D4A0" strokeWidth={2} dot={{ fill: '#00D4A0', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
       </div>
 
       {/* Top tenants */}
-      <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+      <Card noPadding>
         <div className="border-b border-immo-border-default px-5 py-4">
           <h3 className="text-sm font-semibold text-immo-text-primary">Top 5 — Chiffre d'affaires tenants</h3>
         </div>
@@ -220,7 +220,7 @@ export function GlobalStatsPage() {
           ))}
           {data.topRevenue.length === 0 && <div className="py-6 text-center text-sm text-immo-text-secondary">Aucune donnee</div>}
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Mail, Send, Eye, Search, CheckCircle, XCircle, Clock, FileText, TestTube } from 'lucide-react'
 import { useEmailLogs, useSendTestEmail } from '@/hooks/useEmailLogs'
-import { LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
@@ -265,12 +265,12 @@ function LogsTab({
           <LoadingSpinner />
         </div>
       ) : logs.length === 0 ? (
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-12 text-center">
+        <Card className="p-12 text-center">
           <Mail className="mx-auto h-10 w-10 text-immo-text-muted mb-3" />
           <p className="text-sm text-immo-text-muted">Aucun email envoye</p>
-        </div>
+        </Card>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding className="overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-immo-border-default bg-immo-bg-primary/50">
@@ -311,7 +311,7 @@ function LogsTab({
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
 
       <p className="text-xs text-immo-text-muted text-right">{logs.length} email(s)</p>
@@ -334,9 +334,9 @@ function TemplatesTab({
         {TEMPLATE_META.map(tmpl => {
           const Icon = tmpl.icon
           return (
-            <div
+            <Card
               key={tmpl.id}
-              className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5 space-y-3 hover:border-[#7C3AED]/30 transition-colors"
+              className="space-y-3 transition-colors hover:border-[#7C3AED]/30"
             >
               <div className="flex items-start justify-between">
                 <div className={`rounded-lg p-2 ${tmpl.color}`}>
@@ -373,7 +373,7 @@ function TemplatesTab({
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           )
         })}
       </div>
@@ -426,7 +426,7 @@ function TestTab({
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-6 space-y-5">
+      <Card className="space-y-5 p-6">
         <h3 className="font-semibold text-immo-text-primary flex items-center gap-2">
           <TestTube className="h-4 w-4 text-[#7C3AED]" />
           Envoyer un email de test
@@ -479,11 +479,11 @@ function TestTab({
         <p className="text-xs text-immo-text-muted">
           L'email sera envoye avec le statut "test" et apparaitra dans l'historique.
         </p>
-      </div>
+      </Card>
 
       {/* Sample data preview */}
       {selectedMeta && (
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-6 space-y-3">
+        <Card className="space-y-3 p-6">
           <h3 className="text-sm font-semibold text-immo-text-primary">Donnees exemple utilisees</h3>
           <p className="text-xs text-immo-text-muted">Ces valeurs remplacent les variables du template lors de l'envoi de test.</p>
           <div className="divide-y divide-immo-border-default/60 rounded-lg border border-immo-border-default bg-immo-bg-primary">
@@ -494,7 +494,7 @@ function TestTab({
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   )

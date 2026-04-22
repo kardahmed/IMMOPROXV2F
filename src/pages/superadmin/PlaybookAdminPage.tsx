@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Plus, Trash2, AlertTriangle, Lightbulb, Target, MessageCircle, Sparkles, Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { PageHeader } from '@/components/common'
+import { Card, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -156,7 +156,7 @@ export function PlaybookAdminPage() {
         const isEditing = editId === pb.id
 
         return (
-          <div key={pb.id as string} className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+          <Card key={pb.id as string} noPadding className="overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-immo-border-default bg-immo-bg-primary px-5 py-3">
               <div className="flex items-center gap-3">
@@ -284,7 +284,7 @@ export function PlaybookAdminPage() {
                 </div>
               </div>
             )}
-          </div>
+          </Card>
         )
       })}
 

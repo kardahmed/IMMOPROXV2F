@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle, Settings, Send, Users, TrendingUp, AlertTriangle, Check, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { DataTable, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, DataTable, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -213,7 +213,7 @@ export function WhatsAppPage() {
 
       {/* Config tab */}
       {tab === 'config' && config && (
-        <div className="space-y-4 rounded-xl border border-immo-border-default bg-immo-bg-card p-6">
+        <Card className="space-y-4 p-6">
           <h3 className="text-sm font-semibold text-immo-text-primary">Meta Cloud API</h3>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
@@ -247,7 +247,7 @@ export function WhatsAppPage() {
           <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending} className="bg-green-500 text-white hover:bg-green-600">
             <Check className="mr-1.5 h-4 w-4" /> Enregistrer
           </Button>
-        </div>
+        </Card>
       )}
 
       {/* Tenants tab */}

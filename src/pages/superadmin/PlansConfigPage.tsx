@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Check, X, Zap, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { LoadingSpinner, PageHeader } from '@/components/common'
+import { Card, LoadingSpinner, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -228,7 +228,7 @@ export function PlansConfigPage() {
           const isProtected = ['free', 'starter', 'pro', 'enterprise'].includes(plan.plan)
 
           return (
-            <div key={plan.plan} className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+            <Card key={plan.plan} noPadding className="overflow-hidden">
               {/* Header */}
               <div className="px-4 py-3 border-b border-immo-border-default" style={{ backgroundColor: color + '10' }}>
                 <div className="flex items-center justify-between">
@@ -317,13 +317,13 @@ export function PlansConfigPage() {
                   })}
                 </div>
               </div>
-            </div>
+            </Card>
           )
         })}
       </div>
 
       {/* Summary table */}
-      <div className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+      <Card noPadding className="overflow-hidden">
         <div className="border-b border-immo-border-default px-5 py-3">
           <h3 className="text-sm font-semibold text-immo-text-primary">Grille comparative</h3>
         </div>
@@ -385,7 +385,7 @@ export function PlansConfigPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

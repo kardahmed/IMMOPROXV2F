@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, AlertTriangle, Bell, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { LoadingSpinner, PageHeader } from '@/components/common'
+import { Card, LoadingSpinner, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -73,7 +73,7 @@ export function PlatformSettingsPage() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* General settings */}
-        <div className="space-y-5 rounded-xl border border-immo-border-default bg-immo-bg-card p-6">
+        <Card className="space-y-5 p-6">
           <h3 className="text-sm font-semibold text-immo-text-primary">General</h3>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -109,7 +109,7 @@ export function PlatformSettingsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* AI Configuration */}
         <div className="space-y-4 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-6">
@@ -229,15 +229,15 @@ function AlertsSection() {
       </div>
 
       {alerts.length === 0 && (
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-8 text-center">
+        <Card className="p-8 text-center">
           <Bell className="mx-auto mb-2 h-8 w-8 text-immo-text-muted" />
           <p className="text-sm text-immo-text-secondary">Aucune alerte configuree</p>
-        </div>
+        </Card>
       )}
 
       <div className="grid gap-3 lg:grid-cols-2">
         {alerts.map(alert => (
-          <div key={alert.id} className="rounded-xl border border-immo-border-default bg-immo-bg-card p-4">
+          <Card key={alert.id} className="p-4">
             <div className="flex items-start gap-3">
               {/* Active toggle */}
               <button
@@ -324,7 +324,7 @@ function AlertsSection() {
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

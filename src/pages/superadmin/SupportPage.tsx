@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageSquare, Send, Inbox } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { format } from 'date-fns'
@@ -124,7 +124,7 @@ export function SupportPage() {
         {/* Ticket detail */}
         <div className="lg:col-span-7 xl:col-span-8">
           {selectedTicket ? (
-            <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+            <Card noPadding>
               <div className="border-b border-immo-border-default px-5 py-3">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-[#7C3AED]" />
@@ -174,7 +174,7 @@ export function SupportPage() {
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
+            </Card>
           ) : (
             <div className="flex h-full min-h-[400px] flex-col items-center justify-center rounded-xl border border-dashed border-immo-border-default bg-immo-bg-card p-8">
               <MessageSquare className="mb-3 h-10 w-10 text-immo-text-muted" />

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp, Users, DollarSign, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard } from '@/components/common'
+import { Card, KPICard } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { format, subDays } from 'date-fns'
@@ -48,7 +48,7 @@ export function RealtimeDashboard() {
   return (
     <div className="space-y-4">
       {/* Realtime KPIs */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KPICard label="Leads aujourd'hui" value={data.leadsToday} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Ventes aujourd'hui" value={data.salesToday} accent="green" icon={<DollarSign className="h-4 w-4 text-immo-accent-green" />} />
         <KPICard label="Visites aujourd'hui" value={data.visitsToday} accent="orange" icon={<Calendar className="h-4 w-4 text-immo-status-orange" />} />
@@ -56,7 +56,7 @@ export function RealtimeDashboard() {
       </div>
 
       {/* 30-day trend */}
-      <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-4">
+      <Card className="p-4">
         <h3 className="mb-3 text-xs font-semibold text-immo-text-primary">Leads captures — 30 derniers jours</h3>
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={data.trendData}>
@@ -66,7 +66,7 @@ export function RealtimeDashboard() {
             <Bar dataKey="leads" fill="#0579DA" radius={[2, 2, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </Card>
     </div>
   )
 }
