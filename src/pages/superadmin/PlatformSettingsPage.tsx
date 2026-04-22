@@ -9,8 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import toast from 'react-hot-toast'
 
-const inputClass = 'border-immo-border-default bg-immo-bg-card text-immo-text-primary placeholder-immo-text-muted'
-
 export function PlatformSettingsPage() {
   const qc = useQueryClient()
 
@@ -81,17 +79,17 @@ export function PlatformSettingsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <Label className="text-[11px] font-medium text-immo-text-secondary">Nom de la plateforme</Label>
-              <Input value={name} onChange={e => setName(e.target.value)} className={inputClass} />
+              <Input value={name} onChange={e => setName(e.target.value)} variant="immo" />
             </div>
             <div>
               <Label className="text-[11px] font-medium text-immo-text-secondary">Version</Label>
-              <Input value={version} onChange={e => setVersion(e.target.value)} className={inputClass} />
+              <Input value={version} onChange={e => setVersion(e.target.value)} variant="immo" />
             </div>
           </div>
 
           <div>
             <Label className="text-[11px] font-medium text-immo-text-secondary">Email de support</Label>
-            <Input type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@immoprox.io" className={inputClass} />
+            <Input type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} placeholder="support@immoprox.io" variant="immo" />
           </div>
 
           <div className="rounded-lg border border-immo-border-default p-4">
@@ -129,11 +127,11 @@ export function PlatformSettingsPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label className="text-[11px] font-medium text-immo-text-muted">Cle API Anthropic</Label>
-              <Input type="password" value={anthropicKey} onChange={e => setAnthropicKey(e.target.value)} placeholder="sk-ant-..." className={inputClass} />
+              <Input type="password" value={anthropicKey} onChange={e => setAnthropicKey(e.target.value)} placeholder="sk-ant-..." variant="immo" />
             </div>
             <div>
               <Label className="text-[11px] font-medium text-immo-text-muted">Cle API OpenAI</Label>
-              <Input type="password" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." className={inputClass} />
+              <Input type="password" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." variant="immo" />
             </div>
           </div>
           <p className="text-[10px] text-immo-text-muted">
@@ -270,7 +268,8 @@ function AlertsSection() {
                       type="number"
                       value={alert.threshold}
                       onChange={e => updateAlert.mutate({ id: alert.id, threshold: parseInt(e.target.value) || 0 })}
-                      className="mt-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
+                      variant="immo"
+                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -308,7 +307,8 @@ function AlertsSection() {
                           alert.channel === 'slack' ? 'https://hooks.slack.com/services/...' :
                           alert.channel === 'discord' ? 'https://discord.com/api/webhooks/...' : 'https://...'
                         }
-                        className="mt-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
+                        variant="immo"
+                        className="mt-1"
                       />
                     </div>
                   )}

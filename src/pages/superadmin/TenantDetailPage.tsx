@@ -312,7 +312,8 @@ function CustomDomainPanel({ tenantId, customDomain, setCustomDomain, domainDirt
           value={customDomain}
           onChange={e => { setCustomDomain(e.target.value); setDomainDirty(true) }}
           placeholder="landing.monagence.com"
-          className="flex-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
+          variant="immo"
+          className="flex-1"
         />
         <Button
           onClick={() => saveDomain.mutate()}

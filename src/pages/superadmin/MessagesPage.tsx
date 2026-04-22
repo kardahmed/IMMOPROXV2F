@@ -152,7 +152,7 @@ export function MessagesPage() {
               </div>
               <div>
                 <Label className="text-[11px] text-immo-text-muted">Sujet *</Label>
-                <Input value={subject} onChange={e => setSubject(e.target.value)} className="border-immo-border-default bg-immo-bg-primary text-immo-text-primary" />
+                <Input value={subject} onChange={e => setSubject(e.target.value)} variant="immo" />
               </div>
               <div>
                 <Label className="text-[11px] text-immo-text-muted">Message *</Label>
@@ -240,7 +240,7 @@ export function MessagesPage() {
 
               <div>
                 <Label className="text-[11px] text-immo-text-muted">Texte de la banniere</Label>
-                <Input value={bannerText} onChange={e => setBannerText(e.target.value)} placeholder="Ex: Maintenance prevue le 15 avril de 2h a 4h" className="border-immo-border-default bg-immo-bg-primary text-immo-text-primary" />
+                <Input value={bannerText} onChange={e => setBannerText(e.target.value)} placeholder="Ex: Maintenance prevue le 15 avril de 2h a 4h" variant="immo" />
               </div>
 
               {/* Preview */}

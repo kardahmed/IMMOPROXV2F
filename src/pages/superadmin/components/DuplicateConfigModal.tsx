@@ -125,7 +125,28 @@ export function DuplicateConfigModal({ isOpen, onClose, sourceTenantId, sourceTe
   })
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Dupliquer la configuration" subtitle={`Source : ${sourceTenantName}`} size="sm">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Dupliquer la configuration"
+      subtitle={`Source : ${sourceTenantName}`}
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
+          <Button
+            onClick={() => duplicate.mutate()}
+            disabled={!targetId || (!copySettings && !copyTemplates && !copyPipeline) || duplicate.isPending}
+            variant="purple"
+          >
+            {duplicate.isPending
+              ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              : <><Copy className="mr-1.5 h-4 w-4" /> Dupliquer</>
+            }
+          </Button>
+        </>
+      }
+    >
       <div className="space-y-4">
         {/* Target tenant */}
         <div>
@@ -155,20 +176,6 @@ export function DuplicateConfigModal({ isOpen, onClose, sourceTenantId, sourceTe
         <p className="text-[11px] text-immo-status-orange">
           Les parametres existants du tenant cible seront ecrases.
         </p>
-
-        <div className="flex justify-end gap-3 border-t border-immo-border-default pt-4">
-          <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
-          <Button
-            onClick={() => duplicate.mutate()}
-            disabled={!targetId || (!copySettings && !copyTemplates && !copyPipeline) || duplicate.isPending}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-50"
-          >
-            {duplicate.isPending
-              ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              : <><Copy className="mr-1.5 h-4 w-4" /> Dupliquer</>
-            }
-          </Button>
-        </div>
       </div>
     </Modal>
   )
