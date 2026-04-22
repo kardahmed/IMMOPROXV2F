@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Activity, AlertTriangle, CheckCircle, Zap, Shield, Cpu, Database } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
+import { KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
 import { format, subDays, subHours } from 'date-fns'
 
@@ -103,7 +103,10 @@ export function MonitoringPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-immo-text-primary">Monitoring & Securite</h1>
+      <PageHeader
+        title="Monitoring & Securite"
+        subtitle="Sante de la plateforme, erreurs et activite recente"
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">

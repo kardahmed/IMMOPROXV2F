@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Send, FileText, Megaphone, Bell, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { LoadingSpinner, StatusBadge } from '@/components/common'
+import { LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -120,7 +120,10 @@ export function MessagesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-immo-text-primary">Messagerie & Communication</h1>
+      <PageHeader
+        title="Messagerie & Communication"
+        subtitle="Envoyez des messages et gerez la banniere globale"
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-immo-border-default">

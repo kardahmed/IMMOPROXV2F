@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Check, X, Zap, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { LoadingSpinner } from '@/components/common'
+import { LoadingSpinner, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -192,21 +192,21 @@ export function PlansConfigPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">Configuration des plans</h1>
-          <p className="text-sm text-immo-text-secondary">Gerez les limites, tarifs et fonctionnalites de chaque plan</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowAddPlan(true)} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
-            <Plus className="mr-1.5 h-4 w-4" /> Nouveau plan
-          </Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending} className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-50">
-            {saveMutation.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
-            Enregistrer
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Configuration des plans"
+        subtitle="Gerez les limites, tarifs et fonctionnalites de chaque plan"
+        actions={
+          <>
+            <Button onClick={() => setShowAddPlan(true)} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
+              <Plus className="mr-1.5 h-4 w-4" /> Nouveau plan
+            </Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending} className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-50">
+              {saveMutation.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
+              Enregistrer
+            </Button>
+          </>
+        }
+      />
 
       {/* Add plan modal */}
       {showAddPlan && (

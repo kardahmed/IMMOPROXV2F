@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Plus, Trash2, AlertTriangle, Lightbulb, Target, MessageCircle, Sparkles, Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -120,10 +121,10 @@ export function PlaybookAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-immo-text-primary">Playbook IA</h1>
-        <p className="text-sm text-immo-text-secondary">Configurez la methodologie de vente que l'IA utilisera pour generer les scripts d'appel de tous les tenants.</p>
-      </div>
+      <PageHeader
+        title="Playbook IA"
+        subtitle="Configurez la methodologie de vente que l'IA utilisera pour generer les scripts d'appel de tous les tenants."
+      />
 
       {/* Info banner */}
       <div className="flex items-start gap-3 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-4">

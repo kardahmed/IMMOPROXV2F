@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle, Settings, Send, Users, TrendingUp, AlertTriangle, Check, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
+import { KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDistanceToNow } from 'date-fns'
@@ -114,15 +114,10 @@ export function WhatsAppPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10">
-          <MessageCircle className="h-5 w-5 text-green-500" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">WhatsApp Business</h1>
-          <p className="text-xs text-immo-text-muted">Gestion de l'integration WhatsApp Cloud API</p>
-        </div>
-      </div>
+      <PageHeader
+        title="WhatsApp Business"
+        subtitle="Gestion de l'integration WhatsApp Cloud API"
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

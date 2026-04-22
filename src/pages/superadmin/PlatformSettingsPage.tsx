@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, AlertTriangle, Bell, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { LoadingSpinner } from '@/components/common'
+import { LoadingSpinner, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -68,10 +68,10 @@ export function PlatformSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-immo-text-primary">Parametres de la plateforme</h1>
-        <p className="text-sm text-immo-text-secondary">Configuration globale IMMO PRO-X</p>
-      </div>
+      <PageHeader
+        title="Parametres de la plateforme"
+        subtitle="Configuration globale IMMO PRO-X"
+      />
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* General settings */}

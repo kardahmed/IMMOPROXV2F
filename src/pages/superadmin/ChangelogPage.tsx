@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Megaphone } from 'lucide-react'
+import { Plus, Megaphone, ScrollText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { LoadingSpinner, Modal } from '@/components/common'
+import { EmptyState, LoadingSpinner, Modal, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -39,26 +39,39 @@ export function ChangelogPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-immo-text-primary">Changelog</h1>
-        <Button onClick={() => setShowAdd(true)} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
-          <Plus className="mr-1.5 h-4 w-4" /> Nouvelle release
-        </Button>
-      </div>
+      <PageHeader
+        title="Changelog"
+        subtitle="Publiez les notes de version visibles par tous les tenants"
+        actions={
+          <Button onClick={() => setShowAdd(true)} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+            <Plus className="mr-1.5 h-4 w-4" /> Nouvelle release
+          </Button>
+        }
+      />
 
-      <div className="space-y-4">
-        {entries.map(e => (
-          <div key={e.id} className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-[#7C3AED]/10 px-3 py-0.5 text-xs font-bold text-[#7C3AED]">{e.version}</span>
-              <h3 className="text-sm font-semibold text-immo-text-primary">{e.title}</h3>
-              <span className="ml-auto text-xs text-immo-text-muted">{format(new Date(e.published_at), 'dd/MM/yyyy')}</span>
+      {entries.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-immo-border-default bg-immo-bg-card">
+          <EmptyState
+            icon={<ScrollText className="h-10 w-10" />}
+            title="Aucune release note"
+            description="Commencez par publier la premiere note de version pour informer vos tenants des nouveautes."
+            action={{ label: 'Publier une release', onClick: () => setShowAdd(true) }}
+          />
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {entries.map(e => (
+            <div key={e.id} className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5 transition-shadow hover:shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-[#7C3AED]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#7C3AED]">{e.version}</span>
+                <span className="ml-auto text-[11px] text-immo-text-muted">{format(new Date(e.published_at), 'dd/MM/yyyy')}</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold text-immo-text-primary">{e.title}</h3>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-immo-text-secondary">{e.body}</p>
             </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-immo-text-secondary">{e.body}</p>
-          </div>
-        ))}
-        {entries.length === 0 && <p className="py-12 text-center text-sm text-immo-text-muted">Aucune release note</p>}
-      </div>
+          ))}
+        </div>
+      )}
 
       <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Nouvelle release note" size="md">
         <div className="space-y-3">

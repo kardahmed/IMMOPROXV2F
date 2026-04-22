@@ -119,18 +119,20 @@ export function TenantDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/admin')} className="rounded-lg p-2 text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-immo-text-primary">{tenant.name as string}</h1>
-            <PlanBadge plan={(tenant.plan as string) ?? 'free'} />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+        <div className="flex flex-1 items-center gap-3 min-w-0">
+          <button onClick={() => navigate('/admin')} className="shrink-0 rounded-lg p-2 text-immo-text-secondary hover:bg-immo-bg-card-hover">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="truncate text-2xl font-bold text-immo-text-primary">{tenant.name as string}</h1>
+              <PlanBadge plan={(tenant.plan as string) ?? 'free'} />
+            </div>
+            <p className="truncate text-sm text-immo-text-secondary">{(tenant.email as string) ?? '-'} · {(tenant.wilaya as string) ?? '-'}</p>
           </div>
-          <p className="text-sm text-immo-text-secondary">{(tenant.email as string) ?? '-'} · {(tenant.wilaya as string) ?? '-'}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => setShowDuplicate(true)}
             className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
@@ -208,6 +210,12 @@ export function TenantDetailPage() {
                 </div>
               )
             })}
+            {projects.length === 0 && (
+              <div className="px-5 py-12 text-center">
+                <Building2 className="mx-auto mb-2 h-8 w-8 text-immo-text-muted" />
+                <p className="text-sm text-immo-text-secondary">Aucun projet pour ce tenant</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Mail, Send, Eye, Search, CheckCircle, XCircle, Clock, FileText, TestTube } from 'lucide-react'
 import { useEmailLogs, useSendTestEmail } from '@/hooks/useEmailLogs'
-import { LoadingSpinner, StatusBadge } from '@/components/common'
+import { LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
@@ -144,16 +144,10 @@ export function EmailsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-immo-text-primary flex items-center gap-2">
-          <Mail className="h-5 w-5 text-[#7C3AED]" />
-          {t('emails.title', 'Gestion Emails')}
-        </h1>
-        <p className="text-sm text-immo-text-muted mt-1">
-          {t('emails.subtitle', 'Templates, historique et envoi test')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('emails.title', 'Gestion Emails')}
+        subtitle={t('emails.subtitle', 'Templates, historique et envoi test')}
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-immo-border-default">

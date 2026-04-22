@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ScrollText, Search, Download, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { LoadingSpinner, StatusBadge } from '@/components/common'
+import { EmptyState, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 
@@ -113,16 +113,15 @@ export function AuditLogsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">Audit Trail</h1>
-          <p className="text-sm text-immo-text-secondary">Historique de toutes les actions super admin</p>
-        </div>
-        <Button onClick={exportCSV} variant="ghost" className="border border-immo-border-default text-sm text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
-          <Download className="mr-1.5 h-4 w-4" /> Export CSV
-        </Button>
-      </div>
+      <PageHeader
+        title="Audit Trail"
+        subtitle="Historique de toutes les actions super admin"
+        actions={
+          <Button onClick={exportCSV} variant="ghost" className="border border-immo-border-default text-sm text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+            <Download className="mr-1.5 h-4 w-4" /> Export CSV
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="space-y-3">
@@ -189,10 +188,11 @@ export function AuditLogsPage() {
         </table>
 
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16">
-            <ScrollText className="h-10 w-10 text-immo-border-default" />
-            <p className="text-sm text-immo-text-secondary">Aucun log trouve</p>
-          </div>
+          <EmptyState
+            icon={<ScrollText className="h-10 w-10" />}
+            title="Aucun log trouve"
+            description={search || actionFilter !== 'all' ? 'Ajustez les filtres pour elargir les resultats.' : 'Les actions super admin apparaitront ici.'}
+          />
         )}
       </div>
 

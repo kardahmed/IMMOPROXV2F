@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { DollarSign, TrendingUp, TrendingDown, Users, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner } from '@/components/common'
+import { KPICard, LoadingSpinner, PageHeader } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { format, subMonths, startOfMonth, endOfMonth, differenceInDays } from 'date-fns'
 
@@ -111,10 +111,10 @@ export function GlobalStatsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-immo-text-primary">Statistiques & Revenus</h1>
-        <p className="text-sm text-immo-text-secondary">Dashboard financier de la plateforme</p>
-      </div>
+      <PageHeader
+        title="Statistiques & Revenus"
+        subtitle="Dashboard financier de la plateforme"
+      />
 
       {/* Revenue KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

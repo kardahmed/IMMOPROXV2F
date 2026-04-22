@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DollarSign, FileText, AlertTriangle, Check, Send, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
+import { EmptyState, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatPriceCompact } from '@/lib/constants'
 import { format } from 'date-fns'
@@ -61,7 +61,10 @@ export function BillingPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-immo-text-primary">Facturation</h1>
+      <PageHeader
+        title="Facturation"
+        subtitle="Suivi des paiements, impayes et revenus par tenant"
+      />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KPICard label="Revenus totaux" value={formatPriceCompact(totalRevenue)} accent="green" icon={<DollarSign className="h-5 w-5 text-immo-accent-green" />} />
@@ -138,7 +141,13 @@ export function BillingPage() {
             })}
           </tbody>
         </table>
-        {filtered.length === 0 && <div className="py-12 text-center text-sm text-immo-text-muted">Aucune facture</div>}
+        {filtered.length === 0 && (
+          <EmptyState
+            icon={<FileText className="h-10 w-10" />}
+            title={statusFilter === 'all' ? 'Aucune facture' : 'Aucune facture dans ce statut'}
+            description={statusFilter === 'all' ? 'Les factures apparaitront ici des qu\'elles seront generees.' : 'Changez de filtre pour voir d\'autres factures.'}
+          />
+        )}
       </div>
     </div>
   )

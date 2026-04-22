@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageSquare, Send, Inbox } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { LoadingSpinner, StatusBadge } from '@/components/common'
+import { LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { format } from 'date-fns'
@@ -73,12 +73,10 @@ export function SupportPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">Support</h1>
-          <p className="text-sm text-immo-text-secondary">{openCount} ticket(s) a traiter</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Support"
+        subtitle={`${openCount} ticket(s) a traiter`}
+      />
 
       {/* Status filters */}
       <div className="flex flex-wrap items-center gap-1.5">

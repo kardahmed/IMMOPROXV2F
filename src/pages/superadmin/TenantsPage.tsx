@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { KPICard, LoadingSpinner } from '@/components/common'
+import { EmptyState, KPICard, LoadingSpinner, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { CreateTenantModal } from './components/CreateTenantModal'
@@ -108,19 +108,18 @@ export function TenantsPage() {
       {/* Realtime dashboard */}
       <RealtimeDashboard />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">Gestion des Tenants</h1>
-          <p className="text-sm text-immo-text-secondary">Gerez les agences de la plateforme</p>
-        </div>
-        <Button
-          onClick={() => setShowCreate(true)}
-          className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
-        >
-          <Plus className="mr-1.5 h-4 w-4" /> Nouveau Tenant
-        </Button>
-      </div>
+      <PageHeader
+        title="Gestion des Tenants"
+        subtitle="Gerez les agences de la plateforme"
+        actions={
+          <Button
+            onClick={() => setShowCreate(true)}
+            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> Nouveau Tenant
+          </Button>
+        }
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
@@ -182,7 +181,12 @@ export function TenantsPage() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div className="py-12 text-center text-sm text-immo-text-secondary">Aucun tenant trouve</div>
+          <EmptyState
+            icon={<Building2 className="h-10 w-10" />}
+            title={search ? 'Aucun tenant ne correspond' : 'Aucun tenant'}
+            description={search ? 'Modifiez votre recherche pour elargir les resultats.' : 'Creez votre premier tenant pour demarrer.'}
+            action={search ? undefined : { label: 'Creer un tenant', onClick: () => setShowCreate(true) }}
+          />
         )}
       </div>
 
