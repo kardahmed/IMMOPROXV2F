@@ -1,7 +1,9 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight } from 'lucide-react'
+import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight, Moon, Sun } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { LanguageSwitch } from '@/components/common/LanguageSwitch'
 import { HealthAlertsBanner } from './components/HealthAlertsBanner'
 import { GlobalSearch } from './components/GlobalSearch'
 import { NotificationCenter } from './components/NotificationCenter'
@@ -26,6 +28,7 @@ export function SuperAdminLayout() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { isDark, setTheme } = useDarkMode()
   const { inspectedTenantId, inspectedTenantName, leaveTenant } = useSuperAdminStore()
 
   // Find current page label from NAV_ITEMS (longest matching prefix wins for nested routes like /admin/tenants/:id)
@@ -125,6 +128,22 @@ export function SuperAdminLayout() {
           <div className="hidden md:block">
             <GlobalSearch />
           </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            aria-label={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            title={isDark ? 'Mode clair' : 'Mode sombre'}
+            className="rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
+          {/* Language switch — hidden on mobile */}
+          <div className="hidden md:block">
+            <LanguageSwitch />
+          </div>
+
           <NotificationCenter />
         </div>
 
