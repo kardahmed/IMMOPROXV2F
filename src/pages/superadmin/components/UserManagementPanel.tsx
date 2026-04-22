@@ -140,7 +140,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
 
             {/* Actions dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="rounded-md p-1.5 text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+              <DropdownMenuTrigger aria-label="Actions utilisateur" className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="border-immo-border-default bg-immo-bg-card">

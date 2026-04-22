@@ -31,13 +31,16 @@ export function HealthAlertsBanner() {
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="rounded-md p-1 text-immo-status-red/60 hover:bg-immo-status-red/10 hover:text-immo-status-red"
+          aria-label={expanded ? 'Reduire les alertes' : 'Afficher toutes les alertes'}
+          aria-expanded={expanded}
+          className="rounded-md p-1 text-immo-status-red/60 transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"
         >
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         <button
           onClick={() => setDismissed(true)}
-          className="rounded-md p-1 text-immo-status-red/40 hover:bg-immo-status-red/10 hover:text-immo-status-red"
+          aria-label="Masquer les alertes"
+          className="rounded-md p-1 text-immo-status-red/40 transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"
         >
           <X className="h-4 w-4" />
         </button>

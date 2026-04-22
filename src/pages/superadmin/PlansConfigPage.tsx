@@ -237,8 +237,12 @@ export function PlansConfigPage() {
                     <p className="text-[10px] text-immo-text-muted">{count} tenant{count > 1 ? 's' : ''}</p>
                   </div>
                   {!isProtected && (
-                    <button onClick={() => deletePlanMutation.mutate(plan.plan)} disabled={deletePlanMutation.isPending}
-                      className="rounded-lg p-1 text-immo-text-muted hover:bg-immo-status-red/10 hover:text-immo-status-red">
+                    <button
+                      onClick={() => deletePlanMutation.mutate(plan.plan)}
+                      disabled={deletePlanMutation.isPending}
+                      aria-label={`Supprimer le plan ${plan.plan}`}
+                      className="rounded-lg p-1 text-immo-text-muted transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40 disabled:opacity-50"
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   )}

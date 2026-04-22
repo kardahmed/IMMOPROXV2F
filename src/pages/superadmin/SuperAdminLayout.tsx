@@ -37,7 +37,7 @@ export function SuperAdminLayout() {
   return (
     <div className="flex h-screen bg-immo-bg-primary">
       {/* Sidebar */}
-      <aside className="flex w-[240px] shrink-0 flex-col border-r border-immo-border-default/50 bg-immo-bg-card">
+      <aside aria-label="Navigation Super Admin" className="flex w-[240px] shrink-0 flex-col border-r border-immo-border-default/50 bg-immo-bg-card">
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5">
           <img src="/logo-180.png" alt="IMMO PRO-X" className="h-9 w-9" />

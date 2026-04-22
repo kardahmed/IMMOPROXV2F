@@ -241,7 +241,7 @@ export function PlaybookAdminPage() {
                             className="h-7 rounded-md border border-immo-border-default bg-immo-bg-card px-2 text-xs text-immo-text-primary">
                             {OBJECTION_TRIGGERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                           </select>
-                          <button onClick={() => setObjectionRules(objectionRules.filter((_, i) => i !== idx))} className="text-immo-text-muted hover:text-immo-status-red">
+                          <button onClick={() => setObjectionRules(objectionRules.filter((_, i) => i !== idx))} aria-label="Supprimer l'objection" className="rounded text-immo-text-muted transition-colors hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40">
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -262,7 +262,7 @@ export function PlaybookAdminPage() {
                       <div key={i} className="flex items-center gap-2">
                         <span className="text-xs text-[#7C3AED]">→</span>
                         <Input value={p} onChange={e => { const n = [...closingPhrases]; n[i] = e.target.value; setClosingPhrases(n) }} className="flex-1 text-xs border-immo-border-default" />
-                        <button onClick={() => setClosingPhrases(closingPhrases.filter((_, j) => j !== i))} className="text-immo-text-muted hover:text-immo-status-red"><Trash2 className="h-3 w-3" /></button>
+                        <button onClick={() => setClosingPhrases(closingPhrases.filter((_, j) => j !== i))} aria-label="Supprimer la phrase" className="rounded text-immo-text-muted transition-colors hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"><Trash2 className="h-3 w-3" /></button>
                       </div>
                     ))}
                   </div>

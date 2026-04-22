@@ -121,7 +121,11 @@ export function TenantDetailPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
         <div className="flex flex-1 items-center gap-3 min-w-0">
-          <button onClick={() => navigate('/admin')} className="shrink-0 rounded-lg p-2 text-immo-text-secondary hover:bg-immo-bg-card-hover">
+          <button
+            onClick={() => navigate('/admin')}
+            aria-label="Retour a la liste des tenants"
+            className="shrink-0 rounded-lg p-2 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0">

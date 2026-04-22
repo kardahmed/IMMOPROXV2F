@@ -103,7 +103,10 @@ export function PlatformSettingsPage() {
               </div>
               <button
                 onClick={() => setMaintenance(!maintenance)}
-                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors ${maintenance ? 'bg-immo-status-red' : 'bg-immo-border-default'}`}
+                role="switch"
+                aria-checked={maintenance}
+                aria-label="Mode maintenance"
+                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40 ${maintenance ? 'bg-immo-status-red' : 'bg-immo-border-default'}`}
               >
                 <div className={`h-5 w-5 rounded-full bg-white transition-transform ${maintenance ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
@@ -242,7 +245,10 @@ function AlertsSection() {
               {/* Active toggle */}
               <button
                 onClick={() => updateAlert.mutate({ id: alert.id, is_active: !alert.is_active })}
-                className={`mt-1 flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${alert.is_active ? 'bg-immo-accent-green' : 'bg-immo-border-default'}`}
+                role="switch"
+                aria-checked={alert.is_active}
+                aria-label={alert.is_active ? "Desactiver l'alerte" : "Activer l'alerte"}
+                className={`mt-1 flex h-5 w-9 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40 ${alert.is_active ? 'bg-immo-accent-green' : 'bg-immo-border-default'}`}
               >
                 <div className={`h-4 w-4 rounded-full bg-white transition-transform ${alert.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
               </button>
@@ -319,7 +325,8 @@ function AlertsSection() {
               <button
                 onClick={() => deleteAlert.mutate(alert.id)}
                 disabled={deleteAlert.isPending}
-                className="mt-1 rounded-lg p-1.5 text-immo-text-muted hover:bg-immo-status-red/10 hover:text-immo-status-red disabled:opacity-50"
+                aria-label="Supprimer l'alerte"
+                className="mt-1 rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40 disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

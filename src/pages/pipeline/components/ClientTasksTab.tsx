@@ -239,13 +239,13 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
                 {isPending && (
                   <div className="flex gap-1 shrink-0">
                     {task.channel !== 'system' && (
-                      <button onClick={() => executeTask(task)} title="Executer"
-                        className="flex items-center gap-1 rounded-md bg-immo-accent-green/10 px-2 py-1 text-[10px] font-medium text-immo-accent-green hover:bg-immo-accent-green/20">
+                      <button onClick={() => executeTask(task)} aria-label="Executer la tache" title="Executer"
+                        className="flex items-center gap-1 rounded-md bg-immo-accent-green/10 px-2 py-1 text-[10px] font-medium text-immo-accent-green transition-colors hover:bg-immo-accent-green/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40">
                         <Send className="h-3 w-3" /> Executer
                       </button>
                     )}
-                    <button onClick={() => skipTask.mutate(task.id)} title="Ignorer"
-                      className="rounded-md p-1 text-immo-text-muted hover:bg-immo-bg-card-hover">
+                    <button onClick={() => skipTask.mutate(task.id)} aria-label="Ignorer la tache" title="Ignorer"
+                      className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                       <SkipForward className="h-3 w-3" />
                     </button>
                   </div>

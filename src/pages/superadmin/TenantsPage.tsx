@@ -120,10 +120,20 @@ export function TenantsPage() {
       align: 'right',
       render: (t) => (
         <div className="flex justify-end gap-1">
-          <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/tenants/${t.id}`) }} title="Voir" className="rounded-md p-1.5 text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(`/admin/tenants/${t.id}`) }}
+            aria-label={`Voir ${t.name}`}
+            title="Voir"
+            className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
             <Eye className="h-3.5 w-3.5" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); handleAccessTenant(t) }} title="Acceder" className="rounded-md p-1.5 text-[#7C3AED] hover:bg-[#7C3AED]/10">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleAccessTenant(t) }}
+            aria-label={`Acceder au tenant ${t.name}`}
+            title="Acceder"
+            className="rounded-md p-1.5 text-[#7C3AED] transition-colors hover:bg-[#7C3AED]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
             <LogIn className="h-3.5 w-3.5" />
           </button>
         </div>
