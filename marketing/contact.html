@@ -137,7 +137,177 @@
 
         <!-- Step 2 form (hidden until step 1 is submitted) -->
         <form id="form-step-2" class="form-step" novalidate hidden>
-          <!-- content added in sub-task C -->
+          <div>
+            <h2>Votre projet</h2>
+            <p class="form-sub">Ces informations nous permettent de preparer une demo adaptee a votre contexte.</p>
+          </div>
+
+          <!-- 1. Type d'activite + 2. Nom entreprise -->
+          <div class="field">
+            <label>Type d'activite <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="activity_type" value="agence" required /><span>Agence immobiliere</span></label>
+              <label><input type="radio" name="activity_type" value="promoteur" required /><span>Promoteur immobilier</span></label>
+              <label><input type="radio" name="activity_type" value="freelance" required /><span>Agent freelance</span></label>
+              <label><input type="radio" name="activity_type" value="entreprise" required /><span>Autre entreprise</span></label>
+            </div>
+            <div class="err-msg" data-err-for="activity_type"></div>
+          </div>
+
+          <div class="field">
+            <label for="f2-company">Nom de votre entreprise <span class="req">*</span></label>
+            <input id="f2-company" name="company_name" type="text" required autocomplete="organization" placeholder="Ex: Immobiliere Atlas" />
+            <div class="err-msg" data-err-for="f2-company"></div>
+          </div>
+
+          <!-- 3. Nb agents + 5. Leads/mois -->
+          <div class="field-grid">
+            <div class="field">
+              <label for="f2-agents">Nombre d'agents commerciaux <span class="req">*</span></label>
+              <select id="f2-agents" name="agents_count" required>
+                <option value="" disabled selected>Choisir...</option>
+                <option value="1">1 agent</option>
+                <option value="2-5">2 a 5 agents</option>
+                <option value="6-15">6 a 15 agents</option>
+                <option value="16-50">16 a 50 agents</option>
+                <option value="50+">Plus de 50</option>
+              </select>
+              <div class="err-msg" data-err-for="f2-agents"></div>
+            </div>
+            <div class="field">
+              <label for="f2-leads">Leads generes par mois <span class="req">*</span></label>
+              <select id="f2-leads" name="leads_per_month" required>
+                <option value="" disabled selected>Choisir...</option>
+                <option value="<10">Moins de 10</option>
+                <option value="10-50">10 a 50</option>
+                <option value="50-200">50 a 200</option>
+                <option value="200+">Plus de 200</option>
+              </select>
+              <div class="err-msg" data-err-for="f2-leads"></div>
+            </div>
+          </div>
+
+          <!-- 4. Wilayas + 6. Budget marketing -->
+          <div class="field-grid">
+            <div class="field">
+              <label for="f2-wilayas">Wilaya(s) d'operation <span class="req">*</span></label>
+              <input id="f2-wilayas" name="wilayas" type="text" required list="wilayas-list" placeholder="Ex: Alger, Oran, Setif" />
+              <div class="hint">Separez par des virgules</div>
+              <datalist id="wilayas-list">
+                <option value="Adrar"><option value="Chlef"><option value="Laghouat"><option value="Oum El Bouaghi">
+                <option value="Batna"><option value="Bejaia"><option value="Biskra"><option value="Bechar">
+                <option value="Blida"><option value="Bouira"><option value="Tamanrasset"><option value="Tebessa">
+                <option value="Tlemcen"><option value="Tiaret"><option value="Tizi Ouzou"><option value="Alger">
+                <option value="Djelfa"><option value="Jijel"><option value="Setif"><option value="Saida">
+                <option value="Skikda"><option value="Sidi Bel Abbes"><option value="Annaba"><option value="Guelma">
+                <option value="Constantine"><option value="Medea"><option value="Mostaganem"><option value="M'Sila">
+                <option value="Mascara"><option value="Ouargla"><option value="Oran"><option value="El Bayadh">
+                <option value="Illizi"><option value="Bordj Bou Arreridj"><option value="Boumerdes"><option value="El Tarf">
+                <option value="Tindouf"><option value="Tissemsilt"><option value="El Oued"><option value="Khenchela">
+                <option value="Souk Ahras"><option value="Tipaza"><option value="Mila"><option value="Ain Defla">
+                <option value="Naama"><option value="Ain Temouchent"><option value="Ghardaia"><option value="Relizane">
+                <option value="Timimoun"><option value="Bordj Badji Mokhtar"><option value="Ouled Djellal"><option value="Beni Abbes">
+                <option value="In Salah"><option value="In Guezzam"><option value="Touggourt"><option value="Djanet">
+                <option value="El M'Ghair"><option value="El Meniaa">
+              </datalist>
+              <div class="err-msg" data-err-for="f2-wilayas"></div>
+            </div>
+            <div class="field">
+              <label for="f2-budget">Budget marketing mensuel <span class="req">*</span></label>
+              <select id="f2-budget" name="marketing_budget_monthly" required>
+                <option value="" disabled selected>Choisir...</option>
+                <option value="<50k">Moins de 50 000 DA</option>
+                <option value="50-200k">50 000 a 200 000 DA</option>
+                <option value="200k-1M">200 000 a 1 000 000 DA</option>
+                <option value=">1M">Plus de 1 000 000 DA</option>
+              </select>
+              <div class="err-msg" data-err-for="f2-budget"></div>
+            </div>
+          </div>
+
+          <!-- 7. Canaux d'acquisition -->
+          <div class="field">
+            <label>Canaux d'acquisition actuels <span class="req">*</span></label>
+            <div class="checkbox-grid">
+              <label><input type="checkbox" name="acquisition_channels" value="whatsapp" /><span>WhatsApp</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="meta_ads" /><span>Meta Ads (Facebook/Instagram)</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="google_ads" /><span>Google Ads</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="word_of_mouth" /><span>Bouche a oreille</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="billboards" /><span>Panneaux / Affichage</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="salons" /><span>Salons / Evenements</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="seo" /><span>SEO / Site web</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="other" /><span>Autre</span></label>
+            </div>
+            <div class="err-msg" data-err-for="acquisition_channels"></div>
+          </div>
+
+          <!-- 8. Outils actuels -->
+          <div class="field">
+            <label>Outil actuel de suivi clients <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="current_tools" value="nothing" required /><span>Rien de structure</span></label>
+              <label><input type="radio" name="current_tools" value="excel" required /><span>Excel / Google Sheets</span></label>
+              <label><input type="radio" name="current_tools" value="whatsapp" required /><span>WhatsApp uniquement</span></label>
+              <label><input type="radio" name="current_tools" value="crm" required /><span>Un CRM existant</span></label>
+            </div>
+            <div class="err-msg" data-err-for="current_tools"></div>
+          </div>
+
+          <!-- 9. Decideur + noms conditionnels -->
+          <div class="field">
+            <label>Qui prend la decision d'achat ? <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="decision_maker" value="me" required /><span>Moi</span></label>
+              <label><input type="radio" name="decision_maker" value="boss" required /><span>Mon patron / directeur</span></label>
+              <label><input type="radio" name="decision_maker" value="partners" required /><span>Associes / co-fondateurs</span></label>
+              <label><input type="radio" name="decision_maker" value="committee" required /><span>Comite de direction</span></label>
+            </div>
+            <div class="err-msg" data-err-for="decision_maker"></div>
+          </div>
+
+          <div class="field hidden-field" id="field-decision-names">
+            <label for="f2-dm-names">Nom(s) de la/les personne(s) qui decide(nt) <span class="req">*</span></label>
+            <input id="f2-dm-names" name="decision_maker_names" type="text" placeholder="Ex: Mohamed Bensalem (directeur)" />
+            <div class="err-msg" data-err-for="f2-dm-names"></div>
+          </div>
+
+          <!-- 10. Frustration (1-10) -->
+          <div class="field">
+            <label for="f2-frustration">A quel point votre suivi clients actuel vous frustre ? <span class="req">*</span></label>
+            <div class="slider-row">
+              <span style="font-size:11px;color:var(--muted)">Pas du tout</span>
+              <input id="f2-frustration" name="frustration_score" type="range" min="1" max="10" value="5" step="1" />
+              <span style="font-size:11px;color:var(--muted)">Enormement</span>
+              <span class="slider-value" id="frustration-value">5</span>
+            </div>
+          </div>
+
+          <!-- 11. Echeance -->
+          <div class="field">
+            <label>Quand souhaitez-vous etre operationnel ? <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="timeline" value="this_week" required /><span>Cette semaine</span></label>
+              <label><input type="radio" name="timeline" value="this_month" required /><span>Dans le mois</span></label>
+              <label><input type="radio" name="timeline" value="3_months" required /><span>Dans 3 mois</span></label>
+              <label><input type="radio" name="timeline" value="browsing" required /><span>Je me renseigne</span></label>
+            </div>
+            <div class="err-msg" data-err-for="timeline"></div>
+          </div>
+
+          <!-- 12. Message libre -->
+          <div class="field">
+            <label for="f2-message">Un besoin specifique a partager ?</label>
+            <textarea id="f2-message" name="message" rows="3" placeholder="Optionnel — un point particulier sur lequel vous voulez une reponse durant la demo."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" id="btn-back">
+              <span aria-hidden="true">←</span> Precedent
+            </button>
+            <button type="submit" class="btn btn-p" id="btn-step-2">
+              Envoyer et prendre RDV <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>
