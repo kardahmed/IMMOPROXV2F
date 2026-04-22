@@ -43,7 +43,7 @@ export function ChangelogPage() {
         title="Changelog"
         subtitle="Publiez les notes de version visibles par tous les tenants"
         actions={
-          <Button onClick={() => setShowAdd(true)} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+          <Button onClick={() => setShowAdd(true)} variant="purple">
             <Plus className="mr-1.5 h-4 w-4" /> Nouvelle release
           </Button>
         }
@@ -85,7 +85,7 @@ export function ChangelogPage() {
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowAdd(false)} className="text-immo-text-secondary">Annuler</Button>
-            <Button onClick={() => create.mutate()} disabled={!version || !title || !body || create.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+            <Button onClick={() => create.mutate()} disabled={!version || !title || !body || create.isPending} variant="purple">
               <Megaphone className="mr-1.5 h-4 w-4" /> Publier
             </Button>
           </div>

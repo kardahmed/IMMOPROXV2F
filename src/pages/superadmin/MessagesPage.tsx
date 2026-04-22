@@ -159,7 +159,7 @@ export function MessagesPage() {
                 <textarea value={body} onChange={e => setBody(e.target.value)} rows={8} className="mt-1 w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 text-sm text-immo-text-primary" />
               </div>
               <div className="flex items-center gap-3">
-                <Button onClick={() => sendMessage.mutate()} disabled={!subject || !body || sendMessage.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+                <Button onClick={() => sendMessage.mutate()} disabled={!subject || !body || sendMessage.isPending} variant="purple">
                   {sendMessage.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="mr-1.5 h-4 w-4" />}
                   Envoyer
                 </Button>
@@ -259,7 +259,7 @@ export function MessagesPage() {
               )}
 
               <div className="flex gap-2">
-                <Button onClick={() => saveBanner.mutate()} disabled={saveBanner.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+                <Button onClick={() => saveBanner.mutate()} disabled={saveBanner.isPending} variant="purple">
                   {bannerText ? 'Activer la banniere' : 'Desactiver la banniere'}
                 </Button>
                 {bannerText && (

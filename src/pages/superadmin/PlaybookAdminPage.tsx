@@ -167,13 +167,13 @@ export function PlaybookAdminPage() {
                 </div>
               </div>
               {!isEditing ? (
-                <Button onClick={() => startEdit(pb)} size="sm" className="h-7 border border-[#7C3AED]/30 bg-transparent text-xs text-[#7C3AED] hover:bg-[#7C3AED]/10">
+                <Button onClick={() => startEdit(pb)} size="sm" variant="purple-outline" className="h-7 text-xs">
                   Modifier
                 </Button>
               ) : (
                 <div className="flex gap-2">
                   <Button onClick={() => setEditId(null)} size="sm" className="h-7 border border-immo-border-default bg-transparent text-xs text-immo-text-muted">Annuler</Button>
-                  <Button onClick={() => save.mutate()} disabled={save.isPending} size="sm" className="h-7 bg-[#7C3AED] text-xs text-white">
+                  <Button onClick={() => save.mutate()} disabled={save.isPending} size="sm" variant="purple" className="h-7 text-xs">
                     <Save className="mr-1 h-3 w-3" /> Sauvegarder
                   </Button>
                 </div>
@@ -229,7 +229,7 @@ export function PlaybookAdminPage() {
                     <Label className="flex items-center gap-1.5 text-xs font-semibold text-immo-text-primary">
                       <AlertTriangle className="h-3.5 w-3.5 text-immo-status-orange" /> Regles d'objection
                     </Label>
-                    <Button onClick={addObjection} size="sm" disabled={objectionRules.length >= OBJECTION_TRIGGERS.length} className="h-6 bg-[#7C3AED] text-[10px] text-white">
+                    <Button onClick={addObjection} size="sm" disabled={objectionRules.length >= OBJECTION_TRIGGERS.length} variant="purple" className="h-6 text-[10px]">
                       <Plus className="mr-1 h-3 w-3" /> Ajouter
                     </Button>
                   </div>
@@ -268,7 +268,7 @@ export function PlaybookAdminPage() {
                   </div>
                   <div className="flex gap-2">
                     <Input value={newClosing} onChange={e => setNewClosing(e.target.value)} placeholder="Ex: Mardi ou jeudi ?" className="flex-1 text-xs border-immo-border-default" />
-                    <Button onClick={() => { if (newClosing) { setClosingPhrases([...closingPhrases, newClosing]); setNewClosing('') } }} size="sm" className="h-9 bg-[#7C3AED] text-xs text-white">
+                    <Button onClick={() => { if (newClosing) { setClosingPhrases([...closingPhrases, newClosing]); setNewClosing('') } }} size="sm" variant="purple" className="h-9 text-xs">
                       <Plus className="mr-1 h-3 w-3" /> Ajouter
                     </Button>
                   </div>

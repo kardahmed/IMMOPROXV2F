@@ -121,7 +121,7 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantMo
           <Button
             onClick={handleCreate}
             disabled={!isValid || loading}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-50"
+            variant="purple"
           >
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Creer le tenant'}
           </Button>

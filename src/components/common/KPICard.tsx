@@ -19,7 +19,7 @@ export function KPICard({ label, value, subtitle, accent = 'green', icon }: KPIC
   const a = ACCENTS[accent]
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-immo-border-default bg-immo-bg-card shadow-sm">
+    <div className="relative overflow-hidden rounded-xl border border-immo-border-default bg-immo-bg-card shadow-sm transition-shadow duration-200 hover:shadow-md">
       {/* Accent bar */}
       <div className={`h-[3px] ${a.bar}`} />
 

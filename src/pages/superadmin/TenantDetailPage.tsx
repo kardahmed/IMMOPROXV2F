@@ -141,7 +141,7 @@ export function TenantDetailPage() {
           </Button>
           <Button
             onClick={() => setShowChangePlan(true)}
-            className="border border-[#7C3AED]/30 bg-transparent text-[#7C3AED] hover:bg-[#7C3AED]/10"
+            variant="purple-outline"
           >
             Changer le plan
           </Button>
@@ -156,8 +156,7 @@ export function TenantDetailPage() {
             <Power className="mr-1.5 h-4 w-4" />
             {isMaintenance ? 'Desactiver maintenance' : 'Maintenance'}
           </Button>
-          <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]">
+          <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }} variant="purple">
             Acceder au tenant
           </Button>
         </div>

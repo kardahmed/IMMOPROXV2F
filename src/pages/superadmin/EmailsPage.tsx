@@ -465,7 +465,8 @@ function TestTab({
         <Button
           onClick={onSend}
           disabled={isSending || !email}
-          className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white gap-2"
+          variant="purple"
+          className="w-full gap-2"
         >
           {isSending ? (
             <LoadingSpinner />

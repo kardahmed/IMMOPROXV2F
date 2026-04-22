@@ -146,7 +146,7 @@ export function PlatformSettingsPage() {
         <Button
           onClick={() => save.mutate()}
           disabled={save.isPending}
-          className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
+          variant="purple"
         >
           {save.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
         </Button>
@@ -225,7 +225,7 @@ function AlertsSection() {
           <h2 className="text-lg font-bold text-immo-text-primary">Alertes plateforme</h2>
           <p className="text-sm text-immo-text-secondary">Configurez des alertes automatiques par email ou webhook</p>
         </div>
-        <Button onClick={() => addAlert.mutate()} disabled={addAlert.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+        <Button onClick={() => addAlert.mutate()} disabled={addAlert.isPending} variant="purple">
           <Plus className="mr-1.5 h-4 w-4" /> Ajouter
         </Button>
       </div>

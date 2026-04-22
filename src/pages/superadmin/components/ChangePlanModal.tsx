@@ -99,7 +99,7 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
           <Button
             onClick={() => changePlan.mutate()}
             disabled={selected === currentPlan || changePlan.isPending}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-50"
+            variant="purple"
           >
             {changePlan.isPending
               ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

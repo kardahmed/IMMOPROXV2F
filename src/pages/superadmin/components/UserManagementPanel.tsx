@@ -114,7 +114,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
     <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
       <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-4">
         <h3 className="text-sm font-semibold text-immo-text-primary">Utilisateurs ({users.length})</h3>
-        <Button onClick={() => setShowCreate(true)} size="sm" className="bg-[#7C3AED] text-xs font-semibold text-white hover:bg-[#6D28D9]">
+        <Button onClick={() => setShowCreate(true)} size="sm" variant="purple" className="text-xs">
           <Plus className="mr-1 h-3.5 w-3.5" /> Ajouter
         </Button>
       </div>
@@ -288,8 +288,7 @@ function CreateUserModal({ isOpen, tenantId, onClose, onSuccess }: {
         <p className="text-[11px] text-immo-text-secondary">Un email d'invitation sera envoye automatiquement.</p>
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
-          <Button onClick={handleCreate} disabled={!firstName || !lastName || !email || loading}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]">
+          <Button onClick={handleCreate} disabled={!firstName || !lastName || !email || loading} variant="purple">
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Inviter'}
           </Button>
         </div>

@@ -170,7 +170,7 @@ export function SupportPage() {
 
               <div className="flex gap-2 border-t border-immo-border-default p-4">
                 <Input value={reply} onChange={e => setReply(e.target.value)} placeholder="Votre reponse..." className="border-immo-border-default bg-immo-bg-primary text-immo-text-primary" />
-                <Button onClick={() => sendReply.mutate()} disabled={!reply || sendReply.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+                <Button onClick={() => sendReply.mutate()} disabled={!reply || sendReply.isPending} variant="purple">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

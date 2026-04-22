@@ -142,7 +142,7 @@ export function TenantsPage() {
         actions={
           <Button
             onClick={() => setShowCreate(true)}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
+            variant="purple"
           >
             <Plus className="mr-1.5 h-4 w-4" /> Nouveau Tenant
           </Button>
