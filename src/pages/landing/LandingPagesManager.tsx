@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, ExternalLink, Copy, Pencil, Trash2, Eye, EyeOff, Layout } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -8,8 +8,9 @@ import { useAuthStore } from '@/store/authStore'
 import { KPICard, LoadingSpinner, StatusBadge, ConfirmDialog } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import toast from 'react-hot-toast'
-import { LandingPageEditor } from './LandingPageEditor'
-import { TemplateSelector } from './components/TemplateSelector'
+// Lazy-load the editor and template selector — both are heavy and only open on user action
+const LandingPageEditor = lazy(() => import('./LandingPageEditor').then(m => ({ default: m.LandingPageEditor })))
+const TemplateSelector = lazy(() => import('./components/TemplateSelector').then(m => ({ default: m.TemplateSelector })))
 import type { Template } from './components/TemplateSelector'
 
 interface LandingPage {
@@ -197,10 +198,14 @@ export function LandingPagesManager() {
       )}
 
       {/* Template selector */}
-      <TemplateSelector isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelect={handleTemplateSelect} />
+      <Suspense fallback={null}>
+        {showTemplates && <TemplateSelector isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelect={handleTemplateSelect} />}
+      </Suspense>
 
       {/* Editor modal */}
-      <LandingPageEditor isOpen={showEditor} onClose={() => { setShowEditor(false); setEditPage(null) }} editPage={editPage as unknown as Record<string, unknown> | null} />
+      <Suspense fallback={null}>
+        {showEditor && <LandingPageEditor isOpen={showEditor} onClose={() => { setShowEditor(false); setEditPage(null) }} editPage={editPage as unknown as Record<string, unknown> | null} />}
+      </Suspense>
 
       {/* Delete confirm */}
       <ConfirmDialog

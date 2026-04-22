@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -10,7 +10,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
-import { PaymentSchedulePanel } from './components/PaymentSchedulePanel'
+const PaymentSchedulePanel = lazy(() => import('./components/PaymentSchedulePanel').then(m => ({ default: m.PaymentSchedulePanel })))
 import { usePermissions } from '@/hooks/usePermissions'
 import {
   KPICard, SearchInput, FilterDropdown, PageSkeleton,
@@ -398,7 +398,9 @@ export function DossiersPage() {
             <h3 className="text-sm font-semibold text-immo-text-primary">Echeancier — {selectedDossier.clientName}</h3>
             <button onClick={() => setSelectedDossier(null)} className="text-xs text-immo-text-muted hover:text-immo-text-primary">Fermer ✕</button>
           </div>
-          <PaymentSchedulePanel saleId={selectedDossier.saleId} totalPrice={selectedDossier.totalPrice} clientName={selectedDossier.clientName} />
+          <Suspense fallback={<div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" /></div>}>
+            <PaymentSchedulePanel saleId={selectedDossier.saleId} totalPrice={selectedDossier.totalPrice} clientName={selectedDossier.clientName} />
+          </Suspense>
         </div>
       )}
     </div>

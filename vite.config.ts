@@ -24,7 +24,6 @@ export default defineConfig({
           if (id.includes('date-fns')) return 'date-vendor'
           if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('/zod/')) return 'form-vendor'
           if (id.includes('i18next')) return 'i18n-vendor'
-          if (id.includes('@react-pdf')) return 'pdf-vendor'
           if (id.includes('@dnd-kit')) return 'dnd-vendor'
           return undefined
         },

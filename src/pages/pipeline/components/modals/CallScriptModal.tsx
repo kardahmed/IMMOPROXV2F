@@ -354,7 +354,7 @@ export function CallScriptModal({
             <Clock className="h-4 w-4 text-immo-accent-green" />
             <span className="font-mono text-sm font-bold text-immo-accent-green">{formatTime(timer)}</span>
           </div>
-          <button onClick={onClose} className="rounded-md p-1.5 text-immo-text-muted hover:bg-immo-bg-card-hover">
+          <button onClick={onClose} aria-label="Fermer l'appel" className="rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40">
             <X className="h-5 w-5" />
           </button>
         </div>
