@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import {
   Users,
   Calendar,
@@ -43,8 +43,8 @@ import { PrioritySlider } from './components/PrioritySlider'
 import { KanbanBoard } from './components/KanbanBoard'
 import { CardsView } from './components/CardsView'
 import { TableView } from './components/TableView'
-import { ClientFormModal } from './components/ClientFormModal'
-import { SmartStageDialog } from './components/SmartStageDialog'
+const ClientFormModal = lazy(() => import('./components/ClientFormModal').then(m => ({ default: m.ClientFormModal })))
+const SmartStageDialog = lazy(() => import('./components/SmartStageDialog').then(m => ({ default: m.SmartStageDialog })))
 import { ClientSidePanel } from './components/ClientSidePanel'
 import { AdvancedFilters, EMPTY_FILTERS } from './components/AdvancedFilters'
 import type { AdvancedFilterValues } from './components/AdvancedFilters'
@@ -498,23 +498,27 @@ export function PipelinePage() {
         </div>
       )}
 
-      <ClientFormModal isOpen={showClientForm} onClose={() => setShowClientForm(false)} />
+      <Suspense fallback={null}>
+        {showClientForm && <ClientFormModal isOpen={showClientForm} onClose={() => setShowClientForm(false)} />}
+      </Suspense>
 
       {/* Stage change confirmation dialog */}
       {/* Client side panel */}
       <ClientSidePanel clientId={sidePanelClientId} onClose={() => setSidePanelClientId(null)} />
 
       {pendingMove && (
-        <SmartStageDialog
-          isOpen
-          onClose={() => setPendingMove(null)}
-          onConfirm={confirmMoveClient}
-          clientId={pendingMove.clientId}
-          clientName={pendingMove.clientName}
-          fromStage={pendingMove.fromStage}
-          toStage={pendingMove.toStage}
-          loading={updateClientStage.isPending}
-        />
+        <Suspense fallback={null}>
+          <SmartStageDialog
+            isOpen
+            onClose={() => setPendingMove(null)}
+            onConfirm={confirmMoveClient}
+            clientId={pendingMove.clientId}
+            clientName={pendingMove.clientName}
+            fromStage={pendingMove.fromStage}
+            toStage={pendingMove.toStage}
+            loading={updateClientStage.isPending}
+          />
+        </Suspense>
       )}
     </div>
   )
