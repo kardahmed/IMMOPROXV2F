@@ -14,7 +14,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import {
-  KPICard, FilterDropdown, LoadingSpinner,
+  KPICard, FilterDropdown, PageSkeleton,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { HISTORY_TYPE_LABELS } from '@/types'
@@ -228,7 +228,7 @@ export function ReportsPage() {
   const agentOptions = [{ value: 'all', label: 'Tous les agents' }, ...agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` }))]
   const periodOptions = PERIODS.map(p => ({ value: p.key, label: p.label }))
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={5} />
 
   return (
     <div className="space-y-5">

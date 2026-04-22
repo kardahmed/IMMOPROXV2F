@@ -20,7 +20,7 @@ import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useProjects } from '@/hooks/useProjects'
 import { usePermissions } from '@/hooks/usePermissions'
-import { KPICard, StatusBadge, LoadingSpinner } from '@/components/common'
+import { KPICard, PageSkeleton, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatPrice, formatPriceCompact } from '@/lib/constants'
@@ -147,7 +147,7 @@ export function ProjectDetailPage() {
   const coverUrl = project?.cover_url
 
   if (isLoading || !project) {
-    return <LoadingSpinner size="lg" className="h-96" />
+    return <PageSkeleton kpiCount={4} hasTable />
   }
 
   const st = STATUS_MAP[project.status] ?? STATUS_MAP.inactive

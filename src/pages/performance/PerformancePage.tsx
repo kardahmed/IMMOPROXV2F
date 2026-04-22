@@ -12,7 +12,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
-import { KPICard, FilterDropdown, LoadingSpinner } from '@/components/common'
+import { KPICard, FilterDropdown, PageSkeleton } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { PIPELINE_STAGES, SOURCE_LABELS } from '@/types'
 import { exportToCsv } from '@/lib/exportCsv'
@@ -206,7 +206,7 @@ export function PerformancePage() {
     ...allAgents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` })),
   ]
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={5} />
 
   return (
     <div className="space-y-5">

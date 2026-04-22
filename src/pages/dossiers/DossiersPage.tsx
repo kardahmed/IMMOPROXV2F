@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore'
 import { PaymentSchedulePanel } from './components/PaymentSchedulePanel'
 import { usePermissions } from '@/hooks/usePermissions'
 import {
-  KPICard, SearchInput, FilterDropdown, LoadingSpinner,
+  KPICard, SearchInput, FilterDropdown, PageSkeleton,
   StatusBadge,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -267,7 +267,7 @@ export function DossiersPage() {
     ...projectsList.map(p => ({ value: p.id, label: p.name })),
   ]
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={4} hasTable />
 
   return (
     <div className="space-y-5">

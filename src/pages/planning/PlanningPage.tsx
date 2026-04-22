@@ -9,7 +9,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import {
-  KPICard, FilterDropdown, LoadingSpinner, EmptyState,
+  KPICard, FilterDropdown, PageSkeleton, EmptyState,
   SidePanel, StatusBadge,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -175,7 +175,7 @@ export function PlanningPage() {
     return { id: v.client_id, full_name: v.client_name, phone: v.client_phone, pipeline_stage: v.client_stage, tenant_id: v.tenant_id, nin_cin: null }
   }
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={4} />
 
   return (
     <div className="space-y-5">

@@ -25,7 +25,7 @@ import {
   KPICard,
   SearchInput,
   FilterDropdown,
-  LoadingSpinner,
+  PageSkeleton,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatPriceCompact } from '@/lib/constants'
@@ -252,7 +252,7 @@ export function PipelinePage() {
   const isLoading = loadingClients || loadingStats
 
   if (isLoading) {
-    return <LoadingSpinner size="lg" className="h-96" />
+    return <PageSkeleton kpiCount={5} hasTable />
   }
 
   return (

@@ -15,7 +15,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { useClients } from '@/hooks/useClients'
 import { useAuthStore } from '@/store/authStore'
 import {
-  LoadingSpinner,
+  PageSkeleton,
   StatusBadge,
   ConfirmDialog,
 } from '@/components/common'
@@ -172,7 +172,7 @@ export function ClientDetailPage() {
   }
 
   if (isLoading || !client) {
-    return <LoadingSpinner size="lg" className="h-96" />
+    return <PageSkeleton kpiCount={0} />
   }
 
   const color = nameToColor(client.full_name)

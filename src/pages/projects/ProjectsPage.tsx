@@ -18,7 +18,7 @@ import {
   KPICard,
   SearchInput,
   FilterDropdown,
-  LoadingSpinner,
+  PageSkeleton,
   DataTable,
   StatusBadge,
   EmptyState,
@@ -196,7 +196,7 @@ export function ProjectsPage() {
   const isLoading = loadingProjects || loadingUnits
 
   if (isLoading) {
-    return <LoadingSpinner size="lg" className="h-96" />
+    return <PageSkeleton kpiCount={4} hasTable />
   }
 
   if (activeTab === 'units') {

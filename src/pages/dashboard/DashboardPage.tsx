@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
 import { usePermissions } from '@/hooks/usePermissions'
-import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
+import { Card, KPICard, PageSkeleton, StatusBadge } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { HISTORY_TYPE_LABELS, PIPELINE_STAGES } from '@/types'
 import type { HistoryType } from '@/types'
@@ -24,7 +24,7 @@ export function DashboardPage() {
   const dateLocale = i18n.language === 'ar' ? arLocale : frLocale
 
   if (isAgent) return <AgentDashboard />
-  if (isLoading || !data) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading || !data) return <PageSkeleton kpiCount={8} />
 
   return (
     <div className="space-y-6">
@@ -41,9 +41,9 @@ export function DashboardPage() {
       </div>
 
       {/* Row 2 — CA Chart + Pipeline Funnel */}
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* CA Mensuel */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+        <Card>
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">CA mensuel — 6 derniers mois</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={data.monthlyRevenue}>
@@ -53,10 +53,10 @@ export function DashboardPage() {
               <Bar dataKey="revenue" fill="var(--immo-accent-green, #0579DA)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
 
         {/* Pipeline Funnel */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+        <Card>
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Entonnoir pipeline</h3>
           <div className="space-y-2">
             {data.pipelineFunnel.map(s => {
@@ -73,13 +73,13 @@ export function DashboardPage() {
               )
             })}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Row 3 — Visites aujourd'hui + Taches + Clients à risque */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Visites aujourd'hui */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-3">
             <h3 className="text-sm font-semibold text-immo-text-primary flex items-center gap-2">
               <Calendar className="h-4 w-4 text-immo-accent-blue" /> Visites aujourd'hui
@@ -103,10 +103,10 @@ export function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Clients à risque */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-3">
             <h3 className="text-sm font-semibold text-immo-text-primary flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-immo-status-red" /> Clients a risque
@@ -129,10 +129,10 @@ export function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Sources de leads */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="border-b border-immo-border-default px-5 py-3">
             <h3 className="text-sm font-semibold text-immo-text-primary flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-immo-accent-green" /> Sources de leads
@@ -155,13 +155,13 @@ export function DashboardPage() {
               <div className="py-6 text-center text-xs text-immo-text-muted">Aucune donnee</div>
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Row 4 — Projects + Activity */}
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Project progress */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="border-b border-immo-border-default px-5 py-4">
             <h3 className="text-sm font-semibold text-immo-text-primary">{t('dashboard.project_progress')}</h3>
           </div>
@@ -194,10 +194,10 @@ export function DashboardPage() {
               )
             })}
           </div>
-        </div>
+        </Card>
 
         {/* Recent activity */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="border-b border-immo-border-default px-5 py-4">
             <h3 className="text-sm font-semibold text-immo-text-primary">{t('dashboard.recent_activity')}</h3>
           </div>
@@ -222,12 +222,12 @@ export function DashboardPage() {
               )
             })}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Row 5 — Agent performance */}
       {data.agentPerformance.length > 0 && (
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="border-b border-immo-border-default px-5 py-4">
             <h3 className="text-sm font-semibold text-immo-text-primary">{t('dashboard.agent_performance')}</h3>
           </div>
@@ -262,7 +262,7 @@ export function DashboardPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   )

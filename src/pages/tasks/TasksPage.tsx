@@ -10,7 +10,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
-import { KPICard, FilterDropdown, LoadingSpinner, StatusBadge } from '@/components/common'
+import { KPICard, FilterDropdown, LoadingSpinner, PageSkeleton, StatusBadge } from '@/components/common'
 import { PIPELINE_STAGES } from '@/types'
 import { formatDistanceToNow, isToday, isTomorrow, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -245,7 +245,7 @@ export function TasksPage() {
   const totalActive = allTasks.filter(t => !['completed', 'skipped', 'cancelled'].includes(t.status)).length
   const progress = totalActive + completedCount > 0 ? Math.round((completedCount / (totalActive + completedCount)) * 100) : 0
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={4} />
 
   const TABS: Array<{ key: TabKey; label: string; count: number; icon: typeof Clock }> = [
     { key: 'today', label: t('tasks_page.tab_today'), count: todayCount, icon: Calendar },
