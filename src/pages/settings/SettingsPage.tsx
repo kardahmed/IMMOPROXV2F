@@ -1,22 +1,24 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle, Calendar, ToggleLeft } from 'lucide-react'
-import {
-  CompanySection,
-  PipelineSection,
-  BrandingSection,
-  ReservationsSection,
-  TemplatesSection,
-  NotificationsSection,
-  LanguageSection,
-  SecuritySection,
-} from './sections'
-// PlaybookSection moved to Super Admin
-import { TaskConfigSection } from './sections/TaskConfigSection'
-import { WhatsAppSection } from './sections/WhatsAppSection'
-import { VisitScheduleSection } from './sections/VisitScheduleSection'
-import { PermissionProfilesSection } from './sections/PermissionProfilesSection'
-import { FeaturesSection } from './sections/FeaturesSection'
+// Lazy-load sections — only the active section is rendered, no point bundling all 13 up-front
+const CompanySection = lazy(() => import('./sections').then(m => ({ default: m.CompanySection })))
+const PipelineSection = lazy(() => import('./sections').then(m => ({ default: m.PipelineSection })))
+const BrandingSection = lazy(() => import('./sections').then(m => ({ default: m.BrandingSection })))
+const ReservationsSection = lazy(() => import('./sections').then(m => ({ default: m.ReservationsSection })))
+const TemplatesSection = lazy(() => import('./sections').then(m => ({ default: m.TemplatesSection })))
+const NotificationsSection = lazy(() => import('./sections').then(m => ({ default: m.NotificationsSection })))
+const LanguageSection = lazy(() => import('./sections').then(m => ({ default: m.LanguageSection })))
+const SecuritySection = lazy(() => import('./sections').then(m => ({ default: m.SecuritySection })))
+const TaskConfigSection = lazy(() => import('./sections/TaskConfigSection').then(m => ({ default: m.TaskConfigSection })))
+const WhatsAppSection = lazy(() => import('./sections/WhatsAppSection').then(m => ({ default: m.WhatsAppSection })))
+const VisitScheduleSection = lazy(() => import('./sections/VisitScheduleSection').then(m => ({ default: m.VisitScheduleSection })))
+const PermissionProfilesSection = lazy(() => import('./sections/PermissionProfilesSection').then(m => ({ default: m.PermissionProfilesSection })))
+const FeaturesSection = lazy(() => import('./sections/FeaturesSection').then(m => ({ default: m.FeaturesSection })))
+
+function SectionFallback() {
+  return <div className="flex justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" /></div>
+}
 
 type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'visits' | 'profiles' | 'features' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
@@ -85,19 +87,21 @@ export function SettingsPage() {
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        {section === 'company' && <CompanySection />}
-        {section === 'pipeline' && <PipelineSection />}
-        {section === 'tasks' && <TaskConfigSection />}
-        {section === 'visits' && <VisitScheduleSection />}
-        {section === 'profiles' && <PermissionProfilesSection />}
-        {section === 'features' && <FeaturesSection />}
-        {section === 'whatsapp' && <WhatsAppSection />}
-        {section === 'branding' && <BrandingSection />}
-        {section === 'reservations' && <ReservationsSection />}
-        {section === 'templates' && <TemplatesSection />}
-        {section === 'notifications' && <NotificationsSection />}
-        {section === 'language' && <LanguageSection />}
-        {section === 'security' && <SecuritySection />}
+        <Suspense fallback={<SectionFallback />}>
+          {section === 'company' && <CompanySection />}
+          {section === 'pipeline' && <PipelineSection />}
+          {section === 'tasks' && <TaskConfigSection />}
+          {section === 'visits' && <VisitScheduleSection />}
+          {section === 'profiles' && <PermissionProfilesSection />}
+          {section === 'features' && <FeaturesSection />}
+          {section === 'whatsapp' && <WhatsAppSection />}
+          {section === 'branding' && <BrandingSection />}
+          {section === 'reservations' && <ReservationsSection />}
+          {section === 'templates' && <TemplatesSection />}
+          {section === 'notifications' && <NotificationsSection />}
+          {section === 'language' && <LanguageSection />}
+          {section === 'security' && <SecuritySection />}
+        </Suspense>
       </div>
     </div>
   )
