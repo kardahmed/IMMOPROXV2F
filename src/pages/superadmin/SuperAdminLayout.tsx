@@ -45,22 +45,29 @@ export function SuperAdminLayout() {
         <div className="my-2 mx-5 h-px bg-immo-border-default/50" />
 
         {/* Nav */}
-        <nav className="flex-1 space-y-1 px-3 py-2">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
           {NAV_ITEMS.map(({ to, icon: Icon, labelKey, ...rest }) => (
             <NavLink
               key={to}
               to={to}
               end={'end' in rest}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                `group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
                   isActive
-                    ? 'bg-[#7C3AED]/15 font-medium text-[#7C3AED]'
+                    ? 'bg-[#7C3AED]/15 font-semibold text-[#7C3AED]'
                     : 'text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
                 }`
               }
             >
-              <Icon className="h-4 w-4" />
-              {labelKey}
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#7C3AED]" />
+                  )}
+                  <Icon className={`h-4 w-4 transition-transform ${isActive ? '' : 'group-hover:scale-110'}`} />
+                  {labelKey}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -80,9 +87,9 @@ export function SuperAdminLayout() {
         <div className="border-t border-immo-border-default/50 p-3">
           <button
             onClick={signOut}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
+            className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-immo-text-secondary transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             Deconnexion
           </button>
         </div>

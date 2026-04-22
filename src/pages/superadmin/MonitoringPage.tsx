@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Activity, AlertTriangle, CheckCircle, Zap, Shield, Cpu, Database } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
 import { format, subDays, subHours } from 'date-fns'
 
@@ -131,7 +131,7 @@ export function MonitoringPage() {
       {tab === 'overview' && (
         <div className="space-y-6">
           {/* Hourly activity chart */}
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <Card>
             <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Activite par heure (24h)</h3>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={data.hourlyActivity}>
@@ -143,11 +143,11 @@ export function MonitoringPage() {
                 <Bar dataKey="errors" name="Erreurs" fill="#CD3D64" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
 
           {/* 7-day trend + errors list */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+            <Card>
               <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Tendance 7 jours</h3>
               <ResponsiveContainer width="100%" height={160}>
                 <LineChart data={data.dailyActivity}>
@@ -158,10 +158,10 @@ export function MonitoringPage() {
                   <Line type="monotone" dataKey="actions" stroke="#7C3AED" strokeWidth={2} dot={{ fill: '#7C3AED', r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </Card>
 
             {/* Errors list */}
-            <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+            <Card noPadding>
               <div className="border-b border-immo-border-default px-5 py-3">
                 <h3 className="text-sm font-semibold text-immo-status-red">Erreurs recentes ({data.errors24h.length})</h3>
               </div>
@@ -174,12 +174,12 @@ export function MonitoringPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Action frequency + recent logs */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+            <Card noPadding>
               <div className="border-b border-immo-border-default px-5 py-3"><h3 className="text-sm font-semibold text-immo-text-primary">Actions frequentes</h3></div>
               <div className="divide-y divide-immo-border-default">
                 {data.functionStats.map(s => (
@@ -189,8 +189,8 @@ export function MonitoringPage() {
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+            </Card>
+            <Card noPadding>
               <div className="border-b border-immo-border-default px-5 py-3"><h3 className="text-sm font-semibold text-immo-text-primary">Logs recents</h3></div>
               <div className="max-h-[350px] divide-y divide-immo-border-default overflow-y-auto">
                 {data.recentLogs.map((log, i) => (
@@ -201,7 +201,7 @@ export function MonitoringPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       )}
@@ -209,7 +209,7 @@ export function MonitoringPage() {
       {/* Security tab */}
       {tab === 'security' && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+          <Card noPadding>
             <div className="border-b border-immo-border-default px-5 py-3">
               <h3 className="text-sm font-semibold text-immo-text-primary">Dernières connexions super admin</h3>
             </div>
@@ -231,10 +231,10 @@ export function MonitoringPage() {
                 )
               })}
             </div>
-          </div>
+          </Card>
 
           {/* Failed actions (errors as potential security events) */}
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+          <Card noPadding>
             <div className="border-b border-immo-border-default px-5 py-3">
               <h3 className="text-sm font-semibold text-immo-text-primary">Evenements de securite</h3>
             </div>
@@ -250,14 +250,14 @@ export function MonitoringPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* Usage tab */}
       {tab === 'usage' && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+          <Card noPadding className="overflow-hidden">
             <div className="border-b border-immo-border-default px-5 py-3">
               <h3 className="text-sm font-semibold text-immo-text-primary">Consommation par tenant</h3>
             </div>
@@ -293,7 +293,7 @@ export function MonitoringPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

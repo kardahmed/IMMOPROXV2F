@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Send, FileText, Megaphone, Bell, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { Card, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -139,7 +139,7 @@ export function MessagesPage() {
       {tab === 'compose' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Compose form */}
-          <div className="lg:col-span-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <Card className="lg:col-span-2">
             <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Nouveau message</h3>
             <div className="space-y-3">
               <div>
@@ -166,10 +166,10 @@ export function MessagesPage() {
                 {!targetTenant && <span className="text-[10px] text-immo-status-orange">⚠ Broadcast a tous les tenants</span>}
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Templates sidebar */}
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <Card>
             <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Templates rapides</h3>
             <div className="space-y-2">
               {MESSAGE_TEMPLATES.map(tpl => (
@@ -183,13 +183,13 @@ export function MessagesPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* History tab */}
       {tab === 'history' && (
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="divide-y divide-immo-border-default">
             {messages.map(m => {
               const isRead = m.read as boolean
@@ -212,13 +212,13 @@ export function MessagesPage() {
             })}
             {messages.length === 0 && <div className="py-8 text-center text-sm text-immo-text-muted">Aucun message</div>}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Banner tab */}
       {tab === 'banner' && (
         <div className="max-w-3xl space-y-5">
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <Card>
             <div className="mb-3 flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-[#7C3AED]" />
               <h3 className="text-sm font-semibold text-immo-text-primary">Banniere d'annonce globale</h3>
@@ -269,7 +269,7 @@ export function MessagesPage() {
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>
