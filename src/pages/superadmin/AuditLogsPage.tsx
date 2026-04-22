@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ScrollText, Search, Download, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { EmptyState, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { DataTable, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 
@@ -111,6 +112,42 @@ export function AuditLogsPage() {
 
   if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
 
+  const columns: Column<LogEntry>[] = [
+    {
+      key: 'date',
+      header: 'Date',
+      render: (l) => (
+        <div>
+          <p className="text-sm text-immo-text-primary">{format(new Date(l.created_at), 'dd/MM/yyyy')}</p>
+          <p className="text-[11px] text-immo-text-secondary">{format(new Date(l.created_at), 'HH:mm:ss')}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'admin',
+      header: 'Admin',
+      render: (l) => <span className="text-sm text-immo-text-primary">{l.admin_name}</span>,
+    },
+    {
+      key: 'action',
+      header: 'Action',
+      render: (l) => {
+        const meta = ACTION_LABELS[l.action]
+        return <StatusBadge label={meta?.label ?? l.action} type={meta?.color ?? 'muted'} />
+      },
+    },
+    {
+      key: 'tenant',
+      header: 'Tenant',
+      render: (l) => <span className="text-sm text-immo-text-secondary">{l.tenant_name}</span>,
+    },
+    {
+      key: 'details',
+      header: 'Details',
+      render: (l) => <DetailsCell details={l.details} />,
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -155,46 +192,15 @@ export function AuditLogsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-immo-border-default">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-immo-bg-primary">
-              {['Date', 'Admin', 'Action', 'Tenant', 'Details'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-secondary">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-immo-border-default">
-            {filtered.map(l => {
-              const meta = ACTION_LABELS[l.action]
-              return (
-                <tr key={l.id} className="bg-immo-bg-card transition-colors hover:bg-immo-bg-card-hover">
-                  <td className="px-4 py-3">
-                    <p className="text-sm text-immo-text-primary">{format(new Date(l.created_at), 'dd/MM/yyyy')}</p>
-                    <p className="text-[11px] text-immo-text-secondary">{format(new Date(l.created_at), 'HH:mm:ss')}</p>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-immo-text-primary">{l.admin_name}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge label={meta?.label ?? l.action} type={meta?.color ?? 'muted'} />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-immo-text-secondary">{l.tenant_name}</td>
-                  <td className="px-4 py-3">
-                    <DetailsCell details={l.details} />
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-
-        {filtered.length === 0 && (
-          <EmptyState
-            icon={<ScrollText className="h-10 w-10" />}
-            title="Aucun log trouve"
-            description={search || actionFilter !== 'all' ? 'Ajustez les filtres pour elargir les resultats.' : 'Les actions super admin apparaitront ici.'}
-          />
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        rowKey={(l) => l.id}
+        pageSize={limit}
+        emptyIcon={<ScrollText className="h-10 w-10" />}
+        emptyMessage="Aucun log trouve"
+        emptyDescription={search || actionFilter !== 'all' ? 'Ajustez les filtres pour elargir les resultats.' : 'Les actions super admin apparaitront ici.'}
+      />
 
       {/* Load more */}
       {logs.length >= limit && (

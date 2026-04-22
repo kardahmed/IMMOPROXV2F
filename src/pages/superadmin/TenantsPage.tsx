@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { EmptyState, KPICard, LoadingSpinner, PageHeader } from '@/components/common'
+import { DataTable, KPICard, LoadingSpinner, PageHeader } from '@/components/common'
+import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { CreateTenantModal } from './components/CreateTenantModal'
@@ -103,6 +104,33 @@ export function TenantsPage() {
 
   if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
 
+  const columns: Column<TenantRow>[] = [
+    { key: 'name', header: 'Nom', render: (t) => <span className="text-sm font-medium text-immo-text-primary">{t.name}</span> },
+    { key: 'plan', header: 'Plan', render: (t) => <PlanBadge plan={t.plan} /> },
+    { key: 'sante', header: 'Sante', render: (t) => <HealthBadge status={healthMap.get(t.id)?.status ?? 'healthy'} issues={healthMap.get(t.id)?.issues ?? []} /> },
+    { key: 'email', header: 'Email', render: (t) => <span className="text-xs text-immo-text-secondary">{t.email ?? '-'}</span> },
+    { key: 'agents', header: 'Agents', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.agents_count}</span> },
+    { key: 'clients', header: 'Clients', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.clients_count}</span> },
+    { key: 'projects', header: 'Projets', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.projects_count}</span> },
+    { key: 'units', header: 'Biens', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.units_count}</span> },
+    { key: 'created', header: 'Cree le', render: (t) => <span className="text-xs text-immo-text-secondary">{new Date(t.created_at).toLocaleDateString('fr')}</span> },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (t) => (
+        <div className="flex justify-end gap-1">
+          <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/tenants/${t.id}`) }} title="Voir" className="rounded-md p-1.5 text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+            <Eye className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); handleAccessTenant(t) }} title="Acceder" className="rounded-md p-1.5 text-[#7C3AED] hover:bg-[#7C3AED]/10">
+            <LogIn className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-6">
       {/* Realtime dashboard */}
@@ -145,50 +173,15 @@ export function TenantsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-immo-border-default">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-immo-bg-primary">
-              {['Nom', 'Plan', 'Sante', 'Email', 'Agents', 'Clients', 'Projets', 'Biens', 'Cree le', 'Actions'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-secondary">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-immo-border-default">
-            {filtered.map(t => (
-              <tr key={t.id} className="bg-immo-bg-card transition-colors hover:bg-immo-bg-card-hover">
-                <td className="px-4 py-3.5 text-sm font-medium text-immo-text-primary">{t.name}</td>
-                <td className="px-4 py-3.5"><PlanBadge plan={t.plan} /></td>
-                <td className="px-4 py-3.5"><HealthBadge status={healthMap.get(t.id)?.status ?? 'healthy'} issues={healthMap.get(t.id)?.issues ?? []} /></td>
-                <td className="px-4 py-3.5 text-xs text-immo-text-secondary">{t.email ?? '-'}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.agents_count}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.clients_count}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.projects_count}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.units_count}</td>
-                <td className="px-4 py-3.5 text-xs text-immo-text-secondary">{new Date(t.created_at).toLocaleDateString('fr')}</td>
-                <td className="px-4 py-3.5">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => navigate(`/admin/tenants/${t.id}`)} title="Voir" className="rounded-md p-1.5 text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
-                      <Eye className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => handleAccessTenant(t)} title="Acceder" className="rounded-md p-1.5 text-[#7C3AED] hover:bg-[#7C3AED]/10">
-                      <LogIn className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <EmptyState
-            icon={<Building2 className="h-10 w-10" />}
-            title={search ? 'Aucun tenant ne correspond' : 'Aucun tenant'}
-            description={search ? 'Modifiez votre recherche pour elargir les resultats.' : 'Creez votre premier tenant pour demarrer.'}
-            action={search ? undefined : { label: 'Creer un tenant', onClick: () => setShowCreate(true) }}
-          />
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        rowKey={(t) => t.id}
+        onRowClick={(t) => navigate(`/admin/tenants/${t.id}`)}
+        emptyIcon={<Building2 className="h-10 w-10" />}
+        emptyMessage={search ? 'Aucun tenant ne correspond' : 'Aucun tenant'}
+        emptyDescription={search ? 'Modifiez votre recherche pour elargir les resultats.' : 'Creez votre premier tenant pour demarrer.'}
+      />
 
       <CreateTenantModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSuccess={refetch} />
     </div>

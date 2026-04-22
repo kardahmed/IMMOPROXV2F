@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DollarSign, FileText, AlertTriangle, Check, Send, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { EmptyState, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import { DataTable, KPICard, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
+import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatPriceCompact } from '@/lib/constants'
 import { format } from 'date-fns'
@@ -59,6 +60,73 @@ export function BillingPage() {
     { value: 'paid', label: 'Payees' },
   ]
 
+  type Invoice = Record<string, unknown>
+
+  const columns: Column<Invoice>[] = [
+    {
+      key: 'tenant',
+      header: 'Tenant',
+      render: (inv) => <span className="text-sm text-immo-text-primary">{(inv.tenants as { name: string } | null)?.name ?? '-'}</span>,
+    },
+    {
+      key: 'period',
+      header: 'Periode',
+      render: (inv) => <span className="text-xs text-immo-text-muted">{inv.period as string}</span>,
+    },
+    {
+      key: 'amount',
+      header: 'Montant',
+      align: 'right',
+      render: (inv) => <span className="text-sm font-semibold text-immo-accent-green">{formatPriceCompact(inv.amount as number)} DA</span>,
+    },
+    {
+      key: 'due_date',
+      header: 'Echeance',
+      render: (inv) => <span className="text-xs text-immo-text-muted">{inv.due_date ? format(new Date(inv.due_date as string), 'dd/MM/yyyy') : '-'}</span>,
+    },
+    {
+      key: 'status',
+      header: 'Statut',
+      render: (inv) => {
+        const st = STATUS_MAP[inv.status as string] ?? STATUS_MAP.pending
+        return <StatusBadge label={st.label} type={st.type} />
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (inv) => {
+        const isPending = inv.status === 'pending'
+        const isOverdue = inv.status === 'overdue'
+        return (
+          <div className="flex justify-end gap-1.5">
+            {(isPending || isOverdue) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => markPaid.mutate(inv.id as string)}
+                className="h-7 border border-immo-accent-green/30 text-[11px] text-immo-accent-green hover:bg-immo-accent-green/10"
+              >
+                <Check className="mr-1 h-3 w-3" /> Paye
+              </Button>
+            )}
+            {isPending && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => markOverdue.mutate(inv.id as string)}
+                className="h-7 border border-immo-status-red/30 text-[11px] text-immo-status-red hover:bg-immo-status-red/10"
+              >
+                <Send className="mr-1 h-3 w-3" /> Relancer
+              </Button>
+            )}
+          </div>
+        )
+      },
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -74,7 +142,7 @@ export function BillingPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-immo-text-muted" />
         {FILTER_OPTIONS.map(opt => (
           <button
@@ -92,63 +160,14 @@ export function BillingPage() {
         <span className="ml-auto text-xs text-immo-text-muted">{filtered.length} facture(s)</span>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-immo-border-default">
-        <table className="w-full">
-          <thead><tr className="bg-immo-bg-card-hover">
-            {['Tenant', 'Periode', 'Montant', 'Echeance', 'Statut', 'Actions'].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase text-immo-text-muted">{h}</th>
-            ))}
-          </tr></thead>
-          <tbody className="divide-y divide-immo-border-default">
-            {filtered.map(inv => {
-              const tenant = inv.tenants as { name: string } | null
-              const st = STATUS_MAP[(inv.status as string)] ?? STATUS_MAP.pending
-              const isPending = inv.status === 'pending'
-              const isOverdue = inv.status === 'overdue'
-              return (
-                <tr key={inv.id as string} className="bg-immo-bg-card hover:bg-immo-bg-card-hover">
-                  <td className="px-4 py-3 text-sm text-immo-text-primary">{tenant?.name ?? '-'}</td>
-                  <td className="px-4 py-3 text-xs text-immo-text-muted">{inv.period as string}</td>
-                  <td className="px-4 py-3 text-sm font-semibold text-immo-accent-green">{formatPriceCompact(inv.amount as number)} DA</td>
-                  <td className="px-4 py-3 text-xs text-immo-text-muted">{inv.due_date ? format(new Date(inv.due_date as string), 'dd/MM/yyyy') : '-'}</td>
-                  <td className="px-4 py-3"><StatusBadge label={st.label} type={st.type} /></td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1.5">
-                      {(isPending || isOverdue) && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => markPaid.mutate(inv.id as string)}
-                          className="h-7 border border-immo-accent-green/30 text-[11px] text-immo-accent-green hover:bg-immo-accent-green/10"
-                        >
-                          <Check className="mr-1 h-3 w-3" /> Paye
-                        </Button>
-                      )}
-                      {isPending && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => markOverdue.mutate(inv.id as string)}
-                          className="h-7 border border-immo-status-red/30 text-[11px] text-immo-status-red hover:bg-immo-status-red/10"
-                        >
-                          <Send className="mr-1 h-3 w-3" /> Relancer
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <EmptyState
-            icon={<FileText className="h-10 w-10" />}
-            title={statusFilter === 'all' ? 'Aucune facture' : 'Aucune facture dans ce statut'}
-            description={statusFilter === 'all' ? 'Les factures apparaitront ici des qu\'elles seront generees.' : 'Changez de filtre pour voir d\'autres factures.'}
-          />
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        rowKey={(inv) => inv.id as string}
+        emptyIcon={<FileText className="h-10 w-10" />}
+        emptyMessage={statusFilter === 'all' ? 'Aucune facture' : 'Aucune facture dans ce statut'}
+        emptyDescription={statusFilter === 'all' ? "Les factures apparaitront ici des qu'elles seront generees." : 'Changez de filtre pour voir d\'autres factures.'}
+      />
     </div>
   )
 }
