@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -51,9 +51,10 @@ import { PipelineTimeline } from './components/PipelineTimeline'
 import { QuickActions } from './components/QuickActions'
 import { ClientTabs } from './components/ClientTabs'
 import { ClientFormModal } from './components/ClientFormModal'
-import { PlanVisitModal } from './components/modals/PlanVisitModal'
-import { AISuggestionsModal } from './components/modals/AISuggestionsModal'
-import { ReassignModal } from './components/modals/ReassignModal'
+// Lazy-load rarely-opened modals — they add ~40 kB to the initial page chunk
+const PlanVisitModal = lazy(() => import('./components/modals/PlanVisitModal').then(m => ({ default: m.PlanVisitModal })))
+const AISuggestionsModal = lazy(() => import('./components/modals/AISuggestionsModal').then(m => ({ default: m.AISuggestionsModal })))
+const ReassignModal = lazy(() => import('./components/modals/ReassignModal').then(m => ({ default: m.ReassignModal })))
 import { useAutoTasks } from '@/hooks/useAutoTasks'
 
 // Avatar color from name
@@ -390,30 +391,32 @@ export function ClientDetailPage() {
         loading={updateClientStage.isPending}
       />
 
-      {/* Plan visit modal */}
-      <PlanVisitModal
-        isOpen={showVisitModal}
-        onClose={() => setShowVisitModal(false)}
-        client={{ id: client.id, full_name: client.full_name, phone: client.phone, pipeline_stage: client.pipeline_stage, tenant_id: client.tenant_id }}
-      />
-
-      {/* AI suggestions modal */}
-      <AISuggestionsModal
-        isOpen={showAIModal}
-        onClose={() => setShowAIModal(false)}
-        client={{ id: client.id, full_name: client.full_name, phone: client.phone, confirmed_budget: client.confirmed_budget, desired_unit_types: client.desired_unit_types, interested_projects: client.interested_projects, interest_level: client.interest_level, pipeline_stage: client.pipeline_stage, tenant_id: client.tenant_id }}
-      />
-
-      {/* Reassign agent modal */}
-      {showReassignModal && (
-        <ReassignModal
-          isOpen={showReassignModal}
-          onClose={() => setShowReassignModal(false)}
-          clientId={client.id}
-          currentAgentId={client.agent_id}
-          tenantId={client.tenant_id}
-        />
-      )}
+      {/* Lazy-loaded modals — only mount (and fetch their chunk) when opened */}
+      <Suspense fallback={null}>
+        {showVisitModal && (
+          <PlanVisitModal
+            isOpen={showVisitModal}
+            onClose={() => setShowVisitModal(false)}
+            client={{ id: client.id, full_name: client.full_name, phone: client.phone, pipeline_stage: client.pipeline_stage, tenant_id: client.tenant_id }}
+          />
+        )}
+        {showAIModal && (
+          <AISuggestionsModal
+            isOpen={showAIModal}
+            onClose={() => setShowAIModal(false)}
+            client={{ id: client.id, full_name: client.full_name, phone: client.phone, confirmed_budget: client.confirmed_budget, desired_unit_types: client.desired_unit_types, interested_projects: client.interested_projects, interest_level: client.interest_level, pipeline_stage: client.pipeline_stage, tenant_id: client.tenant_id }}
+          />
+        )}
+        {showReassignModal && (
+          <ReassignModal
+            isOpen={showReassignModal}
+            onClose={() => setShowReassignModal(false)}
+            clientId={client.id}
+            currentAgentId={client.agent_id}
+            tenantId={client.tenant_id}
+          />
+        )}
+      </Suspense>
     </div>
   )
 }
