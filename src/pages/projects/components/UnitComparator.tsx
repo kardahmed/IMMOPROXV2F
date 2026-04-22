@@ -46,7 +46,7 @@ export function UnitComparator({ units, onRemove, onClose }: Props) {
       <div className="w-full max-w-3xl rounded-t-2xl bg-immo-bg-card shadow-2xl sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-3">
           <h3 className="text-sm font-semibold text-immo-text-primary">Comparatif ({units.length} unites)</h3>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-immo-text-muted hover:bg-immo-bg-card-hover"><X className="h-4 w-4" /></button>
+          <button onClick={onClose} aria-label="Fermer le comparateur" className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"><X className="h-4 w-4" /></button>
         </div>
 
         <div className="overflow-x-auto p-5">
@@ -58,7 +58,7 @@ export function UnitComparator({ units, onRemove, onClose }: Props) {
                   <th key={u.id} className="pb-2 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <span className="font-semibold text-immo-text-primary">{u.code}</span>
-                      <button onClick={() => onRemove(u.id)} className="rounded p-0.5 text-immo-text-muted hover:text-immo-status-red"><X className="h-3 w-3" /></button>
+                      <button onClick={() => onRemove(u.id)} aria-label={`Retirer l'unite ${u.code}`} className="rounded p-0.5 text-immo-text-muted transition-colors hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"><X className="h-3 w-3" /></button>
                     </div>
                   </th>
                 ))}

@@ -424,8 +424,8 @@ export function TasksPage() {
                         <CheckCircle className="h-3 w-3" /> Fait
                       </button>
                     )}
-                    <button onClick={() => skipTask.mutate(task.id)} title="Ignorer"
-                      className="rounded-lg p-1.5 text-immo-text-muted hover:bg-immo-bg-card-hover">
+                    <button onClick={() => skipTask.mutate(task.id)} aria-label="Ignorer la tache" title="Ignorer"
+                      className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                       <SkipForward className="h-3 w-3" />
                     </button>
                   </div>
@@ -638,10 +638,10 @@ function MessagesTemplateTab({ tenantId }: { tenantId: string }) {
                       </div>
 
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => startEdit(msg)} className="rounded-md p-1.5 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-accent-blue">
+                        <button onClick={() => startEdit(msg)} aria-label="Modifier le modele" className="rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-accent-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-blue/40">
                           <FileText className="h-3.5 w-3.5" />
                         </button>
-                        <button onClick={() => deleteMutation.mutate(msg.id)} className="rounded-md p-1.5 text-immo-text-muted hover:bg-immo-status-red/10 hover:text-immo-status-red">
+                        <button onClick={() => deleteMutation.mutate(msg.id)} aria-label="Supprimer le modele" className="rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>

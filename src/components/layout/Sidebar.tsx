@@ -136,8 +136,9 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
           </div>
           <button
             onClick={signOut}
-            className="shrink-0 rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-status-red-bg hover:text-immo-status-red"
+            aria-label={t('action.logout')}
             title={t('action.logout')}
+            className="shrink-0 rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-status-red-bg hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"
           >
             <LogOut className="h-4 w-4" />
           </button>
