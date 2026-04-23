@@ -1,8 +1,13 @@
-name: Deploy to Hostinger
+name: Deploy to Hostinger (manual fallback)
 
+# Primary deploy is now Hostinger's native git integration:
+#   - immoprox.io      → ./marketing (static)
+#   - app.immoprox.io  → ./ (Vite build of the React CRM)
+# This FTPS workflow is kept as a manual fallback — trigger from the
+# Actions tab if Hostinger git deploy is unavailable. Not on push to
+# avoid double-writes that would stomp the Hostinger git deploy.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -34,5 +39,8 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: /public_html/
+          # NOTE: this path targets the app.immoprox.io docroot. On Hostinger
+          # subdomains this is typically /domains/app.immoprox.io/public_html/.
+          # Adjust if hPanel shows a different path under "File Manager".
+          server-dir: /domains/app.immoprox.io/public_html/
           protocol: ftps
