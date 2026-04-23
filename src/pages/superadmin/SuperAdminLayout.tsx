@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight, Moon, Sun } from 'lucide-react'
+import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight, Moon, Sun, Inbox } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -10,6 +10,7 @@ import { NotificationCenter } from './components/NotificationCenter'
 
 const NAV_ITEMS = [
   { to: '/admin', icon: Building2, labelKey: 'Tenants', end: true },
+  { to: '/admin/leads', icon: Inbox, labelKey: 'Leads' },
   { to: '/admin/plans', icon: Layers, labelKey: 'Plans' },
   { to: '/admin/billing', icon: CreditCard, labelKey: 'Facturation' },
   { to: '/admin/messages', icon: MessageSquare, labelKey: 'Messages' },

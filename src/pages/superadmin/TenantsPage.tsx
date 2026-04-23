@@ -193,7 +193,7 @@ export function TenantsPage() {
         emptyDescription={search ? 'Modifiez votre recherche pour elargir les resultats.' : 'Creez votre premier tenant pour demarrer.'}
       />
 
-      <CreateTenantModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSuccess={refetch} />
+      <CreateTenantModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSuccess={() => refetch()} />
     </div>
   )
 }
