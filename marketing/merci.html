@@ -32,6 +32,7 @@
     .calendar-head p{font-size:14px;color:var(--gray)}
     .calendar-frame{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--white);min-height:640px}
     .calendar-frame iframe{width:100%;height:640px;border:0;display:block}
+    #cal-inline{width:100%;height:640px;overflow:auto}
 
     .fallback-box{margin-top:24px;padding:20px;background:var(--light);border-radius:12px;text-align:center}
     .fallback-box p{font-size:13px;color:var(--gray);margin-bottom:12px}
@@ -88,13 +89,9 @@
       <p>Choisissez le creneau qui vous arrange — demo de 30 minutes.</p>
     </div>
 
-    <!-- Cal.com embed -->
-    <div class="calendar-frame" id="cal-frame">
-      <iframe
-        src="https://cal.eu/immopro-x/demo-immo-pro-x-30min?embed=true&layout=month_view&theme=light"
-        title="Reserver une demo IMMO PRO-X"
-        loading="lazy"
-        allow="camera; microphone; fullscreen"></iframe>
+    <!-- Cal.eu official inline embed (https://cal.com/docs/embed) -->
+    <div class="calendar-frame">
+      <div id="cal-inline"></div>
     </div>
 
     <div class="fallback-box">
@@ -117,6 +114,18 @@
   </div>
   <div class="ft-bot"><span>© 2026 IMMO PRO-X</span><span>Concu en Algerie</span></div>
 </div></footer>
+
+<!-- Cal.eu embed loader -->
+<script type="text/javascript">
+  (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if (typeof namespace === "string") { cal.ns[namespace] = cal.ns[namespace] || api; p(cal.ns[namespace], ar); p(cal, ["initNamespace", namespace]); } else p(cal, ar); return; } p(cal, ar); }; })(window, "https://app.cal.eu/embed/embed.js", "init");
+  Cal("init", "demo-immo-pro-x-30min", { origin: "https://cal.eu" });
+  Cal.ns["demo-immo-pro-x-30min"]("inline", {
+    elementOrSelector: "#cal-inline",
+    config: { layout: "month_view", theme: "light" },
+    calLink: "immopro-x/demo-immo-pro-x-30min",
+  });
+  Cal.ns["demo-immo-pro-x-30min"]("ui", { theme: "light", hideEventTypeDetails: false, layout: "month_view" });
+</script>
 
 <script>
   // Meta Pixel + GA4 can be added here later. For now, fire a standard
