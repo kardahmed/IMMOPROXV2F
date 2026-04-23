@@ -50,21 +50,27 @@ type Lead = {
   created_at: string
 }
 
-// Build the text that goes in the template's {{4}} variable — either the
-// lead's own message, or a compact qualification summary if they finished
-// step 2 without leaving a free-text note, or a short "step-1 only" hint.
-function buildContextLine(lead: Lead): string {
-  if (lead.step_completed === 2) {
-    if (lead.message && lead.message.trim()) return lead.message.trim()
-    const parts: string[] = []
-    if (lead.company_name) parts.push(lead.company_name)
-    if (lead.activity_type) parts.push(ACTIVITY_LABELS[lead.activity_type] ?? lead.activity_type)
-    if (lead.agents_count) parts.push(`${lead.agents_count} agents`)
-    if (lead.timeline) parts.push(TIMELINE_LABELS[lead.timeline] ?? lead.timeline)
-    if (lead.frustration_score !== null) parts.push(`frustration ${lead.frustration_score}/10`)
-    return parts.length ? parts.join(' - ') : 'Lead qualifie (pas de detail)'
+// Build the text that goes in the template's {{5}} variable. The copy
+// changes depending on whether this is the initial "coordinates captured"
+// ping or the later "fully qualified" ping, so the founder can tell at a
+// glance which stage the lead is at.
+function buildContextLine(lead: Lead, pingKind: 'new' | 'qualified'): string {
+  if (pingKind === 'new') {
+    return 'Coordonnees captees - qualification en attente'
   }
-  return 'Lead non qualifie (abandon etape 2)'
+  if (lead.message && lead.message.trim()) return lead.message.trim()
+  const parts: string[] = []
+  if (lead.activity_type) parts.push(ACTIVITY_LABELS[lead.activity_type] ?? lead.activity_type)
+  if (lead.agents_count) parts.push(`${lead.agents_count} agents`)
+  if (lead.timeline) parts.push(TIMELINE_LABELS[lead.timeline] ?? lead.timeline)
+  if (lead.frustration_score !== null) parts.push(`frustration ${lead.frustration_score}/10`)
+  return parts.length ? parts.join(' - ') : 'Lead qualifie (pas de detail supplementaire)'
+}
+
+function buildCompanyLine(lead: Lead): string {
+  if (lead.company_name && lead.company_name.trim()) return lead.company_name.trim()
+  if (lead.activity_type) return ACTIVITY_LABELS[lead.activity_type] ?? lead.activity_type
+  return 'Non renseigne'
 }
 
 // Meta templates reject newlines, most emojis, and repeated whitespace in
@@ -90,17 +96,11 @@ Deno.serve(async (req) => {
     )
   }
 
-  let body: { type?: string; record?: Lead }
+  let body: { type?: string; record?: Lead; old_record?: Partial<Lead> }
   try {
     body = await req.json()
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 })
-  }
-
-  // Supabase Database Webhook payload: { type: 'INSERT'|'UPDATE'|..., record, old_record? }
-  // Skip non-INSERT events so the step-1 -> step-2 patch doesn't double-notify.
-  if (body.type && body.type !== 'INSERT') {
-    return new Response(JSON.stringify({ skipped: body.type }), { status: 200 })
   }
 
   const lead = body.record
@@ -111,11 +111,34 @@ Deno.serve(async (req) => {
     )
   }
 
+  // Double-ping strategy:
+  // - INSERT (step 1 submitted) -> "[NOUVEAU]" ping so the founder can
+  //   call back fast even if the lead abandons step 2.
+  // - UPDATE where step_completed transitions to 2 -> "[QUALIFIE]" ping
+  //   carrying the full qualification details (company, activity, timeline…).
+  // All other UPDATEs are ignored so edits never re-notify.
+  let pingKind: 'new' | 'qualified'
+  if (!body.type || body.type === 'INSERT') {
+    pingKind = 'new'
+  } else if (body.type === 'UPDATE') {
+    const wasQualified = body.old_record?.step_completed === 2
+    const isQualified = lead.step_completed === 2
+    if (wasQualified || !isQualified) {
+      return new Response(JSON.stringify({ skipped: 'update_not_qualification' }), { status: 200 })
+    }
+    pingKind = 'qualified'
+  } else {
+    return new Response(JSON.stringify({ skipped: body.type }), { status: 200 })
+  }
+
+  const namePrefix = pingKind === 'qualified' ? '[QUALIFIE] ' : '[NOUVEAU] '
+
   const params = [
-    cleanForTemplate(lead.full_name, 60),
+    cleanForTemplate(namePrefix + lead.full_name, 60),
     cleanForTemplate(lead.email, 128),
     cleanForTemplate(lead.phone, 32),
-    cleanForTemplate(buildContextLine(lead), 1024),
+    cleanForTemplate(buildCompanyLine(lead), 120),
+    cleanForTemplate(buildContextLine(lead, pingKind), 1024),
   ]
 
   const url = `https://graph.facebook.com/v25.0/${PHONE_NUMBER_ID}/messages`
@@ -192,18 +215,21 @@ Prerequisite: Meta Business Manager with a verified business (LLC).
    - Category: Utility
    - Language: French (fr)
    - Body:
-       🔥 Nouveau lead IMMO PRO-X
+       Nouveau lead recu depuis le site web.
 
-       👤 {{1}}
-       📧 {{2}}
-       📱 {{3}}
+       👤 Nom : {{1}}
+       📧 Email : {{2}}
+       📱 Telephone : {{3}}
+       🏢 Entreprise : {{4}}
+       💬 Message : {{5}}
 
-       📝 {{4}}
+       Recontacte sous 1h pour maximiser la conversion.
    - Samples for review (Meta requires them):
        {{1}} = Youcef Mansouri
        {{2}} = youcef@batiplan.dz
        {{3}} = +213 555 11 22 33
-       {{4}} = On gere 4 promotions a Oran, Excel sature
+       {{4}} = Batiplan Promotion
+       {{5}} = On gere 4 promotions a Oran, Excel sature
    Submit for review. Approval typically takes 1-24h for Utility.
 
 5. Get a permanent access token (before the 24h temp one expires)
@@ -231,12 +257,17 @@ Prerequisite: Meta Business Manager with a verified business (LLC).
    Dashboard -> Database -> Webhooks -> Create
    - Name:          notify-lead-whatsapp
    - Table:         marketing_leads
-   - Events:        INSERT only
+   - Events:        INSERT and UPDATE (both, for the double-ping strategy)
    - Type:          Supabase Edge Functions
    - Edge Function: notify-lead-whatsapp
    - Method:        POST
+   INSERT -> sends the "[NOUVEAU]" ping (step 1 captured).
+   UPDATE -> sends the "[QUALIFIE]" ping only when step_completed
+             transitions to 2. All other UPDATEs are skipped by the function.
 
 9. End-to-end test
-   Submit the form on https://immoprox.io/contact. A WhatsApp ping
-   should arrive at NOTIFY_PHONE within ~10 seconds.
+   Submit the form on https://immoprox.io/contact. Two WhatsApp pings
+   should arrive at NOTIFY_PHONE within ~10 seconds of each step:
+   - "[NOUVEAU] <name>" right after step 1
+   - "[QUALIFIE] <name>" right after step 2 (with full qualification data)
 */
