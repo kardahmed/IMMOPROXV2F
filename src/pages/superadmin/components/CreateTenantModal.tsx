@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Modal } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -10,16 +10,29 @@ import toast from 'react-hot-toast'
 
 const labelClass = 'text-[11px] font-medium text-immo-text-secondary'
 
+export interface CreateTenantDefaults {
+  name?: string
+  email?: string
+  phone?: string
+  address?: string
+  wilaya?: string
+  website?: string
+  adminFirstName?: string
+  adminLastName?: string
+  adminEmail?: string
+}
+
 interface CreateTenantModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (tenantId?: string) => void
+  defaults?: CreateTenantDefaults
+  subtitle?: string
 }
 
-export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantModalProps) {
+export function CreateTenantModal({ isOpen, onClose, onSuccess, defaults, subtitle }: CreateTenantModalProps) {
   const [loading, setLoading] = useState(false)
 
-  // Tenant fields
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -27,15 +40,24 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantMo
   const [wilaya, setWilaya] = useState('')
   const [website, setWebsite] = useState('')
 
-  // Admin fields
   const [adminFirstName, setAdminFirstName] = useState('')
   const [adminLastName, setAdminLastName] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
 
-  function resetForm() {
-    setName(''); setEmail(''); setPhone(''); setAddress(''); setWilaya(''); setWebsite('')
-    setAdminFirstName(''); setAdminLastName(''); setAdminEmail('')
-  }
+  // Populate from defaults each time the modal opens (so reusing the same
+  // instance across leads doesn't bleed state between them).
+  useEffect(() => {
+    if (!isOpen) return
+    setName(defaults?.name ?? '')
+    setEmail(defaults?.email ?? '')
+    setPhone(defaults?.phone ?? '')
+    setAddress(defaults?.address ?? '')
+    setWilaya(defaults?.wilaya ?? '')
+    setWebsite(defaults?.website ?? '')
+    setAdminFirstName(defaults?.adminFirstName ?? '')
+    setAdminLastName(defaults?.adminLastName ?? '')
+    setAdminEmail(defaults?.adminEmail ?? '')
+  }, [isOpen, defaults])
 
   async function handleCreate() {
     if (!name || !email || !adminFirstName || !adminLastName || !adminEmail) return
@@ -65,9 +87,8 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantMo
 
       const result = await response.json()
       toast.success(`Tenant "${result.tenant.name}" cree. Invitation envoyee a ${result.admin_email}`)
-      resetForm()
       onClose()
-      onSuccess()
+      onSuccess(result.tenant?.id)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur lors de la creation')
     } finally {
@@ -82,7 +103,7 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantMo
       isOpen={isOpen}
       onClose={onClose}
       title="Nouveau Tenant"
-      subtitle="Creer une agence et son premier administrateur"
+      subtitle={subtitle ?? 'Creer une agence et son premier administrateur'}
       size="lg"
       footer={
         <>
