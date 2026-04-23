@@ -3,7 +3,7 @@
 Living plan. Update this file at the end of any work session so the
 next one can pick up cleanly.
 
-**Legend**: ✅ done · 🚧 in progress · 🔜 next · 💭 backlog · 🚫 deferred
+**Legend**: ✅ done · 🚧 in progress · 🧩 partial (half-built, live but incomplete) · 🔜 next · 💭 backlog · 🚫 deferred
 
 ---
 
@@ -50,6 +50,70 @@ https://github.com/kardahmed/IMMOPROXV2F/pull/11
 
 Waiting for merge + Hostinger auto-redeploy. Everything already passes
 local tsc + vite build.
+
+### PR #12 — CLAUDE.md + ROADMAP.md (this file)
+https://github.com/kardahmed/IMMOPROXV2F/pull/12
+
+---
+
+## 🧩 Partial / WIP — live code that's NOT fully functional
+
+These features have some infra already built (tables, functions, UI
+scaffolding) but are NOT complete end-to-end. Do not assume they work.
+If you touch one, either finish it or move it to 🚫 deferred. Never
+leave a half-built feature without a note here.
+
+### WhatsApp multi-tenant (Embedded Signup)
+- **What exists**: Supabase tables `whatsapp_config`, `whatsapp_accounts`,
+  `whatsapp_messages`, `whatsapp_templates`. Edge Functions
+  `whatsapp-signup` (OAuth callback) and `send-whatsapp` (send on behalf
+  of tenant with quota check). Super Admin page `/admin/whatsapp` that
+  displays config/accounts/messages/templates.
+- **What's missing**:
+  - `whatsapp_config` row is empty — no Meta app_id / app_secret /
+    access_token stored → `send-whatsapp` will 503.
+  - No FB Login SDK integration in the tenant-side `/settings` → no
+    way for a tenant admin to actually connect their WhatsApp Business
+    Account.
+  - No Meta App Review submitted → even if the SDK was wired,
+    production usage would be blocked.
+  - The 4 whatsapp tables are NOT in any migration file (created
+    directly in Studio). Needs a `016_whatsapp_schema.sql` to freeze
+    the schema.
+
+### Lead notifications — `notify-lead-whatsapp` Edge Function
+- **What exists**: the function scaffold with CallMeBot upstream + a
+  database webhook skeleton in the setup docs at the bottom of
+  `supabase/functions/notify-lead-whatsapp/index.ts`.
+- **What's missing**:
+  - The Supabase Database Webhook on `marketing_leads INSERT` is not
+    created (manual step in Supabase Dashboard).
+  - `CALLMEBOT_API_KEY` secret was never provisioned (bot never
+    replied with an API key). The CallMeBot path is effectively
+    abandoned.
+  - The function must be rewritten to call Meta Cloud API (see 🔜 #1).
+
+### Password reset
+- **What exists**: a "Mot de passe oublie ?" button in `LoginPage.tsx`.
+- **What's missing**: `onClick` handler is empty — button does nothing.
+  Needs `supabase.auth.resetPasswordForEmail(email)` + an email
+  template in Supabase.
+
+### CI on GitHub Actions (`.github/workflows/ci.yml`)
+- **What exists**: a `build` job that runs on every PR — should run
+  `tsc -b --noEmit` + `npm run build`.
+- **What's missing**: runners never provision (all PRs show red check
+  in 1-2 seconds with 0 steps executed). Needs either an Actions
+  billing fix on the GitHub account or migration to a self-hosted
+  runner / local git-hook check.
+
+### FTPS fallback deploy (`.github/workflows/deploy.yml`)
+- **What exists**: a `workflow_dispatch`-only workflow that can push
+  `dist/` to Hostinger via FTPS.
+- **What's missing**: `server-dir` assumes
+  `/domains/app.immoprox.io/public_html/` — **unverified** against the
+  actual Hostinger path. Before using as a real fallback, SSH into the
+  Hostinger File Manager and confirm the docroot path.
 
 ---
 

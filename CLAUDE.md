@@ -140,8 +140,7 @@ immoproxv2f/
 
 ### Known rough edges
 - `ci.yml` infra never provisions runners — every PR shows a red `build` check. Pre-existing. Safe to merge on red for now.
-- The WhatsApp tables (`whatsapp_config`, `whatsapp_accounts`, `whatsapp_messages`, `whatsapp_templates`) exist in Supabase but are **not in any migration file** — they were created directly in Studio. A future migration should capture their schema.
-- `deploy.yml` retained as a fallback — its `server-dir` assumes Hostinger subdomain layout, verify if ever used.
+- **Several features are half-built, live code but NOT fully functional** (WhatsApp multi-tenant, lead notifications Edge Function, password reset button, FTPS fallback deploy). See the `🧩 Partial / WIP` section of `ROADMAP.md` for the full list and what's missing on each. Check ROADMAP before assuming any of these works end-to-end.
 
 ## How to run locally
 
