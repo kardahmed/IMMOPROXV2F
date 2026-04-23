@@ -50,10 +50,10 @@ type Lead = {
   created_at: string
 }
 
-// Build the text that goes in the template's {{4}} variable — either the
+// Build the text that goes in the template's {{5}} variable — either the
 // lead's own message, or a compact qualification summary if they finished
 // step 2 without leaving a free-text note, or a short "step-1 only" hint.
-function buildContextLine(lead: Lead): string {
+function buildMessageLine(lead: Lead): string {
   if (lead.step_completed === 2) {
     if (lead.message && lead.message.trim()) return lead.message.trim()
     const parts: string[] = []
@@ -115,7 +115,8 @@ Deno.serve(async (req) => {
     cleanForTemplate(lead.full_name, 60),
     cleanForTemplate(lead.email, 128),
     cleanForTemplate(lead.phone, 32),
-    cleanForTemplate(buildContextLine(lead), 1024),
+    cleanForTemplate(lead.company_name ?? 'Non renseigne', 80),
+    cleanForTemplate(buildMessageLine(lead), 1024),
   ]
 
   const url = `https://graph.facebook.com/v25.0/${PHONE_NUMBER_ID}/messages`
@@ -191,19 +192,24 @@ Prerequisite: Meta Business Manager with a verified business (LLC).
    - Name:     new_lead_notification
    - Category: Utility
    - Language: French (fr)
+   - Header (Text): 🔔 Nouveau lead IMMO PRO-X
    - Body:
-       🔥 Nouveau lead IMMO PRO-X
+       Nouveau lead recu depuis le site web.
 
-       👤 {{1}}
-       📧 {{2}}
-       📱 {{3}}
+       👤 Nom : {{1}}
+       📧 Email : {{2}}
+       📱 Telephone : {{3}}
+       🏢 Entreprise : {{4}}
+       💬 Message : {{5}}
 
-       📝 {{4}}
+       Recontacte sous 1h pour maximiser la conversion.
+   - Footer: IMMO PRO-X — Lead automatique
    - Samples for review (Meta requires them):
-       {{1}} = Youcef Mansouri
-       {{2}} = youcef@batiplan.dz
-       {{3}} = +213 555 11 22 33
-       {{4}} = On gere 4 promotions a Oran, Excel sature
+       {{1}} = Karim Benyahia
+       {{2}} = karim@example.com
+       {{3}} = +213555123456
+       {{4}} = Agence Immobilier Alger
+       {{5}} = Je voudrais une demo de votre CRM
    Submit for review. Approval typically takes 1-24h for Utility.
 
 5. Get a permanent access token (before the 24h temp one expires)
