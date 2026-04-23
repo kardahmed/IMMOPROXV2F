@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ScrollText, Search, Download, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { LoadingSpinner, StatusBadge } from '@/components/common'
+import { DataTable, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
+import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 
@@ -109,24 +110,59 @@ export function AuditLogsPage() {
     URL.revokeObjectURL(url)
   }
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={0} hasTable />
+
+  const columns: Column<LogEntry>[] = [
+    {
+      key: 'date',
+      header: 'Date',
+      render: (l) => (
+        <div>
+          <p className="text-sm text-immo-text-primary">{format(new Date(l.created_at), 'dd/MM/yyyy')}</p>
+          <p className="text-[11px] text-immo-text-secondary">{format(new Date(l.created_at), 'HH:mm:ss')}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'admin',
+      header: 'Admin',
+      render: (l) => <span className="text-sm text-immo-text-primary">{l.admin_name}</span>,
+    },
+    {
+      key: 'action',
+      header: 'Action',
+      render: (l) => {
+        const meta = ACTION_LABELS[l.action]
+        return <StatusBadge label={meta?.label ?? l.action} type={meta?.color ?? 'muted'} />
+      },
+    },
+    {
+      key: 'tenant',
+      header: 'Tenant',
+      render: (l) => <span className="text-sm text-immo-text-secondary">{l.tenant_name}</span>,
+    },
+    {
+      key: 'details',
+      header: 'Details',
+      render: (l) => <DetailsCell details={l.details} />,
+    },
+  ]
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">Audit Trail</h1>
-          <p className="text-sm text-immo-text-secondary">Historique de toutes les actions super admin</p>
-        </div>
-        <Button onClick={exportCSV} variant="ghost" className="border border-immo-border-default text-sm text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
-          <Download className="mr-1.5 h-4 w-4" /> Export CSV
-        </Button>
-      </div>
+      <PageHeader
+        title="Audit Trail"
+        subtitle="Historique de toutes les actions super admin"
+        actions={
+          <Button onClick={exportCSV} variant="ghost" className="border border-immo-border-default text-sm text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+            <Download className="mr-1.5 h-4 w-4" /> Export CSV
+          </Button>
+        }
+      />
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="space-y-3">
+        <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-immo-text-muted" />
           <input
             value={search}
@@ -136,8 +172,8 @@ export function AuditLogsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1">
-          <Filter className="h-4 w-4 text-immo-text-secondary" />
+        <div className="flex flex-wrap items-center gap-1">
+          <Filter className="mr-1 h-4 w-4 text-immo-text-secondary" />
           {['all', ...Object.keys(ACTION_LABELS)].map(key => (
             <button
               key={key}
@@ -151,49 +187,20 @@ export function AuditLogsPage() {
               {key === 'all' ? 'Tous' : ACTION_LABELS[key]?.label ?? key}
             </button>
           ))}
+          <span className="ml-auto text-xs text-immo-text-muted">{filtered.length} log(s)</span>
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-immo-border-default">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-immo-bg-primary">
-              {['Date', 'Admin', 'Action', 'Tenant', 'Details'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-secondary">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-immo-border-default">
-            {filtered.map(l => {
-              const meta = ACTION_LABELS[l.action]
-              return (
-                <tr key={l.id} className="bg-immo-bg-card transition-colors hover:bg-immo-bg-card-hover">
-                  <td className="px-4 py-3">
-                    <p className="text-sm text-immo-text-primary">{format(new Date(l.created_at), 'dd/MM/yyyy')}</p>
-                    <p className="text-[11px] text-immo-text-secondary">{format(new Date(l.created_at), 'HH:mm:ss')}</p>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-immo-text-primary">{l.admin_name}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge label={meta?.label ?? l.action} type={meta?.color ?? 'muted'} />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-immo-text-secondary">{l.tenant_name}</td>
-                  <td className="px-4 py-3">
-                    <DetailsCell details={l.details} />
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-
-        {filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16">
-            <ScrollText className="h-10 w-10 text-immo-border-default" />
-            <p className="text-sm text-immo-text-secondary">Aucun log trouve</p>
-          </div>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        rowKey={(l) => l.id}
+        pageSize={limit}
+        emptyIcon={<ScrollText className="h-10 w-10" />}
+        emptyMessage="Aucun log trouve"
+        emptyDescription={search || actionFilter !== 'all' ? 'Ajustez les filtres pour elargir les resultats.' : 'Les actions super admin apparaitront ici.'}
+      />
 
       {/* Load more */}
       {logs.length >= limit && (

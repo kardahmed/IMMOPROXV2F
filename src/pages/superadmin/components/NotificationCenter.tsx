@@ -128,7 +128,10 @@ export function NotificationCenter() {
       {/* Bell button */}
       <button
         onClick={() => setOpen(!open)}
-        className="relative rounded-lg p-2 text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} non lues)` : 'Notifications'}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className="relative rounded-lg p-2 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (

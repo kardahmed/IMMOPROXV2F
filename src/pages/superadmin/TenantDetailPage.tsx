@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home, AlertTriangle, Power, Globe, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
+import { Card, KPICard, PageSkeleton, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { formatPriceCompact } from '@/lib/constants'
@@ -114,23 +114,29 @@ export function TenantDetailPage() {
 
   const isMaintenance = tenantSettings?.maintenance_mode ?? false
 
-  if (loadingTenant || !tenant) return <LoadingSpinner size="lg" className="h-96" />
+  if (loadingTenant || !tenant) return <PageSkeleton kpiCount={7} />
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/admin')} className="rounded-lg p-2 text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-immo-text-primary">{tenant.name as string}</h1>
-            <PlanBadge plan={(tenant.plan as string) ?? 'free'} />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+        <div className="flex flex-1 items-center gap-3 min-w-0">
+          <button
+            onClick={() => navigate('/admin')}
+            aria-label="Retour a la liste des tenants"
+            className="shrink-0 rounded-lg p-2 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="truncate text-2xl font-bold text-immo-text-primary">{tenant.name as string}</h1>
+              <PlanBadge plan={(tenant.plan as string) ?? 'free'} />
+            </div>
+            <p className="truncate text-sm text-immo-text-secondary">{(tenant.email as string) ?? '-'} · {(tenant.wilaya as string) ?? '-'}</p>
           </div>
-          <p className="text-sm text-immo-text-secondary">{(tenant.email as string) ?? '-'} · {(tenant.wilaya as string) ?? '-'}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => setShowDuplicate(true)}
             className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
@@ -139,7 +145,7 @@ export function TenantDetailPage() {
           </Button>
           <Button
             onClick={() => setShowChangePlan(true)}
-            className="border border-[#7C3AED]/30 bg-transparent text-[#7C3AED] hover:bg-[#7C3AED]/10"
+            variant="purple-outline"
           >
             Changer le plan
           </Button>
@@ -154,8 +160,7 @@ export function TenantDetailPage() {
             <Power className="mr-1.5 h-4 w-4" />
             {isMaintenance ? 'Desactiver maintenance' : 'Maintenance'}
           </Button>
-          <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]">
+          <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }} variant="purple">
             Acceder au tenant
           </Button>
         </div>
@@ -174,7 +179,7 @@ export function TenantDetailPage() {
 
       {/* KPIs */}
       {kpis && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
           <KPICard label="Agents" value={kpis.agents} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
           <KPICard label="Clients" value={kpis.clients} accent="orange" icon={<Briefcase className="h-5 w-5 text-immo-status-orange" />} />
           <KPICard label="Projets" value={kpis.projects} accent="blue" icon={<Building2 className="h-5 w-5 text-[#7C3AED]" />} />
@@ -185,12 +190,12 @@ export function TenantDetailPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Users — full management panel */}
         <UserManagementPanel tenantId={tenantId!} />
 
         {/* Projects */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="border-b border-immo-border-default px-5 py-4">
             <h3 className="text-sm font-semibold text-immo-text-primary">Projets ({projects.length})</h3>
           </div>
@@ -208,12 +213,18 @@ export function TenantDetailPage() {
                 </div>
               )
             })}
+            {projects.length === 0 && (
+              <div className="px-5 py-12 text-center">
+                <Building2 className="mx-auto mb-2 h-8 w-8 text-immo-text-muted" />
+                <p className="text-sm text-immo-text-secondary">Aucun projet pour ce tenant</p>
+              </div>
+            )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Activity */}
-      <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+      <Card noPadding>
         <div className="border-b border-immo-border-default px-5 py-4">
           <h3 className="text-sm font-semibold text-immo-text-primary">Activite recente</h3>
         </div>
@@ -235,10 +246,10 @@ export function TenantDetailPage() {
           })}
           {history.length === 0 && <div className="py-8 text-center text-sm text-immo-text-secondary">Aucune activite</div>}
         </div>
-      </div>
+      </Card>
 
       {/* Custom Domain + Export */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <CustomDomainPanel tenantId={tenantId!} customDomain={customDomain} setCustomDomain={setCustomDomain} domainDirty={domainDirty} setDomainDirty={setDomainDirty} tenant={tenant} />
         <ExportPanel tenantId={tenantId!} tenantName={tenant.name as string} />
       </div>
@@ -292,7 +303,7 @@ function CustomDomainPanel({ tenantId, customDomain, setCustomDomain, domainDirt
   })
 
   return (
-    <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+    <Card>
       <div className="mb-3 flex items-center gap-2">
         <Globe className="h-5 w-5 text-[#7C3AED]" />
         <h3 className="text-sm font-semibold text-immo-text-primary">Domaine custom</h3>
@@ -305,12 +316,13 @@ function CustomDomainPanel({ tenantId, customDomain, setCustomDomain, domainDirt
           value={customDomain}
           onChange={e => { setCustomDomain(e.target.value); setDomainDirty(true) }}
           placeholder="landing.monagence.com"
-          className="flex-1 border-immo-border-default bg-immo-bg-primary text-immo-text-primary"
+          variant="immo"
+          className="flex-1"
         />
         <Button
           onClick={() => saveDomain.mutate()}
           disabled={saveDomain.isPending || !domainDirty}
-          className="bg-[#7C3AED] text-white hover:bg-[#6D28D9] disabled:opacity-50"
+          variant="purple"
         >
           Enregistrer
         </Button>
@@ -323,7 +335,7 @@ function CustomDomainPanel({ tenantId, customDomain, setCustomDomain, domainDirt
           </p>
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -357,7 +369,7 @@ function ExportPanel({ tenantId, tenantName }: { tenantId: string; tenantName: s
   }
 
   return (
-    <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+    <Card>
       <div className="mb-3 flex items-center gap-2">
         <Download className="h-5 w-5 text-[#7C3AED]" />
         <h3 className="text-sm font-semibold text-immo-text-primary">Export donnees</h3>
@@ -368,7 +380,7 @@ function ExportPanel({ tenantId, tenantName }: { tenantId: string; tenantName: s
       <Button
         onClick={handleExport}
         disabled={exporting}
-        className="border border-[#7C3AED]/30 bg-transparent text-[#7C3AED] hover:bg-[#7C3AED]/10"
+        variant="purple-outline"
       >
         {exporting ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#7C3AED] border-t-transparent" /> : <Download className="mr-1.5 h-4 w-4" />}
         {exporting ? 'Export en cours...' : 'Exporter'}
@@ -378,6 +390,6 @@ function ExportPanel({ tenantId, tenantName }: { tenantId: string; tenantName: s
           Telecharger le fichier
         </a>
       )}
-    </div>
+    </Card>
   )
 }

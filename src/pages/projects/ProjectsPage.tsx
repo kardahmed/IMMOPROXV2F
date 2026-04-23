@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -18,7 +18,7 @@ import {
   KPICard,
   SearchInput,
   FilterDropdown,
-  LoadingSpinner,
+  PageSkeleton,
   DataTable,
   StatusBadge,
   EmptyState,
@@ -32,7 +32,7 @@ import { usePlanEnforcement } from '@/hooks/usePlanEnforcement'
 import { PlanLimitBanner } from '@/components/common/PlanLimitBanner'
 import { format } from 'date-fns'
 import { ProjectCard } from './components/ProjectCard'
-import { CreateProjectModal } from './components/CreateProjectModal'
+const CreateProjectModal = lazy(() => import('./components/CreateProjectModal').then(m => ({ default: m.CreateProjectModal })))
 import { UnitsTab } from './components/UnitsTab'
 
 interface ProjectWithCounts {
@@ -196,7 +196,7 @@ export function ProjectsPage() {
   const isLoading = loadingProjects || loadingUnits
 
   if (isLoading) {
-    return <LoadingSpinner size="lg" className="h-96" />
+    return <PageSkeleton kpiCount={4} hasTable />
   }
 
   if (activeTab === 'units') {
@@ -355,7 +355,9 @@ export function ProjectsPage() {
       )}
 
       {/* Create modal */}
-      <CreateProjectModal isOpen={showCreate} onClose={() => setShowCreate(false)} />
+      <Suspense fallback={null}>
+        {showCreate && <CreateProjectModal isOpen={showCreate} onClose={() => setShowCreate(false)} />}
+      </Suspense>
 
       {/* Delete confirm */}
       <ConfirmDialog

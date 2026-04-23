@@ -36,7 +36,7 @@ function AnnouncementBanner() {
     <div className={`flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm ${typeStyles[data.announcement_type] ?? typeStyles.info}`}>
       <Bell className="h-3.5 w-3.5 shrink-0" />
       <span className="flex-1 line-clamp-1">{data.announcement_banner}</span>
-      <button onClick={() => setDismissed(true)} className="shrink-0 rounded-md p-0.5 hover:bg-black/10">
+      <button onClick={() => setDismissed(true)} aria-label="Masquer l'annonce" className="shrink-0 rounded-md p-0.5 transition-colors hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20">
         <X className="h-3.5 w-3.5" />
       </button>
     </div>

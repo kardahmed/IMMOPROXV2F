@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle, Settings, Send, Users, TrendingUp, AlertTriangle, Check, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { KPICard, LoadingSpinner, StatusBadge } from '@/components/common'
+import { Card, DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
+import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDistanceToNow } from 'date-fns'
@@ -103,7 +104,7 @@ export function WhatsAppPage() {
   const failedMessages = messages.filter(m => m.status === 'failed').length
   const totalSent = accounts.reduce((s, a) => s + ((a.messages_sent as number) ?? 0), 0)
 
-  if (loadingConfig) return <LoadingSpinner size="lg" className="h-96" />
+  if (loadingConfig) return <PageSkeleton kpiCount={4} />
 
   const TABS = [
     { key: 'config' as const, label: 'Configuration', icon: Settings },
@@ -112,20 +113,88 @@ export function WhatsAppPage() {
     { key: 'templates' as const, label: 'Templates', icon: MessageCircle },
   ]
 
+  type TenantRow = { id: string; name: string; plan: string }
+  const tenantColumns: Column<TenantRow>[] = [
+    { key: 'name', header: 'Tenant', render: (tenant) => <span className="text-sm text-immo-text-primary">{tenant.name}</span> },
+    { key: 'plan', header: 'Plan', render: (tenant) => {
+      const account = accounts.find(a => a.tenant_id === tenant.id)
+      return <span className="text-xs text-immo-text-muted">{(account?.plan as string) ?? '-'}</span>
+    } },
+    { key: 'status', header: 'Statut WA', render: (tenant) => {
+      const account = accounts.find(a => a.tenant_id === tenant.id)
+      const isActive = account ? (account.is_active as boolean) : false
+      return <StatusBadge label={isActive ? 'Actif' : 'Inactif'} type={isActive ? 'green' : 'muted'} />
+    } },
+    { key: 'messages', header: 'Messages', align: 'right', render: (tenant) => {
+      const account = accounts.find(a => a.tenant_id === tenant.id)
+      const sent = (account?.messages_sent as number) ?? 0
+      return <span className="text-sm font-mono text-immo-text-primary">{sent}</span>
+    } },
+    { key: 'quota', header: 'Quota', align: 'right', render: (tenant) => {
+      const account = accounts.find(a => a.tenant_id === tenant.id)
+      const sent = (account?.messages_sent as number) ?? 0
+      const quota = (account?.monthly_quota as number) ?? 0
+      return <span className="text-xs text-immo-text-muted">{quota > 0 ? `${sent}/${quota}` : '-'}</span>
+    } },
+    { key: 'actions', header: 'Actions', align: 'right', render: (tenant) => {
+      const account = accounts.find(a => a.tenant_id === tenant.id)
+      const isActive = account ? (account.is_active as boolean) : false
+      return (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => toggleTenant.mutate({ tenantId: tenant.id, active: !isActive })}
+          className={`h-7 text-[11px] ${isActive ? 'border border-immo-status-red/30 text-immo-status-red hover:bg-immo-status-red/10' : 'border border-green-500/30 text-green-500 hover:bg-green-500/10'}`}
+        >
+          {isActive ? 'Desactiver' : 'Activer'}
+        </Button>
+      )
+    } },
+  ]
+
+  type Row = Record<string, unknown>
+  const templateColumns: Column<Row>[] = [
+    { key: 'name', header: 'Nom', render: (tpl) => (
+      <div>
+        <p className="text-sm font-mono text-immo-text-primary">{tpl.name as string}</p>
+        <p className="mt-0.5 text-[10px] text-immo-text-muted line-clamp-1">{tpl.body_text as string}</p>
+      </div>
+    ) },
+    { key: 'category', header: 'Categorie', render: (tpl) => <span className="text-xs text-immo-text-muted">{tpl.category as string}</span> },
+    { key: 'language', header: 'Langue', render: (tpl) => <span className="text-xs text-immo-text-muted">{tpl.language as string}</span> },
+    { key: 'variables', header: 'Variables', align: 'right', render: (tpl) => <span className="text-xs text-immo-text-muted">{tpl.variables_count as number}</span> },
+    { key: 'status', header: 'Statut', render: (tpl) => (
+      <StatusBadge
+        label={tpl.status === 'approved' ? 'Approuve' : tpl.status === 'rejected' ? 'Rejete' : 'En attente'}
+        type={tpl.status === 'approved' ? 'green' : tpl.status === 'rejected' ? 'red' : 'orange'}
+      />
+    ) },
+  ]
+
+  type MsgRow = Record<string, unknown>
+  const messageColumns: Column<MsgRow>[] = [
+    { key: 'tenant', header: 'Tenant', render: (m) => <span className="text-xs text-immo-text-primary">{(m.tenants as { name: string } | null)?.name ?? '-'}</span> },
+    { key: 'client', header: 'Client', render: (m) => <span className="text-xs text-immo-text-secondary">{(m.clients as { full_name: string } | null)?.full_name ?? '-'}</span> },
+    { key: 'template', header: 'Template', render: (m) => <span className="text-xs font-mono text-immo-text-muted">{m.template_name as string}</span> },
+    { key: 'to', header: 'Destinataire', render: (m) => <span className="text-xs font-mono text-immo-text-muted">{m.to_phone as string}</span> },
+    { key: 'status', header: 'Statut', render: (m) => (
+      <StatusBadge
+        label={m.status === 'sent' ? 'Envoye' : m.status === 'delivered' ? 'Livre' : m.status === 'read' ? 'Lu' : 'Echec'}
+        type={m.status === 'failed' ? 'red' : m.status === 'read' ? 'green' : 'orange'}
+      />
+    ) },
+    { key: 'date', header: 'Date', render: (m) => <span className="text-[10px] text-immo-text-muted">{formatDistanceToNow(new Date(m.created_at as string), { addSuffix: true, locale: frLocale })}</span> },
+  ]
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10">
-          <MessageCircle className="h-5 w-5 text-green-500" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">WhatsApp Business</h1>
-          <p className="text-xs text-immo-text-muted">Gestion de l'integration WhatsApp Cloud API</p>
-        </div>
-      </div>
+      <PageHeader
+        title="WhatsApp Business"
+        subtitle="Gestion de l'integration WhatsApp Cloud API"
+      />
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <KPICard label="Tenants actifs" value={totalAccounts} accent="green" icon={<Users className="h-4 w-4 text-green-500" />} />
         <KPICard label="Messages envoyes" value={totalSent} accent="blue" icon={<Send className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Messages recents" value={totalMessages} accent="green" icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
@@ -144,9 +213,9 @@ export function WhatsAppPage() {
 
       {/* Config tab */}
       {tab === 'config' && config && (
-        <div className="max-w-xl space-y-4 rounded-xl border border-immo-border-default bg-immo-bg-card p-6">
+        <Card className="space-y-4 p-6">
           <h3 className="text-sm font-semibold text-immo-text-primary">Meta Cloud API</h3>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs text-immo-text-muted">WABA ID</label>
               <Input defaultValue={config.waba_id as string} onChange={e => setEditWabaId(e.target.value)} className="text-sm font-mono" />
@@ -159,7 +228,7 @@ export function WhatsAppPage() {
               <label className="mb-1 block text-xs text-immo-text-muted">Numero affiche</label>
               <Input value={config.display_phone as string ?? ''} disabled className="text-sm bg-immo-bg-primary" />
             </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-1 block text-xs text-immo-text-muted">Access Token</label>
               <div className="flex gap-2">
                 <Input
@@ -174,117 +243,46 @@ export function WhatsAppPage() {
               </div>
               <p className="mt-1 text-[10px] text-immo-status-orange">Le token temporaire expire en 24h. Utilisez un System User Token permanent.</p>
             </div>
-            <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending} className="bg-green-500 text-white hover:bg-green-600">
-              <Check className="mr-1.5 h-4 w-4" /> Enregistrer
-            </Button>
           </div>
-        </div>
+          <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending} className="bg-green-500 text-white hover:bg-green-600">
+            <Check className="mr-1.5 h-4 w-4" /> Enregistrer
+          </Button>
+        </Card>
       )}
 
       {/* Tenants tab */}
       {tab === 'tenants' && (
-        <div className="overflow-hidden rounded-xl border border-immo-border-default">
-          <table className="w-full">
-            <thead><tr className="bg-immo-bg-card-hover">
-              {['Tenant', 'Plan', 'Statut WA', 'Messages', 'Quota', 'Actions'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase text-immo-text-muted">{h}</th>
-              ))}
-            </tr></thead>
-            <tbody className="divide-y divide-immo-border-default">
-              {allTenants.map(tenant => {
-                const account = accounts.find(a => a.tenant_id === tenant.id)
-                const isActive = account ? (account.is_active as boolean) : false
-                const sent = (account?.messages_sent as number) ?? 0
-                const quota = (account?.monthly_quota as number) ?? 0
-                const plan = (account?.plan as string) ?? '-'
-                return (
-                  <tr key={tenant.id} className="bg-immo-bg-card hover:bg-immo-bg-card-hover">
-                    <td className="px-4 py-3 text-sm text-immo-text-primary">{tenant.name}</td>
-                    <td className="px-4 py-3 text-xs text-immo-text-muted">{plan}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge label={isActive ? 'Actif' : 'Inactif'} type={isActive ? 'green' : 'muted'} />
-                    </td>
-                    <td className="px-4 py-3 text-sm font-mono text-immo-text-primary">{sent}</td>
-                    <td className="px-4 py-3 text-xs text-immo-text-muted">{quota > 0 ? `${sent}/${quota}` : '-'}</td>
-                    <td className="px-4 py-3">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => toggleTenant.mutate({ tenantId: tenant.id, active: !isActive })}
-                        className={`h-7 text-[11px] ${isActive ? 'border border-immo-status-red/30 text-immo-status-red hover:bg-immo-status-red/10' : 'border border-green-500/30 text-green-500 hover:bg-green-500/10'}`}
-                      >
-                        {isActive ? 'Desactiver' : 'Activer'}
-                      </Button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={tenantColumns}
+          data={allTenants}
+          rowKey={(t) => t.id}
+          emptyIcon={<Users className="h-10 w-10" />}
+          emptyMessage="Aucun tenant"
+        />
       )}
 
       {/* Messages tab */}
       {tab === 'messages' && (
-        <div className="overflow-hidden rounded-xl border border-immo-border-default">
-          <table className="w-full">
-            <thead><tr className="bg-immo-bg-card-hover">
-              {['Tenant', 'Client', 'Template', 'Destinataire', 'Statut', 'Date'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase text-immo-text-muted">{h}</th>
-              ))}
-            </tr></thead>
-            <tbody className="divide-y divide-immo-border-default">
-              {messages.map(msg => (
-                <tr key={msg.id as string} className="bg-immo-bg-card hover:bg-immo-bg-card-hover">
-                  <td className="px-4 py-3 text-xs text-immo-text-primary">{(msg.tenants as { name: string } | null)?.name ?? '-'}</td>
-                  <td className="px-4 py-3 text-xs text-immo-text-secondary">{(msg.clients as { full_name: string } | null)?.full_name ?? '-'}</td>
-                  <td className="px-4 py-3 text-xs font-mono text-immo-text-muted">{msg.template_name as string}</td>
-                  <td className="px-4 py-3 text-xs font-mono text-immo-text-muted">{msg.to_phone as string}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge
-                      label={msg.status === 'sent' ? 'Envoye' : msg.status === 'delivered' ? 'Livre' : msg.status === 'read' ? 'Lu' : 'Echec'}
-                      type={msg.status === 'failed' ? 'red' : msg.status === 'read' ? 'green' : 'orange'}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-[10px] text-immo-text-muted">{formatDistanceToNow(new Date(msg.created_at as string), { addSuffix: true, locale: frLocale })}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {messages.length === 0 && <div className="py-12 text-center text-sm text-immo-text-muted">Aucun message envoye</div>}
-        </div>
+        <DataTable
+          columns={messageColumns}
+          data={messages}
+          rowKey={(m) => m.id as string}
+          emptyIcon={<Send className="h-10 w-10" />}
+          emptyMessage="Aucun message envoye"
+          emptyDescription="Les messages WhatsApp envoyes par les tenants apparaitront ici."
+        />
       )}
 
       {/* Templates tab */}
       {tab === 'templates' && (
-        <div className="overflow-hidden rounded-xl border border-immo-border-default">
-          <table className="w-full">
-            <thead><tr className="bg-immo-bg-card-hover">
-              {['Nom', 'Categorie', 'Langue', 'Variables', 'Statut'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase text-immo-text-muted">{h}</th>
-              ))}
-            </tr></thead>
-            <tbody className="divide-y divide-immo-border-default">
-              {templates.map(tpl => (
-                <tr key={tpl.id as string} className="bg-immo-bg-card hover:bg-immo-bg-card-hover">
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-mono text-immo-text-primary">{tpl.name as string}</p>
-                    <p className="mt-0.5 text-[10px] text-immo-text-muted line-clamp-1">{tpl.body_text as string}</p>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-immo-text-muted">{tpl.category as string}</td>
-                  <td className="px-4 py-3 text-xs text-immo-text-muted">{tpl.language as string}</td>
-                  <td className="px-4 py-3 text-xs text-immo-text-muted">{tpl.variables_count as number}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge
-                      label={tpl.status === 'approved' ? 'Approuve' : tpl.status === 'rejected' ? 'Rejete' : 'En attente'}
-                      type={tpl.status === 'approved' ? 'green' : tpl.status === 'rejected' ? 'red' : 'orange'}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={templateColumns}
+          data={templates}
+          rowKey={(t) => t.id as string}
+          emptyIcon={<MessageCircle className="h-10 w-10" />}
+          emptyMessage="Aucun template"
+          emptyDescription="Les templates WhatsApp Business apparaitront ici apres approbation par Meta."
+        />
       )}
     </div>
   )

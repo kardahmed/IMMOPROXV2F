@@ -76,7 +76,7 @@ export function ClientSidePanel({ clientId, onClose }: ClientSidePanelProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-4">
         <h3 className="text-sm font-semibold text-immo-text-primary">Apercu client</h3>
-        <button onClick={onClose} className="rounded-md p-1 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+        <button onClick={onClose} aria-label="Fermer l'apercu" className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40">
           <X className="h-4 w-4" />
         </button>
       </div>

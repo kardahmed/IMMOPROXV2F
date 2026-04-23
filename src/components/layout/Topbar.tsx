@@ -42,7 +42,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
       {/* Left: hamburger (mobile) + page title */}
       <div className="flex items-center gap-3">
         {isMobile && (
-          <button onClick={toggleSidebar} className="rounded-lg p-2 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+          <button onClick={toggleSidebar} aria-label="Ouvrir le menu" className="rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40">
             <Menu className="h-5 w-5" />
           </button>
         )}
@@ -83,8 +83,12 @@ export function Topbar({ title, subtitle }: TopbarProps) {
         </div>
 
         {/* Dark mode toggle */}
-        <button onClick={() => setTheme(isDark ? 'light' : 'dark')} title={isDark ? 'Mode clair' : 'Mode sombre'}
-          className="rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+        <button
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          aria-label={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+          title={isDark ? 'Mode clair' : 'Mode sombre'}
+          className="rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40"
+        >
           {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
 

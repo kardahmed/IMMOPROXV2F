@@ -49,9 +49,30 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
   })
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Changer le plan" subtitle={tenantName} size="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Changer le plan"
+      subtitle={tenantName}
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
+          <Button
+            onClick={() => changePlan.mutate()}
+            disabled={selected === currentPlan || changePlan.isPending}
+            variant="purple"
+          >
+            {changePlan.isPending
+              ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              : <><Zap className="mr-1.5 h-4 w-4" /> Appliquer {PLAN_LABELS[selected]?.label}</>
+            }
+          </Button>
+        </>
+      }
+    >
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {plans.map(p => {
             const meta = PLAN_LABELS[p.plan]
             const isSelected = selected === p.plan
@@ -92,20 +113,6 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
               </button>
             )
           })}
-        </div>
-
-        <div className="flex justify-end gap-3 border-t border-immo-border-default pt-4">
-          <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
-          <Button
-            onClick={() => changePlan.mutate()}
-            disabled={selected === currentPlan || changePlan.isPending}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-50"
-          >
-            {changePlan.isPending
-              ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              : <><Zap className="mr-1.5 h-4 w-4" /> Appliquer {PLAN_LABELS[selected]?.label}</>
-            }
-          </Button>
         </div>
       </div>
     </Modal>

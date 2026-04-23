@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, ExternalLink, Copy, Pencil, Trash2, Eye, EyeOff, Layout } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -8,8 +8,9 @@ import { useAuthStore } from '@/store/authStore'
 import { KPICard, LoadingSpinner, StatusBadge, ConfirmDialog } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import toast from 'react-hot-toast'
-import { LandingPageEditor } from './LandingPageEditor'
-import { TemplateSelector } from './components/TemplateSelector'
+// Lazy-load the editor and template selector — both are heavy and only open on user action
+const LandingPageEditor = lazy(() => import('./LandingPageEditor').then(m => ({ default: m.LandingPageEditor })))
+const TemplateSelector = lazy(() => import('./components/TemplateSelector').then(m => ({ default: m.TemplateSelector })))
 import type { Template } from './components/TemplateSelector'
 
 interface LandingPage {
@@ -174,19 +175,19 @@ export function LandingPagesManager() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1">
-                  <button onClick={() => copyLink(page.slug)} title="Copier le lien" className="rounded-md p-2 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+                  <button onClick={() => copyLink(page.slug)} aria-label="Copier le lien" title="Copier le lien" className="rounded-md p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                     <Copy className="h-4 w-4" />
                   </button>
-                  <a href={`/p/${page.slug}`} target="_blank" rel="noopener noreferrer" title="Voir" className="rounded-md p-2 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+                  <a href={`/p/${page.slug}`} target="_blank" rel="noopener noreferrer" aria-label="Voir la page" title="Voir" className="rounded-md p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                     <ExternalLink className="h-4 w-4" />
                   </a>
-                  <button onClick={() => { setEditPage(page); setShowEditor(true) }} title="Modifier" className="rounded-md p-2 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+                  <button onClick={() => { setEditPage(page); setShowEditor(true) }} aria-label="Modifier la page" title="Modifier" className="rounded-md p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                     <Pencil className="h-4 w-4" />
                   </button>
-                  <button onClick={() => toggleActive.mutate({ id: page.id, active: !page.is_active })} title={page.is_active ? 'Desactiver' : 'Activer'} className="rounded-md p-2 text-immo-text-muted hover:bg-immo-bg-card-hover">
+                  <button onClick={() => toggleActive.mutate({ id: page.id, active: !page.is_active })} aria-label={page.is_active ? 'Desactiver la page' : 'Activer la page'} title={page.is_active ? 'Desactiver' : 'Activer'} className="rounded-md p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                     {page.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
-                  <button onClick={() => setDeleteId(page.id)} title="Supprimer" className="rounded-md p-2 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-status-red">
+                  <button onClick={() => setDeleteId(page.id)} aria-label="Supprimer la page" title="Supprimer" className="rounded-md p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -197,10 +198,14 @@ export function LandingPagesManager() {
       )}
 
       {/* Template selector */}
-      <TemplateSelector isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelect={handleTemplateSelect} />
+      <Suspense fallback={null}>
+        {showTemplates && <TemplateSelector isOpen={showTemplates} onClose={() => setShowTemplates(false)} onSelect={handleTemplateSelect} />}
+      </Suspense>
 
       {/* Editor modal */}
-      <LandingPageEditor isOpen={showEditor} onClose={() => { setShowEditor(false); setEditPage(null) }} editPage={editPage as unknown as Record<string, unknown> | null} />
+      <Suspense fallback={null}>
+        {showEditor && <LandingPageEditor isOpen={showEditor} onClose={() => { setShowEditor(false); setEditPage(null) }} editPage={editPage as unknown as Record<string, unknown> | null} />}
+      </Suspense>
 
       {/* Delete confirm */}
       <ConfirmDialog

@@ -65,8 +65,8 @@ export function WhatsAppButton({ clientId, clientName, phone, tenantId, message,
   }
 
   return (
-    <button onClick={handleClick} title="Envoyer WhatsApp"
-      className="rounded-md p-1.5 text-[#25D366] hover:bg-[#25D366]/10">
+    <button onClick={handleClick} aria-label="Envoyer un message WhatsApp" title="Envoyer WhatsApp"
+      className="rounded-md p-1.5 text-[#25D366] transition-colors hover:bg-[#25D366]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/40">
       <MessageCircle className="h-4 w-4" />
     </button>
   )

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Megaphone } from 'lucide-react'
+import { Plus, Megaphone, ScrollText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { LoadingSpinner, Modal } from '@/components/common'
+import { Card, EmptyState, Modal, PageHeader, PageSkeleton } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,46 +35,66 @@ export function ChangelogPage() {
     },
   })
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={0} />
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-immo-text-primary">Changelog</h1>
-        <Button onClick={() => setShowAdd(true)} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
-          <Plus className="mr-1.5 h-4 w-4" /> Nouvelle release
-        </Button>
-      </div>
+      <PageHeader
+        title="Changelog"
+        subtitle="Publiez les notes de version visibles par tous les tenants"
+        actions={
+          <Button onClick={() => setShowAdd(true)} variant="purple">
+            <Plus className="mr-1.5 h-4 w-4" /> Nouvelle release
+          </Button>
+        }
+      />
 
-      <div className="space-y-4">
-        {entries.map(e => (
-          <div key={e.id} className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-[#7C3AED]/10 px-3 py-0.5 text-xs font-bold text-[#7C3AED]">{e.version}</span>
-              <h3 className="text-sm font-semibold text-immo-text-primary">{e.title}</h3>
-              <span className="ml-auto text-xs text-immo-text-muted">{format(new Date(e.published_at), 'dd/MM/yyyy')}</span>
-            </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-immo-text-secondary">{e.body}</p>
-          </div>
-        ))}
-        {entries.length === 0 && <p className="py-12 text-center text-sm text-immo-text-muted">Aucune release note</p>}
-      </div>
+      {entries.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-immo-border-default bg-immo-bg-card">
+          <EmptyState
+            icon={<ScrollText className="h-10 w-10" />}
+            title="Aucune release note"
+            description="Commencez par publier la premiere note de version pour informer vos tenants des nouveautes."
+            action={{ label: 'Publier une release', onClick: () => setShowAdd(true) }}
+          />
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {entries.map(e => (
+            <Card key={e.id} hoverable>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-[#7C3AED]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#7C3AED]">{e.version}</span>
+                <span className="ml-auto text-[11px] text-immo-text-muted">{format(new Date(e.published_at), 'dd/MM/yyyy')}</span>
+              </div>
+              <h3 className="mt-3 text-sm font-semibold text-immo-text-primary">{e.title}</h3>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-immo-text-secondary">{e.body}</p>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Nouvelle release note" size="md">
+      <Modal
+        isOpen={showAdd}
+        onClose={() => setShowAdd(false)}
+        title="Nouvelle release note"
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowAdd(false)} className="text-immo-text-secondary">Annuler</Button>
+            <Button onClick={() => create.mutate()} disabled={!version || !title || !body || create.isPending} variant="purple">
+              <Megaphone className="mr-1.5 h-4 w-4" /> Publier
+            </Button>
+          </>
+        }
+      >
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div><Label className="text-[11px] text-immo-text-muted">Version *</Label><Input value={version} onChange={e => setVersion(e.target.value)} placeholder="v2.5.0" className="border-immo-border-default bg-immo-bg-primary text-immo-text-primary" /></div>
-            <div><Label className="text-[11px] text-immo-text-muted">Titre *</Label><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nouvelles fonctionnalites" className="border-immo-border-default bg-immo-bg-primary text-immo-text-primary" /></div>
+            <div><Label className="text-[11px] text-immo-text-muted">Version *</Label><Input value={version} onChange={e => setVersion(e.target.value)} placeholder="v2.5.0" variant="immo" /></div>
+            <div><Label className="text-[11px] text-immo-text-muted">Titre *</Label><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nouvelles fonctionnalites" variant="immo" /></div>
           </div>
           <div>
             <Label className="text-[11px] text-immo-text-muted">Contenu *</Label>
             <textarea value={body} onChange={e => setBody(e.target.value)} rows={8} placeholder="- Ajout de..." className="mt-1 w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 text-sm text-immo-text-primary" />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setShowAdd(false)} className="text-immo-text-secondary">Annuler</Button>
-            <Button onClick={() => create.mutate()} disabled={!version || !title || !body || create.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
-              <Megaphone className="mr-1.5 h-4 w-4" /> Publier
-            </Button>
           </div>
         </div>
       </Modal>

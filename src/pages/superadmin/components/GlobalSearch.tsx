@@ -112,11 +112,16 @@ export function GlobalSearch() {
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
+          aria-label="Recherche globale"
           placeholder="Recherche globale... (Ctrl+K)"
-          className="h-9 w-[320px] rounded-lg border border-immo-border-default bg-immo-bg-primary pl-9 pr-8 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#7C3AED]"
+          className="h-9 w-[320px] rounded-lg border border-immo-border-default bg-immo-bg-primary pl-9 pr-8 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20"
         />
         {query && (
-          <button onClick={() => { setQuery(''); setOpen(false) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-immo-text-muted hover:text-immo-text-primary">
+          <button
+            onClick={() => { setQuery(''); setOpen(false) }}
+            aria-label="Effacer la recherche"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded text-immo-text-muted transition-colors hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
             <X className="h-3.5 w-3.5" />
           </button>
         )}

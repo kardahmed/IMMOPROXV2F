@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Shield, ShieldCheck, UserX, KeyRound, Trash2, MoreVertical } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { StatusBadge, Modal, ConfirmDialog } from '@/components/common'
+import { Card, StatusBadge, Modal, ConfirmDialog } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import toast from 'react-hot-toast'
 
-const inputClass = 'border-immo-border-default bg-immo-bg-card text-immo-text-primary placeholder-immo-text-muted'
 
 interface UserRow {
   id: string
@@ -111,10 +110,10 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
   })
 
   return (
-    <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+    <Card noPadding>
       <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-4">
         <h3 className="text-sm font-semibold text-immo-text-primary">Utilisateurs ({users.length})</h3>
-        <Button onClick={() => setShowCreate(true)} size="sm" className="bg-[#7C3AED] text-xs font-semibold text-white hover:bg-[#6D28D9]">
+        <Button onClick={() => setShowCreate(true)} size="sm" variant="purple" className="text-xs">
           <Plus className="mr-1 h-3.5 w-3.5" /> Ajouter
         </Button>
       </div>
@@ -141,7 +140,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
 
             {/* Actions dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="rounded-md p-1.5 text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+              <DropdownMenuTrigger aria-label="Actions utilisateur" className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="border-immo-border-default bg-immo-bg-card">
@@ -230,7 +229,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
           }}
         />
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -268,17 +267,30 @@ function CreateUserModal({ isOpen, tenantId, onClose, onSuccess }: {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Ajouter un utilisateur" size="sm">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Ajouter un utilisateur"
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
+          <Button onClick={handleCreate} disabled={!firstName || !lastName || !email || loading} variant="purple">
+            {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Inviter'}
+          </Button>
+        </>
+      }
+    >
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <div><Label className="text-[11px] text-immo-text-secondary">Prenom *</Label><Input value={firstName} onChange={e => setFirstName(e.target.value)} className={inputClass} /></div>
-          <div><Label className="text-[11px] text-immo-text-secondary">Nom *</Label><Input value={lastName} onChange={e => setLastName(e.target.value)} className={inputClass} /></div>
+          <div><Label className="text-[11px] text-immo-text-secondary">Prenom *</Label><Input value={firstName} onChange={e => setFirstName(e.target.value)} variant="immo" /></div>
+          <div><Label className="text-[11px] text-immo-text-secondary">Nom *</Label><Input value={lastName} onChange={e => setLastName(e.target.value)} variant="immo" /></div>
         </div>
-        <div><Label className="text-[11px] text-immo-text-secondary">Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} /></div>
+        <div><Label className="text-[11px] text-immo-text-secondary">Email *</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} variant="immo" /></div>
         <div>
           <Label className="text-[11px] text-immo-text-secondary">Role</Label>
           <Select value={role} onValueChange={v => setRole(v as 'admin' | 'agent')}>
-            <SelectTrigger className={inputClass}><SelectValue /></SelectTrigger>
+            <SelectTrigger className="border-immo-border-default bg-immo-bg-card text-immo-text-primary"><SelectValue /></SelectTrigger>
             <SelectContent className="border-immo-border-default bg-immo-bg-card">
               <SelectItem value="admin" className="text-immo-text-primary focus:bg-immo-bg-card-hover">Administrateur</SelectItem>
               <SelectItem value="agent" className="text-immo-text-primary focus:bg-immo-bg-card-hover">Agent commercial</SelectItem>
@@ -286,13 +298,6 @@ function CreateUserModal({ isOpen, tenantId, onClose, onSuccess }: {
           </Select>
         </div>
         <p className="text-[11px] text-immo-text-secondary">Un email d'invitation sera envoye automatiquement.</p>
-        <div className="flex justify-end gap-3 pt-2">
-          <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
-          <Button onClick={handleCreate} disabled={!firstName || !lastName || !email || loading}
-            className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]">
-            {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Inviter'}
-          </Button>
-        </div>
       </div>
     </Modal>
   )

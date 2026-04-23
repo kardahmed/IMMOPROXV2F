@@ -11,6 +11,8 @@ export interface Column<T> {
   header: string
   render: (row: T) => ReactNode
   className?: string
+  align?: 'left' | 'center' | 'right'
+  width?: string
 }
 
 interface DataTableProps<T> {
@@ -18,14 +20,18 @@ interface DataTableProps<T> {
   data: T[]
   loading?: boolean
   emptyMessage?: string
+  emptyDescription?: string
   emptyIcon?: ReactNode
   rowKey: (row: T) => string
   onRowClick?: (row: T) => void
+  rowClassName?: (row: T) => string
   pageSize?: number
   /** If provided, use server-side pagination (totalCount + onPageChange) */
   totalCount?: number
   onPageChange?: (page: number) => void
   currentPage?: number
+  /** Sticky header — useful inside scrollable containers */
+  stickyHeader?: boolean
 }
 
 export function DataTable<T>({
@@ -33,13 +39,16 @@ export function DataTable<T>({
   data,
   loading = false,
   emptyMessage,
+  emptyDescription,
   emptyIcon,
   rowKey,
   onRowClick,
+  rowClassName,
   pageSize = 25,
   totalCount,
   onPageChange,
   currentPage,
+  stickyHeader = false,
 }: DataTableProps<T>) {
   const { t } = useTranslation()
   const [localPage, setLocalPage] = useState(0)
@@ -94,48 +103,54 @@ export function DataTable<T>({
         <EmptyState
           icon={emptyIcon ?? <Inbox className="h-10 w-10" />}
           title={emptyMessage ?? t('common.no_data')}
-          description={t('common.no_match')}
+          description={emptyDescription ?? t('common.no_match')}
         />
       </div>
     )
   }
 
+  const alignClass = (align?: 'left' | 'center' | 'right') =>
+    align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
+
   return (
     <div className="overflow-hidden rounded-xl border border-immo-border-default">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-immo-bg-card-hover">
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted ${col.className ?? ''}`}
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {displayData.map((row) => (
-            <tr
-              key={rowKey(row)}
-              onClick={() => onRowClick?.(row)}
-              className={`border-t border-immo-border-default bg-immo-bg-card transition-colors hover:bg-immo-bg-card-hover ${
-                onRowClick ? 'cursor-pointer' : ''
-              }`}
-            >
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
+            <tr className="bg-immo-bg-card-hover">
               {columns.map((col) => (
-                <td
+                <th
                   key={col.key}
-                  className={`px-4 py-3.5 text-sm text-immo-text-primary ${col.className ?? ''}`}
+                  style={col.width ? { width: col.width } : undefined}
+                  className={`px-4 py-3 ${alignClass(col.align)} text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted ${col.className ?? ''}`}
                 >
-                  {col.render(row)}
-                </td>
+                  {col.header}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {displayData.map((row) => (
+              <tr
+                key={rowKey(row)}
+                onClick={() => onRowClick?.(row)}
+                className={`border-t border-immo-border-default bg-immo-bg-card transition-colors hover:bg-immo-bg-card-hover ${
+                  onRowClick ? 'cursor-pointer' : ''
+                } ${rowClassName?.(row) ?? ''}`}
+              >
+                {columns.map((col) => (
+                  <td
+                    key={col.key}
+                    className={`px-4 py-3.5 ${alignClass(col.align)} text-sm text-immo-text-primary ${col.className ?? ''}`}
+                  >
+                    {col.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Pagination */}
       {showPagination && (

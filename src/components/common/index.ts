@@ -1,4 +1,6 @@
 export { KPICard } from './KPICard'
+export { Card, CardHeader } from './Card'
+export { PageSkeleton } from './PageSkeleton'
 export { StatusBadge } from './StatusBadge'
 export { DataTable } from './DataTable'
 export type { Column } from './DataTable'

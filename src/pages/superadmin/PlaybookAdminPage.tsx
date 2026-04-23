@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Plus, Trash2, AlertTriangle, Lightbulb, Target, MessageCircle, Sparkles, Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { Card, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -120,10 +121,10 @@ export function PlaybookAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-immo-text-primary">Playbook IA</h1>
-        <p className="text-sm text-immo-text-secondary">Configurez la methodologie de vente que l'IA utilisera pour generer les scripts d'appel de tous les tenants.</p>
-      </div>
+      <PageHeader
+        title="Playbook IA"
+        subtitle="Configurez la methodologie de vente que l'IA utilisera pour generer les scripts d'appel de tous les tenants."
+      />
 
       {/* Info banner */}
       <div className="flex items-start gap-3 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-4">
@@ -155,7 +156,7 @@ export function PlaybookAdminPage() {
         const isEditing = editId === pb.id
 
         return (
-          <div key={pb.id as string} className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+          <Card key={pb.id as string} noPadding className="overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-immo-border-default bg-immo-bg-primary px-5 py-3">
               <div className="flex items-center gap-3">
@@ -166,13 +167,13 @@ export function PlaybookAdminPage() {
                 </div>
               </div>
               {!isEditing ? (
-                <Button onClick={() => startEdit(pb)} size="sm" className="h-7 border border-[#7C3AED]/30 bg-transparent text-xs text-[#7C3AED] hover:bg-[#7C3AED]/10">
+                <Button onClick={() => startEdit(pb)} size="sm" variant="purple-outline" className="h-7 text-xs">
                   Modifier
                 </Button>
               ) : (
                 <div className="flex gap-2">
                   <Button onClick={() => setEditId(null)} size="sm" className="h-7 border border-immo-border-default bg-transparent text-xs text-immo-text-muted">Annuler</Button>
-                  <Button onClick={() => save.mutate()} disabled={save.isPending} size="sm" className="h-7 bg-[#7C3AED] text-xs text-white">
+                  <Button onClick={() => save.mutate()} disabled={save.isPending} size="sm" variant="purple" className="h-7 text-xs">
                     <Save className="mr-1 h-3 w-3" /> Sauvegarder
                   </Button>
                 </div>
@@ -228,7 +229,7 @@ export function PlaybookAdminPage() {
                     <Label className="flex items-center gap-1.5 text-xs font-semibold text-immo-text-primary">
                       <AlertTriangle className="h-3.5 w-3.5 text-immo-status-orange" /> Regles d'objection
                     </Label>
-                    <Button onClick={addObjection} size="sm" disabled={objectionRules.length >= OBJECTION_TRIGGERS.length} className="h-6 bg-[#7C3AED] text-[10px] text-white">
+                    <Button onClick={addObjection} size="sm" disabled={objectionRules.length >= OBJECTION_TRIGGERS.length} variant="purple" className="h-6 text-[10px]">
                       <Plus className="mr-1 h-3 w-3" /> Ajouter
                     </Button>
                   </div>
@@ -240,7 +241,7 @@ export function PlaybookAdminPage() {
                             className="h-7 rounded-md border border-immo-border-default bg-immo-bg-card px-2 text-xs text-immo-text-primary">
                             {OBJECTION_TRIGGERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                           </select>
-                          <button onClick={() => setObjectionRules(objectionRules.filter((_, i) => i !== idx))} className="text-immo-text-muted hover:text-immo-status-red">
+                          <button onClick={() => setObjectionRules(objectionRules.filter((_, i) => i !== idx))} aria-label="Supprimer l'objection" className="rounded text-immo-text-muted transition-colors hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40">
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -261,13 +262,13 @@ export function PlaybookAdminPage() {
                       <div key={i} className="flex items-center gap-2">
                         <span className="text-xs text-[#7C3AED]">→</span>
                         <Input value={p} onChange={e => { const n = [...closingPhrases]; n[i] = e.target.value; setClosingPhrases(n) }} className="flex-1 text-xs border-immo-border-default" />
-                        <button onClick={() => setClosingPhrases(closingPhrases.filter((_, j) => j !== i))} className="text-immo-text-muted hover:text-immo-status-red"><Trash2 className="h-3 w-3" /></button>
+                        <button onClick={() => setClosingPhrases(closingPhrases.filter((_, j) => j !== i))} aria-label="Supprimer la phrase" className="rounded text-immo-text-muted transition-colors hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"><Trash2 className="h-3 w-3" /></button>
                       </div>
                     ))}
                   </div>
                   <div className="flex gap-2">
                     <Input value={newClosing} onChange={e => setNewClosing(e.target.value)} placeholder="Ex: Mardi ou jeudi ?" className="flex-1 text-xs border-immo-border-default" />
-                    <Button onClick={() => { if (newClosing) { setClosingPhrases([...closingPhrases, newClosing]); setNewClosing('') } }} size="sm" className="h-9 bg-[#7C3AED] text-xs text-white">
+                    <Button onClick={() => { if (newClosing) { setClosingPhrases([...closingPhrases, newClosing]); setNewClosing('') } }} size="sm" variant="purple" className="h-9 text-xs">
                       <Plus className="mr-1 h-3 w-3" /> Ajouter
                     </Button>
                   </div>
@@ -283,7 +284,7 @@ export function PlaybookAdminPage() {
                 </div>
               </div>
             )}
-          </div>
+          </Card>
         )
       })}
 

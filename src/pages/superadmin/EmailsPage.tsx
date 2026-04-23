@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Mail, Send, Eye, Search, CheckCircle, XCircle, Clock, FileText, TestTube } from 'lucide-react'
 import { useEmailLogs, useSendTestEmail } from '@/hooks/useEmailLogs'
-import { LoadingSpinner, StatusBadge } from '@/components/common'
+import { Card, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
@@ -144,16 +144,10 @@ export function EmailsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-immo-text-primary flex items-center gap-2">
-          <Mail className="h-5 w-5 text-[#7C3AED]" />
-          {t('emails.title', 'Gestion Emails')}
-        </h1>
-        <p className="text-sm text-immo-text-muted mt-1">
-          {t('emails.subtitle', 'Templates, historique et envoi test')}
-        </p>
-      </div>
+      <PageHeader
+        title={t('emails.title', 'Gestion Emails')}
+        subtitle={t('emails.subtitle', 'Templates, historique et envoi test')}
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-immo-border-default">
@@ -271,12 +265,12 @@ function LogsTab({
           <LoadingSpinner />
         </div>
       ) : logs.length === 0 ? (
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-12 text-center">
+        <Card className="p-12 text-center">
           <Mail className="mx-auto h-10 w-10 text-immo-text-muted mb-3" />
           <p className="text-sm text-immo-text-muted">Aucun email envoye</p>
-        </div>
+        </Card>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding className="overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-immo-border-default bg-immo-bg-primary/50">
@@ -317,7 +311,7 @@ function LogsTab({
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
 
       <p className="text-xs text-immo-text-muted text-right">{logs.length} email(s)</p>
@@ -340,9 +334,9 @@ function TemplatesTab({
         {TEMPLATE_META.map(tmpl => {
           const Icon = tmpl.icon
           return (
-            <div
+            <Card
               key={tmpl.id}
-              className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5 space-y-3 hover:border-[#7C3AED]/30 transition-colors"
+              className="space-y-3 transition-colors hover:border-[#7C3AED]/30"
             >
               <div className="flex items-start justify-between">
                 <div className={`rounded-lg p-2 ${tmpl.color}`}>
@@ -379,7 +373,7 @@ function TemplatesTab({
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           )
         })}
       </div>
@@ -431,8 +425,8 @@ function TestTab({
   const selectedMeta = TEMPLATE_META.find(t => t.id === template)
 
   return (
-    <div className="max-w-lg space-y-6">
-      <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-6 space-y-5">
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card className="space-y-5 p-6">
         <h3 className="font-semibold text-immo-text-primary flex items-center gap-2">
           <TestTube className="h-4 w-4 text-[#7C3AED]" />
           Envoyer un email de test
@@ -467,26 +461,12 @@ function TestTab({
           />
         </div>
 
-        {/* Sample data preview */}
-        {selectedMeta && (
-          <div className="rounded-lg bg-immo-bg-primary border border-immo-border-default p-3">
-            <p className="text-[10px] font-medium text-immo-text-muted uppercase tracking-wider mb-2">Donnees exemple utilisees</p>
-            <div className="space-y-1">
-              {Object.entries(selectedMeta.sampleData).map(([key, value]) => (
-                <div key={key} className="flex justify-between text-xs">
-                  <span className="text-immo-text-muted">{key.replace(/_/g, ' ')}</span>
-                  <span className="text-immo-text-primary font-medium">{String(value)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Send button */}
         <Button
           onClick={onSend}
           disabled={isSending || !email}
-          className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white gap-2"
+          variant="purple"
+          className="w-full gap-2"
         >
           {isSending ? (
             <LoadingSpinner />
@@ -495,11 +475,27 @@ function TestTab({
           )}
           {isSending ? 'Envoi en cours...' : 'Envoyer le test'}
         </Button>
-      </div>
 
-      <p className="text-xs text-immo-text-muted">
-        L'email sera envoye avec le statut "test" et apparaitra dans l'historique.
-      </p>
+        <p className="text-xs text-immo-text-muted">
+          L'email sera envoye avec le statut "test" et apparaitra dans l'historique.
+        </p>
+      </Card>
+
+      {/* Sample data preview */}
+      {selectedMeta && (
+        <Card className="space-y-3 p-6">
+          <h3 className="text-sm font-semibold text-immo-text-primary">Donnees exemple utilisees</h3>
+          <p className="text-xs text-immo-text-muted">Ces valeurs remplacent les variables du template lors de l'envoi de test.</p>
+          <div className="divide-y divide-immo-border-default/60 rounded-lg border border-immo-border-default bg-immo-bg-primary">
+            {Object.entries(selectedMeta.sampleData).map(([key, value]) => (
+              <div key={key} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                <span className="text-immo-text-muted">{key.replace(/_/g, ' ')}</span>
+                <span className="truncate text-immo-text-primary font-medium">{String(value)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   )
 }

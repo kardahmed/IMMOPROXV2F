@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Send, FileText, Megaphone, Bell, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { LoadingSpinner, StatusBadge } from '@/components/common'
+import { Card, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -110,7 +110,7 @@ export function MessagesPage() {
     }
   })
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={0} />
 
   const TABS: Array<{ key: TabKey; label: string; icon: typeof Send }> = [
     { key: 'compose', label: 'Composer', icon: Send },
@@ -120,7 +120,10 @@ export function MessagesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-immo-text-primary">Messagerie & Communication</h1>
+      <PageHeader
+        title="Messagerie & Communication"
+        subtitle="Envoyez des messages et gerez la banniere globale"
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-immo-border-default">
@@ -134,9 +137,9 @@ export function MessagesPage() {
 
       {/* Compose tab */}
       {tab === 'compose' && (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Compose form */}
-          <div className="xl:col-span-2 rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <Card className="lg:col-span-2">
             <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Nouveau message</h3>
             <div className="space-y-3">
               <div>
@@ -149,24 +152,24 @@ export function MessagesPage() {
               </div>
               <div>
                 <Label className="text-[11px] text-immo-text-muted">Sujet *</Label>
-                <Input value={subject} onChange={e => setSubject(e.target.value)} className="border-immo-border-default bg-immo-bg-primary text-immo-text-primary" />
+                <Input value={subject} onChange={e => setSubject(e.target.value)} variant="immo" />
               </div>
               <div>
                 <Label className="text-[11px] text-immo-text-muted">Message *</Label>
                 <textarea value={body} onChange={e => setBody(e.target.value)} rows={8} className="mt-1 w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 text-sm text-immo-text-primary" />
               </div>
               <div className="flex items-center gap-3">
-                <Button onClick={() => sendMessage.mutate()} disabled={!subject || !body || sendMessage.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+                <Button onClick={() => sendMessage.mutate()} disabled={!subject || !body || sendMessage.isPending} variant="purple">
                   {sendMessage.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="mr-1.5 h-4 w-4" />}
                   Envoyer
                 </Button>
                 {!targetTenant && <span className="text-[10px] text-immo-status-orange">⚠ Broadcast a tous les tenants</span>}
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Templates sidebar */}
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+          <Card>
             <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Templates rapides</h3>
             <div className="space-y-2">
               {MESSAGE_TEMPLATES.map(tpl => (
@@ -180,13 +183,13 @@ export function MessagesPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* History tab */}
       {tab === 'history' && (
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+        <Card noPadding>
           <div className="divide-y divide-immo-border-default">
             {messages.map(m => {
               const isRead = m.read as boolean
@@ -209,13 +212,13 @@ export function MessagesPage() {
             })}
             {messages.length === 0 && <div className="py-8 text-center text-sm text-immo-text-muted">Aucun message</div>}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Banner tab */}
       {tab === 'banner' && (
-        <div className="max-w-xl space-y-5">
-          <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
+        <div className="max-w-3xl space-y-5">
+          <Card>
             <div className="mb-3 flex items-center gap-2">
               <Megaphone className="h-5 w-5 text-[#7C3AED]" />
               <h3 className="text-sm font-semibold text-immo-text-primary">Banniere d'annonce globale</h3>
@@ -237,7 +240,7 @@ export function MessagesPage() {
 
               <div>
                 <Label className="text-[11px] text-immo-text-muted">Texte de la banniere</Label>
-                <Input value={bannerText} onChange={e => setBannerText(e.target.value)} placeholder="Ex: Maintenance prevue le 15 avril de 2h a 4h" className="border-immo-border-default bg-immo-bg-primary text-immo-text-primary" />
+                <Input value={bannerText} onChange={e => setBannerText(e.target.value)} placeholder="Ex: Maintenance prevue le 15 avril de 2h a 4h" variant="immo" />
               </div>
 
               {/* Preview */}
@@ -256,7 +259,7 @@ export function MessagesPage() {
               )}
 
               <div className="flex gap-2">
-                <Button onClick={() => saveBanner.mutate()} disabled={saveBanner.isPending} className="bg-[#7C3AED] text-white hover:bg-[#6D28D9]">
+                <Button onClick={() => saveBanner.mutate()} disabled={saveBanner.isPending} variant="purple">
                   {bannerText ? 'Activer la banniere' : 'Desactiver la banniere'}
                 </Button>
                 {bannerText && (
@@ -266,7 +269,7 @@ export function MessagesPage() {
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

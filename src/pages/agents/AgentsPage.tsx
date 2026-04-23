@@ -9,7 +9,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import {
-  KPICard, SearchInput, StatusBadge, LoadingSpinner, Modal, ConfirmDialog,
+  KPICard, SearchInput, StatusBadge, PageSkeleton, Modal, ConfirmDialog,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -126,7 +126,7 @@ export function AgentsPage() {
     )
   }, [agents, search])
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={4} hasTable />
 
   return (
     <div className="space-y-5">

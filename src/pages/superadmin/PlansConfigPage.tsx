@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Check, X, Zap, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { LoadingSpinner } from '@/components/common'
+import { Card, PageHeader, PageSkeleton } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -188,25 +188,25 @@ export function PlansConfigPage() {
     onError: (e) => toast.error((e as Error).message),
   })
 
-  if (isLoading || !plans) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading || !plans) return <PageSkeleton kpiCount={0} />
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">Configuration des plans</h1>
-          <p className="text-sm text-immo-text-secondary">Gerez les limites, tarifs et fonctionnalites de chaque plan</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowAddPlan(true)} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
-            <Plus className="mr-1.5 h-4 w-4" /> Nouveau plan
-          </Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending} className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9] disabled:opacity-50">
-            {saveMutation.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
-            Enregistrer
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Configuration des plans"
+        subtitle="Gerez les limites, tarifs et fonctionnalites de chaque plan"
+        actions={
+          <>
+            <Button onClick={() => setShowAddPlan(true)} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
+              <Plus className="mr-1.5 h-4 w-4" /> Nouveau plan
+            </Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending} variant="purple">
+              {saveMutation.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
+              Enregistrer
+            </Button>
+          </>
+        }
+      />
 
       {/* Add plan modal */}
       {showAddPlan && (
@@ -214,21 +214,21 @@ export function PlansConfigPage() {
           <p className="mb-2 text-sm font-semibold text-[#7C3AED]">Nouveau plan</p>
           <div className="flex gap-2">
             <Input value={newPlanName} onChange={e => setNewPlanName(e.target.value)} placeholder="Nom du plan (ex: premium)" className="w-[200px] border-immo-border-default bg-immo-bg-card text-sm" />
-            <Button onClick={() => addPlanMutation.mutate()} disabled={!newPlanName || addPlanMutation.isPending} className="bg-[#7C3AED] text-white">Ajouter</Button>
+            <Button onClick={() => addPlanMutation.mutate()} disabled={!newPlanName || addPlanMutation.isPending} variant="purple">Ajouter</Button>
             <Button onClick={() => setShowAddPlan(false)} className="border border-immo-border-default bg-transparent text-immo-text-secondary">Annuler</Button>
           </div>
         </div>
       )}
 
       {/* Plans grid */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${editPlans.length}, minmax(220px, 1fr))` }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
         {editPlans.map((plan, idx) => {
           const color = PLAN_COLORS[plan.plan] ?? '#0579DA'
           const count = tenantCounts.get(plan.plan) ?? 0
           const isProtected = ['free', 'starter', 'pro', 'enterprise'].includes(plan.plan)
 
           return (
-            <div key={plan.plan} className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+            <Card key={plan.plan} noPadding className="overflow-hidden">
               {/* Header */}
               <div className="px-4 py-3 border-b border-immo-border-default" style={{ backgroundColor: color + '10' }}>
                 <div className="flex items-center justify-between">
@@ -237,8 +237,12 @@ export function PlansConfigPage() {
                     <p className="text-[10px] text-immo-text-muted">{count} tenant{count > 1 ? 's' : ''}</p>
                   </div>
                   {!isProtected && (
-                    <button onClick={() => deletePlanMutation.mutate(plan.plan)} disabled={deletePlanMutation.isPending}
-                      className="rounded-lg p-1 text-immo-text-muted hover:bg-immo-status-red/10 hover:text-immo-status-red">
+                    <button
+                      onClick={() => deletePlanMutation.mutate(plan.plan)}
+                      disabled={deletePlanMutation.isPending}
+                      aria-label={`Supprimer le plan ${plan.plan}`}
+                      className="rounded-lg p-1 text-immo-text-muted transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40 disabled:opacity-50"
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -317,13 +321,13 @@ export function PlansConfigPage() {
                   })}
                 </div>
               </div>
-            </div>
+            </Card>
           )
         })}
       </div>
 
       {/* Summary table */}
-      <div className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
+      <Card noPadding className="overflow-hidden">
         <div className="border-b border-immo-border-default px-5 py-3">
           <h3 className="text-sm font-semibold text-immo-text-primary">Grille comparative</h3>
         </div>
@@ -385,7 +389,7 @@ export function PlansConfigPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

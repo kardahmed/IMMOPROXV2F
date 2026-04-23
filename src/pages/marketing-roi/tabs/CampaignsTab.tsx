@@ -142,15 +142,15 @@ export function CampaignsTab() {
                   <div className="flex items-center gap-2">
                     <StatusBadge label={st.label} type={st.type} />
                     {c.status === 'active' && (
-                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'paused' })} className="rounded-md p-1 text-immo-status-orange hover:bg-immo-status-orange/10" title="Pause"><Pause className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'paused' })} aria-label="Mettre en pause" title="Pause" className="rounded-md p-1 text-immo-status-orange transition-colors hover:bg-immo-status-orange/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-orange/40"><Pause className="h-3.5 w-3.5" /></button>
                     )}
                     {c.status === 'paused' && (
-                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'active' })} className="rounded-md p-1 text-immo-accent-green hover:bg-immo-accent-green/10" title="Reprendre"><Play className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'active' })} aria-label="Reprendre" title="Reprendre" className="rounded-md p-1 text-immo-accent-green transition-colors hover:bg-immo-accent-green/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40"><Play className="h-3.5 w-3.5" /></button>
                     )}
                     {c.status !== 'completed' && (
-                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'completed' })} className="rounded-md p-1 text-immo-text-muted hover:bg-immo-bg-card-hover" title="Terminer"><Check className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'completed' })} aria-label="Terminer la campagne" title="Terminer" className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"><Check className="h-3.5 w-3.5" /></button>
                     )}
-                    <button onClick={() => deleteCampaign.mutate(c.id)} className="rounded-md p-1 text-immo-text-muted hover:text-immo-status-red hover:bg-immo-status-red/5" title="Supprimer"><Trash2 className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => deleteCampaign.mutate(c.id)} aria-label="Supprimer la campagne" title="Supprimer" className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-status-red/5 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
 

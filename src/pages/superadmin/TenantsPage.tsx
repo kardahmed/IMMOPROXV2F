@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { KPICard, LoadingSpinner } from '@/components/common'
+import { DataTable, KPICard, PageHeader, PageSkeleton } from '@/components/common'
+import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { CreateTenantModal } from './components/CreateTenantModal'
@@ -101,26 +102,62 @@ export function TenantsPage() {
     navigate('/dashboard')
   }
 
-  if (isLoading) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading) return <PageSkeleton kpiCount={5} hasTable />
+
+  const columns: Column<TenantRow>[] = [
+    { key: 'name', header: 'Nom', render: (t) => <span className="text-sm font-medium text-immo-text-primary">{t.name}</span> },
+    { key: 'plan', header: 'Plan', render: (t) => <PlanBadge plan={t.plan} /> },
+    { key: 'sante', header: 'Sante', render: (t) => <HealthBadge status={healthMap.get(t.id)?.status ?? 'healthy'} issues={healthMap.get(t.id)?.issues ?? []} /> },
+    { key: 'email', header: 'Email', render: (t) => <span className="text-xs text-immo-text-secondary">{t.email ?? '-'}</span> },
+    { key: 'agents', header: 'Agents', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.agents_count}</span> },
+    { key: 'clients', header: 'Clients', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.clients_count}</span> },
+    { key: 'projects', header: 'Projets', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.projects_count}</span> },
+    { key: 'units', header: 'Biens', align: 'center', render: (t) => <span className="text-sm text-immo-text-primary">{t.units_count}</span> },
+    { key: 'created', header: 'Cree le', render: (t) => <span className="text-xs text-immo-text-secondary">{new Date(t.created_at).toLocaleDateString('fr')}</span> },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (t) => (
+        <div className="flex justify-end gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(`/admin/tenants/${t.id}`) }}
+            aria-label={`Voir ${t.name}`}
+            title="Voir"
+            className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleAccessTenant(t) }}
+            aria-label={`Acceder au tenant ${t.name}`}
+            title="Acceder"
+            className="rounded-md p-1.5 text-[#7C3AED] transition-colors hover:bg-[#7C3AED]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+          >
+            <LogIn className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
       {/* Realtime dashboard */}
       <RealtimeDashboard />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-immo-text-primary">Gestion des Tenants</h1>
-          <p className="text-sm text-immo-text-secondary">Gerez les agences de la plateforme</p>
-        </div>
-        <Button
-          onClick={() => setShowCreate(true)}
-          className="bg-[#7C3AED] font-semibold text-white hover:bg-[#6D28D9]"
-        >
-          <Plus className="mr-1.5 h-4 w-4" /> Nouveau Tenant
-        </Button>
-      </div>
+      <PageHeader
+        title="Gestion des Tenants"
+        subtitle="Gerez les agences de la plateforme"
+        actions={
+          <Button
+            onClick={() => setShowCreate(true)}
+            variant="purple"
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> Nouveau Tenant
+          </Button>
+        }
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
@@ -132,56 +169,29 @@ export function TenantsPage() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-immo-text-muted" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher un tenant..."
-          className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#7C3AED]"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-immo-text-muted" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher un tenant..."
+            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#7C3AED]"
+          />
+        </div>
+        <span className="shrink-0 text-xs text-immo-text-muted">{filtered.length} tenant(s)</span>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-immo-border-default">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-immo-bg-primary">
-              {['Nom', 'Plan', 'Sante', 'Email', 'Agents', 'Clients', 'Projets', 'Biens', 'Cree le', 'Actions'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-secondary">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-immo-border-default">
-            {filtered.map(t => (
-              <tr key={t.id} className="bg-immo-bg-card transition-colors hover:bg-immo-bg-card-hover">
-                <td className="px-4 py-3.5 text-sm font-medium text-immo-text-primary">{t.name}</td>
-                <td className="px-4 py-3.5"><PlanBadge plan={t.plan} /></td>
-                <td className="px-4 py-3.5"><HealthBadge status={healthMap.get(t.id)?.status ?? 'healthy'} issues={healthMap.get(t.id)?.issues ?? []} /></td>
-                <td className="px-4 py-3.5 text-xs text-immo-text-secondary">{t.email ?? '-'}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.agents_count}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.clients_count}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.projects_count}</td>
-                <td className="px-4 py-3.5 text-center text-sm text-immo-text-primary">{t.units_count}</td>
-                <td className="px-4 py-3.5 text-xs text-immo-text-secondary">{new Date(t.created_at).toLocaleDateString('fr')}</td>
-                <td className="px-4 py-3.5">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => navigate(`/admin/tenants/${t.id}`)} title="Voir" className="rounded-md p-1.5 text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
-                      <Eye className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => handleAccessTenant(t)} title="Acceder" className="rounded-md p-1.5 text-[#7C3AED] hover:bg-[#7C3AED]/10">
-                      <LogIn className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="py-12 text-center text-sm text-immo-text-secondary">Aucun tenant trouve</div>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        rowKey={(t) => t.id}
+        onRowClick={(t) => navigate(`/admin/tenants/${t.id}`)}
+        emptyIcon={<Building2 className="h-10 w-10" />}
+        emptyMessage={search ? 'Aucun tenant ne correspond' : 'Aucun tenant'}
+        emptyDescription={search ? 'Modifiez votre recherche pour elargir les resultats.' : 'Creez votre premier tenant pour demarrer.'}
+      />
 
       <CreateTenantModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSuccess={refetch} />
     </div>

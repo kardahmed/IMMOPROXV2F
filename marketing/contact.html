@@ -84,37 +84,230 @@
         </div>
       </div>
 
-      <!-- Contact form -->
-      <div class="card rv rv-1" style="padding:32px">
-        <h2 style="margin-bottom:20px">Envoyez-nous un message</h2>
-        <form style="display:flex;flex-direction:column;gap:14px" onsubmit="event.preventDefault();alert('Message envoye ! Nous vous repondrons sous 24h.')">
-          <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:4px">Nom complet *</label>
-            <input required type="text" placeholder="Votre nom" style="width:100%;height:44px;border:1px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;outline:none">
+      <!-- Contact form — 2 steps -->
+      <div class="card rv rv-1 form-card" id="form-card">
+        <!-- Progress indicator -->
+        <div class="form-progress" aria-hidden="true">
+          <div class="form-progress-bar" id="progress-bar"></div>
+          <div class="form-progress-labels">
+            <span class="step-label active" id="label-1">1. Contact</span>
+            <span class="step-label" id="label-2">2. Projet</span>
           </div>
+        </div>
+
+        <!-- Error banner -->
+        <div class="form-error" id="form-error" role="alert" hidden></div>
+
+        <!-- Step 1 form (visible by default) -->
+        <form id="form-step-1" class="form-step" novalidate>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:4px">Email *</label>
-            <input required type="email" placeholder="vous@agence.com" style="width:100%;height:44px;border:1px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;outline:none">
+            <h2>Demandez une demo</h2>
+            <p class="form-sub">Laissez vos coordonnees — on revient vers vous sous 24h ouvrees avec un creneau.</p>
           </div>
+
+          <div class="field">
+            <label for="f1-name">Nom complet <span class="req">*</span></label>
+            <input id="f1-name" name="full_name" type="text" required autocomplete="name" placeholder="Votre nom" />
+            <div class="err-msg" data-err-for="f1-name"></div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="f1-email">Email professionnel <span class="req">*</span></label>
+              <input id="f1-email" name="email" type="email" required autocomplete="email" placeholder="vous@agence.com" />
+              <div class="err-msg" data-err-for="f1-email"></div>
+            </div>
+            <div class="field">
+              <label for="f1-phone">Telephone <span class="req">*</span></label>
+              <input id="f1-phone" name="phone" type="tel" required autocomplete="tel" placeholder="0555 12 34 56" />
+              <div class="err-msg" data-err-for="f1-phone"></div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-p" id="btn-step-1">
+              Continuer <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          <p class="form-sub" style="font-size:11px;text-align:center">
+            Vos donnees sont confidentielles — voir <a href="confidentialite.html" style="color:var(--blue)">politique de confidentialite</a>.
+          </p>
+        </form>
+
+        <!-- Step 2 form (hidden until step 1 is submitted) -->
+        <form id="form-step-2" class="form-step" novalidate hidden>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:4px">Telephone</label>
-            <input type="tel" placeholder="0555 123 456" style="width:100%;height:44px;border:1px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;outline:none">
+            <h2>Votre projet</h2>
+            <p class="form-sub">Ces informations nous permettent de preparer une demo adaptee a votre contexte.</p>
           </div>
-          <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:4px">Sujet</label>
-            <select style="width:100%;height:44px;border:1px solid var(--border);border-radius:10px;padding:0 14px;font-size:14px;outline:none;color:var(--gray)">
-              <option>Demande de demo</option>
-              <option>Question sur les tarifs</option>
-              <option>Support technique</option>
-              <option>Partenariat</option>
-              <option>Autre</option>
-            </select>
+
+          <!-- 1. Type d'activite + 2. Nom entreprise -->
+          <div class="field">
+            <label>Type d'activite <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="activity_type" value="agence" required /><span>Agence immobiliere</span></label>
+              <label><input type="radio" name="activity_type" value="promoteur" required /><span>Promoteur immobilier</span></label>
+              <label><input type="radio" name="activity_type" value="freelance" required /><span>Agent freelance</span></label>
+              <label><input type="radio" name="activity_type" value="entreprise" required /><span>Autre entreprise</span></label>
+            </div>
+            <div class="err-msg" data-err-for="activity_type"></div>
           </div>
-          <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:4px">Message *</label>
-            <textarea required rows="4" placeholder="Votre message..." style="width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;outline:none;resize:none;font-family:inherit"></textarea>
+
+          <div class="field">
+            <label for="f2-company">Nom de votre entreprise <span class="req">*</span></label>
+            <input id="f2-company" name="company_name" type="text" required autocomplete="organization" placeholder="Ex: Immobiliere Atlas" />
+            <div class="err-msg" data-err-for="f2-company"></div>
           </div>
-          <button type="submit" class="btn btn-p" style="width:100%;justify-content:center;border-radius:10px">Envoyer le message</button>
+
+          <!-- 3. Nb agents + 5. Leads/mois -->
+          <div class="field-grid">
+            <div class="field">
+              <label for="f2-agents">Nombre d'agents commerciaux <span class="req">*</span></label>
+              <select id="f2-agents" name="agents_count" required>
+                <option value="" disabled selected>Choisir...</option>
+                <option value="1">1 agent</option>
+                <option value="2-5">2 a 5 agents</option>
+                <option value="6-15">6 a 15 agents</option>
+                <option value="16-50">16 a 50 agents</option>
+                <option value="50+">Plus de 50</option>
+              </select>
+              <div class="err-msg" data-err-for="f2-agents"></div>
+            </div>
+            <div class="field">
+              <label for="f2-leads">Leads generes par mois <span class="req">*</span></label>
+              <select id="f2-leads" name="leads_per_month" required>
+                <option value="" disabled selected>Choisir...</option>
+                <option value="<10">Moins de 10</option>
+                <option value="10-50">10 a 50</option>
+                <option value="50-200">50 a 200</option>
+                <option value="200+">Plus de 200</option>
+              </select>
+              <div class="err-msg" data-err-for="f2-leads"></div>
+            </div>
+          </div>
+
+          <!-- 4. Wilayas + 6. Budget marketing -->
+          <div class="field-grid">
+            <div class="field">
+              <label for="f2-wilayas">Wilaya(s) d'operation <span class="req">*</span></label>
+              <input id="f2-wilayas" name="wilayas" type="text" required list="wilayas-list" placeholder="Ex: Alger, Oran, Setif" />
+              <div class="hint">Separez par des virgules</div>
+              <datalist id="wilayas-list">
+                <option value="Adrar"><option value="Chlef"><option value="Laghouat"><option value="Oum El Bouaghi">
+                <option value="Batna"><option value="Bejaia"><option value="Biskra"><option value="Bechar">
+                <option value="Blida"><option value="Bouira"><option value="Tamanrasset"><option value="Tebessa">
+                <option value="Tlemcen"><option value="Tiaret"><option value="Tizi Ouzou"><option value="Alger">
+                <option value="Djelfa"><option value="Jijel"><option value="Setif"><option value="Saida">
+                <option value="Skikda"><option value="Sidi Bel Abbes"><option value="Annaba"><option value="Guelma">
+                <option value="Constantine"><option value="Medea"><option value="Mostaganem"><option value="M'Sila">
+                <option value="Mascara"><option value="Ouargla"><option value="Oran"><option value="El Bayadh">
+                <option value="Illizi"><option value="Bordj Bou Arreridj"><option value="Boumerdes"><option value="El Tarf">
+                <option value="Tindouf"><option value="Tissemsilt"><option value="El Oued"><option value="Khenchela">
+                <option value="Souk Ahras"><option value="Tipaza"><option value="Mila"><option value="Ain Defla">
+                <option value="Naama"><option value="Ain Temouchent"><option value="Ghardaia"><option value="Relizane">
+                <option value="Timimoun"><option value="Bordj Badji Mokhtar"><option value="Ouled Djellal"><option value="Beni Abbes">
+                <option value="In Salah"><option value="In Guezzam"><option value="Touggourt"><option value="Djanet">
+                <option value="El M'Ghair"><option value="El Meniaa">
+              </datalist>
+              <div class="err-msg" data-err-for="f2-wilayas"></div>
+            </div>
+            <div class="field">
+              <label for="f2-budget">Budget marketing mensuel <span class="req">*</span></label>
+              <select id="f2-budget" name="marketing_budget_monthly" required>
+                <option value="" disabled selected>Choisir...</option>
+                <option value="<50k">Moins de 50 000 DA</option>
+                <option value="50-200k">50 000 a 200 000 DA</option>
+                <option value="200k-1M">200 000 a 1 000 000 DA</option>
+                <option value=">1M">Plus de 1 000 000 DA</option>
+              </select>
+              <div class="err-msg" data-err-for="f2-budget"></div>
+            </div>
+          </div>
+
+          <!-- 7. Canaux d'acquisition -->
+          <div class="field">
+            <label>Canaux d'acquisition actuels <span class="req">*</span></label>
+            <div class="checkbox-grid">
+              <label><input type="checkbox" name="acquisition_channels" value="whatsapp" /><span>WhatsApp</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="meta_ads" /><span>Meta Ads (Facebook/Instagram)</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="google_ads" /><span>Google Ads</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="word_of_mouth" /><span>Bouche a oreille</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="billboards" /><span>Panneaux / Affichage</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="salons" /><span>Salons / Evenements</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="seo" /><span>SEO / Site web</span></label>
+              <label><input type="checkbox" name="acquisition_channels" value="other" /><span>Autre</span></label>
+            </div>
+            <div class="err-msg" data-err-for="acquisition_channels"></div>
+          </div>
+
+          <!-- 8. Outils actuels -->
+          <div class="field">
+            <label>Outil actuel de suivi clients <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="current_tools" value="nothing" required /><span>Rien de structure</span></label>
+              <label><input type="radio" name="current_tools" value="excel" required /><span>Excel / Google Sheets</span></label>
+              <label><input type="radio" name="current_tools" value="whatsapp" required /><span>WhatsApp uniquement</span></label>
+              <label><input type="radio" name="current_tools" value="crm" required /><span>Un CRM existant</span></label>
+            </div>
+            <div class="err-msg" data-err-for="current_tools"></div>
+          </div>
+
+          <!-- 9. Decideur + noms conditionnels -->
+          <div class="field">
+            <label>Qui prend la decision d'achat ? <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="decision_maker" value="me" required /><span>Moi</span></label>
+              <label><input type="radio" name="decision_maker" value="boss" required /><span>Mon patron / directeur</span></label>
+              <label><input type="radio" name="decision_maker" value="partners" required /><span>Associes / co-fondateurs</span></label>
+              <label><input type="radio" name="decision_maker" value="committee" required /><span>Comite de direction</span></label>
+            </div>
+            <div class="err-msg" data-err-for="decision_maker"></div>
+          </div>
+
+          <div class="field hidden-field" id="field-decision-names">
+            <label for="f2-dm-names">Nom(s) de la/les personne(s) qui decide(nt) <span class="req">*</span></label>
+            <input id="f2-dm-names" name="decision_maker_names" type="text" placeholder="Ex: Mohamed Bensalem (directeur)" />
+            <div class="err-msg" data-err-for="f2-dm-names"></div>
+          </div>
+
+          <!-- 10. Frustration (1-10) -->
+          <div class="field">
+            <label for="f2-frustration">A quel point votre suivi clients actuel vous frustre ? <span class="req">*</span></label>
+            <div class="slider-row">
+              <span style="font-size:11px;color:var(--muted)">Pas du tout</span>
+              <input id="f2-frustration" name="frustration_score" type="range" min="1" max="10" value="5" step="1" />
+              <span style="font-size:11px;color:var(--muted)">Enormement</span>
+              <span class="slider-value" id="frustration-value">5</span>
+            </div>
+          </div>
+
+          <!-- 11. Echeance -->
+          <div class="field">
+            <label>Quand souhaitez-vous etre operationnel ? <span class="req">*</span></label>
+            <div class="radio-grid">
+              <label><input type="radio" name="timeline" value="this_week" required /><span>Cette semaine</span></label>
+              <label><input type="radio" name="timeline" value="this_month" required /><span>Dans le mois</span></label>
+              <label><input type="radio" name="timeline" value="3_months" required /><span>Dans 3 mois</span></label>
+              <label><input type="radio" name="timeline" value="browsing" required /><span>Je me renseigne</span></label>
+            </div>
+            <div class="err-msg" data-err-for="timeline"></div>
+          </div>
+
+          <!-- 12. Message libre -->
+          <div class="field">
+            <label for="f2-message">Un besoin specifique a partager ?</label>
+            <textarea id="f2-message" name="message" rows="3" placeholder="Optionnel — un point particulier sur lequel vous voulez une reponse durant la demo."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" id="btn-back">
+              <span aria-hidden="true">←</span> Precedent
+            </button>
+            <button type="submit" class="btn btn-p" id="btn-step-2">
+              Envoyer et prendre RDV <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -131,6 +324,239 @@
   <div class="ft-bot"><span>© 2026 IMMO PRO-X</span><span>Concu en Algerie</span></div>
 </div></footer>
 
-<script>const o=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){el.target.classList.add('v');o.unobserve(el.target)}})},{threshold:.08});document.querySelectorAll('.rv').forEach(el=>o.observe(el));</script>
+<script>
+// Scroll-reveal animation (existing behavior)
+const _ioReveal = new IntersectionObserver(entries => {
+  entries.forEach(el => { if (el.isIntersecting) { el.target.classList.add('v'); _ioReveal.unobserve(el.target) } })
+}, { threshold: .08 })
+document.querySelectorAll('.rv').forEach(el => _ioReveal.observe(el))
+
+// ─── Supabase config (anon key is safe to expose — RLS protects data) ──────
+const SUPABASE_URL = 'https://lbnqccsebwiifxcucflg.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxibnFjY3NlYndpaWZ4Y3VjZmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NjQyMDgsImV4cCI6MjA5MTM0MDIwOH0.lo0cNBXpBTbvcxyCtTRjKtPA8I2XAP9Nuj0Xo9Ehjmw'
+
+const $ = (sel, ctx = document) => ctx.querySelector(sel)
+const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel))
+
+// ─── UTM + referrer capture (read once on page load) ──────────────────────
+function captureTracking() {
+  const params = new URLSearchParams(location.search)
+  return {
+    source: params.get('utm_source') || null,
+    medium: params.get('utm_medium') || null,
+    campaign: params.get('utm_campaign') || null,
+    referrer: document.referrer || null,
+    user_agent: navigator.userAgent || null,
+  }
+}
+const _tracking = captureTracking()
+
+// State: id of the lead created in step 1, reused on step 2 update
+let leadId = null
+
+// ─── Supabase REST helpers ────────────────────────────────────────────────
+async function supabaseRequest(method, path, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Prefer': 'return=representation',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Supabase ${method} ${path} failed: ${res.status} ${text}`)
+  }
+  return res.json()
+}
+
+// ─── Error helpers ────────────────────────────────────────────────────────
+function setFieldError(fieldEl, msg) {
+  const wrapper = fieldEl.closest('.field') || fieldEl.parentElement
+  if (wrapper) wrapper.classList.toggle('invalid', !!msg)
+  const slot = wrapper?.querySelector('.err-msg')
+  if (slot) slot.textContent = msg || ''
+}
+function clearFieldError(fieldEl) { setFieldError(fieldEl, '') }
+function showFormError(msg) {
+  const el = $('#form-error')
+  el.textContent = msg
+  el.hidden = !msg
+  if (msg) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+// ─── Validation ───────────────────────────────────────────────────────────
+const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const RE_PHONE = /^[+0-9\s()\-.]{6,}$/
+
+function validateStep1(form) {
+  let ok = true
+  const name = form.full_name
+  const email = form.email
+  const phone = form.phone
+
+  if (!name.value.trim()) { setFieldError(name, 'Champ requis'); ok = false } else clearFieldError(name)
+  if (!RE_EMAIL.test(email.value.trim())) { setFieldError(email, 'Email invalide'); ok = false } else clearFieldError(email)
+  if (!RE_PHONE.test(phone.value.trim())) { setFieldError(phone, 'Numero invalide'); ok = false } else clearFieldError(phone)
+  return ok
+}
+
+function validateStep2(form) {
+  let ok = true
+  // All required radios/selects/texts
+  const required = ['activity_type', 'company_name', 'agents_count', 'wilayas', 'leads_per_month', 'marketing_budget_monthly', 'current_tools', 'decision_maker', 'timeline']
+  for (const name of required) {
+    const el = form.elements[name]
+    if (!el) continue
+    const value = el.value?.trim?.() ?? ''
+    if (!value) {
+      const target = el.length ? el[0] : el
+      setFieldError(target, 'Champ requis')
+      ok = false
+    } else {
+      const target = el.length ? el[0] : el
+      clearFieldError(target)
+    }
+  }
+  // Acquisition channels: at least one
+  const channels = $$('input[name=acquisition_channels]:checked', form)
+  const chField = $('input[name=acquisition_channels]', form)
+  if (channels.length === 0) {
+    setFieldError(chField, 'Cochez au moins un canal')
+    ok = false
+  } else clearFieldError(chField)
+
+  // Conditional decision-maker names
+  const dm = form.decision_maker.value
+  if (dm && dm !== 'me') {
+    const names = form.decision_maker_names
+    if (!names.value.trim()) {
+      setFieldError(names, 'Precisez le(s) nom(s)')
+      ok = false
+    } else clearFieldError(names)
+  }
+  return ok
+}
+
+// ─── Interactive behaviors ────────────────────────────────────────────────
+// Live slider value
+const frustration = $('#f2-frustration')
+const frustrationOut = $('#frustration-value')
+if (frustration) frustration.addEventListener('input', () => { frustrationOut.textContent = frustration.value })
+
+// Reveal decision-maker-names when boss/partners/committee selected
+$$('input[name=decision_maker]').forEach(r => r.addEventListener('change', () => {
+  const field = $('#field-decision-names')
+  const input = $('#f2-dm-names')
+  const needsNames = r.checked && r.value !== 'me'
+  field.classList.toggle('hidden-field', !needsNames)
+  input.required = needsNames
+  if (!needsNames) { input.value = ''; clearFieldError(input) }
+}))
+
+// ─── Step transitions ─────────────────────────────────────────────────────
+const form1 = $('#form-step-1')
+const form2 = $('#form-step-2')
+const progressBar = $('#progress-bar')
+const label1 = $('#label-1')
+const label2 = $('#label-2')
+
+function goToStep(n) {
+  form1.hidden = n !== 1
+  form2.hidden = n !== 2
+  progressBar.classList.toggle('step-2', n === 2)
+  label1.classList.toggle('active', n === 1)
+  label2.classList.toggle('active', n === 2)
+  $('#form-card').scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+$('#btn-back').addEventListener('click', () => {
+  showFormError('')
+  goToStep(1)
+})
+
+// ─── Step 1 submit: create partial lead in Supabase ───────────────────────
+form1.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  showFormError('')
+  if (!validateStep1(form1)) return
+
+  const btn = $('#btn-step-1')
+  btn.disabled = true
+  btn.textContent = 'Envoi...'
+
+  try {
+    const payload = {
+      full_name: form1.full_name.value.trim(),
+      email: form1.email.value.trim().toLowerCase(),
+      phone: form1.phone.value.trim(),
+      step_completed: 1,
+      ..._tracking,
+    }
+    const rows = await supabaseRequest('POST', 'marketing_leads', payload)
+    leadId = rows[0]?.id
+    if (!leadId) throw new Error('No id returned')
+    goToStep(2)
+  } catch (err) {
+    console.error(err)
+    showFormError('Erreur technique — verifiez votre connexion et reessayez.')
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = 'Continuer <span aria-hidden="true">→</span>'
+  }
+})
+
+// ─── Step 2 submit: update lead with qualification data ───────────────────
+form2.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  showFormError('')
+  if (!validateStep2(form2)) return
+  if (!leadId) {
+    showFormError('Session expiree — merci de reprendre depuis l\'etape 1.')
+    goToStep(1)
+    return
+  }
+
+  const btn = $('#btn-step-2')
+  btn.disabled = true
+  btn.textContent = 'Envoi...'
+
+  try {
+    // Parse wilayas from comma-separated input into a TEXT[] array
+    const wilayas = form2.wilayas.value.split(',').map(w => w.trim()).filter(Boolean)
+    // Collect checked acquisition channels into an array
+    const channels = $$('input[name=acquisition_channels]:checked', form2).map(el => el.value)
+
+    const payload = {
+      company_name: form2.company_name.value.trim(),
+      activity_type: form2.activity_type.value,
+      agents_count: form2.agents_count.value,
+      wilayas,
+      leads_per_month: form2.leads_per_month.value,
+      marketing_budget_monthly: form2.marketing_budget_monthly.value,
+      acquisition_channels: channels,
+      current_tools: form2.current_tools.value,
+      decision_maker: form2.decision_maker.value,
+      decision_maker_names: form2.decision_maker_names.value.trim() || null,
+      frustration_score: parseInt(form2.frustration_score.value, 10),
+      timeline: form2.timeline.value,
+      message: form2.message.value.trim() || null,
+      step_completed: 2,
+    }
+
+    await supabaseRequest('PATCH', `marketing_leads?id=eq.${leadId}`, payload)
+    // Pass along a flag so merci.html can greet returning prospects
+    window.location.href = `merci.html?from=form&lead=${leadId}`
+  } catch (err) {
+    console.error(err)
+    showFormError('Erreur d\'envoi — verifiez votre connexion et reessayez.')
+    btn.disabled = false
+    btn.innerHTML = 'Envoyer et prendre RDV <span aria-hidden="true">→</span>'
+  }
+})
+</script>
 </body>
 </html>

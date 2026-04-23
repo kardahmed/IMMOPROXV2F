@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { DollarSign, BarChart3, Megaphone, Mail, FileText } from 'lucide-react'
 import { usePlanEnforcement } from '@/hooks/usePlanEnforcement'
-import { ExpensesTab } from './tabs/ExpensesTab'
-import { AnalyticsTab } from './tabs/AnalyticsTab'
-import { CampaignsTab } from './tabs/CampaignsTab'
-import { EmailCampaignsTab } from './tabs/EmailCampaignsTab'
-import { EmailTemplatesTab } from './tabs/EmailTemplatesTab'
+// Lazy-load tabs — only the active tab is rendered, so no point downloading all 5 up-front
+const ExpensesTab = lazy(() => import('./tabs/ExpensesTab').then(m => ({ default: m.ExpensesTab })))
+const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab').then(m => ({ default: m.AnalyticsTab })))
+const CampaignsTab = lazy(() => import('./tabs/CampaignsTab').then(m => ({ default: m.CampaignsTab })))
+const EmailCampaignsTab = lazy(() => import('./tabs/EmailCampaignsTab').then(m => ({ default: m.EmailCampaignsTab })))
+const EmailTemplatesTab = lazy(() => import('./tabs/EmailTemplatesTab').then(m => ({ default: m.EmailTemplatesTab })))
+
+function TabFallback() {
+  return <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" /></div>
+}
 
 type Tab = 'expenses' | 'analytics' | 'campaigns' | 'email_campaigns' | 'email_templates'
 
@@ -44,11 +49,13 @@ export function MarketingROIPage() {
         ))}
       </div>
 
-      {tab === 'analytics' && <AnalyticsTab />}
-      {tab === 'expenses' && <ExpensesTab />}
-      {tab === 'campaigns' && <CampaignsTab />}
-      {tab === 'email_campaigns' && <EmailCampaignsTab />}
-      {tab === 'email_templates' && <EmailTemplatesTab />}
+      <Suspense fallback={<TabFallback />}>
+        {tab === 'analytics' && <AnalyticsTab />}
+        {tab === 'expenses' && <ExpensesTab />}
+        {tab === 'campaigns' && <CampaignsTab />}
+        {tab === 'email_campaigns' && <EmailCampaignsTab />}
+        {tab === 'email_templates' && <EmailTemplatesTab />}
+      </Suspense>
     </div>
   )
 }

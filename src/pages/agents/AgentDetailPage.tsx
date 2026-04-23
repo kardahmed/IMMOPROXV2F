@@ -7,7 +7,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
-import { KPICard, StatusBadge, LoadingSpinner } from '@/components/common'
+import { KPICard, PageSkeleton, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { USER_ROLE_LABELS, GOAL_METRIC_LABELS, PIPELINE_STAGES, HISTORY_TYPE_LABELS } from '@/types'
@@ -103,7 +103,7 @@ export function AgentDetailPage() {
     enabled: !!agentId,
   })
 
-  if (isLoading || !agent) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading || !agent) return <PageSkeleton kpiCount={4} />
 
   const fullName = `${agent.first_name} ${agent.last_name}`
   const color = nameToColor(fullName)

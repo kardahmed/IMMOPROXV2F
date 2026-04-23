@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import {
   Phone, PhoneCall, MessageCircle, MessageSquare,
   Mail, Bot, Calendar, UserCheck,
 } from 'lucide-react'
-import { CallLogModal } from './modals/CallLogModal'
-import { CallScriptModal } from './modals/CallScriptModal'
-import { MessageTemplateModal } from './modals/MessageTemplateModal'
+// Lazy-load modals — they add bundle weight to every ClientDetailPage visit
+// and most users never trigger all three.
+const CallLogModal = lazy(() => import('./modals/CallLogModal').then(m => ({ default: m.CallLogModal })))
+const CallScriptModal = lazy(() => import('./modals/CallScriptModal').then(m => ({ default: m.CallScriptModal })))
+const MessageTemplateModal = lazy(() => import('./modals/MessageTemplateModal').then(m => ({ default: m.MessageTemplateModal })))
 import type { PipelineStage } from '@/types'
 
 interface QuickActionsProps {
@@ -112,37 +114,41 @@ export function QuickActions({
         ))}
       </div>
 
-      {/* Call script modal (guided call) */}
-      <CallScriptModal
-        isOpen={showCallScript}
-        onClose={() => setShowCallScript(false)}
-        clientId={clientId}
-        clientName={clientName}
-        clientPhone={clientPhone}
-        clientStage={clientStage ?? 'accueil'}
-        tenantId={tenantId}
-        agentId={agentId}
-      />
-
-      {/* Simple call log modal (fallback) */}
-      <CallLogModal
-        isOpen={showCallLog}
-        onClose={() => setShowCallLog(false)}
-        clientId={clientId}
-        clientName={clientName}
-        tenantId={tenantId}
-        agentId={agentId}
-      />
-
-      {/* Message template modal */}
-      <MessageTemplateModal
-        isOpen={showMessage}
-        onClose={() => setShowMessage(false)}
-        clientName={clientName}
-        clientPhone={clientPhone}
-        agentName={agentName}
-        projectName={projectName}
-      />
+      {/* Lazy modals — chunk fetched only when opened */}
+      <Suspense fallback={null}>
+        {showCallScript && (
+          <CallScriptModal
+            isOpen={showCallScript}
+            onClose={() => setShowCallScript(false)}
+            clientId={clientId}
+            clientName={clientName}
+            clientPhone={clientPhone}
+            clientStage={clientStage ?? 'accueil'}
+            tenantId={tenantId}
+            agentId={agentId}
+          />
+        )}
+        {showCallLog && (
+          <CallLogModal
+            isOpen={showCallLog}
+            onClose={() => setShowCallLog(false)}
+            clientId={clientId}
+            clientName={clientName}
+            tenantId={tenantId}
+            agentId={agentId}
+          />
+        )}
+        {showMessage && (
+          <MessageTemplateModal
+            isOpen={showMessage}
+            onClose={() => setShowMessage(false)}
+            clientName={clientName}
+            clientPhone={clientPhone}
+            agentName={agentName}
+            projectName={projectName}
+          />
+        )}
+      </Suspense>
     </>
   )
 }

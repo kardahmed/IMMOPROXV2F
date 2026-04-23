@@ -3,7 +3,7 @@ import { Users, Calendar, DollarSign, Target, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { KPICard, LoadingSpinner } from '@/components/common'
+import { Card, KPICard, PageSkeleton } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { format, isToday, isTomorrow, isAfter } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -59,7 +59,7 @@ export function AgentDashboard() {
     enabled: !!userId && !!tenantId,
   })
 
-  if (isLoading || !data) return <LoadingSpinner size="lg" className="h-96" />
+  if (isLoading || !data) return <PageSkeleton kpiCount={4} />
 
   return (
     <div className="space-y-6">
@@ -73,7 +73,7 @@ export function AgentDashboard() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Upcoming visits */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card shadow-sm">
+        <Card noPadding className="shadow-sm">
           <div className="border-b border-immo-border-default px-5 py-4">
             <h3 className="text-sm font-semibold text-immo-text-primary">{t('agent_dashboard.next_visits')}</h3>
           </div>
@@ -98,10 +98,10 @@ export function AgentDashboard() {
               })
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Clients to relaunch */}
-        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card shadow-sm">
+        <Card noPadding className="shadow-sm">
           <div className="border-b border-immo-border-default px-5 py-4">
             <h3 className="text-sm font-semibold text-immo-text-primary">{t('agent_dashboard.clients_relaunch')}</h3>
           </div>
@@ -125,7 +125,7 @@ export function AgentDashboard() {
               ))
             )}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )
