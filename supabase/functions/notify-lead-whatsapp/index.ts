@@ -50,14 +50,13 @@ type Lead = {
   created_at: string
 }
 
-// Build the text that goes in the template's {{4}} variable — either the
+// Build the text that goes in the template's {{5}} variable — either the
 // lead's own message, or a compact qualification summary if they finished
 // step 2 without leaving a free-text note, or a short "step-1 only" hint.
 function buildContextLine(lead: Lead): string {
   if (lead.step_completed === 2) {
     if (lead.message && lead.message.trim()) return lead.message.trim()
     const parts: string[] = []
-    if (lead.company_name) parts.push(lead.company_name)
     if (lead.activity_type) parts.push(ACTIVITY_LABELS[lead.activity_type] ?? lead.activity_type)
     if (lead.agents_count) parts.push(`${lead.agents_count} agents`)
     if (lead.timeline) parts.push(TIMELINE_LABELS[lead.timeline] ?? lead.timeline)
@@ -65,6 +64,12 @@ function buildContextLine(lead: Lead): string {
     return parts.length ? parts.join(' - ') : 'Lead qualifie (pas de detail)'
   }
   return 'Lead non qualifie (abandon etape 2)'
+}
+
+function buildCompanyLine(lead: Lead): string {
+  if (lead.company_name && lead.company_name.trim()) return lead.company_name.trim()
+  if (lead.activity_type) return ACTIVITY_LABELS[lead.activity_type] ?? lead.activity_type
+  return 'Non renseigne'
 }
 
 // Meta templates reject newlines, most emojis, and repeated whitespace in
@@ -115,6 +120,7 @@ Deno.serve(async (req) => {
     cleanForTemplate(lead.full_name, 60),
     cleanForTemplate(lead.email, 128),
     cleanForTemplate(lead.phone, 32),
+    cleanForTemplate(buildCompanyLine(lead), 120),
     cleanForTemplate(buildContextLine(lead), 1024),
   ]
 
@@ -192,18 +198,21 @@ Prerequisite: Meta Business Manager with a verified business (LLC).
    - Category: Utility
    - Language: French (fr)
    - Body:
-       🔥 Nouveau lead IMMO PRO-X
+       Nouveau lead recu depuis le site web.
 
-       👤 {{1}}
-       📧 {{2}}
-       📱 {{3}}
+       👤 Nom : {{1}}
+       📧 Email : {{2}}
+       📱 Telephone : {{3}}
+       🏢 Entreprise : {{4}}
+       💬 Message : {{5}}
 
-       📝 {{4}}
+       Recontacte sous 1h pour maximiser la conversion.
    - Samples for review (Meta requires them):
        {{1}} = Youcef Mansouri
        {{2}} = youcef@batiplan.dz
        {{3}} = +213 555 11 22 33
-       {{4}} = On gere 4 promotions a Oran, Excel sature
+       {{4}} = Batiplan Promotion
+       {{5}} = On gere 4 promotions a Oran, Excel sature
    Submit for review. Approval typically takes 1-24h for Utility.
 
 5. Get a permanent access token (before the 24h temp one expires)
