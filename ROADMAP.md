@@ -47,6 +47,22 @@ next one can pick up cleanly.
   `new_lead_notification` template (5 body variables). Tested
   end-to-end from `immoprox.io/contact` — both pings land on
   `+213 542 766 068` within ~10 seconds.
+- Password reset flow live: `LoginPage` "Mot de passe oublie ?" button
+  wired to `supabase.auth.resetPasswordForEmail`, paired with a
+  dedicated `/reset-password` page that accepts the Supabase recovery
+  session from the email link, validates new password (min 8 chars,
+  zod cross-field confirm), calls `supabase.auth.updateUser`, then
+  redirects to `/dashboard`. Requires
+  `https://app.immoprox.io/reset-password` in Supabase Auth Redirect
+  URLs and the Reset-Password email template in French.
+- WhatsApp schema frozen in `supabase/migrations/016_whatsapp_schema.sql`.
+  The 4 tables (`whatsapp_config`, `whatsapp_accounts`,
+  `whatsapp_messages`, `whatsapp_templates`) had been created directly
+  in Studio so the repo had no recovery trail — the migration captures
+  columns, indexes, RLS (tenant-scoped reads, super-admin writes) and
+  updated_at triggers. Statements are idempotent (IF NOT EXISTS, DROP
+  POLICY IF EXISTS) so it re-runs safely on the live DB without
+  disturbing existing rows.
 
 ---
 
@@ -72,10 +88,12 @@ leave a half-built feature without a note here.
 
 ### WhatsApp multi-tenant (Embedded Signup)
 - **What exists**: Supabase tables `whatsapp_config`, `whatsapp_accounts`,
-  `whatsapp_messages`, `whatsapp_templates`. Edge Functions
-  `whatsapp-signup` (OAuth callback) and `send-whatsapp` (send on behalf
-  of tenant with quota check). Super Admin page `/admin/whatsapp` that
-  displays config/accounts/messages/templates.
+  `whatsapp_messages`, `whatsapp_templates`, now frozen in
+  `016_whatsapp_schema.sql` with the right RLS policies and updated_at
+  triggers. Edge Functions `whatsapp-signup` (OAuth callback) and
+  `send-whatsapp` (send on behalf of tenant with quota check). Super
+  Admin page `/admin/whatsapp` that displays config/accounts/messages/
+  templates.
 - **What's missing**:
   - `whatsapp_config` row is empty — no Meta app_id / app_secret /
     access_token stored → `send-whatsapp` will 503.
@@ -84,15 +102,6 @@ leave a half-built feature without a note here.
     Account.
   - No Meta App Review submitted → even if the SDK was wired,
     production usage would be blocked.
-  - The 4 whatsapp tables are NOT in any migration file (created
-    directly in Studio). Needs a `016_whatsapp_schema.sql` to freeze
-    the schema.
-
-### Password reset
-- **What exists**: a "Mot de passe oublie ?" button in `LoginPage.tsx`.
-- **What's missing**: `onClick` handler is empty — button does nothing.
-  Needs `supabase.auth.resetPasswordForEmail(email)` + an email
-  template in Supabase.
 
 ### CI on GitHub Actions (`.github/workflows/ci.yml`)
 - **What exists**: a `build` job that runs on every PR — should run
@@ -133,20 +142,10 @@ After Meta approves the app, add a "Connect your WhatsApp" flow in
 - UI for template submission + management per tenant (or curated platform templates)
 - Gives tenants the ability to send booking confirmations, reminders, and follow-ups from their own WhatsApp number inside the CRM.
 
-### 3. Password reset flow
-"Mot de passe oublie ?" button on login page is currently inert. Wire to
-Supabase password reset email.
-
-### 4. Fix CI / GitHub Actions
+### 3. Fix CI / GitHub Actions
 `ci.yml` has been failing in 1s on every PR (no runners provisioned).
 Check Actions billing / quota, or move to a workflow that doesn't need
 a runner (e.g. a pre-merge check that runs locally via a git hook).
-
-### 5. Capture the WhatsApp tables in a migration
-Create a new migration (016 or 017) that captures the current schema of
-`whatsapp_config`, `whatsapp_accounts`, `whatsapp_messages`,
-`whatsapp_templates`. They exist in Supabase but were created in
-Studio, so `supabase/migrations/` is incomplete.
 
 ---
 
