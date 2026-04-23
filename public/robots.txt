@@ -1,4 +1,4 @@
-# app.immoprox.io is a private CRM — not indexable.
+# app.immoprox.io is a private CRM - not indexable.
 # Public/marketing content lives at https://immoprox.io.
 User-agent: *
 Disallow: /
