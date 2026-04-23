@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -66,7 +66,7 @@ export function LoginPage() {
         <div style={{position:'absolute',bottom:'-80px',left:'-80px',width:'250px',height:'250px',borderRadius:'50%',background:'rgba(6,182,212,.15)',filter:'blur(60px)'}} />
 
         <div style={{position:'relative',zIndex:1}}>
-          <a href="/marketing/index.html" className="mb-8 flex items-center gap-2 text-[11px] text-white/40 hover:text-white/70 transition-colors">
+          <a href="https://immoprox.io" className="mb-8 flex items-center gap-2 text-[11px] text-white/40 hover:text-white/70 transition-colors">
             <ArrowLeft className="h-3 w-3" /> Retour au site
           </a>
           <div className="flex items-center gap-3">
@@ -121,7 +121,7 @@ export function LoginPage() {
         <div className="w-full max-w-[420px]">
           {/* Mobile header */}
           <div className="mb-6 lg:hidden">
-            <a href="/marketing/index.html" className="mb-4 flex items-center gap-1.5 text-[11px] text-[#8898AA] hover:text-[#0579DA]">
+            <a href="https://immoprox.io" className="mb-4 flex items-center gap-1.5 text-[11px] text-[#8898AA] hover:text-[#0579DA]">
               <ArrowLeft className="h-3 w-3" /> Retour au site
             </a>
             <div className="flex items-center justify-center gap-3">
@@ -212,19 +212,19 @@ export function LoginPage() {
               </button>
             </form>
 
-            {/* Sign up */}
+            {/* Demo request — sales-led model, no self-service signup */}
             <p className="mt-6 text-center text-[13px] text-[#8898AA]">
-              Pas encore de compte ? <Link to="/register" className="text-[#0579DA] hover:underline" style={{fontWeight:600}}>S'inscrire gratuitement</Link>
+              Pas encore client ? <a href="https://immoprox.io/contact.html" className="text-[#0579DA] hover:underline" style={{fontWeight:600}}>Demander une demo</a>
             </p>
           </div>
 
           {/* Legal footer */}
           <div className="mt-4 flex justify-center gap-4 text-[10px] text-[#B0BAC5]">
-            <a href="/marketing/cgu.html" className="hover:text-[#425466]">CGU</a>
+            <a href="https://immoprox.io/cgu.html" className="hover:text-[#425466]">CGU</a>
             <span>·</span>
-            <a href="/marketing/confidentialite.html" className="hover:text-[#425466]">Confidentialite</a>
+            <a href="https://immoprox.io/confidentialite.html" className="hover:text-[#425466]">Confidentialite</a>
             <span>·</span>
-            <a href="/marketing/contact.html" className="hover:text-[#425466]">Contact</a>
+            <a href="https://immoprox.io/contact.html" className="hover:text-[#425466]">Contact</a>
           </div>
         </div>
       </div>
