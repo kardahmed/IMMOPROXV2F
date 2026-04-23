@@ -67,3 +67,51 @@ footer{padding:64px 0 0;background:#050D1A;border-top:1px solid rgba(255,255,255
 /* RESPONSIVE */
 @media(max-width:960px){.nav-lk{display:none}.ft-top{grid-template-columns:1fr 1fr;gap:32px}}
 @media(max-width:640px){.ft-top{grid-template-columns:1fr!important;text-align:center}.ft-brand{align-items:center}.ft-soc{justify-content:center}.ft-bot{flex-direction:column;gap:8px;text-align:center}}
+
+/* CONTACT — 2-step form */
+.form-card{padding:32px;display:flex;flex-direction:column;gap:20px}
+.form-card h2{font-size:22px;font-weight:800;letter-spacing:-.3px;margin:0}
+.form-card p.form-sub{font-size:13px;color:var(--muted);line-height:1.5;margin:0}
+
+.form-progress{display:flex;flex-direction:column;gap:6px}
+.form-progress-bar{height:4px;background:var(--border);border-radius:999px;overflow:hidden;position:relative}
+.form-progress-bar::after{content:'';position:absolute;inset:0;right:auto;background:var(--blue);width:50%;transition:width .35s ease;border-radius:999px}
+.form-progress-bar.step-2::after{width:100%}
+.form-progress-labels{display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
+.step-label.active{color:var(--blue)}
+
+.form-step{display:flex;flex-direction:column;gap:14px}
+.form-step[hidden]{display:none!important}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:600;color:var(--gray)}
+.field label .req{color:var(--blue)}
+.field .hint{font-size:11px;color:var(--muted);margin-top:2px}
+.field input[type=text],.field input[type=email],.field input[type=tel],.field input[type=number],.field select,.field textarea{width:100%;min-height:44px;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;outline:none;font-family:inherit;background:#fff;color:var(--dark);transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(5,121,218,.12)}
+.field textarea{resize:vertical;min-height:100px}
+.field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--red,#CD3D64);box-shadow:0 0 0 3px rgba(205,61,100,.1)}
+.field .err-msg{font-size:11px;color:#CD3D64;margin-top:2px;min-height:14px}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.field-grid{grid-template-columns:1fr}}
+
+.checkbox-grid,.radio-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checkbox-grid label,.radio-grid label{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--dark);cursor:pointer;transition:all .2s;background:#fff}
+.checkbox-grid label:hover,.radio-grid label:hover{border-color:var(--blue);background:rgba(5,121,218,.03)}
+.checkbox-grid input:checked+span,.radio-grid input:checked+span{font-weight:600}
+.checkbox-grid label:has(input:checked),.radio-grid label:has(input:checked){border-color:var(--blue);background:rgba(5,121,218,.05)}
+.checkbox-grid input,.radio-grid input{accent-color:var(--blue)}
+
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider-row input[type=range]{flex:1;accent-color:var(--blue)}
+.slider-value{min-width:32px;text-align:center;font-weight:700;color:var(--blue);font-size:16px}
+
+.form-error{padding:12px 14px;border-radius:10px;background:rgba(205,61,100,.08);border:1px solid rgba(205,61,100,.2);color:#CD3D64;font-size:13px;font-weight:500}
+
+.form-actions{display:flex;gap:10px;margin-top:8px}
+.form-actions .btn{flex:1;justify-content:center;border-radius:10px}
+.btn-ghost{background:transparent;color:var(--gray);padding:14px 20px;border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--gray);color:var(--dark)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
+
+.hidden-field{display:none}

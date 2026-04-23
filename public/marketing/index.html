@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-NF3G7HXL');</script>
+  <!-- End Google Tag Manager -->
   <title>IMMO PRO-X — CRM Immobilier pour Promoteurs</title>
   <meta name="description" content="La plateforme CRM tout-en-un pour les promoteurs immobiliers algeriens.">
   <link rel="icon" type="image/png" href="/favicon.png">
@@ -189,23 +196,16 @@
     .int-c:hover{transform:scale(1.12)rotate(3deg);border-color:var(--blue);box-shadow:0 8px 24px rgba(5,121,218,.1)}
     .int-c svg{width:28px;height:28px}
 
-    /* ═══ PRICING ═══ */
-    .pricing{padding:100px 0}
-    .billing-label{font-size:13px;font-weight:500;color:#8898AA;transition:color .3s}
-    .billing-label.billing-active{color:#0A2540;font-weight:700}
-    .p-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-    .p-c{background:var(--white);border:2px solid var(--border);border-radius:16px;padding:28px 20px;transition:all .3s;position:relative}
-    .p-c:hover{border-color:var(--blue)}
-    .p-c.pop{border-color:var(--blue);background:linear-gradient(180deg,rgba(5,121,218,.03),#fff)}
-    .p-c.pop::before{content:'Populaire';position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:3px 14px;border-radius:999px}
-    .p-n{font-size:16px;font-weight:700;margin-bottom:8px}
-    .p-pr{font-size:30px;font-weight:900;letter-spacing:-.5px}
-    .p-pr small{font-size:13px;font-weight:500;color:var(--muted)}
-    .p-d{font-size:12px;color:var(--muted);margin:4px 0 20px}
-    .p-l{list-style:none;margin-bottom:20px}
-    .p-l li{font-size:13px;color:var(--gray);padding:7px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
-    .p-l li::before{content:'✓';color:var(--green);font-weight:700;font-size:11px}
-    .p-l li.off::before{content:'—';color:var(--muted)}.p-l li.off{color:var(--muted)}
+    /* ═══ HOW IT WORKS ═══ */
+    .howit{padding:100px 0}
+    .howit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:0 auto}
+    .howit-c{background:var(--white);border:2px solid var(--border);border-radius:16px;padding:32px 24px;transition:all .3s;position:relative}
+    .howit-c:hover{border-color:var(--blue);transform:translateY(-4px);box-shadow:0 20px 40px rgba(5,121,218,.08)}
+    .howit-num{font-size:40px;font-weight:900;letter-spacing:-1px;line-height:1;margin-bottom:16px;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .howit-c h3{font-size:18px;font-weight:700;margin-bottom:10px;color:var(--dark)}
+    .howit-c p{font-size:14px;line-height:1.65;color:var(--gray)}
+    .howit-cta{text-align:center;margin-top:48px}
+    .howit-note{font-size:12px;color:var(--muted);margin-top:14px}
 
     /* ═══ TESTIMONIALS ═══ */
     .testi{padding:100px 0;background:linear-gradient(165deg,#050D1A 0%,#0A2540 50%,#0B3D6F 100%);color:#fff;position:relative;overflow:hidden}
@@ -314,7 +314,7 @@
     @media(max-width:960px){
       .sp-i{grid-template-columns:1fr!important;gap:32px}.split.alt .sp-i{direction:ltr}
       .bento{grid-template-columns:1fr 1fr}.b-card.w{grid-column:auto}
-      .p-grid{grid-template-columns:1fr 1fr}.t-grid{grid-template-columns:1fr}
+      .howit-grid{grid-template-columns:1fr}.t-grid{grid-template-columns:1fr}
       .nav-lk{display:none}.fb{display:none}.dash-side{display:none}
       .ba-grid{grid-template-columns:1fr;gap:16px}.ba-arrow{transform:rotate(90deg)}
       .mobile-inner{flex-direction:column}.stats-row{gap:24px}.trust-row{gap:20px}
@@ -322,7 +322,7 @@
       .counters{gap:24px}.counter .num{font-size:28px}
     }
     @media(max-width:640px){
-      .bento,.p-grid{grid-template-columns:1fr}
+      .bento,.howit-grid{grid-template-columns:1fr}
       .hero-btn{flex-direction:column;align-items:center}
       .counters{flex-direction:column;gap:20px}
       .ft-top{grid-template-columns:1fr!important;gap:28px;text-align:center}
@@ -337,13 +337,16 @@
   </style>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NF3G7HXL" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
 <!-- NAV -->
 <nav>
   <div class="nav-i">
     <a href="/" class="nav-l"><img src="/favicon.png" alt="IMMO PRO-X" style="width:28px;height:28px;border-radius:6px"> IMMO <span>PRO-X</span></a>
-    <div class="nav-lk"><a href="#features">Fonctionnalites</a><a href="#pricing">Tarifs</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a></div>
-    <div class="nav-r"><a href="/login" class="btn btn-g btn-sm">Connexion</a><a href="/register" class="btn btn-p btn-sm">Demarrer →</a></div>
+    <div class="nav-lk"><a href="#features">Fonctionnalites</a><a href="#how-it-works">Notre approche</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a></div>
+    <div class="nav-r"><a href="https://app.immoprox.io/login" class="btn btn-g btn-sm">Connexion</a><a href="contact.html" class="btn btn-p btn-sm">Demander une demo →</a></div>
   </div>
 </nav>
 
@@ -353,8 +356,8 @@
   <div class="ctn hero-c">
     <h1 class="rv">L'infrastructure CRM<br>pour <span class="hl" id="typewriter-text"></span><span class="typewriter-cursor"></span></h1>
     <p class="sub rv rv-1">Pipeline de vente, landing pages, tracking publicitaire et intelligence artificielle. La plateforme tout-en-un pour les promoteurs immobiliers.</p>
-    <div class="hero-btn rv rv-2"><a href="/register" class="btn btn-p">Demarrer maintenant →</a><a href="#features" class="btn btn-g">Explorer les fonctionnalites</a></div>
-    <p class="hero-note rv rv-2">Essai gratuit · Sans carte bancaire · Configuration en 2 minutes</p>
+    <div class="hero-btn rv rv-2"><a href="contact.html" class="btn btn-p">Demander une demo →</a><a href="#features" class="btn btn-g">Explorer les fonctionnalites</a></div>
+    <p class="hero-note rv rv-2">Demo personnalisee de 30 min · Reponse sous 24h · Sans engagement</p>
 
     <!-- Animated counters -->
     <div class="counters rv rv-3">
@@ -444,7 +447,7 @@
         <li><span class="ck">✓</span>Historique complet & relance automatique</li>
         <li><span class="ck">✓</span>WhatsApp en un clic avec message pre-ecrit</li>
       </ul>
-      <a href="/register" class="btn btn-p" style="margin-top:8px">Essayer le pipeline →</a>
+      <a href="contact.html" class="btn btn-p" style="margin-top:8px">Voir le pipeline en demo →</a>
     </div>
   </div>
 </section>
@@ -468,7 +471,7 @@
         <li><span class="ck">✓</span>Distribution round-robin entre agents</li>
         <li><span class="ck">✓</span>Questions custom + reponses dans le CRM</li>
       </ul>
-      <a href="/register" class="btn btn-p" style="margin-top:8px">Creer ma page →</a>
+      <a href="contact.html" class="btn btn-p" style="margin-top:8px">Voir une landing en demo →</a>
     </div>
   </div>
 </section>
@@ -494,52 +497,34 @@
   </div>
 </section>
 
-<!-- PRICING -->
-<section class="pricing" id="pricing">
+<!-- HOW IT WORKS -->
+<section class="howit" id="how-it-works">
   <div class="ctn">
     <div class="s-head">
-      <div class="tag rv">Tarifs</div>
-      <h2 class="rv rv-1">Simple, transparent, sans surprises</h2>
-      <p class="rv rv-2">Commencez gratuitement. Evoluez sans engagement.</p>
-      <!-- Monthly / Yearly toggle -->
-      <div class="rv rv-2" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:24px">
-        <span class="billing-label billing-active" id="label-monthly">Mensuel</span>
-        <button id="billing-toggle" onclick="toggleBilling()" style="position:relative;width:44px;height:24px;border-radius:12px;background:#E3E8EF;border:none;cursor:pointer;transition:background .3s">
-          <div id="billing-dot" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .3s"></div>
-        </button>
-        <span class="billing-label" id="label-yearly">Annuel</span>
-        <span id="badge-save" style="display:none;background:rgba(0,212,160,.12);color:#00D4A0;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">-17%</span>
+      <div class="tag rv">Notre approche</div>
+      <h2 class="rv rv-1">Une plateforme premium,<br>un accompagnement sur-mesure</h2>
+      <p class="rv rv-2">Chaque equipe immobiliere a ses propres besoins. On configure IMMO PRO-X selon votre realite terrain — pas de plan generique.</p>
+    </div>
+    <div class="howit-grid">
+      <div class="howit-c rv">
+        <div class="howit-num">01</div>
+        <h3>Demo personnalisee</h3>
+        <p>30 minutes en visio avec notre equipe pour comprendre votre activite et vous presenter le CRM sur vos vrais cas d'usage.</p>
+      </div>
+      <div class="howit-c rv rv-1">
+        <div class="howit-num">02</div>
+        <h3>Setup & configuration</h3>
+        <p>Import de vos donnees, parametrage des projets, activation des features selon votre equipe. Operationnel en une semaine.</p>
+      </div>
+      <div class="howit-c rv rv-2">
+        <div class="howit-num">03</div>
+        <h3>Formation & support</h3>
+        <p>Onboarding complet de vos agents, support dedie WhatsApp et email, et un interlocuteur unique pour evoluer avec vous.</p>
       </div>
     </div>
-    <div class="p-grid">
-      <div class="p-c rv">
-        <div class="p-n">Free</div>
-        <div class="p-pr"><span class="price-monthly">0 DA</span><span class="price-yearly" style="display:none">0 DA</span></div>
-        <div class="p-d">Pour decouvrir</div>
-        <ul class="p-l"><li>2 agents</li><li>1 projet · 20 unites</li><li>50 clients</li><li>Taches automatiques</li><li class="off">IA</li><li class="off">Landing pages</li></ul>
-        <a href="/register" class="btn btn-o btn-sm" style="width:100%;border-radius:999px">Commencer</a>
-      </div>
-      <div class="p-c rv rv-1">
-        <div class="p-n">Starter</div>
-        <div class="p-pr"><span class="price-monthly">9 900 DA <small>/mois</small></span><span class="price-yearly" style="display:none">99 000 DA <small>/an</small></span></div>
-        <div class="p-d">Petites agences</div>
-        <ul class="p-l"><li>5 agents · 3 projets</li><li>100 unites · 300 clients</li><li>Suggestions IA</li><li>Export CSV & PDF</li><li>WhatsApp Business</li><li class="off">Landing pages</li></ul>
-        <a href="/register" class="btn btn-o btn-sm" style="width:100%;border-radius:999px">Essai 14 jours</a>
-      </div>
-      <div class="p-c pop rv rv-2">
-        <div class="p-n" style="color:var(--blue)">Pro <span style="background:var(--blue);color:#fff;font-size:9px;padding:2px 8px;border-radius:999px;margin-left:6px">Populaire</span></div>
-        <div class="p-pr"><span class="price-monthly">19 900 DA <small>/mois</small></span><span class="price-yearly" style="display:none">199 000 DA <small>/an</small></span></div>
-        <div class="p-d">Promoteurs ambitieux</div>
-        <ul class="p-l"><li>15 agents · 10 projets</li><li>500 unites · 2 000 clients</li><li>IA complete + Scripts</li><li>Landing pages illimitees</li><li>WhatsApp Business</li><li>Generation PDF</li></ul>
-        <a href="/register" class="btn btn-p btn-sm" style="width:100%;border-radius:999px">Essai 14 jours →</a>
-      </div>
-      <div class="p-c rv rv-3">
-        <div class="p-n">Enterprise</div>
-        <div class="p-pr"><span class="price-monthly">Sur devis</span><span class="price-yearly" style="display:none">Sur devis</span></div>
-        <div class="p-d">Grands groupes</div>
-        <ul class="p-l"><li>Tout illimite</li><li>IA personnalisee + API</li><li>Branding & domaine custom</li><li>WhatsApp illimite</li><li>Support dedie</li></ul>
-        <a href="https://wa.me/213542766068?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20le%20plan%20Enterprise" target="_blank" class="btn btn-o btn-sm" style="width:100%;border-radius:999px">Nous contacter →</a>
-      </div>
+    <div class="howit-cta rv rv-3">
+      <a href="contact.html" class="btn btn-p" style="font-size:15px;padding:14px 32px">Demander une demo →</a>
+      <p class="howit-note">Reponse sous 24h ouvrees · Demo en visio · 100% sans engagement</p>
     </div>
   </div>
 </section>
@@ -549,7 +534,7 @@
   <div class="ctn">
     <div class="s-head"><div class="tag rv" style="background:rgba(0,212,160,.12);color:var(--green)">Temoignages</div><h2 class="rv rv-1" style="color:#fff">Des promoteurs comme vous<br>font confiance a IMMO PRO-X</h2><p class="rv rv-2" style="color:rgba(255,255,255,.4)">Ils ont transforme leur activite avec notre plateforme.</p></div>
     <div class="t-grid">
-      <div class="t-c rv"><div class="t-stars">★★★★★</div><div class="t-q">"On est passe d'Excel a IMMO PRO-X. 8 agents, un seul outil. On a double nos ventes en 3 mois. L'essai gratuit nous a convaincus en une semaine."</div><div class="t-a"><div class="t-av">YM</div><div><div class="t-nm">Youcef Mebarki</div><div class="t-rl">DG — Groupe Batiplan, Oran</div></div></div></div>
+      <div class="t-c rv"><div class="t-stars">★★★★★</div><div class="t-q">"On est passe d'Excel a IMMO PRO-X. 8 agents, un seul outil. On a double nos ventes en 3 mois. La demo nous a convaincus en 30 minutes."</div><div class="t-a"><div class="t-av">YM</div><div><div class="t-nm">Youcef Mebarki</div><div class="t-rl">DG — Groupe Batiplan, Oran</div></div></div></div>
       <div class="t-c rv rv-1"><div class="t-stars">★★★★★</div><div class="t-q">"Les landing pages avec tracking Facebook ont change notre acquisition. On sait exactement combien chaque campagne rapporte. ROI visible immediatement."</div><div class="t-a"><div class="t-av">SB</div><div><div class="t-nm">Sofiane Belkadi</div><div class="t-rl">Dir. commercial — Atlas Immo, Alger</div></div></div></div>
       <div class="t-c rv rv-2"><div class="t-stars">★★★★★</div><div class="t-q">"L'IA qui genere les scripts d'appel, c'est un game changer. Nouveaux agents operationnels le jour 1. Le suivi echeancier nous fait gagner des heures."</div><div class="t-a"><div class="t-av">NF</div><div><div class="t-nm">Nadir Ferhat</div><div class="t-rl">Gerant — Promo Horizon, Constantine</div></div></div></div>
     </div>
@@ -602,7 +587,7 @@
         <tr><td>Gestion multi-projets</td><td class="no">Difficile</td><td class="yes">✓</td><td class="hl yes">✓ Avec unites + plans</td></tr>
         <tr><td>WhatsApp en 1 clic</td><td class="no">—</td><td class="no">—</td><td class="hl yes">✓ Message pre-ecrit</td></tr>
         <tr><td>Adapte marche algerien</td><td class="no">—</td><td class="no">—</td><td class="hl yes">✓ DA, wilayas, normes</td></tr>
-        <tr><td>Prix</td><td>Gratuit</td><td>50-200$/mois</td><td class="hl" style="color:var(--green);font-weight:800">A partir de 0 DA</td></tr>
+        <tr><td>Support en francais & arabe</td><td class="no">—</td><td class="no">Anglais seulement</td><td class="hl yes">✓ Equipe locale Algerie</td></tr>
       </tbody>
     </table>
   </div>
@@ -631,7 +616,7 @@
           <li><span class="ck">✓</span> Fiche client complete hors bureau</li>
           <li><span class="ck">✓</span> Photos et documents sur le terrain</li>
         </ul>
-        <a href="/register" class="btn btn-p" style="margin-top:12px">Tester sur mobile →</a>
+        <a href="contact.html" class="btn btn-p" style="margin-top:12px">Demander une demo →</a>
       </div>
     </div>
   </div>
@@ -646,14 +631,14 @@
       <p class="rv rv-2">Tout ce que vous devez savoir avant de commencer.</p>
     </div>
     <div class="faq-list">
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Est-ce que c'est vraiment gratuit pour commencer ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, le plan Free est 100% gratuit sans limite de temps. Il inclut 2 agents, 1 projet et 50 clients. Aucune carte bancaire requise.</p></div></div>
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Combien de temps pour configurer la plateforme ?<span class="arrow">+</span></div><div class="faq-a"><p>En moyenne 15 minutes. Creez votre compte, ajoutez vos projets et unites, invitez vos agents. La prise en main est intuitive et nous fournissons un guide de demarrage rapide.</p></div></div>
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Mes donnees sont-elles securisees ?<span class="arrow">+</span></div><div class="faq-a"><p>Absolument. Vos donnees sont stockees sur des serveurs securises en Europe (Supabase/AWS), chiffrees en transit (SSL) et au repos. Backups automatiques quotidiens.</p></div></div>
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Puis-je importer mes clients depuis Excel ?<span class="arrow">+</span></div><div class="faq-a"><p>La fonctionnalite d'import CSV est en cours de developpement. En attendant, notre equipe peut vous aider a migrer vos donnees gratuitement lors de la mise en place.</p></div></div>
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Le tracking Facebook/Google est-il inclus ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, l'integration Meta Pixel, Google Tag et TikTok Pixel est incluse dans tous les plans avec landing pages. Le tracking Conversion API (server-side) est aussi integre pour un suivi precis.</p></div></div>
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Les paiements sont-ils en dinars algeriens ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, tous les prix sont en DA. Le paiement se fait par virement bancaire CCP/baridi ou par versement direct. Nous envoyons une facture chaque mois.</p></div></div>
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Puis-je changer de plan a tout moment ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, vous pouvez upgrader ou downgrader a tout moment. Le changement prend effet immediatement et le prorata est calcule automatiquement.</p></div></div>
-      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Y a-t-il un support technique ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, support par WhatsApp et email pour tous les plans. Le plan Enterprise inclut un support dedie avec un interlocuteur attribue.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Comment fonctionne la prise en main ?<span class="arrow">+</span></div><div class="faq-a"><p>Apres votre demande, on planifie une demo de 30 minutes pour comprendre vos besoins. Si IMMO PRO-X correspond, on configure ensemble la plateforme — import des donnees, parametrage des projets, formation de l'equipe. Operationnel en une semaine.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Combien de temps pour deployer la plateforme ?<span class="arrow">+</span></div><div class="faq-a"><p>Une semaine en moyenne entre la signature et la mise en production complete : import des donnees existantes, configuration des projets et unites, parametrage du pipeline et formation de vos agents.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Mes donnees sont-elles securisees ?<span class="arrow">+</span></div><div class="faq-a"><p>Absolument. Vos donnees sont stockees sur des serveurs securises en Europe (Supabase/AWS), chiffrees en transit (SSL 256-bit) et au repos. Backups automatiques quotidiens. Conformite RGPD garantie.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Puis-je importer mes clients depuis Excel ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, on s'occupe de la migration de vos donnees existantes (Excel, CSV, autre CRM) lors de la mise en place. C'est inclus dans le setup initial.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Le tracking Facebook / Google / TikTok est-il inclus ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, l'integration Meta Pixel, Google Tag Manager et TikTok Pixel est nativement incluse pour vos landing pages. Le tracking Conversion API (server-side) est aussi disponible pour un suivi precis de vos campagnes publicitaires.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">L'IA est-elle vraiment utile au quotidien ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui — IMMO PRO-X integre Claude (Anthropic) pour generer des scripts d'appel hyper-personnalises selon le profil de chaque client, suggerer les meilleures unites, et repondre aux questions de vos prospects en temps reel pendant les appels. Vos nouveaux agents sont operationnels des le premier jour.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">La plateforme est-elle disponible en arabe ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, IMMO PRO-X est entierement bilingue Francais / Arabe avec support RTL natif. Vos agents peuvent basculer la langue en un clic. Les emails et documents generes peuvent egalement etre dans les deux langues.</p></div></div>
+      <div class="faq-item rv"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Y a-t-il un support technique ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui — support par WhatsApp et email avec une equipe basee en Algerie. Reponse sous 24h ouvrees. Pour les grands comptes, un interlocuteur dedie est attribue.</p></div></div>
     </div>
   </div>
 </section>
@@ -661,7 +646,7 @@
 <!-- CTA FINAL -->
 <section class="cta-end">
   <div class="glow g1"></div><div class="glow g2"></div>
-  <div class="ctn"><h2 class="rv">Pret a accelerer vos ventes ?</h2><p class="rv rv-1">Essai gratuit 14 jours. Sans carte bancaire. Sans engagement.</p><a href="/register" class="btn btn-p rv rv-2" style="font-size:16px;padding:16px 40px;border-radius:999px;position:relative">Commencer gratuitement →</a></div>
+  <div class="ctn"><h2 class="rv">Pret a accelerer vos ventes ?</h2><p class="rv rv-1">Demo personnalisee de 30 minutes. Reponse sous 24h ouvrees. 100% sans engagement.</p><a href="contact.html" class="btn btn-p rv rv-2" style="font-size:16px;padding:16px 40px;border-radius:999px;position:relative">Demander une demo →</a></div>
 </section>
 
 <!-- FOOTER -->
@@ -677,7 +662,7 @@
           <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
         </div>
       </div>
-      <div class="ft-col"><h4>Produit</h4><a href="#features">Pipeline</a><a href="#features">Landing pages</a><a href="#integrations">Integrations</a><a href="#pricing">Tarifs</a></div>
+      <div class="ft-col"><h4>Produit</h4><a href="#features">Pipeline</a><a href="#features">Landing pages</a><a href="#integrations">Integrations</a><a href="#how-it-works">Notre approche</a></div>
       <div class="ft-col"><h4>Ressources</h4><a href="docs.html">Documentation</a><a href="guide.html">Guide demarrage</a><a href="blog.html">Blog</a><a href="changelog.html">Changelog</a></div>
       <div class="ft-col"><h4>Entreprise</h4><a href="a-propos.html">A propos</a><a href="contact.html">Contact</a><a href="cgu.html">CGU</a><a href="confidentialite.html">Confidentialite</a></div>
     </div>
@@ -695,19 +680,6 @@
 // Scroll reveal
 const o=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){el.target.classList.add('v');o.unobserve(el.target)}})},{threshold:.08,rootMargin:'0px 0px -40px 0px'});
 document.querySelectorAll('.rv').forEach(el=>o.observe(el));
-
-// Billing toggle (monthly/yearly)
-let isYearly=false;
-function toggleBilling(){
-  isYearly=!isYearly;
-  document.getElementById('billing-dot').style.left=isYearly?'22px':'2px';
-  document.getElementById('billing-toggle').style.background=isYearly?'#0579DA':'#E3E8EF';
-  document.getElementById('badge-save').style.display=isYearly?'inline':'none';
-  document.getElementById('label-monthly').classList.toggle('billing-active',!isYearly);
-  document.getElementById('label-yearly').classList.toggle('billing-active',isYearly);
-  document.querySelectorAll('.price-monthly').forEach(el=>{el.style.display=isYearly?'none':'inline'});
-  document.querySelectorAll('.price-yearly').forEach(el=>{el.style.display=isYearly?'inline':'none'});
-}
 
 // Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'})})});
