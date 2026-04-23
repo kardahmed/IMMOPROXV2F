@@ -1,3 +1,23 @@
+# Pretty URLs — hide the .html extension.
+# 1. If someone hits /contact.html directly, 301 to /contact (canonical).
+# 2. /index.html on any path -> strip to the directory.
+# 3. Internally rewrite /contact -> /contact.html so the file is served.
+RewriteEngine On
+
+# 301 /index.html -> /
+RewriteCond %{THE_REQUEST} \s/+(.*)index\.html[\s?] [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# 301 /foo.html -> /foo  (only when it came from the browser, not from internal rewrite)
+RewriteCond %{THE_REQUEST} \s/+([^\s?]+?)\.html[\s?] [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# Internal rewrite /foo -> /foo.html when the file exists
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^(.+?)/?$ /$1.html [L]
+
 # Security headers for the immoprox.io marketing site.
 # CSP is intentionally omitted — GTM injects scripts dynamically and a
 # strict CSP would break tag-manager-driven analytics.
