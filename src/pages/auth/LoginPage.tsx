@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import toast from 'react-hot-toast'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useTranslation } from 'react-i18next'
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, Check } from 'lucide-react'
@@ -22,8 +24,9 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   if (isAuthenticated && role) {
     navigate(role === 'super_admin' ? '/admin' : '/dashboard', { replace: true })
@@ -47,6 +50,29 @@ export function LoginPage() {
     try { await signIn(data.email, data.password) }
     catch (err) { setError(err instanceof Error ? err.message : 'Erreur de connexion') }
     finally { setLoading(false) }
+  }
+
+  async function handleForgotPassword() {
+    const email = (getValues('email') ?? '').trim()
+    if (!email) {
+      toast.error('Entrez votre email en haut, puis cliquez sur "Mot de passe oublie ?"')
+      return
+    }
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    if (!emailOk) {
+      toast.error('Email invalide')
+      return
+    }
+    setResetLoading(true)
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    setResetLoading(false)
+    if (resetError) {
+      toast.error(resetError.message)
+      return
+    }
+    toast.success(`Email envoye a ${email}. Verifiez votre boite de reception.`)
   }
 
   return (
@@ -101,8 +127,14 @@ export function LoginPage() {
                 <label htmlFor="password" className="text-[12px] text-[#425466]" style={{fontWeight:600}}>
                   {t('login.password_label')}
                 </label>
-                <button type="button" className="text-[11px] text-[#0579DA] hover:underline" style={{fontWeight:600}}>
-                  Mot de passe oublie ?
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="text-[11px] text-[#0579DA] hover:underline disabled:opacity-60"
+                  style={{fontWeight:600}}
+                >
+                  {resetLoading ? 'Envoi...' : 'Mot de passe oublie ?'}
                 </button>
               </div>
               <div className="relative">
