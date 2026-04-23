@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /api
-Disallow: /functions
-
-Sitemap: https://immoprox.com/sitemap.xml
