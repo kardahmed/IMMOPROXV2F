@@ -143,17 +143,17 @@ export function LoginPage() {
 
           {/* Demo request — sales-led model, no self-service signup */}
           <p className="mt-6 text-center text-[13px] text-[#8898AA]">
-            Pas encore client ? <a href="https://immoprox.io/contact.html" className="text-[#0579DA] hover:underline" style={{fontWeight:600}}>Demander une demo</a>
+            Pas encore client ? <a href="https://immoprox.io/contact" className="text-[#0579DA] hover:underline" style={{fontWeight:600}}>Demander une demo</a>
           </p>
         </div>
 
         {/* Legal footer */}
         <div className="mt-6 flex justify-center gap-4 text-[10px] text-[#B0BAC5]">
-          <a href="https://immoprox.io/cgu.html" className="hover:text-[#425466]">CGU</a>
+          <a href="https://immoprox.io/cgu" className="hover:text-[#425466]">CGU</a>
           <span>·</span>
-          <a href="https://immoprox.io/confidentialite.html" className="hover:text-[#425466]">Confidentialite</a>
+          <a href="https://immoprox.io/confidentialite" className="hover:text-[#425466]">Confidentialite</a>
           <span>·</span>
-          <a href="https://immoprox.io/contact.html" className="hover:text-[#425466]">Contact</a>
+          <a href="https://immoprox.io/contact" className="hover:text-[#425466]">Contact</a>
         </div>
       </div>
     </div>
