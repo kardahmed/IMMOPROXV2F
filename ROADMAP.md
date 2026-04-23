@@ -38,8 +38,15 @@ next one can pick up cleanly.
   — reused by both the normal flow and lead conversion.
 
 ### Backend
-- Edge Function `notify-lead-whatsapp` scaffolded (CallMeBot format).
-  Pending swap to Meta Cloud API (see Next).
+- Edge Function `notify-lead-whatsapp` now fully wired to the Meta
+  WhatsApp Cloud API with a double-ping strategy: `[NOUVEAU]` fires on
+  step-1 INSERT so the founder can call back fast even if the lead
+  abandons step 2, then `[QUALIFIE]` fires on the step-2 UPDATE with
+  the full qualification context (company, activity, timeline,
+  frustration, free-text message). Uses the approved
+  `new_lead_notification` template (5 body variables). Tested
+  end-to-end from `immoprox.io/contact` — both pings land on
+  `+213 542 766 068` within ~10 seconds.
 
 ---
 
@@ -81,18 +88,6 @@ leave a half-built feature without a note here.
     directly in Studio). Needs a `016_whatsapp_schema.sql` to freeze
     the schema.
 
-### Lead notifications — `notify-lead-whatsapp` Edge Function
-- **What exists**: the function scaffold with CallMeBot upstream + a
-  database webhook skeleton in the setup docs at the bottom of
-  `supabase/functions/notify-lead-whatsapp/index.ts`.
-- **What's missing**:
-  - The Supabase Database Webhook on `marketing_leads INSERT` is not
-    created (manual step in Supabase Dashboard).
-  - `CALLMEBOT_API_KEY` secret was never provisioned (bot never
-    replied with an API key). The CallMeBot path is effectively
-    abandoned.
-  - The function must be rewritten to call Meta Cloud API (see 🔜 #1).
-
 ### Password reset
 - **What exists**: a "Mot de passe oublie ?" button in `LoginPage.tsx`.
 - **What's missing**: `onClick` handler is empty — button does nothing.
@@ -119,27 +114,16 @@ leave a half-built feature without a note here.
 
 ## 🔜 Next up (prioritized)
 
-### 1. Lead notifications — pick one of 3 paths
-- **WhatsApp via Meta Cloud API (founder-only, immediate)** ← recommended
-  - Use Meta's test phone number (free, up to 5 pre-approved recipients)
-  - Create a Meta app in the founder's Business portfolio
-  - Wire `notify-lead-whatsapp` to call `graph.facebook.com/v25.0/{phone_id}/messages`
-  - Secrets needed: `META_WHATSAPP_PHONE_NUMBER_ID`, `META_WHATSAPP_ACCESS_TOKEN`, `META_WHATSAPP_TEMPLATE_NAME`, `NOTIFY_PHONE`
-  - ~2 hours of founder setup (Meta app + template + token) + ~5 minutes to rewrite the Edge Function.
-  - Blockers: none — can start immediately.
-- **Email via Resend** — 5-minute fallback if WhatsApp drags on.
-- **CallMeBot** — already written but the bot never returned an API key.
-  Dead path, can be scrapped unless it unblocks itself.
-
-### 2. Meta WhatsApp App Review
-Once the founder's Meta app is live with the WhatsApp product, submit
-for App Review to unlock `whatsapp_business_messaging` and
-`whatsapp_business_management` permissions in production.
+### 1. Meta WhatsApp App Review
+The founder's Meta app is now live with the WhatsApp product (used
+already for the lead notification pings). Next step: submit for App
+Review to unlock `whatsapp_business_messaging` and
+`whatsapp_business_management` permissions in production, beyond the
+5-recipient test-mode limit currently in place.
 - Lead time: **2-8 weeks** of Meta back-and-forth.
-- Launch in parallel with Next #1 — no need to wait.
-- Unlocks Next #3 when approved.
+- Unlocks Next #2 when approved.
 
-### 3. Embedded Signup — offer WhatsApp to tenants
+### 2. Embedded Signup — offer WhatsApp to tenants
 After Meta approves the app, add a "Connect your WhatsApp" flow in
 `/settings/whatsapp`:
 - FB Login SDK integrated in the CRM settings page
@@ -149,16 +133,16 @@ After Meta approves the app, add a "Connect your WhatsApp" flow in
 - UI for template submission + management per tenant (or curated platform templates)
 - Gives tenants the ability to send booking confirmations, reminders, and follow-ups from their own WhatsApp number inside the CRM.
 
-### 4. Password reset flow
+### 3. Password reset flow
 "Mot de passe oublie ?" button on login page is currently inert. Wire to
 Supabase password reset email.
 
-### 5. Fix CI / GitHub Actions
+### 4. Fix CI / GitHub Actions
 `ci.yml` has been failing in 1s on every PR (no runners provisioned).
 Check Actions billing / quota, or move to a workflow that doesn't need
 a runner (e.g. a pre-merge check that runs locally via a git hook).
 
-### 6. Capture the WhatsApp tables in a migration
+### 5. Capture the WhatsApp tables in a migration
 Create a new migration (016 or 017) that captures the current schema of
 `whatsapp_config`, `whatsapp_accounts`, `whatsapp_messages`,
 `whatsapp_templates`. They exist in Supabase but were created in
