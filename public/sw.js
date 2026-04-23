@@ -27,6 +27,8 @@ self.addEventListener('activate', event => {
 // Network first, fallback to cache
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return
+  // Cache API only supports http(s) — skip chrome-extension://, etc.
+  if (!event.request.url.startsWith('http')) return
 
   event.respondWith(
     fetch(event.request)
