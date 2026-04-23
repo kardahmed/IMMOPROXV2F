@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://immoprox.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://immoprox.com/a-propos</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://immoprox.com/contact</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://immoprox.com/blog</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://immoprox.com/blog/pourquoi-crm-promoteurs-algeriens-2026</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://immoprox.com/blog/landing-page-immobiliere-qui-convertit</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://immoprox.com/blog/intelligence-artificielle-vente-immobiliere</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://immoprox.com/blog/gerer-equipe-agents-commerciaux</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://immoprox.com/docs</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://immoprox.com/guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://immoprox.com/changelog</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://immoprox.com/cgu</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://immoprox.com/confidentialite</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://immoprox.io/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://immoprox.io/a-propos.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://immoprox.io/contact.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://immoprox.io/blog.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://immoprox.io/blog-article1.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://immoprox.io/blog-article2.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://immoprox.io/blog-article3.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://immoprox.io/blog-article4.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://immoprox.io/docs.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://immoprox.io/guide.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://immoprox.io/changelog.html</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://immoprox.io/cgu.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://immoprox.io/confidentialite.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>

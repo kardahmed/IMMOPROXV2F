@@ -1,0 +1,20 @@
+# Security headers for the immoprox.io marketing site.
+# CSP is intentionally omitted — GTM injects scripts dynamically and a
+# strict CSP would break tag-manager-driven analytics.
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# Long-cache static assets — PNGs and CSS are stable, content-hashed
+# updates aren't applicable here so a moderate 7-day TTL is fine.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png "access plus 7 days"
+  ExpiresByType image/jpeg "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 7 days"
+  ExpiresByType text/css "access plus 7 days"
+</IfModule>
