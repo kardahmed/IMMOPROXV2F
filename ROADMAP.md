@@ -118,6 +118,41 @@ next one can pick up cleanly.
   don't see the option (UI gate) and even if they did, RLS would
   deny the UPDATE.
 
+### Tenant onboarding — welcome modal
+- **Migration 025** — adds `tenants.welcome_modal_seen_at TIMESTAMPTZ`.
+  Distinct from the pre-existing `onboarding_completed` boolean (which
+  gates the persistent `OnboardingWizard` checklist bar): this column
+  tracks the one-shot first-login welcome tour.
+- **`WelcomeModal` component** (`src/components/common/WelcomeModal.tsx`)
+  — a 4-step carousel shown once to tenant admins on first login,
+  explaining pipeline, projects, agents, and settings. Each step has
+  a CTA that deep-links to the relevant page and marks the modal seen.
+  Dismissable at any step via "Passer l'introduction".
+- **Admin-only** (via `useAuthStore().role === 'admin'`) — agents get
+  a clean experience from their admin, no CRM intro modal.
+- **UTM tracking on `/admin/leads`** — the marketing form already
+  captured `utm_source/medium/campaign/referrer/user_agent` via
+  `captureTracking()`. The admin page now displays a "Source"
+  column (with referrer fallback) and a full "Provenance" section
+  in the lead detail modal.
+
+### Phase 6 — plan propagation triggers
+- **Migration 024** — two triggers keep `whatsapp_accounts.monthly_quota`
+  in sync with the tenant's current plan:
+  - `tenants_plan_change_sync` fires on `UPDATE OF plan` — when a
+    super admin upgrades/downgrades a tenant, their WhatsApp quota
+    is rewritten from `plan_limits.max_whatsapp_messages` (with the
+    `-1 → 999999` translation for the unlimited enterprise tier).
+  - `plan_limits_quota_sync` fires on `UPDATE OF max_whatsapp_messages`
+    — when the super admin tweaks a plan's quota on `/admin/plans`,
+    every tenant on that plan gets the new quota instantly.
+  - Helper `sync_whatsapp_quota_from_plan(tenant_id)` exposed as
+    `SECURITY DEFINER` for manual backfills.
+- **Validated 24-Apr-2026**: live test on the enterprise tenant
+  flipped enterprise → pro → enterprise, quota propagated correctly
+  (999999 → 2000 → 999999). No more manual backfill needed when
+  changing a tenant's plan.
+
 ### Phase 2 foundation — automation engine
 - **Migration 019** — added `automation_type`, `automation_metadata`,
   `template_name`, `template_params` columns to `tasks`. Partial

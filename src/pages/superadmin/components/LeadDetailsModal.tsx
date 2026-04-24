@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Modal } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { Mail, Phone, Building2, Calendar, MapPin, UserPlus } from 'lucide-react'
+import { Mail, Phone, Building2, Calendar, UserPlus, Compass } from 'lucide-react'
 
 type LeadStatus = 'new' | 'contacted' | 'demo_booked' | 'demo_done' | 'won' | 'lost' | 'nurture'
 
@@ -24,6 +24,9 @@ interface Lead {
   timeline: string | null
   message: string | null
   source: string | null
+  medium: string | null
+  campaign: string | null
+  referrer: string | null
   status: LeadStatus
   step_completed: number
   created_at: string
@@ -221,11 +224,22 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
           </div>
         )}
 
-        {/* Source */}
-        {lead.source && (
-          <div className="flex items-center gap-1.5 text-[11px] text-immo-text-secondary">
-            <MapPin className="h-3 w-3" />
-            Source: <span className="font-medium text-immo-text-primary">{lead.source}</span>
+        {/* Provenance — UTM + referrer */}
+        {(lead.source || lead.medium || lead.campaign || lead.referrer) && (
+          <div>
+            <h4 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
+              <Compass className="h-3 w-3" />
+              Provenance
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Source" value={lead.source} />
+              <Field label="Medium" value={lead.medium} />
+              <Field label="Campagne" value={lead.campaign} />
+              <Field
+                label="Referrer"
+                value={lead.referrer ? <span className="break-all text-xs">{lead.referrer}</span> : null}
+              />
+            </div>
           </div>
         )}
       </div>
