@@ -29,9 +29,10 @@
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Plan feature key → tenant_settings column. Features not listed here
-// are plan-only (no tenant override). Must stay in sync with the
-// TENANT_COLUMN map in src/hooks/useFeatureAccess.ts.
+// Plan feature key → tenant_settings column. Every plan-level feature
+// has a tenant override. Must stay in sync with TENANT_COLUMN in
+// src/hooks/useFeatureAccess.ts and FEATURES in
+// src/pages/settings/sections/FeaturesSection.tsx.
 const TENANT_COLUMN: Record<string, string> = {
   payment_tracking: 'feature_payment_tracking',
   charges:          'feature_charges',
@@ -41,6 +42,13 @@ const TENANT_COLUMN: Record<string, string> = {
   ai_scripts:       'feature_ai_scripts',
   whatsapp:         'feature_whatsapp',
   auto_tasks:       'feature_auto_tasks',
+  ai_suggestions:   'feature_ai_suggestions',
+  ai_documents:     'feature_ai_documents',
+  ai_custom:        'feature_ai_custom',
+  export_csv:       'feature_export_csv',
+  custom_branding:  'feature_custom_branding',
+  api_access:       'feature_api_access',
+  roi_marketing:    'feature_roi_marketing',
 }
 
 export interface FeatureCheckResult {

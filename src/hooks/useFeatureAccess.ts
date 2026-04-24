@@ -3,9 +3,11 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { usePlanEnforcement } from './usePlanEnforcement'
 
-// Plan feature key → tenant_settings column name. Features not listed
-// here are plan-only: the tenant admin has no override switch. This
-// mirrors the FEATURES array in FeaturesSection.tsx.
+// Plan feature key → tenant_settings column name. Every plan-level
+// feature has a tenant override so the agency admin can disable
+// what their plan allows. Must stay in sync with FEATURES in
+// src/pages/settings/sections/FeaturesSection.tsx and TENANT_COLUMN
+// in supabase/functions/_shared/checkPlanFeature.ts.
 const TENANT_COLUMN: Record<string, string> = {
   payment_tracking: 'feature_payment_tracking',
   charges:          'feature_charges',
@@ -15,6 +17,13 @@ const TENANT_COLUMN: Record<string, string> = {
   ai_scripts:       'feature_ai_scripts',
   whatsapp:         'feature_whatsapp',
   auto_tasks:       'feature_auto_tasks',
+  ai_suggestions:   'feature_ai_suggestions',
+  ai_documents:     'feature_ai_documents',
+  ai_custom:        'feature_ai_custom',
+  export_csv:       'feature_export_csv',
+  custom_branding:  'feature_custom_branding',
+  api_access:       'feature_api_access',
+  roi_marketing:    'feature_roi_marketing',
 }
 
 interface FeatureAccess {
