@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -37,6 +38,30 @@ Deno.serve(async (req) => {
     if (userErr || !user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Resolve tenant + feature gate
+    const { data: profile } = await supabase.from('users').select('tenant_id').eq('id', user.id).single()
+    const tenantId = (profile as { tenant_id: string } | null)?.tenant_id
+    if (!tenantId) {
+      return new Response(JSON.stringify({ error: 'No tenant' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const featureCheck = await checkPlanFeature(supabase, tenantId, 'ai_suggestions')
+    if (!featureCheck.allowed) {
+      return new Response(JSON.stringify({
+        error: featureCheck.reason === 'plan'
+          ? `Les suggestions IA ne sont pas incluses dans votre plan (${featureCheck.plan}).`
+          : `Les suggestions IA ont été désactivées par l'administrateur de votre agence.`,
+        reason: featureCheck.reason,
+        plan: featureCheck.plan,
+      }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
