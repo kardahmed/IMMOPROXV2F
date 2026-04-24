@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -27,6 +28,18 @@ Deno.serve(async (req) => {
     // Get tenant
     const { data: profile } = await supabase.from('users').select('tenant_id').eq('id', user.id).single()
     if (!profile?.tenant_id) return json({ error: 'No tenant' }, 403)
+
+    // Plan + tenant feature gate
+    const featureCheck = await checkPlanFeature(supabase, profile.tenant_id, 'whatsapp')
+    if (!featureCheck.allowed) {
+      return json({
+        error: featureCheck.reason === 'plan'
+          ? `WhatsApp n'est pas inclus dans votre plan (${featureCheck.plan}). Contactez l'administrateur IMMO PRO-X.`
+          : `WhatsApp a été désactivé par l'administrateur de votre agence. Réactivez-le dans /settings.`,
+        reason: featureCheck.reason,
+        plan: featureCheck.plan,
+      }, 403)
+    }
 
     // Check WhatsApp is active for this tenant
     const { data: waAccount } = await supabase

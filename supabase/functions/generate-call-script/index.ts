@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -26,6 +27,22 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
     if (authErr || !user) return json({ error: 'Invalid token' }, 401)
+
+    // Resolve tenant + feature gate
+    const { data: profile } = await supabase.from('users').select('tenant_id').eq('id', user.id).single()
+    const tenantId = (profile as { tenant_id: string } | null)?.tenant_id
+    if (!tenantId) return json({ error: 'No tenant' }, 403)
+
+    const featureCheck = await checkPlanFeature(supabase, tenantId, 'ai_scripts')
+    if (!featureCheck.allowed) {
+      return json({
+        error: featureCheck.reason === 'plan'
+          ? `Les scripts d'appel IA ne sont pas inclus dans votre plan (${featureCheck.plan}).`
+          : `Les scripts d'appel IA ont été désactivés par l'administrateur de votre agence.`,
+        reason: featureCheck.reason,
+        plan: featureCheck.plan,
+      }, 403)
+    }
 
     // 2. Parse request
     const { client_id } = await req.json()
