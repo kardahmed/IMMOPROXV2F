@@ -102,7 +102,7 @@ export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
         {activeTab === 'documents' && <DocumentsTab clientId={clientId} />}
         {activeTab === 'charges' && <ChargesTab clientId={clientId} tenantId={tenantId} />}
         {activeTab === 'notes' && <NotesTab clientId={clientId} />}
-        {activeTab === 'tasks' && <TasksTab clientId={clientId} tenantId={tenantId} />}
+        {activeTab === 'tasks' && <TasksTab clientId={clientId} tenantId={tenantId} clientPhone={clientInfo?.phone} />}
         {activeTab === 'auto_tasks' && clientInfo && (
           <ClientTasksTab clientId={clientId} clientName={clientInfo.full_name} clientPhone={clientInfo.phone} clientStage={clientInfo.pipeline_stage} tenantId={tenantId} />
         )}

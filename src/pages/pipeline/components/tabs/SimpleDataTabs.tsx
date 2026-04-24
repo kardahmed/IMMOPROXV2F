@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 // native <select> used instead of base-ui Select
 import { StatusBadge, EmptyState, Modal } from '@/components/common'
+import { AutomationBadge } from '@/components/common/AutomationBadge'
+import { OpenWhatsAppButton } from '@/components/common/OpenWhatsAppButton'
 import { ClientDocuments } from '../ClientDocuments'
 
 function ClientDocumentsWrapper({ clientId }: { clientId: string }) {
@@ -344,7 +346,7 @@ export function NotesTab({ clientId }: { clientId: string }) {
 }
 
 /* ═══ Tasks ═══ */
-export function TasksTab({ clientId, tenantId }: { clientId: string; tenantId: string }) {
+export function TasksTab({ clientId, tenantId, clientPhone }: { clientId: string; tenantId: string; clientPhone?: string }) {
   const { t } = useTranslation()
   const [showCreate, setShowCreate] = useState(false)
   const [title, setTitle] = useState(''); const [dueAt, setDueAt] = useState('')
@@ -402,11 +404,19 @@ export function TasksTab({ clientId, tenantId }: { clientId: string; tenantId: s
                 </button>
                 <div className="min-w-0 flex-1">
                   <p className={`text-sm ${task.status === 'done' ? 'text-immo-text-muted line-through' : 'text-immo-text-primary'}`}>{task.title as string}</p>
-                  <div className="flex items-center gap-2 text-[11px] text-immo-text-muted">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-immo-text-muted">
+                    <AutomationBadge automationType={task.automation_type as string | null} />
                     {task.type === 'ai_generated' && <span className="flex items-center gap-0.5 text-purple-400"><Bot className="h-3 w-3" /> IA</span>}
                     {typeof task.due_at === 'string' && <span>{format(new Date(task.due_at), 'dd/MM/yyyy')}</span>}
                   </div>
                 </div>
+                {Boolean(task.automation_type) && task.status !== 'done' && (
+                  <OpenWhatsAppButton
+                    templateName={task.template_name as string | null}
+                    templateParams={task.template_params}
+                    clientPhone={clientPhone}
+                  />
+                )}
                 <span className={`text-[11px] font-medium ${task.status === 'done' ? 'text-immo-accent-green' : task.status === 'ignored' ? 'text-immo-text-muted' : 'text-immo-status-orange'}`}>
                   {task.status === 'done' ? t('status.completed') : task.status === 'ignored' ? t('status.cancelled') : t('status.pending')}
                 </span>
