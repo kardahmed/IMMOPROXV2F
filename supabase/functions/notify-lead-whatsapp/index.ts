@@ -96,6 +96,26 @@ Deno.serve(async (req) => {
     )
   }
 
+  // Guard against the "24h temporary token" footgun.
+  //
+  // Background: the Meta API Setup page has a "Generate access token"
+  // button that always mints TEMPORARY 24h tokens — even when the UI
+  // suggests "this is a permanent token". A truly permanent System User
+  // token must be generated from Business Settings > System Users and
+  // is always 500+ characters long.
+  //
+  // When a 24h token is used and expires, the Cloud API starts returning
+  // { sent: true, message_id: "wamid..." } cosmetic responses but
+  // silently drops the actual delivery. This once burned us for ~2h of
+  // debug (the founder's friends submitted the form, no WhatsApp
+  // arrived, the function logs showed sent:true everywhere). Logging a
+  // warning here makes the root cause jump out next time.
+  if (ACCESS_TOKEN.length < 300) {
+    console.warn(
+      `[notify-lead-whatsapp] META_WHATSAPP_ACCESS_TOKEN is only ${ACCESS_TOKEN.length} chars long — this is probably a 24h temporary token. Permanent System User tokens are 500+ chars. If messages stop arriving despite sent:true responses, regenerate the token via Business Settings > System Users with expiration=Never.`
+    )
+  }
+
   let body: { type?: string; record?: Lead; old_record?: Partial<Lead> }
   try {
     body = await req.json()
