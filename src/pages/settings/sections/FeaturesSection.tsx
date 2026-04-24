@@ -1,21 +1,36 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Save, DollarSign, FileText, Target, Globe, Sparkles, MessageCircle, Zap, Receipt, Lock } from 'lucide-react'
+import { Save, DollarSign, FileText, Target, Globe, Sparkles, MessageCircle, Zap, Receipt, Lock, Cpu, Download, Palette, Key, BarChart3 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import toast from 'react-hot-toast'
 
-// Map feature toggle key → plan_limits.features key (null = always available, no plan restriction)
+// Map feature toggle key → plan_limits.features key. Every plan-level
+// feature has a tenant override here so the agency admin can disable
+// what their plan allows. Must stay in sync with TENANT_COLUMN in
+// src/hooks/useFeatureAccess.ts and supabase/functions/_shared/checkPlanFeature.ts.
 const FEATURES = [
+  // Modules (core CRM capabilities)
   { key: 'feature_payment_tracking', label: 'Suivi des echeanciers', desc: 'Gestion des paiements, echeanciers, relances de retard', icon: DollarSign, color: 'text-immo-accent-green', planFeature: 'payment_tracking' },
   { key: 'feature_charges', label: 'Charges & frais', desc: 'Frais notaire, agence, enregistrement par dossier', icon: Receipt, color: 'text-immo-status-orange', planFeature: 'charges' },
   { key: 'feature_documents', label: 'Generation de documents', desc: 'Contrats, echeanciers, bons de reservation en PDF', icon: FileText, color: 'text-immo-accent-blue', planFeature: 'pdf_generation' },
   { key: 'feature_goals', label: 'Objectifs de vente', desc: 'Objectifs mensuels/trimestriels par agent', icon: Target, color: 'text-purple-500', planFeature: 'goals' },
   { key: 'feature_landing_pages', label: 'Pages de capture', desc: 'Landing pages pour vos campagnes publicitaires', icon: Globe, color: 'text-immo-accent-blue', planFeature: 'landing_pages' },
-  { key: 'feature_ai_scripts', label: 'Scripts d\'appel IA', desc: 'Generation de scripts personnalises par intelligence artificielle', icon: Sparkles, color: 'text-purple-500', planFeature: 'ai_scripts' },
   { key: 'feature_whatsapp', label: 'WhatsApp Business', desc: 'Envoi automatique de messages WhatsApp aux clients', icon: MessageCircle, color: 'text-green-500', planFeature: 'whatsapp' },
   { key: 'feature_auto_tasks', label: 'Taches automatiques', desc: 'Generation et suivi automatique des taches par etape', icon: Zap, color: 'text-immo-status-orange', planFeature: 'auto_tasks' },
+  { key: 'feature_roi_marketing', label: 'ROI Marketing', desc: 'Analyse du ROI des campagnes et budgets publicitaires', icon: BarChart3, color: 'text-immo-accent-green', planFeature: 'roi_marketing' },
+
+  // IA (intelligence artificielle)
+  { key: 'feature_ai_scripts', label: 'Scripts d\'appel IA', desc: 'Generation de scripts personnalises par intelligence artificielle', icon: Sparkles, color: 'text-purple-500', planFeature: 'ai_scripts' },
+  { key: 'feature_ai_suggestions', label: 'Suggestions IA', desc: 'Recommandation d\'unites pertinentes pour chaque client', icon: Sparkles, color: 'text-purple-500', planFeature: 'ai_suggestions' },
+  { key: 'feature_ai_documents', label: 'Documents IA', desc: 'Generation de documents personnalises par IA', icon: FileText, color: 'text-purple-500', planFeature: 'ai_documents' },
+  { key: 'feature_ai_custom', label: 'IA personnalisee', desc: 'Prompts IA sur mesure pour votre agence', icon: Cpu, color: 'text-purple-500', planFeature: 'ai_custom' },
+
+  // Outils (transverse)
+  { key: 'feature_export_csv', label: 'Export CSV', desc: 'Export des donnees (pipeline, clients, paiements) en CSV', icon: Download, color: 'text-immo-text-muted', planFeature: 'export_csv' },
+  { key: 'feature_custom_branding', label: 'Branding personnalise', desc: 'Logo, couleurs et typographie personnalises', icon: Palette, color: 'text-immo-accent-blue', planFeature: 'custom_branding' },
+  { key: 'feature_api_access', label: 'Acces API', desc: 'Integrations externes et webhooks', icon: Key, color: 'text-immo-text-muted', planFeature: 'api_access' },
 ] as const
 
 type FeatureKey = typeof FEATURES[number]['key']
@@ -46,11 +61,14 @@ export function FeaturesSection() {
     enabled: !!tenantPlan,
   })
 
+  const SELECT_COLS = FEATURES.map(f => f.key).join(', ')
+  const DEFAULT_FEATURES = Object.fromEntries(FEATURES.map(f => [f.key, true])) as Record<FeatureKey, boolean>
+
   const { data: settings } = useQuery({
     queryKey: ['tenant-features', tenantId],
     queryFn: async () => {
       const { data } = await supabase.from('tenant_settings')
-        .select('feature_payment_tracking, feature_charges, feature_documents, feature_goals, feature_landing_pages, feature_ai_scripts, feature_whatsapp, feature_auto_tasks' as never)
+        .select(SELECT_COLS as never)
         .eq('tenant_id', tenantId!)
         .single()
       return data as unknown as Record<FeatureKey, boolean> | null
@@ -58,29 +76,15 @@ export function FeaturesSection() {
     enabled: !!tenantId,
   })
 
-  const [features, setFeatures] = useState<Record<FeatureKey, boolean>>({
-    feature_payment_tracking: true,
-    feature_charges: true,
-    feature_documents: true,
-    feature_goals: true,
-    feature_landing_pages: true,
-    feature_ai_scripts: true,
-    feature_whatsapp: true,
-    feature_auto_tasks: true,
-  })
+  const [features, setFeatures] = useState<Record<FeatureKey, boolean>>(DEFAULT_FEATURES)
 
   useEffect(() => {
     if (settings) {
-      setFeatures({
-        feature_payment_tracking: settings.feature_payment_tracking ?? true,
-        feature_charges: settings.feature_charges ?? true,
-        feature_documents: settings.feature_documents ?? true,
-        feature_goals: settings.feature_goals ?? true,
-        feature_landing_pages: settings.feature_landing_pages ?? true,
-        feature_ai_scripts: settings.feature_ai_scripts ?? true,
-        feature_whatsapp: settings.feature_whatsapp ?? true,
-        feature_auto_tasks: settings.feature_auto_tasks ?? true,
-      })
+      setFeatures(
+        Object.fromEntries(
+          FEATURES.map(f => [f.key, settings[f.key] ?? true])
+        ) as Record<FeatureKey, boolean>
+      )
     }
   }, [settings])
 
