@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useClients } from '@/hooks/useClients'
 import { useAuthStore } from '@/store/authStore'
+import { usePermissions } from '@/hooks/usePermissions'
 import {
   PageSkeleton,
   StatusBadge,
@@ -70,8 +71,10 @@ export function ClientDetailPage() {
   const [searchParams] = useSearchParams()
   const returnTo = searchParams.get('from') ?? 'pipeline'
   const navigate = useNavigate()
-  const { updateClient, updateClientStage } = useClients()
+  const { updateClient, updateClientStage, softDeleteClient } = useClients()
   const userId = useAuthStore((s) => s.session?.user?.id)
+  const { isAdmin, isSuperAdmin } = usePermissions()
+  const canSoftDelete = isAdmin || isSuperAdmin
 
   const [showInfo, setShowInfo] = useState(true)
   const [stageConfirm, setStageConfirm] = useState<PipelineStage | null>(null)
@@ -79,6 +82,7 @@ export function ClientDetailPage() {
   const [showVisitModal, setShowVisitModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
   const [showReassignModal, setShowReassignModal] = useState(false)
+  const [showSoftDeleteConfirm, setShowSoftDeleteConfirm] = useState(false)
 
   // Fetch client
   const { data: rawClient, isLoading } = useQuery({
@@ -289,6 +293,14 @@ export function ClientDetailPage() {
               >
                 Marquer comme perdu
               </DropdownMenuItem>
+              {canSoftDelete && (
+                <DropdownMenuItem
+                  onClick={() => setShowSoftDeleteConfirm(true)}
+                  className="text-sm text-immo-status-red focus:bg-immo-status-red-bg"
+                >
+                  Mettre a la corbeille
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -389,6 +401,25 @@ export function ClientDetailPage() {
         description={`Déplacer ce client vers "${stageConfirm ? PIPELINE_STAGES[stageConfirm].label : ''}" ?`}
         confirmLabel="Confirmer"
         loading={updateClientStage.isPending}
+      />
+
+      {/* Soft-delete (corbeille) confirm — admin + super_admin only */}
+      <ConfirmDialog
+        isOpen={showSoftDeleteConfirm}
+        onClose={() => setShowSoftDeleteConfirm(false)}
+        onConfirm={() => {
+          if (!client) return
+          softDeleteClient.mutate(client.id, {
+            onSuccess: () => {
+              setShowSoftDeleteConfirm(false)
+              navigate(backPath)
+            },
+          })
+        }}
+        title="Mettre ce client a la corbeille ?"
+        description={`${client.full_name} sera retire des vues actives. Un admin peut le restaurer depuis /corbeille.`}
+        confirmLabel="Mettre a la corbeille"
+        loading={softDeleteClient.isPending}
       />
 
       {/* Lazy-loaded modals — only mount (and fetch their chunk) when opened */}
