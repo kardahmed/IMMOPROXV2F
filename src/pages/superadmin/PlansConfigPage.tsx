@@ -42,6 +42,7 @@ const FEATURE_LABELS: Record<string, { label: string; icon: typeof Cpu }> = {
   auto_tasks: { label: 'Taches automatiques', icon: Zap },
   goals: { label: 'Objectifs de vente', icon: Briefcase },
   charges: { label: 'Charges & frais', icon: DollarSign },
+  roi_marketing: { label: 'ROI marketing', icon: Briefcase },
 }
 
 const ALL_FEATURES = Object.keys(FEATURE_LABELS)
