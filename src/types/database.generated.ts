@@ -2335,6 +2335,7 @@ export type Database = {
           suspended_at: string | null
           trial_ends_at: string | null
           website: string | null
+          welcome_modal_seen_at: string | null
           wilaya: string | null
         }
         Insert: {
@@ -2351,6 +2352,7 @@ export type Database = {
           suspended_at?: string | null
           trial_ends_at?: string | null
           website?: string | null
+          welcome_modal_seen_at?: string | null
           wilaya?: string | null
         }
         Update: {
@@ -2367,6 +2369,7 @@ export type Database = {
           suspended_at?: string | null
           trial_ends_at?: string | null
           website?: string | null
+          welcome_modal_seen_at?: string | null
           wilaya?: string | null
         }
         Relationships: []
