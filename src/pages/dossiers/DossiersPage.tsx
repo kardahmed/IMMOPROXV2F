@@ -85,6 +85,7 @@ export function DossiersPage() {
             .from('reservations')
             .select('id, client_id, agent_id, project_id, unit_id, deposit_amount, status, expires_at, clients(full_name, phone), projects(name), units(code), users!reservations_agent_id_fkey(first_name, last_name)')
             .eq('tenant_id', tenantId)
+            .is('deleted_at', null)
           if (isAgent && userId) q = q.eq('agent_id', userId)
           return q
         })(),
