@@ -43,10 +43,16 @@ next one can pick up cleanly.
   step-1 INSERT so the founder can call back fast even if the lead
   abandons step 2, then `[QUALIFIE]` fires on the step-2 UPDATE with
   the full qualification context (company, activity, timeline,
-  frustration, free-text message). Uses the approved
-  `new_lead_notification` template (5 body variables). Tested
-  end-to-end from `immoprox.io/contact` — both pings land on
-  `+213 542 766 068` within ~10 seconds.
+  frustration, free-text message). After initially having the
+  `new_lead_notification` template re-categorized by Meta as Marketing
+  (because "Recontacte sous 1h" read as a sales CTA to Meta's
+  classifier), a new `nouveau_lead__immo_prox` template was submitted
+  as pure Utility and replaced the old one. Also learnt the hard way
+  that Meta's "Generate access token" button on the API Setup page
+  always returns 24h tokens — permanent tokens must come from
+  Business Settings > System Users with expiration=Never. The
+  `notify-lead-whatsapp` function now logs a warning at boot if the
+  stored token is <300 chars so we never debug the symptom again.
 - Password reset flow live: `LoginPage` "Mot de passe oublie ?" button
   wired to `supabase.auth.resetPasswordForEmail`, paired with a
   dedicated `/reset-password` page that accepts the Supabase recovery
@@ -64,18 +70,112 @@ next one can pick up cleanly.
   POLICY IF EXISTS) so it re-runs safely on the live DB without
   disturbing existing rows.
 
+### Security hardening (23-Apr-2026 audit fallout)
+- **Migration 017** — rewrote RLS on every sensitive table
+  (`clients`, `visits`, `reservations`, `history`, `tasks`,
+  `documents`, `whatsapp_messages`, `whatsapp_accounts`) so agents
+  only see their own rows (or unassigned rows) and can only UPDATE
+  their own. Hard DELETE gated to `admin` + `super_admin` on most
+  tables; `reservations` DELETE is super-admin-only (legal + money);
+  `history` is append-only below super admin; `whatsapp_messages`
+  DELETE + UPDATE locked to super admin (the founder's previous-
+  employer story about an agent wiping WhatsApp logs on their way
+  out, made law).
+- **Migration 018** — dropped the legacy permissive policies
+  (`tenant_isolation`, `admin_manage_*`, `super_admin_all_*`,
+  `"Tenant access own whatsapp_*"`) that were still attached from
+  the Studio era. PostgreSQL OR-combines permissive policies, so
+  without 018 the strict 017 rules were being bypassed by the
+  looser legacy ones. After 018, `pg_policies` shows exactly 4
+  rows per table (select/insert/update/delete) and the agent
+  isolation is actually enforced.
+- **`security_audit` table + triggers** — populated by SECURITY
+  DEFINER triggers on both HARD_DELETE and SOFT_DELETE (when
+  `deleted_at` flips from NULL). Every destructive action is
+  logged with tenant, user, role, target_type, target_preview
+  (human-readable), created_at. Writable only by the triggers and
+  service-role; readable by tenant admins + super admin.
+- **Soft-delete infrastructure** — `deleted_at` + `deleted_by`
+  columns on the 6 sensitive tables, with partial indexes for fast
+  Corbeille lookups. `useClients` hook gained `softDeleteClient` +
+  `restoreClient` + `useDeletedClients` hooks. Base list queries
+  (`useClients`, `useHistory`, `PlanningPage`, `DossiersPage`,
+  `VisitsTab`, `SimpleDataTabs`) all filter `.is('deleted_at',
+  null)` so soft-deleted rows drop out of the normal views.
+- **`/corbeille` page** for admins — lazy-loaded data table
+  showing soft-deleted clients with agent, pipeline stage, time
+  since deletion, and a "Restaurer" button. Gated behind
+  `RoleRoute allowedRoles=['admin','super_admin']`.
+- **`/admin/security` page** for super admin — forensic audit log
+  with KPIs (total events, hard deletes, soft deletes, number of
+  users with >10 destructive actions = flagged as suspect), range
+  presets (7j/30j/90j/all), action filter, text search across
+  tenant + user + target. Sidebar entry in `SuperAdminLayout`
+  between Leads and Audit Trail.
+- **Client detail "Mettre à la corbeille" action** — admin-only
+  DropdownMenuItem in the "..." menu on the client detail page,
+  wired to `softDeleteClient` through a `ConfirmDialog`. Agents
+  don't see the option (UI gate) and even if they did, RLS would
+  deny the UPDATE.
+
+### Phase 2 foundation — automation engine
+- **Migration 019** — added `automation_type`, `automation_metadata`,
+  `template_name`, `template_params` columns to `tasks`. Partial
+  index on `automation_type IS NOT NULL` + GIN index on the JSONB
+  metadata for cron idempotency lookups.
+- **`dispatchAutomation()` helper** (`_shared/dispatchAutomation.ts`)
+  — the dual-mode entry point every cron + trigger will call. Path
+  A: if the tenant has an active `whatsapp_accounts` (plan Pro +
+  within quota), invoke `send-whatsapp` with the approved template
+  + ordered variables from `WHATSAPP_TEMPLATES_CATALOG.md`. Path B:
+  otherwise (plan Essentiel, or send fails), insert a row in
+  `tasks` with template_name + template_params so the agent sees it
+  in /tasks and can tap "Open WhatsApp" (wa.me deeplink with
+  pre-rendered body). Idempotency built in — crons pass a stable
+  `related_id` to avoid duplicate dispatches on re-runs.
+- **Not yet wired** to `check-reminders`, `check-payments`,
+  `check-reservations`. Waiting until the 10 templates in
+  `WHATSAPP_TEMPLATES_CATALOG.md` are approved by Meta — otherwise
+  every WhatsApp dispatch would fall through to the task path with
+  a "template not found" error, which would noise up /tasks for
+  every tenant.
+
+### Documentation (for institutional memory)
+- **`META_APP_REVIEW_GUIDE.md`** — full 6-step walkthrough of the
+  Meta App Review submission process (business verification,
+  dedicated phone + display name, screencast scripts per
+  permission, submission forms with pre-written English copy to
+  paste into Meta's fields, post-approval flip-to-live).
+- **`WHATSAPP_TEMPLATES_CATALOG.md`** — the 10 critical templates
+  rewritten as pure Utility (no CTAs, no sales language, no
+  promotional emojis) to dodge the Marketing re-categorization
+  trap that bit the original `new_lead_notification`. Each
+  template ships in a copy-paste block with Meta-submission
+  fields + sample variables + CRM data-mapping. Covers the
+  client lifecycle: visite (3), dossier (3), paiement (3),
+  réservation (1). Submission order + batching strategy spelled
+  out.
+
 ---
 
 ## 🚧 In progress
 
-### PR #11 — leads page + tenant provisioning from lead
-https://github.com/kardahmed/IMMOPROXV2F/pull/11
+### Meta — template reviews (pending)
+- `nouveau_lead__immo_prox` (founder notification, replaces the
+  Marketing-downgraded `new_lead_notification`) — submitted as
+  Utility, in review. Expected 1-24h.
+- 10 templates from `WHATSAPP_TEMPLATES_CATALOG.md` to be submitted
+  one by one (or in batches) by the founder. Review 1-24h each,
+  independent / parallelizable.
 
-Waiting for merge + Hostinger auto-redeploy. Everything already passes
-local tsc + vite build.
-
-### PR #12 — CLAUDE.md + ROADMAP.md (this file)
-https://github.com/kardahmed/IMMOPROXV2F/pull/12
+### Meta — App Review (not submitted yet)
+- Business Verification: done ✅
+- Dedicated SIM to register as WABA phone number: to buy
+- Display Name "IMMO PRO-X" approval: pending on SIM
+- App Review submission (2 permissions: `whatsapp_business_messaging`
+  + `whatsapp_business_management`): to do after Display Name
+- Lead time: 2-8 weeks of Meta back-and-forth
+- Full play-by-play in `META_APP_REVIEW_GUIDE.md`
 
 ---
 
@@ -88,12 +188,15 @@ leave a half-built feature without a note here.
 
 ### WhatsApp multi-tenant (Embedded Signup)
 - **What exists**: Supabase tables `whatsapp_config`, `whatsapp_accounts`,
-  `whatsapp_messages`, `whatsapp_templates`, now frozen in
-  `016_whatsapp_schema.sql` with the right RLS policies and updated_at
-  triggers. Edge Functions `whatsapp-signup` (OAuth callback) and
-  `send-whatsapp` (send on behalf of tenant with quota check). Super
-  Admin page `/admin/whatsapp` that displays config/accounts/messages/
-  templates.
+  `whatsapp_messages`, `whatsapp_templates`, frozen in
+  `016_whatsapp_schema.sql` with the right RLS policies (hardened
+  further in 017/018) and updated_at triggers. Edge Functions
+  `whatsapp-signup` (OAuth callback) and `send-whatsapp` (send on
+  behalf of tenant with quota check). Super Admin page
+  `/admin/whatsapp` that displays config/accounts/messages/templates.
+  Automation helper `_shared/dispatchAutomation.ts` with
+  dual-mode (WhatsApp vs task) dispatch — infrastructure ready,
+  not yet wired to crons.
 - **What's missing**:
   - `whatsapp_config` row is empty — no Meta app_id / app_secret /
     access_token stored → `send-whatsapp` will 503.
@@ -102,6 +205,24 @@ leave a half-built feature without a note here.
     Account.
   - No Meta App Review submitted → even if the SDK was wired,
     production usage would be blocked.
+  - Crons (`check-reminders`, `check-payments`, `check-reservations`)
+    not yet calling `dispatchAutomation()`. Blocked on the 10 Utility
+    templates being approved by Meta.
+
+### UI wiring for automation tasks (deferred)
+- **What exists**: `dispatchAutomation()` falls back to inserting
+  rows in `tasks` with `automation_type` + `template_name` +
+  `template_params` when the tenant has no active WhatsApp.
+- **What's missing**:
+  - `/tasks` page doesn't yet badge auto-tasks (🤖 Tâche
+    automatique) or offer the "Open WhatsApp deeplink" button —
+    so on Essentiel tenants, auto-tasks look like any other
+    manual task. UI polish to add once the first cron wires
+    actually fire dispatchAutomation.
+  - No template-rendering helper on the frontend yet — the
+    deeplink needs the rendered message body (template + params
+    substituted). Will live in `src/lib/whatsappTemplates.ts`
+    once a cron is live to test against.
 
 ### CI on GitHub Actions (`.github/workflows/ci.yml`)
 - **What exists**: a `build` job that runs on every PR — should run
@@ -123,16 +244,36 @@ leave a half-built feature without a note here.
 
 ## 🔜 Next up (prioritized)
 
-### 1. Meta WhatsApp App Review
-The founder's Meta app is now live with the WhatsApp product (used
-already for the lead notification pings). Next step: submit for App
-Review to unlock `whatsapp_business_messaging` and
-`whatsapp_business_management` permissions in production, beyond the
-5-recipient test-mode limit currently in place.
-- Lead time: **2-8 weeks** of Meta back-and-forth.
-- Unlocks Next #2 when approved.
+### 1. Wire the 3 crons to dispatchAutomation (unblocked once templates approved)
+Once the 10 templates in `WHATSAPP_TEMPLATES_CATALOG.md` land in
+Meta's "Approved" state:
+- `check-reminders` → fires `visite_confirmation_j_moins_1` (J-1
+  before a planned visit), `visite_rappel_h_moins_2` (2h before),
+  `document_rappel_manquant` (doc pending too long).
+- `check-payments` → fires `paiement_echeance_j_moins_3` (J-3
+  before a due installment), `paiement_retard` (J+1 after unpaid).
+- `check-reservations` → fires `reservation_confirmation` when a
+  reservation flips to `active`.
+- Effort: ~1 day of dev. Mostly plumbing — helpers already exist.
 
-### 2. Embedded Signup — offer WhatsApp to tenants
+### 2. UI — badge + deeplink for automation tasks
+After #1 is live, `/tasks` (and the pipeline client detail tasks
+tab) need to visually distinguish auto-tasks:
+- 🤖 badge on tasks where `automation_type IS NOT NULL`.
+- "Open WhatsApp" button that generates a `wa.me/<phone>?text=...`
+  deeplink from the rendered template (using a new
+  `src/lib/whatsappTemplates.ts` local map so we don't round-trip
+  to Meta just to render a preview).
+- Effort: 1-2 days. Blocked on #1 having real data to render.
+
+### 3. Meta — buy SIM + App Review submission
+The founder has verified Business Manager ✅, just needs a
+dedicated SIM (never used on consumer WhatsApp) to register as the
+WABA phone number. Then follow `META_APP_REVIEW_GUIDE.md` Étapes
+2-4: Display Name (1-2d), screencast videos, submit for App
+Review (2-8 weeks Meta review).
+
+### 4. Embedded Signup — offer WhatsApp to tenants
 After Meta approves the app, add a "Connect your WhatsApp" flow in
 `/settings/whatsapp`:
 - FB Login SDK integrated in the CRM settings page
@@ -142,7 +283,13 @@ After Meta approves the app, add a "Connect your WhatsApp" flow in
 - UI for template submission + management per tenant (or curated platform templates)
 - Gives tenants the ability to send booking confirmations, reminders, and follow-ups from their own WhatsApp number inside the CRM.
 
-### 3. Fix CI / GitHub Actions
+### 5. Pricing + billing page
+Once at least 1 tenant is ready to go Pro, publish the pricing on
+`immoprox.io` (Essentiel / Pro / Extra packs, as designed in the
+2026-04-24 session). Invoicing stays manual (bank transfer) for
+Algeria per CLAUDE.md.
+
+### 6. Fix CI / GitHub Actions
 `ci.yml` has been failing in 1s on every PR (no runners provisioned).
 Check Actions billing / quota, or move to a workflow that doesn't need
 a runner (e.g. a pre-merge check that runs locally via a git hook).
