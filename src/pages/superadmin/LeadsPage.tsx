@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Inbox, Mail, Phone, Building2, Search, UserPlus, Clock, Flame } from 'lucide-react'
+import { Inbox, Mail, Phone, Building2, Search, UserPlus, Clock, Flame, Compass } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { DataTable, KPICard, PageHeader, PageSkeleton } from '@/components/common'
@@ -30,6 +30,9 @@ interface LeadRow {
   timeline: string | null
   message: string | null
   source: string | null
+  medium: string | null
+  campaign: string | null
+  referrer: string | null
   status: 'new' | 'contacted' | 'demo_booked' | 'demo_done' | 'won' | 'lost' | 'nurture'
   notes: string | null
   step_completed: number
@@ -69,6 +72,18 @@ function splitName(full: string): { first: string; last: string } {
   const parts = full.trim().split(/\s+/)
   if (parts.length === 1) return { first: parts[0], last: '' }
   return { first: parts[0], last: parts.slice(1).join(' ') }
+}
+
+function formatSource(l: LeadRow): { main: string; sub: string | null; isDirect: boolean } {
+  if (l.source) return { main: l.source, sub: l.campaign, isDirect: false }
+  if (l.referrer) {
+    try {
+      return { main: new URL(l.referrer).hostname.replace(/^www\./, ''), sub: null, isDirect: false }
+    } catch {
+      return { main: 'Externe', sub: null, isDirect: false }
+    }
+  }
+  return { main: 'Direct', sub: null, isDirect: true }
 }
 
 export function LeadsPage() {
@@ -174,6 +189,23 @@ export function LeadsPage() {
           {l.company_name}
         </div>
       ) : <span className="text-xs text-immo-text-secondary">—</span>,
+    },
+    {
+      key: 'source',
+      header: 'Source',
+      width: '130px',
+      render: l => {
+        const s = formatSource(l)
+        return (
+          <div className={`flex flex-col gap-0.5 text-[11px] ${s.isDirect ? 'text-immo-text-secondary/60' : 'text-immo-text-secondary'}`}>
+            <span className="flex items-center gap-1">
+              <Compass className="h-3 w-3" />
+              <span className={`font-medium ${s.isDirect ? '' : 'text-immo-text-primary'}`}>{s.main}</span>
+            </span>
+            {s.sub && <span className="truncate pl-4 text-[10px] opacity-75">{s.sub}</span>}
+          </div>
+        )
+      },
     },
     {
       key: 'signals',
