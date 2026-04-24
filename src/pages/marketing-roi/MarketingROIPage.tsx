@@ -1,6 +1,5 @@
 import { useState, lazy, Suspense } from 'react'
 import { DollarSign, BarChart3, Megaphone, Mail, FileText } from 'lucide-react'
-import { usePlanEnforcement } from '@/hooks/usePlanEnforcement'
 // Lazy-load tabs — only the active tab is rendered, so no point downloading all 5 up-front
 const ExpensesTab = lazy(() => import('./tabs/ExpensesTab').then(m => ({ default: m.ExpensesTab })))
 const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab').then(m => ({ default: m.AnalyticsTab })))
@@ -16,18 +15,6 @@ type Tab = 'expenses' | 'analytics' | 'campaigns' | 'email_campaigns' | 'email_t
 
 export function MarketingROIPage() {
   const [tab, setTab] = useState<Tab>('analytics')
-  const { hasFeature } = usePlanEnforcement()
-
-  // Enterprise only feature
-  if (!hasFeature('roi_marketing')) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-lg font-bold text-immo-text-primary">Module ROI Marketing</p>
-        <p className="mt-2 text-sm text-immo-text-muted">Cette fonctionnalité est disponible avec le plan Enterprise.</p>
-        <a href="/settings" className="mt-4 rounded-lg bg-immo-accent-green px-4 py-2 text-sm font-semibold text-white">Voir les plans</a>
-      </div>
-    )
-  }
 
   const TABS: Array<{ key: Tab; label: string; icon: typeof DollarSign }> = [
     { key: 'analytics', label: 'Analytique ROI', icon: BarChart3 },
