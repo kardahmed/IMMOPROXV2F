@@ -1,8 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendEmailInternal } from '../_shared/send-email-internal.ts'
+import { dispatchAutomation } from '../_shared/dispatchAutomation.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+// Format an ISO date as "mardi 24 mai 2026" for French template variables.
+const FR_DAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+const FR_MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre']
+function formatFrenchDateTime(iso: string): { date: string; time: string } {
+  const d = new Date(iso)
+  const date = `${FR_DAYS[d.getDay()]} ${d.getDate()} ${FR_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  const time = `${d.getHours().toString().padStart(2, '0')}h${d.getMinutes().toString().padStart(2, '0')}`
+  return { date, time }
+}
 
 Deno.serve(async (req) => {
   // Auth: service role key required
@@ -132,6 +143,116 @@ Deno.serve(async (req) => {
       })
     }
 
+    // 4. Visite J-1 confirmation + H-2 rappel
+    //    Fires the approved Utility templates `visite_confirmation_j_moins_1`
+    //    and `visite_rappel_h_moins_2` via dispatchAutomation. dispatchAutomation
+    //    picks between sending WhatsApp directly (if tenant has active
+    //    whatsapp_accounts) or creating a fallback task for the agent.
+    //    Idempotency via the related_id = visit.id — re-running the cron
+    //    within the same window won't duplicate dispatches.
+    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 3600 * 1000)
+    const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 3600 * 1000)
+    const oneHourFromNow = new Date(now.getTime() + 1 * 3600 * 1000)
+    const threeHoursFromNow = new Date(now.getTime() + 3 * 3600 * 1000)
+
+    // J-1: visits scheduled 24-25h from now (cron runs hourly)
+    const { data: visitsJ1 } = await supabase
+      .from('visits')
+      .select(`
+        id, tenant_id, agent_id, client_id, scheduled_at,
+        clients!inner(full_name, phone),
+        projects(name),
+        users!visits_agent_id_fkey(first_name, last_name, phone)
+      `)
+      .eq('status', 'planned')
+      .gte('scheduled_at', twentyFourHoursFromNow.toISOString())
+      .lt('scheduled_at', twentyFiveHoursFromNow.toISOString())
+      .is('deleted_at', null)
+
+    // H-2: visits scheduled 1-3h from now (we use 1h window within the 3h
+    // lookahead to hit each visit exactly once when the cron runs hourly)
+    const { data: visitsH2 } = await supabase
+      .from('visits')
+      .select(`
+        id, tenant_id, agent_id, client_id, scheduled_at,
+        clients!inner(full_name, phone),
+        projects(name),
+        users!visits_agent_id_fkey(first_name, last_name, phone)
+      `)
+      .eq('status', 'planned')
+      .gte('scheduled_at', oneHourFromNow.toISOString())
+      .lt('scheduled_at', threeHoursFromNow.toISOString())
+      .is('deleted_at', null)
+
+    const dispatched = { confirmations_j1: 0, rappels_h2: 0, via_whatsapp: 0, via_task: 0, skipped: 0 }
+
+    for (const v of visitsJ1 ?? []) {
+      const client = v.clients as { full_name: string; phone: string } | null
+      const project = v.projects as { name: string } | null
+      const agent = v.users as { first_name: string; last_name: string; phone: string } | null
+      const { date, time } = formatFrenchDateTime(v.scheduled_at as string)
+      const agentLine = agent ? `${agent.first_name} ${agent.last_name}${agent.phone ? ' - ' + agent.phone : ''}` : '-'
+
+      const result = await dispatchAutomation({
+        supabase,
+        tenantId: v.tenant_id,
+        clientId: v.client_id,
+        agentId: v.agent_id,
+        templateName: 'visite_confirmation_j_moins_1',
+        templateParams: [
+          client?.full_name ?? '-',
+          date,
+          time,
+          project?.name ?? '-',
+          agentLine,
+        ],
+        clientPhone: client?.phone ?? null,
+        fallbackTaskTitle: `Envoyer WhatsApp de confirmation visite a ${client?.full_name ?? 'client'}`,
+        fallbackDueAt: new Date(new Date(v.scheduled_at as string).getTime() - 20 * 3600 * 1000),
+        relatedId: v.id,
+        relatedType: 'visit',
+        triggerSource: 'cron_check_reminders_visit_j_minus_1',
+      })
+
+      dispatched.confirmations_j1++
+      if (result.path === 'whatsapp') dispatched.via_whatsapp++
+      else if (result.path === 'task') dispatched.via_task++
+      else dispatched.skipped++
+    }
+
+    for (const v of visitsH2 ?? []) {
+      const client = v.clients as { full_name: string; phone: string } | null
+      const project = v.projects as { name: string } | null
+      const agent = v.users as { first_name: string; last_name: string; phone: string } | null
+      const { time } = formatFrenchDateTime(v.scheduled_at as string)
+      const agentLine = agent ? `${agent.first_name} ${agent.last_name}${agent.phone ? ' - ' + agent.phone : ''}` : '-'
+
+      const result = await dispatchAutomation({
+        supabase,
+        tenantId: v.tenant_id,
+        clientId: v.client_id,
+        agentId: v.agent_id,
+        templateName: 'visite_rappel_h_moins_2',
+        templateParams: [
+          client?.full_name ?? '-',
+          time,
+          project?.name ?? '-',
+          agentLine,
+        ],
+        clientPhone: client?.phone ?? null,
+        fallbackTaskTitle: `Envoyer WhatsApp rappel visite a ${client?.full_name ?? 'client'}`,
+        fallbackDueAt: new Date(new Date(v.scheduled_at as string).getTime() - 1 * 3600 * 1000),
+        relatedId: v.id,
+        relatedType: 'visit',
+        triggerSource: 'cron_check_reminders_visit_h_minus_2',
+      })
+
+      dispatched.rappels_h2++
+      if (result.path === 'whatsapp') dispatched.via_whatsapp++
+      else if (result.path === 'task') dispatched.via_task++
+      else dispatched.skipped++
+    }
+
     // Insert notifications
     let inserted = 0
     for (const n of notifications) {
@@ -186,7 +307,8 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      message: `Created ${inserted} notification(s), sent ${emailsSent} email(s)`,
+      message: `Created ${inserted} notification(s), sent ${emailsSent} email(s), dispatched ${dispatched.confirmations_j1 + dispatched.rappels_h2} visit reminder(s)`,
+      visit_automation: dispatched,
       breakdown: {
         payment_reminders: notifications.filter(n => n.type === 'payment_reminder').length,
         reservation_expiring: notifications.filter(n => n.type === 'reservation_expiring').length,
