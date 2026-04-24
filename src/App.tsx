@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RoleRoute } from '@/components/auth/RoleRoute'
 import { SuperAdminRoute } from '@/components/auth/SuperAdminRoute'
+import { FeatureRoute } from '@/components/auth/FeatureRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
@@ -113,13 +114,22 @@ function App() {
 
             {/* Admin & super_admin only */}
             <Route element={<RoleRoute allowedRoles={['admin', 'super_admin']} />}>
-              <Route path="/landing" element={<LandingPagesManager />} />
-              <Route path="/goals" element={<GoalsPage />} />
+              {/* Plan-gated routes: feature must be enabled in plan_limits.features AND tenant_settings */}
+              <Route element={<FeatureRoute feature="landing_pages" featureName="Pages de capture" />}>
+                <Route path="/landing" element={<LandingPagesManager />} />
+              </Route>
+              <Route element={<FeatureRoute feature="goals" featureName="Objectifs de vente" />}>
+                <Route path="/goals" element={<GoalsPage />} />
+              </Route>
+              <Route element={<FeatureRoute feature="roi_marketing" featureName="ROI Marketing" />}>
+                <Route path="/marketing-roi" element={<MarketingROIPage />} />
+              </Route>
+
+              {/* Core admin routes — no plan gate */}
               <Route path="/performance" element={<PerformancePage />} />
               <Route path="/agents" element={<AgentsPage />} />
               <Route path="/agents/:agentId" element={<AgentDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/marketing-roi" element={<MarketingROIPage />} />
               <Route path="/corbeille" element={<CorbeillePage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
