@@ -22,6 +22,7 @@ export function useHistory(clientId: string, filters?: HistoryFilters) {
         .select('*, users!history_agent_id_fkey(first_name, last_name)')
         .eq('client_id', clientId)
         .eq('tenant_id', tenantId)
+        .is('deleted_at', null)
 
       if (filters?.type) query = query.eq('type', filters.type)
 

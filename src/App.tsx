@@ -47,6 +47,7 @@ const LeadsPage = lazy(() => import('@/pages/superadmin/LeadsPage').then(m => ({
 
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage').then(m => ({ default: m.TasksPage })))
 const MarketingROIPage = lazy(() => import('@/pages/marketing-roi/MarketingROIPage').then(m => ({ default: m.MarketingROIPage })))
+const CorbeillePage = lazy(() => import('@/pages/corbeille/CorbeillePage').then(m => ({ default: m.CorbeillePage })))
 
 // Landing pages
 const PublicLandingPage = lazy(() => import('@/pages/landing/PublicLandingPage').then(m => ({ default: m.PublicLandingPage })))
@@ -117,6 +118,7 @@ function App() {
               <Route path="/agents/:agentId" element={<AgentDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/marketing-roi" element={<MarketingROIPage />} />
+              <Route path="/corbeille" element={<CorbeillePage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

@@ -36,6 +36,7 @@ export function useClients(filters?: ClientFilters) {
         .from('clients')
         .select('*, users!clients_agent_id_fkey(first_name, last_name)', { count: 'exact' })
         .eq('tenant_id', tenantId)
+        .is('deleted_at', null)
 
       if (filters?.stage) query = query.eq('pipeline_stage', filters.stage)
       if (filters?.source) query = query.eq('source', filters.source)
@@ -115,6 +116,42 @@ export function useClients(filters?: ClientFilters) {
     },
   })
 
+  // Soft-delete: marks the row for the Corbeille view. RLS in
+  // migration 017 restricts this UPDATE to admins, so an agent
+  // calling this hook will get an access-denied error.
+  const softDeleteClient = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { error } = await supabase
+        .from('clients')
+        .update({ deleted_at: new Date().toISOString(), deleted_by: user?.id ?? null } as never)
+        .eq('id', id)
+
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] })
+      qc.invalidateQueries({ queryKey: ['deleted-clients'] })
+      toast.success('Client mis dans la corbeille')
+    },
+  })
+
+  const restoreClient = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('clients')
+        .update({ deleted_at: null, deleted_by: null } as never)
+        .eq('id', id)
+
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clients'] })
+      qc.invalidateQueries({ queryKey: ['deleted-clients'] })
+      toast.success('Client restaure')
+    },
+  })
+
   return {
     clients: clientsQuery.data?.data ?? [],
     totalCount: clientsQuery.data?.count ?? 0,
@@ -124,6 +161,8 @@ export function useClients(filters?: ClientFilters) {
     createClient,
     updateClient,
     updateClientStage,
+    softDeleteClient,
+    restoreClient,
   }
 }
 
@@ -137,11 +176,32 @@ export function useClientById(id: string, tenantId: string) {
         .select('*, users!clients_agent_id_fkey(first_name, last_name)')
         .eq('id', id)
         .eq('tenant_id', tenantId)
+        .is('deleted_at', null)
         .single()
 
       if (error) { handleSupabaseError(error); throw error }
       return data
     },
     enabled: !!id && !!tenantId,
+  })
+}
+
+/** Admin-only: list soft-deleted clients (for the Corbeille page). */
+export function useDeletedClients() {
+  const tenantId = useTenant()
+  return useQuery({
+    queryKey: ['deleted-clients', tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, full_name, phone, email, pipeline_stage, agent_id, deleted_at, deleted_by, users!clients_agent_id_fkey(first_name, last_name)')
+        .eq('tenant_id', tenantId)
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false })
+
+      if (error) { handleSupabaseError(error); throw error }
+      return data ?? []
+    },
+    enabled: !!tenantId,
   })
 }
