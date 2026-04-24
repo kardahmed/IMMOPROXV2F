@@ -29,6 +29,7 @@ export function VisitsTab({ clientId, tenantId }: { clientId: string; tenantId: 
         .from('visits')
         .select('*, users!visits_agent_id_fkey(first_name, last_name)')
         .eq('client_id', clientId)
+        .is('deleted_at', null)
         .order('scheduled_at', { ascending: false })
       if (error) { handleSupabaseError(error); throw error }
       return data as unknown as Array<Record<string, unknown>>

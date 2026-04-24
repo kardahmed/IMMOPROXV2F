@@ -31,7 +31,7 @@ export function ReservationTab({ clientId }: { clientId: string }) {
   const { data: reservations = [] } = useQuery({
     queryKey: ['client-reservations', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('reservations').select('*, projects(name), units(code)').eq('client_id', clientId).order('created_at', { ascending: false })
+      const { data, error } = await supabase.from('reservations').select('*, projects(name), units(code)').eq('client_id', clientId).is('deleted_at', null).order('created_at', { ascending: false })
       if (error) { handleSupabaseError(error); throw error }
       return data as unknown as Array<Record<string, unknown>>
     },
@@ -354,7 +354,7 @@ export function TasksTab({ clientId, tenantId }: { clientId: string; tenantId: s
   const { data: tasks = [] } = useQuery({
     queryKey: ['client-tasks', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tasks').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
+      const { data, error } = await supabase.from('tasks').select('*').eq('client_id', clientId).is('deleted_at', null).order('created_at', { ascending: false })
       if (error) { handleSupabaseError(error); throw error }
       return data as unknown as Array<Record<string, unknown>>
     },
