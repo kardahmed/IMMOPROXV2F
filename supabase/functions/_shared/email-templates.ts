@@ -278,6 +278,33 @@ export function welcomeTemplate(params: TemplateParams & {
   }
 }
 
+// ─── Template: Lead drip (abandoned step 2) ─────────────────────────────────
+
+export function leadDripTemplate(params: TemplateParams & {
+  first_name: string
+  contact_url: string
+}): { subject: string; html: string } {
+  const platformName = params.platform_name ?? 'IMMO PRO-X'
+  const content = `
+    <h2 style="margin:0 0 16px;font-size:18px;color:#1A2B3D">Bonjour ${params.first_name},</h2>
+    <div style="color:#5E6C84;font-size:14px;line-height:1.7">
+      Vous avez commence votre demande de demo sur ${platformName} il y a quelques heures, mais ne l'avez pas terminee.
+      <br><br>
+      Pour que nous puissions organiser un creneau qui vous convient et vous montrer comment ${platformName} peut transformer la gestion de votre agence (pipeline 9 etapes, suivi paiements, automatisations WhatsApp...), il ne vous reste que <strong>2 minutes</strong> a remplir.
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <a href="${params.contact_url}" class="btn">Terminer ma demande</a>
+    </div>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #F0F3F7;color:#8898AA;font-size:12px;line-height:1.6">
+      Ou repondez simplement a cet email avec vos questions — nous y repondons dans la journee.
+    </div>`
+
+  return {
+    subject: `Votre demande de demo ${platformName} — on continue ?`,
+    html: baseLayout(platformName, content, `Reprenez votre demande en 2 minutes`),
+  }
+}
+
 // ─── Template: Generic ──────────────────────────────────────────────────────
 
 export function genericTemplate(params: TemplateParams & {
@@ -299,7 +326,7 @@ export function genericTemplate(params: TemplateParams & {
 
 // ─── Template registry ──────────────────────────────────────────────────────
 
-export type TemplateName = 'payment_reminder' | 'payment_overdue' | 'reservation_expiring' | 'reservation_expired' | 'client_relaunch' | 'welcome' | 'generic'
+export type TemplateName = 'payment_reminder' | 'payment_overdue' | 'reservation_expiring' | 'reservation_expired' | 'client_relaunch' | 'welcome' | 'lead_drip' | 'generic'
 
 // deno-lint-ignore no-explicit-any
 const templateMap: Record<TemplateName, (params: any) => { subject: string; html: string }> = {
@@ -309,6 +336,7 @@ const templateMap: Record<TemplateName, (params: any) => { subject: string; html
   reservation_expired: reservationExpiredTemplate,
   client_relaunch: clientRelaunchTemplate,
   welcome: welcomeTemplate,
+  lead_drip: leadDripTemplate,
   generic: genericTemplate,
 }
 
@@ -368,6 +396,13 @@ export const TEMPLATE_META: Array<{
     description: 'Email de bienvenue pour les nouveaux utilisateurs.',
     trigger: 'Manuel / Onboarding',
     sampleData: { user_name: 'Ahmed Benali', tenant_name: 'Agence Sahel Immobilier' },
+  },
+  {
+    id: 'lead_drip',
+    label: 'Relance lead abandonne',
+    description: 'Envoye 6h apres qu\'un lead a rempli l\'etape 1 du formulaire de contact mais pas l\'etape 2.',
+    trigger: 'Cron: check-abandoned-leads',
+    sampleData: { first_name: 'Karim', contact_url: 'https://immoprox.io/contact' },
   },
   {
     id: 'generic',
