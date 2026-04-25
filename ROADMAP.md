@@ -297,8 +297,8 @@ leave a half-built feature without a note here.
 
 Tout ce qui doit être livré pour passer en mode go-to-market. Les
 items A → D sont nouveaux ; E → J sont les anciens "Next up"
-ré-ordonnés. Effort total estimé : **~7 jours de dev** pour A+B+C+D,
-le reste dépend de Meta.
+ré-ordonnés ; K est nouveau (cost tracking). Effort total estimé :
+**~8 jours de dev** pour A+B+C+D+K, le reste dépend de Meta.
 
 ### A. Webhook entrant WhatsApp (~1 jour)
 **But** : capter les réponses des clients dans `whatsapp_messages`
@@ -380,6 +380,29 @@ d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
 ### J. CI fix
 *(déjà "Next up #6" — non-bloquant)*
 
+### K. Dashboard Unit Economics — `/admin/costs` (~1 jour)
+**But** : suivre la rentabilité réelle, pas juste le MRR. Aujourd'hui
+`/admin/stats` montre revenue + churn mais ne calcule **pas le profit
+net** (manque la soustraction des coûts variables Anthropic / Meta /
+Resend / Supabase + coûts fixes).
+
+- Page `/admin/costs` (nav Super Admin) :
+  - Section "Coûts fixes mensuels" : formulaire pour saisir
+    Supabase, Hostinger, Google Workspace, Sentry, comptable, etc.
+    (stocké dans une nouvelle table `platform_costs`).
+  - Section "Coûts variables estimés par tenant" : table avec
+    revenue (depuis `plan_limits`), coûts variables estimés
+    (basés sur quota plan × tarif Meta/Anthropic), **marge brute
+    estimée par tenant et par mois**.
+  - Section "Profit net plateforme" : MRR (depuis stats) − coûts
+    fixes − Σ coûts variables = **profit net mensuel** affiché en
+    KPI. Décomposable par mois sur 6 mois glissants.
+- Migration : table `platform_costs (id, period TEXT, category TEXT,
+  description TEXT, amount_dzd INTEGER, created_at)`.
+- Pas de tracking automatique d'usage par tenant pour le MVP — on
+  estime depuis les quotas plan. Le tracking précis (`tenant_usage_log`)
+  est en backlog 💭.
+
 ---
 
 ## 🏁 Definition of Done — critères pour dire "on arrête le dev"
@@ -402,13 +425,216 @@ dev produit s'arrête (sauf bug fixes) :
 - [ ] **3 crons WhatsApp opérationnels** (`check-reminders`,
       `check-payments`, `check-reservations`) avec ≥3 dispatches
       réussis chacun
+- [ ] **Dashboard Unit Economics live** : `/admin/costs` montre
+      profit net mensuel (MRR − coûts fixes − coûts variables) sur
+      ≥3 mois consécutifs avec des chiffres validés par le comptable
 - [ ] **0 bug critique ouvert** (pas de bloquant, pas de data loss)
 - [ ] **ROADMAP 🚧 In progress vide**, 🧩 Partial vide ou converti
       en 🚫 Deferred avec justification
 
 ---
 
-## 🔜 Next up (prioritized)
+## 💰 Pricing & Unit Economics
+
+Toutes les valeurs sont calculées au **cours parallèle DZD/USD = 250**
+(c'est le taux d'achat réel de l'USD pour payer les fournisseurs
+étrangers Anthropic / Meta / Supabase / Hostinger). Référence WhatsApp
+basée sur les tarifs Wati + tarifs Meta directs zone MENA.
+
+### Grille des 3 plans
+
+| Item | 🟢 Essentiel | 🔵 Pro | 🟣 Extra |
+|---|:-:|:-:|:-:|
+| Prix mensuel DZD | **28,000** | **75,000** | **180,000** |
+| Équivalent USD parallèle | $112 | $300 | $720 |
+| Users inclus | 4 | 15 | illimité |
+| Clients actifs | 300 | 2,000 | illimité |
+| Projets | 3 | 10 | illimité |
+| Stockage | 500 MB | 5 GB | 50 GB |
+| Landing pages | 1 | 5 | illimité |
+| Email campagnes/mois | 200 | 2,000 | illimité |
+| WhatsApp API (numéro dédié) | ❌ | ✅ | ✅ |
+| WhatsApp utility/mois inclus | 0 | 3,000 | 25,000 (cap fair-use) |
+| WhatsApp marketing/mois inclus | 0 | 500 | 5,000 (cap fair-use) |
+| Inbox tenant (admin voit tout) | ❌ | ✅ | ✅ |
+| Auto-rappels (visites/paiements/réservations) | ❌ | ✅ | ✅ |
+| Auto-close tâches sur réponse | ❌ | ✅ | ✅ |
+| Score engagement | ❌ | ✅ basique | ✅ + smart (futur) |
+| IA scripts d'appel | ❌ | ✅ | ✅ |
+| IA matching unités | ❌ | ✅ | ✅ |
+| IA documents auto | ❌ | ❌ | ✅ |
+| IA prompts custom | ❌ | ❌ | ✅ |
+| Marketing ROI | ❌ | ✅ | ✅ |
+| Goals + Performance | ❌ | ✅ | ✅ |
+| Custom branding | ❌ | ❌ | ✅ |
+| API + webhooks | ❌ | ❌ | ✅ |
+| Support | Email | Email + WA | Dédié + onboarding |
+
+### Surconsommation (overage) — au-delà du quota
+- WhatsApp utility supplémentaire : **12 DZD/msg** (markup ~50% sur Meta)
+- WhatsApp marketing supplémentaire : **30 DZD/msg**
+- WhatsApp authentification : **10 DZD/msg**
+- User additionnel Essentiel : **6,000 DZD/user/mois**
+- User additionnel Pro : **4,500 DZD/user/mois**
+
+### Coûts Meta WhatsApp (référence brute, zone MENA)
+- Utility : ~$0.033/conversation = ~8 DZD parallèle
+- Marketing : ~$0.082/conversation = ~20 DZD parallèle
+- Auth : ~$0.028/conversation = ~7 DZD parallèle
+- Service (réponse <24h) : 1,000 free/mois puis ~8 DZD/conv
+
+### Marges par tenant (gross margin)
+
+| Plan | Revenu | Coûts variables (worst case) | Marge brute | % |
+|---|---|---|---|---|
+| Essentiel | 28,000 | ~550 (DB + emails seulement) | 27,450 | **98%** 💎 |
+| Pro | 75,000 | ~38,250 (3k utility + 500 marketing + IA + DB) | 36,750 | **49%** ✅ |
+| Extra (cap fair-use) | 180,000 | ~110,000 (15k utility + 2k marketing + IA + DB) | 70,000 | **39%** 🟡 |
+
+⚠️ **Extra** doit être **cappé en fair-use** (15k utility + 2k marketing
+inclus) sinon le tenant peut consommer pour $1,300+/mois ($595 de perte
+par mois). Au-delà du cap → overage facturé.
+
+### Coûts fixes plateforme (peu importe nb tenants)
+
+| Item | DZD/mois |
+|---|---|
+| Supabase Pro | 6,250 |
+| Hostinger Premium | 1,000 |
+| Domain immoprox.io | 375 |
+| Google Workspace email pro | 1,500 |
+| Resend Free (3k emails inclus) | 0 |
+| GitHub Free | 0 |
+| Sentry monitoring (recommandé) | 6,500 |
+| Cal.com (optionnel) | 3,000 |
+| **Total minimum** | **~9,125** |
+| **Total recommandé** | **~18,625** |
+
+### Coûts opérationnels mensuels
+
+| Item | DZD/mois |
+|---|---|
+| Comptable (cabinet ou indépendant) | 30,000 - 50,000 |
+| Frais bancaires pro | 1,500 - 3,000 |
+| Internet fibre pro | 5,000 |
+| Téléphone pro | 2,500 |
+| Loyer bureau (si applicable) | 0 - 30,000 |
+| Frais remittance (~5% des paiements USD) | variable |
+| **Total opérationnel** | **~39,000 - 90,500** |
+
+### Coûts one-shot (lancement)
+
+| Item | DZD |
+|---|---|
+| Création SARL/EURL | 150,000 - 300,000 |
+| Inscription comptable | 20,000 |
+| Ouverture compte bancaire pro | 10,000 |
+| Carte CIB Internationale | 3,000 |
+| SIM dédiée WhatsApp Business | 5,000 |
+| Marketing initial (cartes, brochures) | 50,000 |
+| Branding (logo HD, screenshots) | 30,000 |
+| **Total lancement** | **~268,000 - 418,000** |
+
+### Charges fiscales Algérie
+
+| Taxe | Taux | Base |
+|---|---|---|
+| TVA | 19% | Sur prix HT |
+| TAP (Taxe Activité Pro) | 2% | Sur CA mensuel |
+| IBS (Impôt Bénéfices Sociétés) | 19% | Sur bénéfice net annuel (si SARL/EURL) |
+| IRG | 0-35% progressif | Si EURL personne physique |
+
+→ Décision marketing : afficher **TTC** (plus lisible B2B Algérie)
+plutôt que HT.
+
+### Break-even & projections
+
+| Scénario | Composition | Revenu | Coût total | Profit avant impôts |
+|---|---|---|---|---|
+| Early (2 tenants) | 1 Essentiel + 1 Pro | 103,000 | 97,425 | **+5,575** 🟡 |
+| Croissance (5 tenants) | 3 Essentiel + 2 Pro | 234,000 | 136,775 | **+97,225** ✅ |
+| Cible 6 mois (10 tenants) | 5 Essentiel + 5 Pro | 515,000 | 254,125 | **+260,875** ✅✅ |
+| Cible 12 mois (20 tenants) | 10 Essentiel + 10 Pro | 1,030,000 | 449,625 | **+580,375** ✅✅✅ |
+
+→ **Break-even atteint à 3 tenants**. Salaire confortable à 10
+tenants Pro mix (~260k DZD/mois avant impôts ≈ $1,040 USD).
+
+---
+
+## ⚠️ Risques majeurs & plans B
+
+### Risque #1 — Meta App Review refuse ou prend >3 mois 🔴
+**Probabilité** : moyenne. Meta est notoirement strict sur les
+catégorisations Marketing vs Utility et la qualité des screencasts.
+Le founder a déjà eu un template re-categorized par Meta (cf section
+Done > Backend ci-dessus).
+
+**Impact** : sans Meta App Review approuvé, l'Embedded Signup
+tenant-side n'est pas utilisable → les tenants ne peuvent pas
+connecter leur propre WhatsApp Business → le plan Pro perd son
+différentiateur principal.
+
+**Plan B (si Meta refuse ou délai >3 mois)** :
+1. **Plan Pro fallback** : on continue avec `dispatchAutomation` qui
+   tombe dans la branche "task" (pas WhatsApp direct). Le tenant
+   reçoit la tâche dans `/tasks` avec un bouton "Open WhatsApp
+   deeplink" qui ouvre `wa.me/<phone>?text=<rendered>` → l'agent
+   envoie depuis SON WhatsApp perso. Pas d'auto-rappels temps réel,
+   mais 80% de la valeur est conservée.
+2. **Pricing revu** : Pro descend à **45,000 DZD/mois** (vs 75,000)
+   tant que l'API n'est pas dispo. On positionne comme "early bird"
+   en attendant l'activation auto.
+3. **Communication** : être transparent avec les premiers tenants
+   ("API en cours d'activation Meta, en attendant vous envoyez en
+   1 clic depuis votre tel"). La plupart des agences algériennes
+   utilisent déjà WhatsApp Business sur tel — c'est pas un drame.
+4. **Re-soumission** : ré-essayer App Review tous les 1-2 mois en
+   ajustant la documentation jusqu'à approbation.
+
+### Risque #2 — Cours parallèle DZD/USD se dégrade
+**Probabilité** : forte (historiquement ~10% par an).
+
+**Impact** : nos coûts USD (Anthropic, Meta, Supabase) montent
+mécaniquement → marges Pro/Extra se compriment.
+
+**Plan B** : ajustement annuel automatique des prix (+10% par
+an indexé sur taux parallèle). Documenté dans les CGU.
+
+### Risque #3 — Plus de 3 tenants Extra qui consomment fair-use max
+**Probabilité** : faible mais possible si tenants enthousiastes.
+
+**Impact** : marge Extra à 39% peut tomber à <20% si tous max-out.
+
+**Plan B** : déjà mitigé par le cap fair-use (15k utility + 2k
+marketing). Au-delà → overage automatique.
+
+### Risque #4 — Anthropic/Meta change ses tarifs
+**Probabilité** : faible court-terme, modérée long-terme.
+
+**Impact** : recalcul de la grille pricing.
+
+**Plan B** : mécanisme d'ajustement annuel + clause CGU permettant
+modification avec préavis 30j.
+
+### Risque #5 — 1 tenant Pro représente >40% du MRR
+**Probabilité** : modérée en early stage.
+
+**Impact** : si ce tenant churn, MRR s'effondre.
+
+**Plan B** : objectif diversification — pas plus de 25% du MRR
+sur 1 tenant à partir de 5 tenants signés. Refuser nouveaux Extra
+si ça déséquilibre trop.
+
+### Risque #6 — Régulation algérienne change sur SaaS B2B
+**Probabilité** : faible court-terme.
+
+**Impact** : nouveaux frais ou contraintes (ex: hébergement local
+obligatoire, taxe sur services numériques).
+
+**Plan B** : suivre l'actualité réglementaire via le comptable +
+chambre de commerce. Pas d'action préventive.
+
+---
 
 ### 1. Wire the 3 crons to dispatchAutomation (unblocked once templates approved)
 Once the 10 templates in `WHATSAPP_TEMPLATES_CATALOG.md` land in
