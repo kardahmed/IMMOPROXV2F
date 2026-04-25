@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Phone, MessageCircle, CheckCheck, Check, AlertCircle } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Phone, MessageCircle, CheckCheck, Check, AlertCircle, Send, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import toast from 'react-hot-toast'
+import { supabase } from '@/lib/supabase'
 import type { Conversation, InboxMessage } from '@/hooks/useInbox'
 
 interface Props {
@@ -26,8 +29,8 @@ function StatusIcon({ status }: { status: string }) {
 
 function MessageBubble({ message }: { message: InboxMessage }) {
   const isOutbound = message.direction === 'outbound'
-  const time = format(new Date(message.created_at), 'HH:mm', { locale: fr })
-  const date = format(new Date(message.created_at), 'd MMM yyyy', { locale: fr })
+  const time = format(new Date(message.created_at ?? 0), 'HH:mm', { locale: fr })
+  const date = format(new Date(message.created_at ?? 0), 'd MMM yyyy', { locale: fr })
 
   return (
     <div className={`flex ${isOutbound ? 'justify-end' : 'justify-start'}`}>
@@ -55,7 +58,12 @@ function MessageBubble({ message }: { message: InboxMessage }) {
 
 export function ConversationThread({ conversation }: Props) {
   const { t } = useTranslation()
+  const qc = useQueryClient()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [draft, setDraft] = useState('')
+
+  // Reset the draft when switching conversations.
+  useEffect(() => setDraft(''), [conversation?.key])
 
   // Scroll to bottom when conversation changes or new messages arrive
   useEffect(() => {
@@ -63,6 +71,38 @@ export function ConversationThread({ conversation }: Props) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [conversation?.key, conversation?.messages.length])
+
+  const sendMessage = useMutation({
+    mutationFn: async (params: { to: string; clientId: string | null; bodyText: string }) => {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          to: params.to,
+          body_text: params.bodyText,
+          client_id: params.clientId ?? undefined,
+        },
+      })
+      if (error) throw error
+      return data as { success: boolean; error?: string; remaining?: number }
+    },
+    onSuccess: (data) => {
+      if (!data?.success) throw new Error(data?.error ?? 'Echec envoi')
+      setDraft('')
+      qc.invalidateQueries({ queryKey: ['inbox'] })
+      toast.success(t('inbox.send_success'))
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? t('inbox.send_error'))
+    },
+  })
+
+  const handleSend = () => {
+    if (!conversation || !draft.trim() || sendMessage.isPending) return
+    sendMessage.mutate({
+      to: conversation.phone,
+      clientId: conversation.client?.id ?? null,
+      bodyText: draft.trim(),
+    })
+  }
 
   if (!conversation) {
     return (
@@ -106,11 +146,41 @@ export function ConversationThread({ conversation }: Props) {
         ))}
       </div>
 
-      {/* Quick send placeholder — wired in step C */}
-      <div className="border-t border-immo-border-default bg-immo-bg-card px-5 py-3">
-        <div className="rounded-lg border border-dashed border-immo-border-default bg-immo-bg-app px-3 py-2.5 text-center text-xs text-immo-text-muted">
-          {t('inbox.send_disabled')}
+      {/* Quick send composer */}
+      <div className="border-t border-immo-border-default bg-immo-bg-card px-4 py-3">
+        <div className="flex items-end gap-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSend()
+              }
+            }}
+            placeholder={t('inbox.send_placeholder')}
+            rows={1}
+            disabled={sendMessage.isPending}
+            className="flex-1 resize-none rounded-lg border border-immo-border-default bg-immo-bg-app px-3 py-2 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:outline-none focus:ring-1 focus:ring-immo-accent-green disabled:opacity-50"
+            style={{ maxHeight: '120px', minHeight: '40px' }}
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!draft.trim() || sendMessage.isPending}
+            aria-label={t('inbox.send_action')}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-immo-accent-green text-white transition-colors hover:bg-immo-accent-green/90 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {sendMessage.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </button>
         </div>
+        <p className="mt-1.5 text-[10px] text-immo-text-muted">
+          {t('inbox.send_hint')}
+        </p>
       </div>
     </div>
   )

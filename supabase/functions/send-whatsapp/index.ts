@@ -69,28 +69,57 @@ Deno.serve(async (req) => {
 
     const config = waConfig as unknown as { phone_number_id: string; access_token: string }
 
-    // Parse request
-    const { to, template_name, variables, client_id } = await req.json() as {
+    // Parse request — supports two modes:
+    //   1. template_name + variables  (cold outreach, any time)
+    //   2. body_text                  (reply within 24h conversation
+    //                                  window; free-form text)
+    // If task_id is set, we mark the task as executed_at=now() after a
+    // successful send (step C — task↔reality loop). The webhook will
+    // later auto-close it when the client replies.
+    const { to, template_name, variables, body_text, client_id, task_id } = await req.json() as {
       to: string
-      template_name: string
+      template_name?: string
       variables?: string[]
+      body_text?: string
       client_id?: string
+      task_id?: string
     }
 
-    if (!to || !template_name) return json({ error: 'to and template_name required' }, 400)
+    if (!to) return json({ error: 'to required' }, 400)
+    if (!template_name && !body_text) {
+      return json({ error: 'template_name OR body_text required' }, 400)
+    }
+    if (template_name && body_text) {
+      return json({ error: 'pass either template_name or body_text, not both' }, 400)
+    }
 
     // Clean phone number (ensure format: 213XXXXXXXXX)
     let phone = to.replace(/[\s\-\(\)\+]/g, '')
     if (phone.startsWith('0')) phone = '213' + phone.slice(1)
     if (!phone.startsWith('213')) phone = '213' + phone
 
-    // Build template components
-    const components: Array<{ type: string; parameters: Array<{ type: string; text: string }> }> = []
-    if (variables && variables.length > 0) {
-      components.push({
-        type: 'body',
-        parameters: variables.map(v => ({ type: 'text', text: v })),
-      })
+    // Build the Meta payload — template OR free-form text
+    const metaPayload: Record<string, unknown> = {
+      messaging_product: 'whatsapp',
+      to: phone,
+    }
+    if (body_text) {
+      metaPayload.type = 'text'
+      metaPayload.text = { body: body_text }
+    } else {
+      const components: Array<{ type: string; parameters: Array<{ type: string; text: string }> }> = []
+      if (variables && variables.length > 0) {
+        components.push({
+          type: 'body',
+          parameters: variables.map(v => ({ type: 'text', text: v })),
+        })
+      }
+      metaPayload.type = 'template'
+      metaPayload.template = {
+        name: template_name,
+        language: { code: 'fr' },
+        ...(components.length > 0 ? { components } : {}),
+      }
     }
 
     // Send via Meta Cloud API
@@ -100,16 +129,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.access_token}`,
       },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: phone,
-        type: 'template',
-        template: {
-          name: template_name,
-          language: { code: 'fr' },
-          ...(components.length > 0 ? { components } : {}),
-        },
-      }),
+      body: JSON.stringify(metaPayload),
     })
 
     const result = await response.json()
@@ -120,8 +140,11 @@ Deno.serve(async (req) => {
         tenant_id: profile.tenant_id,
         client_id: client_id ?? null,
         agent_id: user.id,
-        template_name,
+        template_name: template_name ?? null,
         to_phone: phone,
+        body_text: body_text ?? null,
+        message_type: body_text ? 'text' : 'template',
+        direction: 'outbound',
         variables: variables ?? [],
         status: 'failed',
         error_message: result.error?.message ?? 'Unknown error',
@@ -138,12 +161,24 @@ Deno.serve(async (req) => {
       tenant_id: profile.tenant_id,
       client_id: client_id ?? null,
       agent_id: user.id,
-      template_name,
+      template_name: template_name ?? null,
       to_phone: phone,
+      body_text: body_text ?? null,
+      message_type: body_text ? 'text' : 'template',
+      direction: 'outbound',
       variables: variables ?? [],
       wa_message_id: waMessageId,
       status: 'sent',
     })
+
+    // Mark task as executed (step C — task↔reality loop). The
+    // whatsapp-webhook will later auto-close it when the client replies.
+    if (task_id) {
+      await supabase.from('tasks').update({
+        executed_at: new Date().toISOString(),
+        message_sent: body_text ?? null,
+      } as never).eq('id', task_id).eq('tenant_id', profile.tenant_id)
+    }
 
     // Increment tenant message counter
     await supabase
@@ -153,13 +188,16 @@ Deno.serve(async (req) => {
 
     // Log in client history if client_id provided
     if (client_id) {
+      const historyTitle = body_text
+        ? `WhatsApp envoye: ${body_text.slice(0, 60)}${body_text.length > 60 ? '...' : ''}`
+        : `WhatsApp envoye: ${template_name}`
       await supabase.from('history').insert({
         tenant_id: profile.tenant_id,
         client_id,
         agent_id: user.id,
         type: 'whatsapp_message',
-        title: `WhatsApp envoyé: ${template_name}`,
-        metadata: { wa_message_id: waMessageId, template: template_name, to: phone },
+        title: historyTitle,
+        metadata: { wa_message_id: waMessageId, template: template_name ?? null, body_text: body_text ?? null, to: phone },
       } as never)
 
       // Update last contact
@@ -170,7 +208,9 @@ Deno.serve(async (req) => {
       success: true,
       message_id: waMessageId,
       to: phone,
-      template: template_name,
+      template: template_name ?? null,
+      body_text: body_text ?? null,
+      task_executed: task_id ? true : false,
       remaining: account.monthly_quota - account.messages_sent - 1,
     })
   } catch (err) {

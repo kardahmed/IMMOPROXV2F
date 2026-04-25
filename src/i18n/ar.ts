@@ -27,7 +27,12 @@ export const ar = {
     unknown_sender: 'مرسل غير معروف',
     select_conversation: 'اختر محادثة',
     select_conversation_hint: 'اختر عميلاً من اليسار لعرض رسائله',
-    send_disabled: 'الإرسال السريع متاح قريبًا',
+    send_action: 'إرسال',
+    send_placeholder: 'اكتب ردًا...',
+    send_hint: 'Enter للإرسال · Shift+Enter لسطر جديد',
+    send_success: 'تم إرسال الرسالة',
+    send_error: 'فشل إرسال واتساب',
+    send_via_crm: 'إرسال عبر CRM',
   },
 
   // Page meta

@@ -27,7 +27,12 @@ export const fr = {
     unknown_sender: 'Expéditeur inconnu',
     select_conversation: 'Sélectionnez une conversation',
     select_conversation_hint: 'Choisissez un client à gauche pour voir ses messages',
-    send_disabled: 'Envoi rapide bientôt disponible',
+    send_action: 'Envoyer',
+    send_placeholder: 'Écrire une réponse...',
+    send_hint: 'Entrée pour envoyer · Shift+Entrée pour saut de ligne',
+    send_success: 'Message envoyé',
+    send_error: 'Échec de l\'envoi WhatsApp',
+    send_via_crm: 'Envoyer via CRM',
   },
 
   // Page meta

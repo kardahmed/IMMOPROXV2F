@@ -230,6 +230,56 @@ Deno.serve(async (req) => {
         } else {
           result.processedMessages++
         }
+
+        // ── Auto-close pending tasks (step C — task↔reality loop) ──
+        // When a client we know replies, mark the latest pending task
+        // for them as done — only if the task was actually executed
+        // (executed_at IS NOT NULL) and not auto-cancelled. This is
+        // the second half of the loop: agents send via /inbox or the
+        // task's "Send via CRM" button (which sets executed_at), and
+        // when the client replies, the system closes the task without
+        // a manual click.
+        const matchedClientId = (client as { id: string } | null)?.id
+        if (matchedClientId) {
+          const { data: pendingTask } = await supabase
+            .from('tasks')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('client_id', matchedClientId)
+            .eq('status', 'pending')
+            .not('executed_at', 'is', null)
+            .neq('auto_cancelled', true)
+            .is('deleted_at', null)
+            .order('executed_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+          const taskId = (pendingTask as { id: string } | null)?.id
+          if (taskId) {
+            const nowIso = new Date().toISOString()
+            const { error: closeErr } = await supabase
+              .from('tasks')
+              .update({
+                status: 'done',
+                completed_at: nowIso,
+                client_response: msg.type === 'text' ? (msg.text?.body ?? null) : null,
+              } as never)
+              .eq('id', taskId)
+
+            if (closeErr) {
+              result.errors.push(`Auto-close task ${taskId}: ${closeErr.message}`)
+            } else {
+              await supabase.from('history').insert({
+                tenant_id: tenantId,
+                client_id: matchedClientId,
+                agent_id: (client as { agent_id: string | null } | null)?.agent_id ?? null,
+                type: 'whatsapp_message',
+                title: 'Tache auto-fermee : reponse client recue',
+                metadata: { task_id: taskId, wa_message_id: msg.id, message_type: msg.type },
+              } as never)
+            }
+          }
+        }
       }
 
       // ── Delivery status updates ──────────────────────────────────
