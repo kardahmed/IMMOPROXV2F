@@ -354,7 +354,7 @@ export function TasksTab({ clientId, tenantId, clientPhone }: { clientId: string
   const qc = useQueryClient()
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['client-tasks', clientId],
+    queryKey: ['tasks', clientId],
     queryFn: async () => {
       const { data, error } = await supabase.from('tasks').select('*').eq('client_id', clientId).is('deleted_at', null).order('created_at', { ascending: false })
       if (error) { handleSupabaseError(error); throw error }
@@ -368,7 +368,7 @@ export function TasksTab({ clientId, tenantId, clientPhone }: { clientId: string
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['client-tasks', clientId] })
+      qc.invalidateQueries({ queryKey: ['tasks', clientId] })
       setShowCreate(false); setTitle(''); setDueAt('')
       toast.success(t('success.created'))
     },
@@ -379,7 +379,7 @@ export function TasksTab({ clientId, tenantId, clientPhone }: { clientId: string
       const { error } = await supabase.from('tasks').update({ status } as never).eq('id', id)
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['client-tasks', clientId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', clientId] }),
   })
 
   return (
