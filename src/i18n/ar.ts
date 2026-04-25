@@ -223,6 +223,16 @@ export const ar = {
     showing: '{{count}} نتيجة',
   },
 
+  // Feature gating (route + tenant override)
+  feature: {
+    unavailable_title: '{{name}} غير متاح',
+    unavailable_generic: 'هذه الميزة غير متاحة',
+    unavailable_plan_desc: 'هذه الميزة غير مشمولة في خطتك الحالية. اتصل بمسؤول IMMO PRO-X للترقية إلى خطة أعلى.',
+    unavailable_tenant_desc: 'تم تعطيل هذه الميزة من قبل مسؤول وكالتك. يمكنك إعادة تفعيلها من الإعدادات.',
+    contact_support: 'الاتصال بـ IMMO PRO-X',
+    to_settings: 'الإعدادات',
+  },
+
   // KPI
   kpi: {
     total_clients: 'إجمالي العملاء',
