@@ -17,6 +17,7 @@ import { fr } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import { TaskConfigSection } from '@/pages/settings/sections/TaskConfigSection'
 import { TaskDetailModal } from './components/TaskDetailModal'
+import { deriveDisplayStatus, DISPLAY_STATUS_META, buildStatusPayload, type TaskDisplayStatus } from '@/lib/taskStatus'
 
 interface ClientTask {
   id: string; title: string; stage: string; status: string; priority: string
@@ -28,14 +29,9 @@ interface ClientTask {
 
 type TabKey = 'today' | 'overdue' | 'upcoming' | 'completed' | 'messages' | 'config'
 
-const STATUS_MAP: Record<string, { label: string; type: 'green' | 'orange' | 'blue' | 'muted' | 'red' }> = {
-  pending: { label: 'A faire', type: 'orange' },
-  scheduled: { label: 'Programme', type: 'blue' },
-  in_progress: { label: 'En cours', type: 'blue' },
-  completed: { label: 'Fait', type: 'green' },
-  skipped: { label: 'Ignore', type: 'muted' },
-  cancelled: { label: 'Annule', type: 'red' },
-}
+// Status display now derived via deriveDisplayStatus + DISPLAY_STATUS_META
+// (see @/lib/taskStatus). The post-028 DB enum is only pending|done|ignored;
+// the 6 visible states are derived from auxiliary fields.
 
 const CHANNEL_ICONS: Record<string, typeof Phone> = { whatsapp: MessageCircle, sms: Mail, call: Phone, email: Mail, system: Zap }
 
@@ -52,13 +48,14 @@ export function TasksPage() {
   const [stageFilter, setStageFilter] = useState('all')
   const [detailTask, setDetailTask] = useState<ClientTask | null>(null)
 
-  // Fetch all tasks with client + agent relations
+  // Fetch all tasks with client + agent relations (post-028 unified)
   const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ['all-tasks', tenantId],
     queryFn: async () => {
-      let query = supabase.from('client_tasks')
-        .select('*, clients(full_name, phone, pipeline_stage), users!client_tasks_agent_id_fkey(first_name, last_name)')
+      let query = supabase.from('tasks')
+        .select('*, clients(full_name, phone, pipeline_stage), users!tasks_agent_id_fkey(first_name, last_name)')
         .eq('tenant_id', tenantId!)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(500)
 
@@ -90,7 +87,7 @@ export function TasksPage() {
 
   const completeTask = useMutation({
     mutationFn: async (taskId: string) => {
-      const { error } = await supabase.from('client_tasks').update({ status: 'completed', completed_at: new Date().toISOString(), executed_at: new Date().toISOString() } as never).eq('id', taskId)
+      const { error } = await supabase.from('tasks').update(buildStatusPayload('completed')).eq('id', taskId)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['all-tasks'] }); toast.success('Tâche terminée') },
@@ -98,7 +95,7 @@ export function TasksPage() {
 
   const skipTask = useMutation({
     mutationFn: async (taskId: string) => {
-      const { error } = await supabase.from('client_tasks').update({ status: 'skipped' } as never).eq('id', taskId)
+      const { error } = await supabase.from('tasks').update(buildStatusPayload('skipped')).eq('id', taskId)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['all-tasks'] }),
@@ -223,26 +220,41 @@ export function TasksPage() {
     if (stageFilter !== 'all') tasks = tasks.filter(t => t.stage === stageFilter)
 
     const now = new Date()
+    // Helpers — display-status driven so we don't depend on the
+    // post-028 collapsed enum ('pending' covers pending+scheduled+in_progress).
+    const isActive = (t: ClientTask) => {
+      const d = deriveDisplayStatus(t)
+      return d === 'pending' || d === 'scheduled' || d === 'in_progress'
+    }
+    const isTerminal = (t: ClientTask) => {
+      const d = deriveDisplayStatus(t)
+      return d === 'completed' || d === 'skipped' || d === 'cancelled'
+    }
+
     switch (tab) {
       case 'today':
-        return tasks.filter(t => ['pending', 'scheduled'].includes(t.status) && (!t.scheduled_at || isToday(new Date(t.scheduled_at)) || new Date(t.scheduled_at) <= now))
+        return tasks.filter(t => isActive(t) && (!t.scheduled_at || isToday(new Date(t.scheduled_at)) || new Date(t.scheduled_at) <= now))
       case 'overdue':
-        return tasks.filter(t => ['pending', 'scheduled'].includes(t.status) && t.scheduled_at && new Date(t.scheduled_at) < now)
+        return tasks.filter(t => isActive(t) && t.scheduled_at && new Date(t.scheduled_at) < now)
       case 'upcoming':
-        return tasks.filter(t => ['pending', 'scheduled'].includes(t.status) && t.scheduled_at && new Date(t.scheduled_at) > now)
+        return tasks.filter(t => isActive(t) && t.scheduled_at && new Date(t.scheduled_at) > now)
       case 'completed':
-        return tasks.filter(t => ['completed', 'skipped'].includes(t.status))
+        return tasks.filter(t => isTerminal(t))
       default:
         return tasks
     }
   }, [allTasks, tab, agentFilter, stageFilter])
 
-  // KPIs
-  const todayCount = allTasks.filter(t => ['pending', 'scheduled'].includes(t.status) && (!t.scheduled_at || isToday(new Date(t.scheduled_at)) || new Date(t.scheduled_at) <= new Date())).length
-  const overdueCount = allTasks.filter(t => ['pending', 'scheduled'].includes(t.status) && t.scheduled_at && new Date(t.scheduled_at) < new Date()).length
-  const upcomingCount = allTasks.filter(t => ['pending', 'scheduled'].includes(t.status) && t.scheduled_at && new Date(t.scheduled_at) > new Date()).length
-  const completedCount = allTasks.filter(t => t.status === 'completed').length
-  const totalActive = allTasks.filter(t => !['completed', 'skipped', 'cancelled'].includes(t.status)).length
+  // KPIs (same isActive/isTerminal predicates inlined to keep useMemo simple)
+  const isActiveTask = (t: ClientTask) => {
+    const d = deriveDisplayStatus(t)
+    return d === 'pending' || d === 'scheduled' || d === 'in_progress'
+  }
+  const todayCount = allTasks.filter(t => isActiveTask(t) && (!t.scheduled_at || isToday(new Date(t.scheduled_at)) || new Date(t.scheduled_at) <= new Date())).length
+  const overdueCount = allTasks.filter(t => isActiveTask(t) && t.scheduled_at && new Date(t.scheduled_at) < new Date()).length
+  const upcomingCount = allTasks.filter(t => isActiveTask(t) && t.scheduled_at && new Date(t.scheduled_at) > new Date()).length
+  const completedCount = allTasks.filter(t => deriveDisplayStatus(t) === 'completed').length
+  const totalActive = allTasks.filter(t => isActiveTask(t)).length
   const progress = totalActive + completedCount > 0 ? Math.round((completedCount / (totalActive + completedCount)) * 100) : 0
 
   if (isLoading) return <PageSkeleton kpiCount={4} />
@@ -315,26 +327,28 @@ export function TasksPage() {
           )}
 
           {filtered.map(task => {
-            const st = STATUS_MAP[task.status] ?? STATUS_MAP.pending
+            const display = deriveDisplayStatus(task)
+            const meta = DISPLAY_STATUS_META[display]
             const ChannelIcon = CHANNEL_ICONS[task.channel] ?? Zap
-            const isPending = ['pending', 'scheduled'].includes(task.status)
-            const isOverdue = task.scheduled_at && new Date(task.scheduled_at) < new Date() && isPending
+            const isActionable = display === 'pending' || display === 'scheduled' || display === 'in_progress'
+            const isCompleted = display === 'completed'
+            const isOverdue = task.scheduled_at && new Date(task.scheduled_at) < new Date() && isActionable
             const stageInfo = PIPELINE_STAGES[task.stage as keyof typeof PIPELINE_STAGES]
 
             return (
               <div key={task.id}
                 className={`flex items-center gap-3 rounded-xl border p-3.5 transition-all ${
-                  task.status === 'completed' ? 'border-immo-accent-green/20 bg-immo-accent-green/[0.02] opacity-50' :
+                  isCompleted ? 'border-immo-accent-green/20 bg-immo-accent-green/[0.02] opacity-50' :
                   isOverdue ? 'border-immo-status-red/30 bg-immo-status-red/[0.02]' :
                   'border-immo-border-default bg-immo-bg-card hover:border-immo-accent-green/30 hover:shadow-sm'
                 }`}>
                 {/* Checkbox */}
-                <button onClick={() => isPending ? completeTask.mutate(task.id) : null}
+                <button onClick={() => isActionable ? completeTask.mutate(task.id) : null}
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                    task.status === 'completed' ? 'border-immo-accent-green bg-immo-accent-green text-white' :
+                    isCompleted ? 'border-immo-accent-green bg-immo-accent-green text-white' :
                     'border-immo-border-default hover:border-immo-accent-green'
                   }`}>
-                  {task.status === 'completed' && <CheckCircle className="h-3 w-3" />}
+                  {isCompleted && <CheckCircle className="h-3 w-3" />}
                 </button>
 
                 {/* Channel */}
@@ -347,7 +361,7 @@ export function TasksPage() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${task.status === 'completed' ? 'text-immo-text-muted line-through' : 'text-immo-text-primary'}`}>
+                  <p className={`text-sm ${isCompleted ? 'text-immo-text-muted line-through' : 'text-immo-text-primary'}`}>
                     {task.title}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -369,7 +383,7 @@ export function TasksPage() {
                       <span className="text-[10px] text-immo-text-muted">{task.agent.first_name} {task.agent.last_name}</span>
                     )}
                     {/* Time */}
-                    {task.scheduled_at && isPending && (
+                    {task.scheduled_at && isActionable && (
                       <span className={`text-[9px] flex items-center gap-0.5 ${isOverdue ? 'text-immo-status-red font-medium' : 'text-immo-text-muted'}`}>
                         <Clock className="h-2.5 w-2.5" />
                         {isOverdue ? 'En retard — ' : ''}
@@ -385,10 +399,10 @@ export function TasksPage() {
                 {(task.priority === 'high' || task.priority === 'urgent') && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-immo-status-orange" />}
 
                 {/* Status */}
-                <StatusBadge label={st.label} type={st.type} />
+                <StatusBadge label={meta.label} type={meta.color} />
 
                 {/* Actions */}
-                {isPending && (
+                {isActionable && (
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => setDetailTask(task)} title="Apercu"
                       className="rounded-lg border border-immo-border-default px-2.5 py-1.5 text-[10px] font-medium text-immo-text-secondary hover:bg-immo-bg-card-hover transition-colors">

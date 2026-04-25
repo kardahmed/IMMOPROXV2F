@@ -10,27 +10,20 @@ import { StatusBadge } from '@/components/common'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import toast from 'react-hot-toast'
+import { deriveDisplayStatus, DISPLAY_STATUS_META, buildStatusPayload } from '@/lib/taskStatus'
 
 interface ClientTask {
   id: string; title: string; description: string | null; stage: string
   status: string; priority: string; channel: string; scheduled_at: string | null
   executed_at: string | null; completed_at: string | null; message_sent: string | null
   template_id: string | null; bundle_id: string | null
+  auto_cancelled: boolean | null
   created_at: string
 }
 
 interface TaskTemplate {
   id: string; title: string; stage: string; channel: string; message_mode: string
   delay_minutes: number; attached_file_types: string[]
-}
-
-const STATUS_MAP: Record<string, { label: string; type: 'green' | 'orange' | 'blue' | 'muted' | 'red' }> = {
-  pending: { label: 'A faire', type: 'orange' },
-  scheduled: { label: 'Programme', type: 'blue' },
-  in_progress: { label: 'En cours', type: 'blue' },
-  completed: { label: 'Fait', type: 'green' },
-  skipped: { label: 'Ignore', type: 'muted' },
-  cancelled: { label: 'Annule', type: 'red' },
 }
 
 const CHANNEL_ICONS: Record<string, typeof Phone> = { whatsapp: MessageCircle, sms: Mail, call: Phone, email: Mail, system: Zap }
@@ -48,12 +41,12 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
   const qc = useQueryClient()
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending')
 
-  // Client tasks
+  // Client tasks (post-028 unified — reads from `tasks`)
   const { data: tasks = [] } = useQuery({
     queryKey: ['client-tasks', clientId],
     queryFn: async () => {
-      const { data } = await supabase.from('client_tasks').select('*').eq('client_id', clientId).order('created_at')
-      return (data ?? []) as ClientTask[]
+      const { data } = await supabase.from('tasks').select('*').eq('client_id', clientId).is('deleted_at', null).order('created_at')
+      return (data ?? []) as unknown as ClientTask[]
     },
   })
 
@@ -66,20 +59,23 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
 
       if (!templates || templates.length === 0) { toast.error('Aucun template actif pour cette étape'); return }
 
+      // Status is always 'pending' (enum); UI derives "Programmé" from
+      // scheduled_at > now() when delay_minutes > 0.
       const newTasks = (templates as TaskTemplate[]).map(t => ({
         tenant_id: tenantId,
         client_id: clientId,
         template_id: t.id,
         title: t.title,
         stage: t.stage,
-        status: t.delay_minutes === 0 ? 'pending' : 'scheduled',
+        type: 'manual' as const,
+        status: 'pending' as const,
         priority: 'medium',
         channel: t.channel,
         agent_id: userId,
         scheduled_at: t.delay_minutes > 0 ? new Date(Date.now() + t.delay_minutes * 60000).toISOString() : null,
       }))
 
-      const { error } = await supabase.from('client_tasks').insert(newTasks as never)
+      const { error } = await supabase.from('tasks').insert(newTasks)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['client-tasks', clientId] }); toast.success('Tâches générées') },
@@ -87,9 +83,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
 
   const completeTask = useMutation({
     mutationFn: async (taskId: string) => {
-      const { error } = await supabase.from('client_tasks').update({
-        status: 'completed', completed_at: new Date().toISOString(), executed_at: new Date().toISOString(),
-      } as never).eq('id', taskId)
+      const { error } = await supabase.from('tasks').update(buildStatusPayload('completed')).eq('id', taskId)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['client-tasks', clientId] }); toast.success('Tâche terminée') },
@@ -97,7 +91,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
 
   const skipTask = useMutation({
     mutationFn: async (taskId: string) => {
-      const { error } = await supabase.from('client_tasks').update({ status: 'skipped' } as never).eq('id', taskId)
+      const { error } = await supabase.from('tasks').update(buildStatusPayload('skipped')).eq('id', taskId)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['client-tasks', clientId] }),
@@ -129,13 +123,17 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
     } as never)
   }
 
-  const filtered = tasks.filter(t =>
-    filter === 'all' ? true :
-    filter === 'pending' ? ['pending', 'scheduled', 'in_progress'].includes(t.status) :
-    ['completed', 'skipped'].includes(t.status)
-  )
+  const filtered = tasks.filter(t => {
+    const display = deriveDisplayStatus(t)
+    if (filter === 'all') return true
+    if (filter === 'pending') return display === 'pending' || display === 'scheduled' || display === 'in_progress'
+    return display === 'completed' || display === 'skipped' || display === 'cancelled'
+  })
 
-  const pendingCount = tasks.filter(t => ['pending', 'scheduled'].includes(t.status)).length
+  const pendingCount = tasks.filter(t => {
+    const d = deriveDisplayStatus(t)
+    return d === 'pending' || d === 'scheduled' || d === 'in_progress'
+  }).length
   const completedCount = tasks.filter(t => t.status === 'completed').length
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
 
@@ -181,25 +179,27 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
       ) : (
         <div className="space-y-2">
           {filtered.map(task => {
-            const st = STATUS_MAP[task.status] ?? STATUS_MAP.pending
+            const display = deriveDisplayStatus(task)
+            const meta = DISPLAY_STATUS_META[display]
             const ChannelIcon = CHANNEL_ICONS[task.channel] ?? Zap
-            const isPending = ['pending', 'scheduled'].includes(task.status)
-            const isOverdue = task.scheduled_at && new Date(task.scheduled_at) < new Date() && isPending
+            const isActionable = display === 'pending' || display === 'scheduled' || display === 'in_progress'
+            const isCompleted = display === 'completed'
+            const isOverdue = task.scheduled_at && new Date(task.scheduled_at) < new Date() && isActionable
 
             return (
               <div key={task.id}
                 className={`flex items-center gap-3 rounded-lg border p-3 transition-all ${
-                  task.status === 'completed' ? 'border-immo-accent-green/20 bg-immo-accent-green/5 opacity-60' :
+                  isCompleted ? 'border-immo-accent-green/20 bg-immo-accent-green/5 opacity-60' :
                   isOverdue ? 'border-immo-status-red/30 bg-immo-status-red/5' :
                   'border-immo-border-default hover:border-immo-accent-green/30'
                 }`}>
                 {/* Status checkbox */}
-                <button onClick={() => isPending ? completeTask.mutate(task.id) : null}
+                <button onClick={() => isActionable ? completeTask.mutate(task.id) : null}
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                    task.status === 'completed' ? 'border-immo-accent-green bg-immo-accent-green text-white' :
+                    isCompleted ? 'border-immo-accent-green bg-immo-accent-green text-white' :
                     'border-immo-border-default hover:border-immo-accent-green'
                   }`}>
-                  {task.status === 'completed' && <CheckCircle className="h-3 w-3" />}
+                  {isCompleted && <CheckCircle className="h-3 w-3" />}
                 </button>
 
                 {/* Channel icon */}
@@ -211,11 +211,11 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-medium ${task.status === 'completed' ? 'text-immo-text-muted line-through' : 'text-immo-text-primary'}`}>
+                  <p className={`text-xs font-medium ${isCompleted ? 'text-immo-text-muted line-through' : 'text-immo-text-primary'}`}>
                     {task.title}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    {task.scheduled_at && isPending && (
+                    {task.scheduled_at && isActionable && (
                       <span className={`text-[9px] flex items-center gap-0.5 ${isOverdue ? 'text-immo-status-red font-medium' : 'text-immo-text-muted'}`}>
                         <Clock className="h-2.5 w-2.5" />
                         {isOverdue ? 'En retard — ' : ''}{formatDistanceToNow(new Date(task.scheduled_at), { addSuffix: true, locale: fr })}
@@ -233,10 +233,10 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
                 ) : null}
 
                 {/* Status badge */}
-                <StatusBadge label={st.label} type={st.type} />
+                <StatusBadge label={meta.label} type={meta.color} />
 
                 {/* Actions */}
-                {isPending && (
+                {isActionable && (
                   <div className="flex gap-1 shrink-0">
                     {task.channel !== 'system' && (
                       <button onClick={() => executeTask(task)} aria-label="Executer la tache" title="Executer"

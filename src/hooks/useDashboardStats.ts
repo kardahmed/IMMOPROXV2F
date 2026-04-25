@@ -135,8 +135,9 @@ export function useDashboardStats() {
         supabase.from('payment_schedules').select('amount').eq('tenant_id', tenantId).eq('status', 'late'),
         // New: today's visits
         supabase.from('visits').select('id, scheduled_at, status, clients(full_name), users!visits_agent_id_fkey(first_name, last_name), projects(name)').eq('tenant_id', tenantId).gte('scheduled_at', today).lte('scheduled_at', today + 'T23:59:59').order('scheduled_at'),
-        // New: tasks
-        supabase.from('client_tasks').select('id, status, scheduled_at').eq('tenant_id', tenantId).in('status', ['pending', 'scheduled']),
+        // New: tasks (post-028 unified — status is always 'pending' for
+        // both pending+scheduled, scheduled_at distinguishes them)
+        supabase.from('tasks').select('id, status, scheduled_at').eq('tenant_id', tenantId).eq('status', 'pending').is('deleted_at', null),
         // New: all sales for monthly chart
         supabase.from('sales').select('final_price, created_at').eq('tenant_id', tenantId).eq('status', 'active').gte('created_at', new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString()),
       ])

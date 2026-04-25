@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       supabase.from('visits').select('scheduled_at, status, visit_type, notes, projects(name)').eq('client_id', client_id).order('scheduled_at', { ascending: false }).limit(5),
       supabase.from('reservations').select('status, deposit_amount, expires_at, duration_days, units(code, type, subtype, price, surface, floor, projects(name))').eq('client_id', client_id).limit(3),
       supabase.from('sales').select('final_price, financing_mode, status, units(code, type, price)').eq('client_id', client_id).limit(3),
-      supabase.from('client_tasks').select('title, status, channel, client_response, completed_at').eq('client_id', client_id).order('created_at', { ascending: false }).limit(10),
+      supabase.from('tasks').select('title, status, channel, client_response, completed_at').eq('client_id', client_id).is('deleted_at', null).order('created_at', { ascending: false }).limit(10),
       supabase.from('call_responses').select('responses, result, duration_seconds, ai_summary, created_at').eq('client_id', client_id).order('created_at', { ascending: false }).limit(5),
       supabase.from('payment_schedules').select('description, amount, due_date, status').eq('sale_id', client_id).order('due_date').limit(10),
     ])

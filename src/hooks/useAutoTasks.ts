@@ -10,6 +10,10 @@ interface TaskTemplate {
 /**
  * Hook to auto-generate tasks when a client changes pipeline stage.
  * Also cancels pending tasks from the previous stage.
+ *
+ * Post-028 unified model: writes to `tasks` (not `client_tasks`).
+ * Status uses the 3-value enum + auto_cancelled boolean for the
+ * cancelled-by-system distinction.
  */
 export function useAutoTasks() {
   const tenantId = useAuthStore(s => s.tenantId)
@@ -20,21 +24,21 @@ export function useAutoTasks() {
     mutationFn: async ({ clientId, newStage, oldStage }: { clientId: string; newStage: string; oldStage?: string }) => {
       if (!tenantId || !userId) return
 
-      // 1. Cancel pending tasks from old stage
+      // 1. Cancel pending tasks from old stage (status=ignored + auto_cancelled flag)
       if (oldStage && oldStage !== newStage) {
-        await supabase.from('client_tasks')
-          .update({ status: 'cancelled', auto_cancelled: true } as never)
+        await supabase.from('tasks')
+          .update({ status: 'ignored', auto_cancelled: true })
           .eq('client_id', clientId)
           .eq('stage', oldStage)
-          .in('status', ['pending', 'scheduled'])
+          .eq('status', 'pending')
       }
 
-      // 2. Check if tasks already exist for new stage
-      const { count } = await supabase.from('client_tasks')
+      // 2. Check if non-cancelled tasks already exist for new stage
+      const { count } = await supabase.from('tasks')
         .select('id', { count: 'exact', head: true })
         .eq('client_id', clientId)
         .eq('stage', newStage)
-        .not('status', 'eq', 'cancelled')
+        .or('status.neq.ignored,auto_cancelled.eq.false')
 
       if ((count ?? 0) > 0) return // Already has tasks for this stage
 
@@ -48,7 +52,8 @@ export function useAutoTasks() {
 
       if (!templates || templates.length === 0) return
 
-      // 4. Create tasks
+      // 4. Create tasks — status is always 'pending'; the UI derives
+      // "Programmé" from scheduled_at > now() when delay_minutes > 0.
       const newTasks = (templates as TaskTemplate[]).map(t => ({
         tenant_id: tenantId,
         client_id: clientId,
@@ -56,18 +61,20 @@ export function useAutoTasks() {
         bundle_id: t.bundle_id,
         title: t.title,
         stage: t.stage,
-        status: t.delay_minutes === 0 ? 'pending' as const : 'scheduled' as const,
+        type: 'manual' as const,
+        status: 'pending' as const,
         priority: t.priority,
         channel: t.channel,
         agent_id: userId,
         scheduled_at: t.delay_minutes > 0 ? new Date(Date.now() + t.delay_minutes * 60000).toISOString() : null,
       }))
 
-      await supabase.from('client_tasks').insert(newTasks as never)
+      await supabase.from('tasks').insert(newTasks)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['client-tasks'] })
       qc.invalidateQueries({ queryKey: ['all-tasks'] })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
     },
   })
 
