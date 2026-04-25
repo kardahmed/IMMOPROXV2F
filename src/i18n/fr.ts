@@ -12,8 +12,22 @@ export const fr = {
     landing: 'Pages capture',
     reports: 'Rapports',
     tasks: 'Tâches',
+    inbox: 'Messages',
     marketing_roi: 'ROI Marketing',
     settings: 'Paramètres',
+  },
+
+  // Inbox WhatsApp
+  inbox: {
+    title: 'Messages WhatsApp',
+    subtitle: '{{count}} conversation(s)',
+    empty_subtitle: 'Aucun message pour le moment',
+    empty_list: 'Aucune conversation',
+    no_preview: 'Pas de message',
+    unknown_sender: 'Expéditeur inconnu',
+    select_conversation: 'Sélectionnez une conversation',
+    select_conversation_hint: 'Choisissez un client à gauche pour voir ses messages',
+    send_disabled: 'Envoi rapide bientôt disponible',
   },
 
   // Page meta
