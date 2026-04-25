@@ -821,137 +821,6 @@ export type Database = {
           },
         ]
       }
-      client_tasks: {
-        Row: {
-          agent_id: string | null
-          auto_cancelled: boolean | null
-          bundle_id: string | null
-          channel: string | null
-          channel_used: string | null
-          client_id: string
-          client_response: string | null
-          completed_at: string | null
-          created_at: string | null
-          description: string | null
-          executed_at: string | null
-          id: string
-          is_recurring: boolean | null
-          message_sent: string | null
-          priority: string | null
-          recurrence_days: number | null
-          reminder_at: string | null
-          response: string | null
-          scheduled_at: string | null
-          stage: string | null
-          status: string | null
-          template_id: string | null
-          tenant_id: string
-          title: string
-        }
-        Insert: {
-          agent_id?: string | null
-          auto_cancelled?: boolean | null
-          bundle_id?: string | null
-          channel?: string | null
-          channel_used?: string | null
-          client_id: string
-          client_response?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          description?: string | null
-          executed_at?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          message_sent?: string | null
-          priority?: string | null
-          recurrence_days?: number | null
-          reminder_at?: string | null
-          response?: string | null
-          scheduled_at?: string | null
-          stage?: string | null
-          status?: string | null
-          template_id?: string | null
-          tenant_id: string
-          title: string
-        }
-        Update: {
-          agent_id?: string | null
-          auto_cancelled?: boolean | null
-          bundle_id?: string | null
-          channel?: string | null
-          channel_used?: string | null
-          client_id?: string
-          client_response?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          description?: string | null
-          executed_at?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          message_sent?: string | null
-          priority?: string | null
-          recurrence_days?: number | null
-          reminder_at?: string | null
-          response?: string | null
-          scheduled_at?: string | null
-          stage?: string | null
-          status?: string | null
-          template_id?: string | null
-          tenant_id?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_tasks_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "client_tasks_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "client_tasks_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "client_tasks_bundle_id_fkey"
-            columns: ["bundle_id"]
-            isOneToOne: false
-            referencedRelation: "task_bundles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "client_tasks_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "client_tasks_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "task_templates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "client_tasks_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       clients: {
         Row: {
           address: string | null
@@ -4051,13 +3920,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sent_messages_log_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "client_tasks"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sent_messages_log_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -4450,17 +4312,34 @@ export type Database = {
         Row: {
           agent_id: string | null
           assigned_to: string | null
+          auto_cancelled: boolean
           automation_metadata: Json
           automation_type: string | null
+          bundle_id: string | null
+          channel: string | null
+          channel_used: string | null
           client_id: string
+          client_response: string | null
+          completed_at: string | null
           created_at: string | null
           deleted_at: string | null
           deleted_by: string | null
+          description: string | null
           due_at: string | null
           due_date: string | null
+          executed_at: string | null
           id: string
+          is_recurring: boolean
+          message_sent: string | null
+          priority: string | null
+          recurrence_days: number | null
+          reminder_at: string | null
+          response: string | null
+          scheduled_at: string | null
+          stage: string | null
           status: Database["public"]["Enums"]["task_status"]
           task_type: string | null
+          template_id: string | null
           template_name: string | null
           template_params: Json | null
           tenant_id: string
@@ -4471,17 +4350,34 @@ export type Database = {
         Insert: {
           agent_id?: string | null
           assigned_to?: string | null
+          auto_cancelled?: boolean
           automation_metadata?: Json
           automation_type?: string | null
+          bundle_id?: string | null
+          channel?: string | null
+          channel_used?: string | null
           client_id: string
+          client_response?: string | null
+          completed_at?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          description?: string | null
           due_at?: string | null
           due_date?: string | null
+          executed_at?: string | null
           id?: string
+          is_recurring?: boolean
+          message_sent?: string | null
+          priority?: string | null
+          recurrence_days?: number | null
+          reminder_at?: string | null
+          response?: string | null
+          scheduled_at?: string | null
+          stage?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           task_type?: string | null
+          template_id?: string | null
           template_name?: string | null
           template_params?: Json | null
           tenant_id: string
@@ -4492,17 +4388,34 @@ export type Database = {
         Update: {
           agent_id?: string | null
           assigned_to?: string | null
+          auto_cancelled?: boolean
           automation_metadata?: Json
           automation_type?: string | null
+          bundle_id?: string | null
+          channel?: string | null
+          channel_used?: string | null
           client_id?: string
+          client_response?: string | null
+          completed_at?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          description?: string | null
           due_at?: string | null
           due_date?: string | null
+          executed_at?: string | null
           id?: string
+          is_recurring?: boolean
+          message_sent?: string | null
+          priority?: string | null
+          recurrence_days?: number | null
+          reminder_at?: string | null
+          response?: string | null
+          scheduled_at?: string | null
+          stage?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           task_type?: string | null
+          template_id?: string | null
           template_name?: string | null
           template_params?: Json | null
           tenant_id?: string
@@ -4533,10 +4446,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tasks_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "task_bundles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
             referencedColumns: ["id"]
           },
           {
