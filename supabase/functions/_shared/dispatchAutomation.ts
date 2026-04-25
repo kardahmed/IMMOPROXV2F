@@ -55,11 +55,12 @@
 //   { path: 'skipped', reason: 'duplicate' | 'missing_phone' }
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkPlanFeature } from './checkPlanFeature.ts'
 
 export type DispatchResult =
   | { path: 'whatsapp'; messageId: string | null }
   | { path: 'task'; taskId: string }
-  | { path: 'skipped'; reason: 'duplicate' | 'missing_phone' | 'quota_exceeded' | 'whatsapp_error'; details?: string }
+  | { path: 'skipped'; reason: 'duplicate' | 'missing_phone' | 'quota_exceeded' | 'whatsapp_error' | 'feature_disabled'; details?: string }
 
 export type DispatchInput = {
   supabase: SupabaseClient
@@ -103,18 +104,44 @@ export async function dispatchAutomation(input: DispatchInput): Promise<Dispatch
     return { path: 'skipped', reason: 'duplicate' }
   }
 
-  // --- Check if tenant has active WhatsApp ---
-  const { data: wa } = await supabase
-    .from('whatsapp_accounts')
-    .select('phone_number_id, access_token, messages_sent, monthly_quota')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-    .maybeSingle()
+  // --- Plan feature preflight ---
+  // Without this, a tenant whose plan/settings disallow whatsapp would
+  // still trigger an HTTP round-trip to send-whatsapp, get a 403, then
+  // fall back to a task with reason="whatsapp_error" — confusing the
+  // agent and polluting cron logs. Check both gates upfront so we
+  // route to the right path immediately.
+  const [whatsappCheck, autoTasksCheck] = await Promise.all([
+    checkPlanFeature(supabase, tenantId, 'whatsapp'),
+    checkPlanFeature(supabase, tenantId, 'auto_tasks'),
+  ])
 
-  const whatsappAvailable = wa
-    && wa.phone_number_id
-    && wa.access_token
-    && (wa.messages_sent ?? 0) < (wa.monthly_quota ?? 0)
+  // If neither path is allowed, the tenant has explicitly opted out of
+  // automation. Don't create tasks, don't try to send. Cron is a no-op.
+  if (!whatsappCheck.allowed && !autoTasksCheck.allowed) {
+    return {
+      path: 'skipped',
+      reason: 'feature_disabled',
+      details: `whatsapp=${whatsappCheck.reason ?? 'ok'}, auto_tasks=${autoTasksCheck.reason ?? 'ok'}`,
+    }
+  }
+
+  // --- Check if tenant has active WhatsApp (only matters when allowed) ---
+  let whatsappAvailable = false
+  let wa: { phone_number_id: string | null; access_token: string | null; messages_sent: number | null; monthly_quota: number | null } | null = null
+
+  if (whatsappCheck.allowed) {
+    const { data } = await supabase
+      .from('whatsapp_accounts')
+      .select('phone_number_id, access_token, messages_sent, monthly_quota')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .maybeSingle()
+    wa = data as typeof wa
+    whatsappAvailable = !!(wa
+      && wa.phone_number_id
+      && wa.access_token
+      && (wa.messages_sent ?? 0) < (wa.monthly_quota ?? 0))
+  }
 
   // --- Path A: send via WhatsApp ---
   if (whatsappAvailable) {
@@ -135,8 +162,12 @@ export async function dispatchAutomation(input: DispatchInput): Promise<Dispatch
       if (error) {
         // WhatsApp send failed (network, quota, template not approved…).
         // Fall through to the task path so the agent at least sees the
-        // nudge and can handle it manually.
+        // nudge and can handle it manually — but only if auto_tasks is
+        // allowed for this tenant. Otherwise we skip entirely.
         console.error('[dispatchAutomation] send-whatsapp failed, falling back to task:', error.message)
+        if (!autoTasksCheck.allowed) {
+          return { path: 'skipped', reason: 'whatsapp_error', details: error.message }
+        }
         return await insertTask({
           supabase, tenantId, clientId, agentId,
           templateName, templateParams,
@@ -150,6 +181,9 @@ export async function dispatchAutomation(input: DispatchInput): Promise<Dispatch
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[dispatchAutomation] send-whatsapp threw:', msg)
+      if (!autoTasksCheck.allowed) {
+        return { path: 'skipped', reason: 'whatsapp_error', details: msg }
+      }
       return await insertTask({
         supabase, tenantId, clientId, agentId,
         templateName, templateParams,
@@ -160,7 +194,14 @@ export async function dispatchAutomation(input: DispatchInput): Promise<Dispatch
     }
   }
 
-  // --- Path B: fall back to task ---
+  // --- Path B: fall back to task (only if auto_tasks is allowed) ---
+  if (!autoTasksCheck.allowed) {
+    return {
+      path: 'skipped',
+      reason: 'feature_disabled',
+      details: `auto_tasks=${autoTasksCheck.reason ?? 'ok'}, whatsapp_unavailable`,
+    }
+  }
   return await insertTask({
     supabase, tenantId, clientId, agentId,
     templateName, templateParams,
