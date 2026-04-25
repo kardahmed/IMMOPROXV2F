@@ -293,6 +293,101 @@ leave a half-built feature without a note here.
 
 ---
 
+## 🎯 MVP closure plan — features bloquantes avant d'arrêter le dev produit
+
+Tout ce qui doit être livré pour passer en mode go-to-market. Les
+items A → C sont nouveaux ; D → I sont les anciens "Next up"
+ré-ordonnés. Effort total estimé : **~5 jours de dev** pour A+B+C,
+le reste dépend de Meta.
+
+### A. Webhook entrant WhatsApp (~1 jour)
+**But** : capter les réponses des clients pour alimenter l'automation
+et le score d'engagement. Pas d'UI inbox dans le CRM — les agents
+continuent à lire leurs conversations dans WhatsApp Business app/web.
+
+- Edge Function `whatsapp-webhook` (vérification Meta + endpoint POST)
+- Insert dans `whatsapp_messages` avec `direction='inbound'`
+- Match `from_phone` → `clients.phone` (jointure tenant-scoped)
+- Si pas de match : insertion avec `client_id=NULL` + log pour debug
+- Configuration côté Meta (webhook URL + verify token + abonnement
+  aux événements `messages` + `message_status`)
+
+### B. Idée #1 — boucle tâche ↔ réalité (~2 jours)
+**But** : que le statut des tâches reflète la réalité automatiquement.
+Dépend de A.
+
+- Bouton "Envoyer via CRM" sur chaque tâche WhatsApp → appelle
+  `send-whatsapp` + écrit `executed_at = now()` sur la tâche
+- Handler dans le webhook (A) : si une tâche du même client est
+  `pending` + `executed_at IS NOT NULL` + `auto_cancelled IS NOT TRUE`
+  → flip `status='done'` + `completed_at = now()` + insertion history
+- Cron `tasks_no_reply_48h` (toutes les heures) : pour chaque tâche
+  `executed_at` > 48h, sans réponse client entre-temps → crée une
+  tâche de relance + suggère un autre canal (`channel='call'` si
+  WhatsApp non répondu)
+
+### C. Idée #2 — score engagement, version SIMPLE (~2 jours)
+**But** : pastille couleur sur la liste pipeline pour voir au coup
+d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
+
+- Migration : `clients.engagement_score INT DEFAULT 50`
+  + `engagement_updated_at TIMESTAMPTZ`
+- Edge Function `recompute-engagement` (cron toutes les 6h) calcule :
+  - +20 si réponse WhatsApp dans les 24h après envoi
+  - +15 si visite réalisée (pas no-show)
+  - −20 si no-show ou délai >7j sans interaction
+  - −10 si tâche `auto_cancelled=true` (relance ignorée)
+  - decay : −5/semaine sans aucun contact
+- UI : pastille couleur (rouge <30, orange 30-60, vert >60) dans
+  `TableView.tsx` (pipeline) + détail client
+- Note : la version **smart** (ML, comparaison historique, prédiction
+  de signature) est en backlog 💭 — à reconsidérer après ~3 mois
+  d'usage prod quand on a la data pour calibrer.
+
+### D. Wire 3 crons à dispatchAutomation
+*(déjà documenté ci-dessous dans "Next up #1" — débloqué dès Meta
+approuve les 10 templates)*
+
+### E. UI badge + deeplink auto-tasks
+*(déjà "Next up #2" — dépend de D)*
+
+### F. Meta App Review submission
+*(déjà "Next up #3" — externe, attend SIM dédiée)*
+
+### G. Embedded Signup tenant-side
+*(déjà "Next up #4" — dépend de F)*
+
+### H. Pricing + billing page
+*(déjà "Next up #5")*
+
+### I. CI fix
+*(déjà "Next up #6" — non-bloquant)*
+
+---
+
+## 🏁 Definition of Done — critères pour dire "on arrête le dev"
+
+Quand tous ces critères sont 🟢, on passe en mode go-to-market et le
+dev produit s'arrête (sauf bug fixes) :
+
+- [ ] **1 tenant Pro live** avec WhatsApp connecté via Embedded Signup
+      et utilisé quotidiennement
+- [ ] **Webhook entrant fonctionnel** : ≥10 réponses clients capturées
+      automatiquement dans `whatsapp_messages` direction=inbound sur 7j
+- [ ] **Auto-close des tâches** : ≥5 tâches passées de pending → done
+      automatiquement via réponse client (sans clic agent) sur 7j
+- [ ] **Score engagement** : valeur recalculée pour 100% des clients
+      actifs, affichée dans `TableView`, ≥1 agent l'utilise comme
+      filtre de tri
+- [ ] **3 crons WhatsApp opérationnels** (`check-reminders`,
+      `check-payments`, `check-reservations`) avec ≥3 dispatches
+      réussis chacun
+- [ ] **0 bug critique ouvert** (pas de bloquant, pas de data loss)
+- [ ] **ROADMAP 🚧 In progress vide**, 🧩 Partial vide ou converti
+      en 🚫 Deferred avec justification
+
+---
+
 ## 🔜 Next up (prioritized)
 
 ### 1. Wire the 3 crons to dispatchAutomation (unblocked once templates approved)
@@ -349,6 +444,23 @@ a runner (e.g. a pre-merge check that runs locally via a git hook).
 
 ## 💭 Backlog (nice-to-haves, unsorted)
 
+- **Smart engagement score (ML version)** — successor to the simple
+  rule-based score from MVP closure plan section C. Compares the live
+  client's signal pattern against historical clients who signed vs
+  churned, weights signals dynamically per tenant, predicts probability
+  of signature. Needs ~3 months of prod data to calibrate. Effort:
+  ~1-2 weeks once data is there. Reconsider only after the simple score
+  is shipped and used.
+- **CRM-side WhatsApp inbox UI** — currently agents read replies
+  directly in WhatsApp Business app/web (their existing habit). If
+  multi-agent on same WABA becomes a need, build a per-client
+  conversation view in the CRM that mirrors `whatsapp_messages`. Not a
+  priority while solo agents handle their own number.
+- **Sequence builder** (idea #3 from the 25-Apr-2026 brainstorm) —
+  drag-drop UI for tenants to define multi-step automation flows
+  ("J+0 WhatsApp, J+1 SMS si pas de réponse, J+3 appel, J+7 marquer
+  froid"). Effort: ~2-3 days. Deferred until A/B/C from MVP closure
+  plan are in production and we see real friction.
 - **Email drip** when a lead doesn't complete step 2 within 24h
 - **Tenant onboarding tour** after first login (once 3-5 tenants are live
   and we see the confusion points)
