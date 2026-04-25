@@ -72,7 +72,7 @@ export function useAutoTasks() {
       await supabase.from('tasks').insert(newTasks)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['client-tasks'] })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
       qc.invalidateQueries({ queryKey: ['all-tasks'] })
       qc.invalidateQueries({ queryKey: ['tasks'] })
     },

@@ -43,7 +43,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
 
   // Client tasks (post-028 unified — reads from `tasks`)
   const { data: tasks = [] } = useQuery({
-    queryKey: ['client-tasks', clientId],
+    queryKey: ['tasks', clientId],
     queryFn: async () => {
       const { data } = await supabase.from('tasks').select('*').eq('client_id', clientId).is('deleted_at', null).order('created_at')
       return (data ?? []) as unknown as ClientTask[]
@@ -78,7 +78,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
       const { error } = await supabase.from('tasks').insert(newTasks)
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['client-tasks', clientId] }); toast.success('Tâches générées') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', clientId] }); toast.success('Tâches générées') },
   })
 
   const completeTask = useMutation({
@@ -86,7 +86,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
       const { error } = await supabase.from('tasks').update(buildStatusPayload('completed')).eq('id', taskId)
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['client-tasks', clientId] }); toast.success('Tâche terminée') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', clientId] }); toast.success('Tâche terminée') },
   })
 
   const skipTask = useMutation({
@@ -94,7 +94,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
       const { error } = await supabase.from('tasks').update(buildStatusPayload('skipped')).eq('id', taskId)
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['client-tasks', clientId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', clientId] }),
   })
 
   // Execute task: open WhatsApp / SMS with pre-written message
