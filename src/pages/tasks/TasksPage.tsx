@@ -17,7 +17,7 @@ import { fr } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import { TaskConfigSection } from '@/pages/settings/sections/TaskConfigSection'
 import { TaskDetailModal } from './components/TaskDetailModal'
-import { deriveDisplayStatus, DISPLAY_STATUS_META, buildStatusPayload, type TaskDisplayStatus } from '@/lib/taskStatus'
+import { deriveDisplayStatus, DISPLAY_STATUS_META, buildStatusPayload } from '@/lib/taskStatus'
 
 interface ClientTask {
   id: string; title: string; stage: string; status: string; priority: string

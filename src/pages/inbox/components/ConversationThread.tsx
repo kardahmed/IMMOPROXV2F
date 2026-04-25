@@ -74,7 +74,7 @@ export function ConversationThread({ conversation }: Props) {
     )
   }
 
-  const label = conversation.client?.full_name ?? `+${conversation.phone}` ?? t('inbox.unknown_sender')
+  const label = conversation.client?.full_name ?? (conversation.phone ? `+${conversation.phone}` : t('inbox.unknown_sender'))
   const phone = conversation.phone ? (conversation.phone.startsWith('+') ? conversation.phone : `+${conversation.phone}`) : ''
 
   return (

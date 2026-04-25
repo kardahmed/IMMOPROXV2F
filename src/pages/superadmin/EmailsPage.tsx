@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Mail, Send, Eye, Search, CheckCircle, XCircle, Clock, FileText, TestTube } from 'lucide-react'
-import { useEmailLogs, useSendTestEmail } from '@/hooks/useEmailLogs'
+import { useEmailLogs, useSendTestEmail, type EmailLog } from '@/hooks/useEmailLogs'
 import { Card, LoadingSpinner, PageHeader, StatusBadge } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
@@ -105,9 +105,9 @@ export function EmailsPage() {
     if (!search) return logs
     const s = search.toLowerCase()
     return logs.filter(l =>
-      l.recipient.toLowerCase().includes(s) ||
+      l.to_email.toLowerCase().includes(s) ||
       l.subject.toLowerCase().includes(s) ||
-      (l.template ?? '').toLowerCase().includes(s)
+      (l.template_slug ?? '').toLowerCase().includes(s)
     )
   }, [logs, search])
 
@@ -214,7 +214,7 @@ function LogsTab({
   statusFilter,
   onStatusFilterChange,
 }: {
-  logs: Array<{ id: string; recipient: string; subject: string; template: string | null; status: string; provider: string | null; created_at: string }>
+  logs: EmailLog[]
   isLoading: boolean
   search: string
   onSearchChange: (v: string) => void
@@ -284,14 +284,15 @@ function LogsTab({
             </thead>
             <tbody>
               {logs.map(log => {
-                const statusConf = STATUS_CONFIG[log.status] ?? { label: log.status, type: 'muted' as const }
-                const templateMeta = TEMPLATE_META.find(t => t.id === log.template)
+                const statusKey = log.status ?? 'unknown'
+                const statusConf = STATUS_CONFIG[statusKey] ?? { label: statusKey, type: 'muted' as const }
+                const templateMeta = TEMPLATE_META.find(t => t.id === log.template_slug)
                 return (
                   <tr key={log.id} className="border-b border-immo-border-default/50 hover:bg-immo-bg-primary/30">
                     <td className="px-4 py-3 text-immo-text-muted whitespace-nowrap">
-                      {format(new Date(log.created_at), 'dd/MM/yy HH:mm')}
+                      {log.created_at ? format(new Date(log.created_at), 'dd/MM/yy HH:mm') : '—'}
                     </td>
-                    <td className="px-4 py-3 text-immo-text-primary font-medium">{log.recipient}</td>
+                    <td className="px-4 py-3 text-immo-text-primary font-medium">{log.to_email}</td>
                     <td className="px-4 py-3 text-immo-text-primary max-w-[300px] truncate">{log.subject}</td>
                     <td className="px-4 py-3">
                       {templateMeta ? (
@@ -305,7 +306,7 @@ function LogsTab({
                     <td className="px-4 py-3">
                       <StatusBadge label={statusConf.label} type={statusConf.type} />
                     </td>
-                    <td className="px-4 py-3 text-immo-text-muted text-xs">{log.provider ?? '—'}</td>
+                    <td className="px-4 py-3 text-immo-text-muted text-xs">{log.error_message ?? '—'}</td>
                   </tr>
                 )
               })}

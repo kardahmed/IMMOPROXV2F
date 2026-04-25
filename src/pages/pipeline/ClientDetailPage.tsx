@@ -372,7 +372,7 @@ export function ClientDetailPage() {
               {/* Col 3: Admin */}
               <div className="space-y-3">
                 <InfoField label="Agent assigné" value={agentName} />
-                <InfoField label="Date création" value={format(new Date(client.created_at), 'dd/MM/yyyy HH:mm')} />
+                <InfoField label="Date création" value={client.created_at ? format(new Date(client.created_at), 'dd/MM/yyyy HH:mm') : '—'} />
                 <InfoField label="CIN vérifié" value={client.cin_verified ? 'Oui' : 'Non'} badge badgeColor={client.cin_verified ? '#00D4A0' : '#FF4949'} />
                 <InfoField label="Notes" value={client.notes} />
                 <InfoField label="Profession" value={client.profession} />

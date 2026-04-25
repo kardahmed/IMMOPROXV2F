@@ -101,7 +101,7 @@ export function PipelinePage() {
       const m = new Map<string, number>()
       for (const c of clients) {
         const ref = latest.get(c.id) ?? c.created_at
-        m.set(c.id, Math.floor((Date.now() - new Date(ref).getTime()) / 86400000))
+        m.set(c.id, Math.floor((Date.now() - new Date(ref ?? 0).getTime()) / 86400000))
       }
       return m
     },

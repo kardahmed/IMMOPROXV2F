@@ -19,9 +19,9 @@ interface ClientInfo {
   confirmed_budget: number | null
   desired_unit_types: string[] | null
   interested_projects: string[] | null
-  interest_level: string
+  interest_level: string | null
   pipeline_stage: PipelineStage
-  tenant_id: string
+  tenant_id: string | null
 }
 
 interface AvailableUnit {
@@ -75,7 +75,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
       const { data } = await supabase
         .from('units')
         .select('id, code, type, subtype, building, floor, surface, price, delivery_date, project_id, projects(name)')
-        .eq('tenant_id', client!.tenant_id)
+        .eq('tenant_id', client!.tenant_id!)
         .eq('status', 'available')
         .order('code')
       return (data ?? []).map((u: Record<string, unknown>) => ({
@@ -90,7 +90,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
   const { data: projects = [] } = useQuery({
     queryKey: ['ai-projects', client?.tenant_id],
     queryFn: async () => {
-      const { data } = await supabase.from('projects').select('id, name').eq('tenant_id', client!.tenant_id).eq('status', 'active')
+      const { data } = await supabase.from('projects').select('id, name').eq('tenant_id', client!.tenant_id!).eq('status', 'active')
       return (data ?? []) as Array<{ id: string; name: string }>
     },
     enabled: !!client?.tenant_id && isOpen,
