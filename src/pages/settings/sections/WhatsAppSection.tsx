@@ -20,19 +20,19 @@ export function WhatsAppSection() {
   const { data: planInfo } = useQuery({
     queryKey: ['wa-plan-info', tenantId],
     queryFn: async () => {
-      const { data: tenant } = await supabase.from('tenants').select('plan' as never).eq('id', tenantId!).single()
-      const plan = (tenant as unknown as { plan: string } | null)?.plan ?? 'free'
+      const { data: tenant } = await supabase.from('tenants').select('plan').eq('id', tenantId!).single()
+      const plan = tenant?.plan ?? 'free'
       const { data: limits } = await supabase
         .from('plan_limits')
         .select('features, max_whatsapp_messages')
         .eq('plan', plan)
         .single()
-      const l = limits as unknown as { features: Record<string, boolean>; max_whatsapp_messages: number } | null
+      const features = limits?.features as Record<string, boolean> | null
       return {
         plan,
         planLabel: PLAN_LABELS[plan] ?? plan,
-        whatsappIncluded: l?.features?.whatsapp === true,
-        messagesIncluded: l?.max_whatsapp_messages ?? 0,
+        whatsappIncluded: features?.whatsapp === true,
+        messagesIncluded: limits?.max_whatsapp_messages ?? 0,
       }
     },
     enabled: !!tenantId,
