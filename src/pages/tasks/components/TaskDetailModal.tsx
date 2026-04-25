@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   X, MessageCircle, Phone, Mail, Copy, ExternalLink, Sparkles,
-  CheckCircle, XCircle, User, Building2, GitBranch, Clock,
+  CheckCircle, XCircle, User, Building2, GitBranch, Clock, Send, Loader2,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
@@ -146,6 +146,40 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
   }
 
+  // Step C — task↔reality loop. Sends the message via the WABA Edge
+  // Function (free-form text mode) and stamps executed_at on the task.
+  // The whatsapp-webhook will auto-close the task when the client
+  // replies. Falls back to the deeplink with a clear toast if the
+  // tenant doesn't have a WhatsApp account configured.
+  const sendViaCrm = useMutation({
+    mutationFn: async () => {
+      if (!message.trim()) throw new Error('Message vide')
+      const phone = (task.client?.phone ?? '').replace(/\s+/g, '').replace(/^0/, '213')
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          to: phone,
+          body_text: message.trim(),
+          client_id: task.client_id,
+          task_id: task.id,
+        },
+      })
+      if (error) throw error
+      const result = data as { success: boolean; error?: string }
+      if (!result?.success) throw new Error(result?.error ?? 'Echec envoi')
+      return result
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['all-tasks'] })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: ['inbox'] })
+      toast.success('WhatsApp envoye via CRM')
+      onClose()
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? 'Echec envoi WhatsApp')
+    },
+  })
+
   function openSMS() {
     window.open(`sms:${task.client?.phone ?? ''}?body=${encodeURIComponent(message)}`, '_blank')
   }
@@ -241,6 +275,16 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
               <button onClick={() => navigate(`/pipeline/clients/${task.client_id}?tab=auto_tasks`)} className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors">
                 <ExternalLink className="h-3.5 w-3.5 text-immo-text-muted" /> Voir Dossier Client
               </button>
+              {task.channel === 'whatsapp' && (
+                <button
+                  onClick={() => sendViaCrm.mutate()}
+                  disabled={sendViaCrm.isPending || !message.trim()}
+                  className="flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-2 text-xs font-semibold text-white hover:bg-[#25D366]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendViaCrm.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  Envoyer via CRM
+                </button>
+              )}
               <button onClick={openWhatsApp} className="flex items-center gap-1.5 rounded-lg border border-[#25D366]/30 bg-[#25D366]/5 px-3 py-2 text-xs font-medium text-[#25D366] hover:bg-[#25D366]/10 transition-colors">
                 <MessageCircle className="h-3.5 w-3.5" /> Ouvrir WhatsApp
               </button>
