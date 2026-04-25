@@ -50,7 +50,7 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
           return ((daysInStageMap.get(a.id) ?? 0) - (daysInStageMap.get(b.id) ?? 0)) * dir
         case 'created_at':
         default:
-          return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir
+          return (new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime()) * dir
       }
     })
   }, [clients, sortCol, sortDir, daysInStageMap])

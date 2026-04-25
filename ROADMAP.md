@@ -293,62 +293,564 @@ leave a half-built feature without a note here.
 
 ---
 
-## 🔜 Next up (prioritized)
+## 🎯 MVP closure plan — features bloquantes avant d'arrêter le dev produit
 
-### 1. Wire the 3 crons to dispatchAutomation (unblocked once templates approved)
-Once the 10 templates in `WHATSAPP_TEMPLATES_CATALOG.md` land in
-Meta's "Approved" state:
+Tout ce qui doit être livré pour passer en mode go-to-market. Les
+items A → D sont nouveaux ; E → J sont les anciens "Next up"
+ré-ordonnés ; K est nouveau (cost tracking). Effort total estimé :
+**~8 jours de dev** pour A+B+C+D+K, le reste dépend de Meta.
+
+### A. Webhook entrant WhatsApp (~1 jour)
+**But** : capter les réponses des clients dans `whatsapp_messages`
+(direction=inbound) pour alimenter l'automation, le score, et l'inbox
+tenant.
+
+- Edge Function `whatsapp-webhook` (vérification Meta + endpoint POST)
+- Insert dans `whatsapp_messages` avec `direction='inbound'`
+- Match `from_phone` → `clients.phone` (jointure tenant-scoped)
+- Si pas de match : insertion avec `client_id=NULL` + log pour debug
+- Configuration côté Meta (webhook URL + verify token + abonnement
+  aux événements `messages` + `message_status`)
+
+### B. Inbox tenant — UI conversations (~2 jours)
+**But** : que l'admin tenant voie tous les échanges WhatsApp de ses
+agents (oversight) et que chaque agent voit uniquement les siens.
+Sécurité déjà gérée par RLS migration 017 — il reste l'UI.
+
+- Page `/messages` (onglet sidebar, gated tenant) :
+  - Liste des conversations regroupées par client
+  - Filtres : agent, période, statut (lu / non lu)
+  - Compteur "non lus" sur l'icône sidebar
+  - Admin tenant → voit toutes les convos. Agent → voit les siennes
+    (RLS migration 017 fait le filtre, pas de logique UI à dupliquer)
+- Vue conversation threadée par client :
+  - Bulles entrantes/sortantes type WhatsApp
+  - Affichage timestamp, agent émetteur, statut delivery (sent/delivered/read)
+  - Champ d'envoi rapide (réutilise `send-whatsapp` Edge Function)
+- Onglet "Messages" sur la fiche client (mêmes données, focus 1 client)
+- Marquage "lu" : table `whatsapp_messages.read_at` (migration mineure)
+
+### C. Idée #1 — boucle tâche ↔ réalité (~2 jours)
+**But** : que le statut des tâches reflète la réalité automatiquement.
+Dépend de A.
+
+- Bouton "Envoyer via CRM" sur chaque tâche WhatsApp → appelle
+  `send-whatsapp` + écrit `executed_at = now()` sur la tâche
+- Handler dans le webhook (A) : si une tâche du même client est
+  `pending` + `executed_at IS NOT NULL` + `auto_cancelled IS NOT TRUE`
+  → flip `status='done'` + `completed_at = now()` + insertion history
+- Cron `tasks_no_reply_48h` (toutes les heures) : pour chaque tâche
+  `executed_at` > 48h, sans réponse client entre-temps → crée une
+  tâche de relance + suggère un autre canal (`channel='call'` si
+  WhatsApp non répondu)
+
+### D. Idée #2 — score engagement, version SIMPLE (~2 jours)
+**But** : pastille couleur sur la liste pipeline pour voir au coup
+d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
+
+- Migration : `clients.engagement_score INT DEFAULT 50`
+  + `engagement_updated_at TIMESTAMPTZ`
+- Edge Function `recompute-engagement` (cron toutes les 6h) calcule :
+  - +20 si réponse WhatsApp dans les 24h après envoi
+  - +15 si visite réalisée (pas no-show)
+  - −20 si no-show ou délai >7j sans interaction
+  - −10 si tâche `auto_cancelled=true` (relance ignorée)
+  - decay : −5/semaine sans aucun contact
+- UI : pastille couleur (rouge <30, orange 30-60, vert >60) dans
+  `TableView.tsx` (pipeline) + détail client
+- Note : la version **smart** (ML, comparaison historique, prédiction
+  de signature) est en backlog 💭 — à reconsidérer après ~3 mois
+  d'usage prod quand on a la data pour calibrer.
+
+### E. Wire 3 crons à dispatchAutomation (~1 jour)
+**But** : déclencher les rappels WhatsApp automatiques quand les
+templates sont approuvés. Bloqué tant que les 10 templates de
+`WHATSAPP_TEMPLATES_CATALOG.md` ne sont pas en statut "Approved" chez
+Meta — sinon chaque dispatch fallback en task avec erreur "template
+not found", ce qui pollue `/tasks` pour tous les tenants.
+
 - `check-reminders` → fires `visite_confirmation_j_moins_1` (J-1
-  before a planned visit), `visite_rappel_h_moins_2` (2h before),
-  `document_rappel_manquant` (doc pending too long).
-- `check-payments` → fires `paiement_echeance_j_moins_3` (J-3
-  before a due installment), `paiement_retard` (J+1 after unpaid).
-- `check-reservations` → fires `reservation_confirmation` when a
-  reservation flips to `active`.
-- Effort: ~1 day of dev. Mostly plumbing — helpers already exist.
+  avant visite planifiée), `visite_rappel_h_moins_2` (H-2),
+  `document_rappel_manquant` (doc en attente trop longtemps).
+- `check-payments` → fires `paiement_echeance_j_moins_3` (J-3 avant
+  échéance), `paiement_retard` (J+1 après impayé).
+- `check-reservations` → fires `reservation_confirmation` quand une
+  réservation passe en `active`.
+- Mostly plumbing — les helpers existent déjà (`dispatchAutomation`).
 
-### 2. UI — badge + deeplink for automation tasks
-After #1 is live, `/tasks` (and the pipeline client detail tasks
-tab) need to visually distinguish auto-tasks:
-- 🤖 badge on tasks where `automation_type IS NOT NULL`.
-- "Open WhatsApp" button that generates a `wa.me/<phone>?text=...`
-  deeplink from the rendered template (using a new
-  `src/lib/whatsappTemplates.ts` local map so we don't round-trip
-  to Meta just to render a preview).
-- Effort: 1-2 days. Blocked on #1 having real data to render.
+### F. UI badge + deeplink auto-tasks (~1 jour)
+**But** : sur les tenants Essentiel (sans WhatsApp API), les tâches
+auto-générées par les crons doivent être visuellement distinguables
+des tâches manuelles + offrir un bouton "Open WhatsApp" qui pré-
+remplit le message dans l'app WhatsApp de l'agent.
 
-### 3. Meta — buy SIM + App Review submission
-The founder has verified Business Manager ✅, just needs a
-dedicated SIM (never used on consumer WhatsApp) to register as the
-WABA phone number. Then follow `META_APP_REVIEW_GUIDE.md` Étapes
-2-4: Display Name (1-2d), screencast videos, submit for App
-Review (2-8 weeks Meta review).
+- Badge 🤖 sur les tâches où `automation_type IS NOT NULL`
+- Bouton "Open WhatsApp" qui génère un `wa.me/<phone>?text=<rendered>`
+  depuis le template + variables (helper local
+  `src/lib/whatsappTemplates.ts` pour rendre côté frontend, sans
+  round-trip Meta).
+- Dépend de E pour avoir des données réelles à afficher.
 
-### 4. Embedded Signup — offer WhatsApp to tenants
-After Meta approves the app, add a "Connect your WhatsApp" flow in
-`/settings/whatsapp`:
-- FB Login SDK integrated in the CRM settings page
-- Callback lands on the existing `whatsapp-signup` Edge Function
-- Tenant's WABA credentials stored in `whatsapp_accounts`
-- `send-whatsapp` already supports per-tenant sends via their credentials
-- UI for template submission + management per tenant (or curated platform templates)
-- Gives tenants the ability to send booking confirmations, reminders, and follow-ups from their own WhatsApp number inside the CRM.
+### G. Meta App Review submission (externe — attend SIM)
+**But** : faire approuver l'app par Meta avec les 2 permissions
+`whatsapp_business_messaging` + `whatsapp_business_management` pour
+débloquer Embedded Signup tenant-side.
 
-### 5. Pricing + billing page
-Once at least 1 tenant is ready to go Pro, publish the pricing on
-`immoprox.io` (Essentiel / Pro / Extra packs, as designed in the
-2026-04-24 session). Invoicing stays manual (bank transfer) for
-Algeria per CLAUDE.md.
+- Business Verification : ✅ déjà fait
+- Achat SIM dédiée → activation Display Name "IMMO PRO-X" (1-2j)
+- Préparer screencasts vidéo selon `META_APP_REVIEW_GUIDE.md`
+  Étapes 2-4
+- Submit App Review (queue Meta : 2-8 semaines)
+- 🔴 **Le plus gros bloqueur calendaire du projet**
 
-### 6. Fix CI / GitHub Actions
-`ci.yml` has been failing in 1s on every PR (no runners provisioned).
-Check Actions billing / quota, or move to a workflow that doesn't need
-a runner (e.g. a pre-merge check that runs locally via a git hook).
+### H. Embedded Signup tenant-side (~1-2 jours)
+**But** : permettre à chaque tenant de connecter SA propre WhatsApp
+Business depuis `/settings/whatsapp` via OAuth Facebook. Bloqué tant
+que G n'est pas approved.
+
+- FB Login SDK intégré dans la page Settings
+- Callback OAuth atteint l'Edge Function `whatsapp-signup` existante
+- Credentials WABA du tenant stockés dans `whatsapp_accounts`
+- `send-whatsapp` envoie déjà depuis le `access_token` du tenant —
+  rien à changer là
+- UI pour gérer les templates : catalogue partagé pour
+  Essentiel/Pro, builder custom pour Extra (cf backlog Approche C)
+
+### I. Pricing + billing page publique (~2 jours)
+**But** : publier la grille Essentiel/Pro/Extra sur `immoprox.io`
+quand au moins 1 tenant est prêt à passer Pro. Facturation reste
+manuelle (virement bancaire DZ).
+
+- Page `/pricing.html` sur le repo marketing avec la grille
+  finale (cf section 💰 Pricing & Unit Economics ci-dessus)
+- CTA chaque plan → contact form pré-rempli avec plan choisi
+- Mention TVA 19% incluse + setup fee 50k DZD pour Pro/Extra (à
+  valider)
+
+### J. CI fix (~½ jour, non-bloquant)
+**But** : que `ci.yml` arrête de fail rouge sur chaque PR.
+
+- Vérifier billing / quota Actions (probablement le souci)
+- Ou migrer vers un pre-merge git hook local qui run
+  `tsc --noEmit` + `npm run build`
+- Pre-existing depuis avril 2026, safe to merge red en attendant
+
+### K. Dashboard Unit Economics — `/admin/costs` (~1 jour)
+**But** : suivre la rentabilité réelle, pas juste le MRR. Aujourd'hui
+`/admin/stats` montre revenue + churn mais ne calcule **pas le profit
+net** (manque la soustraction des coûts variables Anthropic / Meta /
+Resend / Supabase + coûts fixes).
+
+- Page `/admin/costs` (nav Super Admin) :
+  - Section "Coûts fixes mensuels" : formulaire pour saisir
+    Supabase, Hostinger, Google Workspace, Sentry, comptable, etc.
+    (stocké dans une nouvelle table `platform_costs`).
+  - Section "Coûts variables estimés par tenant" : table avec
+    revenue (depuis `plan_limits`), coûts variables estimés
+    (basés sur quota plan × tarif Meta/Anthropic), **marge brute
+    estimée par tenant et par mois**.
+  - Section "Profit net plateforme" : MRR (depuis stats) − coûts
+    fixes − Σ coûts variables = **profit net mensuel** affiché en
+    KPI. Décomposable par mois sur 6 mois glissants.
+- Migration : table `platform_costs (id, period TEXT, category TEXT,
+  description TEXT, amount_dzd INTEGER, created_at)`.
+- Pas de tracking automatique d'usage par tenant pour le MVP — on
+  estime depuis les quotas plan. Le tracking précis (`tenant_usage_log`)
+  est en backlog 💭.
+
+---
+
+## 🏁 Definition of Done — critères pour dire "on arrête le dev"
+
+Quand tous ces critères sont 🟢, on passe en mode go-to-market et le
+dev produit s'arrête (sauf bug fixes) :
+
+- [ ] **1 tenant Pro live** avec WhatsApp connecté via Embedded Signup
+      et utilisé quotidiennement
+- [ ] **Webhook entrant fonctionnel** : ≥10 réponses clients capturées
+      automatiquement dans `whatsapp_messages` direction=inbound sur 7j
+- [ ] **Inbox tenant fonctionnel** : page `/messages` live, admin
+      voit toutes les convos du tenant, agents voient les leurs (RLS),
+      ≥1 admin l'utilise pour superviser ≥1 agent sur 7j
+- [ ] **Auto-close des tâches** : ≥5 tâches passées de pending → done
+      automatiquement via réponse client (sans clic agent) sur 7j
+- [ ] **Score engagement** : valeur recalculée pour 100% des clients
+      actifs, affichée dans `TableView`, ≥1 agent l'utilise comme
+      filtre de tri
+- [ ] **3 crons WhatsApp opérationnels** (`check-reminders`,
+      `check-payments`, `check-reservations`) avec ≥3 dispatches
+      réussis chacun
+- [ ] **Dashboard Unit Economics live** : `/admin/costs` montre
+      profit net mensuel (MRR − coûts fixes − coûts variables) sur
+      ≥3 mois consécutifs avec des chiffres validés par le comptable
+- [ ] **0 bug critique ouvert** (pas de bloquant, pas de data loss)
+- [ ] **ROADMAP 🚧 In progress vide**, 🧩 Partial vide ou converti
+      en 🚫 Deferred avec justification
+
+---
+
+## 💰 Pricing & Unit Economics
+
+Toutes les valeurs sont calculées au **cours parallèle DZD/USD = 250**
+(c'est le taux d'achat réel de l'USD pour payer les fournisseurs
+étrangers Anthropic / Meta / Supabase / Hostinger). Référence WhatsApp
+basée sur les tarifs Wati + tarifs Meta directs zone MENA.
+
+### Grille des 3 plans
+
+| Item | 🟢 Essentiel | 🔵 Pro | 🟣 Extra |
+|---|:-:|:-:|:-:|
+| Prix mensuel DZD | **28,000** | **75,000** | **180,000** |
+| Équivalent USD parallèle | $112 | $300 | $720 |
+| Users inclus | 4 | 15 | illimité |
+| Clients actifs | 300 | 2,000 | illimité |
+| Projets | 3 | 10 | illimité |
+| Stockage | 500 MB | 5 GB | 50 GB |
+| Landing pages | 1 | 5 | illimité |
+| Email campagnes/mois | 200 | 2,000 | illimité |
+| WhatsApp API (numéro dédié) | ❌ | ✅ | ✅ |
+| WhatsApp utility/mois inclus | 0 | 3,000 | 25,000 (cap fair-use) |
+| WhatsApp marketing/mois inclus | 0 | 500 | 5,000 (cap fair-use) |
+| Inbox tenant (admin voit tout) | ❌ | ✅ | ✅ |
+| Auto-rappels (visites/paiements/réservations) | ❌ | ✅ | ✅ |
+| Auto-close tâches sur réponse | ❌ | ✅ | ✅ |
+| Score engagement | ❌ | ✅ basique | ✅ + smart (futur) |
+| IA scripts d'appel | ❌ | ✅ | ✅ |
+| IA matching unités | ❌ | ✅ | ✅ |
+| IA documents auto | ❌ | ❌ | ✅ |
+| IA prompts custom | ❌ | ❌ | ✅ |
+| **Templates WhatsApp personnalisables** (builder full custom) | ❌ | ❌ | ✅ |
+| Catalogue 10 templates pré-rédigés (avec variables agence) | ✅ | ✅ | ✅ |
+| Marketing ROI | ❌ | ✅ | ✅ |
+| Goals + Performance | ❌ | ✅ | ✅ |
+| Custom branding | ❌ | ❌ | ✅ |
+| API + webhooks | ❌ | ❌ | ✅ |
+| Support | Email | Email + WA | Dédié + onboarding |
+
+### Surconsommation (overage) — au-delà du quota
+- WhatsApp utility supplémentaire : **12 DZD/msg** (markup ~50% sur Meta)
+- WhatsApp marketing supplémentaire : **30 DZD/msg**
+- WhatsApp authentification : **10 DZD/msg**
+- User additionnel Essentiel : **6,000 DZD/user/mois**
+- User additionnel Pro : **4,500 DZD/user/mois**
+
+### Coûts Meta WhatsApp (référence brute, zone MENA)
+- Utility : ~$0.033/conversation = ~8 DZD parallèle
+- Marketing : ~$0.082/conversation = ~20 DZD parallèle
+- Auth : ~$0.028/conversation = ~7 DZD parallèle
+- Service (réponse <24h) : 1,000 free/mois puis ~8 DZD/conv
+
+### Marges par tenant (gross margin)
+
+| Plan | Revenu | Coûts variables (worst case) | Marge brute | % |
+|---|---|---|---|---|
+| Essentiel | 28,000 | ~550 (DB + emails seulement) | 27,450 | **98%** 💎 |
+| Pro | 75,000 | ~38,250 (3k utility + 500 marketing + IA + DB) | 36,750 | **49%** ✅ |
+| Extra (cap fair-use) | 180,000 | ~110,000 (15k utility + 2k marketing + IA + DB) | 70,000 | **39%** 🟡 |
+
+⚠️ **Extra** doit être **cappé en fair-use** (15k utility + 2k marketing
+inclus) sinon le tenant peut consommer pour $1,300+/mois ($595 de perte
+par mois). Au-delà du cap → overage facturé.
+
+### Coûts fixes plateforme (peu importe nb tenants)
+
+| Item | DZD/mois |
+|---|---|
+| Supabase Pro | 6,250 |
+| Hostinger Premium | 1,000 |
+| Domain immoprox.io | 375 |
+| Google Workspace email pro | 1,500 |
+| Resend Free (3k emails inclus) | 0 |
+| GitHub Free | 0 |
+| Sentry monitoring (recommandé) | 6,500 |
+| Cal.com (optionnel) | 3,000 |
+| **Total minimum** | **~9,125** |
+| **Total recommandé** | **~18,625** |
+
+### Coûts opérationnels mensuels
+
+| Item | DZD/mois |
+|---|---|
+| Comptable (cabinet ou indépendant) | 30,000 - 50,000 |
+| Frais bancaires pro | 1,500 - 3,000 |
+| Internet fibre pro | 5,000 |
+| Téléphone pro | 2,500 |
+| Loyer bureau (si applicable) | 0 - 30,000 |
+| Frais remittance (~5% des paiements USD) | variable |
+| **Total opérationnel** | **~39,000 - 90,500** |
+
+### Coûts one-shot (lancement)
+
+| Item | DZD |
+|---|---|
+| Création SARL/EURL | 150,000 - 300,000 |
+| Inscription comptable | 20,000 |
+| Ouverture compte bancaire pro | 10,000 |
+| Carte CIB Internationale | 3,000 |
+| SIM dédiée WhatsApp Business | 5,000 |
+| Marketing initial (cartes, brochures) | 50,000 |
+| Branding (logo HD, screenshots) | 30,000 |
+| **Total lancement** | **~268,000 - 418,000** |
+
+### Charges fiscales Algérie
+
+| Taxe | Taux | Base |
+|---|---|---|
+| TVA | 19% | Sur prix HT |
+| TAP (Taxe Activité Pro) | 2% | Sur CA mensuel |
+| IBS (Impôt Bénéfices Sociétés) | 19% | Sur bénéfice net annuel (si SARL/EURL) |
+| IRG | 0-35% progressif | Si EURL personne physique |
+
+→ Décision marketing : afficher **TTC** (plus lisible B2B Algérie)
+plutôt que HT.
+
+### Break-even & projections
+
+| Scénario | Composition | Revenu | Coût total | Profit avant impôts |
+|---|---|---|---|---|
+| Early (2 tenants) | 1 Essentiel + 1 Pro | 103,000 | 97,425 | **+5,575** 🟡 |
+| Croissance (5 tenants) | 3 Essentiel + 2 Pro | 234,000 | 136,775 | **+97,225** ✅ |
+| Cible 6 mois (10 tenants) | 5 Essentiel + 5 Pro | 515,000 | 254,125 | **+260,875** ✅✅ |
+| Cible 12 mois (20 tenants) | 10 Essentiel + 10 Pro | 1,030,000 | 449,625 | **+580,375** ✅✅✅ |
+
+→ **Break-even atteint à 3 tenants**. Salaire confortable à 10
+tenants Pro mix (~260k DZD/mois avant impôts ≈ $1,040 USD).
+
+---
+
+## ⚠️ Risques majeurs & plans B
+
+### Risque #1 — Meta App Review refuse ou prend >3 mois 🔴
+**Probabilité** : moyenne. Meta est notoirement strict sur les
+catégorisations Marketing vs Utility et la qualité des screencasts.
+Le founder a déjà eu un template re-categorized par Meta (cf section
+Done > Backend ci-dessus).
+
+**Impact** : sans Meta App Review approuvé, l'Embedded Signup
+tenant-side n'est pas utilisable → les tenants ne peuvent pas
+connecter leur propre WhatsApp Business → le plan Pro perd son
+différentiateur principal.
+
+**Plan B (si Meta refuse ou délai >3 mois)** :
+1. **Plan Pro fallback** : on continue avec `dispatchAutomation` qui
+   tombe dans la branche "task" (pas WhatsApp direct). Le tenant
+   reçoit la tâche dans `/tasks` avec un bouton "Open WhatsApp
+   deeplink" qui ouvre `wa.me/<phone>?text=<rendered>` → l'agent
+   envoie depuis SON WhatsApp perso. Pas d'auto-rappels temps réel,
+   mais 80% de la valeur est conservée.
+2. **Pricing revu** : Pro descend à **45,000 DZD/mois** (vs 75,000)
+   tant que l'API n'est pas dispo. On positionne comme "early bird"
+   en attendant l'activation auto.
+3. **Communication** : être transparent avec les premiers tenants
+   ("API en cours d'activation Meta, en attendant vous envoyez en
+   1 clic depuis votre tel"). La plupart des agences algériennes
+   utilisent déjà WhatsApp Business sur tel — c'est pas un drame.
+4. **Re-soumission** : ré-essayer App Review tous les 1-2 mois en
+   ajustant la documentation jusqu'à approbation.
+
+### Risque #2 — Cours parallèle DZD/USD se dégrade
+**Probabilité** : forte (historiquement ~10% par an).
+
+**Impact** : nos coûts USD (Anthropic, Meta, Supabase) montent
+mécaniquement → marges Pro/Extra se compriment.
+
+**Plan B** : ajustement annuel automatique des prix (+10% par
+an indexé sur taux parallèle). Documenté dans les CGU.
+
+### Risque #3 — Plus de 3 tenants Extra qui consomment fair-use max
+**Probabilité** : faible mais possible si tenants enthousiastes.
+
+**Impact** : marge Extra à 39% peut tomber à <20% si tous max-out.
+
+**Plan B** : déjà mitigé par le cap fair-use (15k utility + 2k
+marketing). Au-delà → overage automatique.
+
+### Risque #4 — Anthropic/Meta change ses tarifs
+**Probabilité** : faible court-terme, modérée long-terme.
+
+**Impact** : recalcul de la grille pricing.
+
+**Plan B** : mécanisme d'ajustement annuel + clause CGU permettant
+modification avec préavis 30j.
+
+### Risque #5 — 1 tenant Pro représente >40% du MRR
+**Probabilité** : modérée en early stage.
+
+**Impact** : si ce tenant churn, MRR s'effondre.
+
+**Plan B** : objectif diversification — pas plus de 25% du MRR
+sur 1 tenant à partir de 5 tenants signés. Refuser nouveaux Extra
+si ça déséquilibre trop.
+
+### Risque #6 — Régulation algérienne change sur SaaS B2B
+**Probabilité** : faible court-terme.
+
+**Impact** : nouveaux frais ou contraintes (ex: hébergement local
+obligatoire, taxe sur services numériques).
+
+**Plan B** : suivre l'actualité réglementaire via le comptable +
+chambre de commerce. Pas d'action préventive.
+
+---
+
+## 🚀 Plan d'exécution — séquence opérationnelle complète
+
+État au **2026-04-25** : repo nettoyé (34 branches mergées + dangereuse
+supprimées), refactor tasks consolidé (PRs #42-#45), ROADMAP finalisé
+avec MVP closure plan + pricing + risques. SIM Meta pas encore achetée
+→ on est au point de départ Phase A.
+
+Légende acteurs : 👨‍💼 Founder · 🤖 Claude (dev) · 🏢 Meta · 🏪 Tenant
+
+### Phase A — Setup Meta (1-2 semaines après achat SIM)
+
+| # | Étape | Acteur | Durée | Bloque |
+|---|---|---|---|---|
+| A1 | Acheter SIM dédiée (jamais utilisée WhatsApp consumer) | 👨‍💼 | 1-3j | TOUT |
+| A2 | Activer SIM + tester réception SMS | 👨‍💼 | 30min | A3 |
+| A3 | Soumettre Display Name "IMMO PRO-X" | 👨‍💼 | 30min + 1-2j review | A8 |
+| A4 | Préparer 10 templates depuis `WHATSAPP_TEMPLATES_CATALOG.md` | 👨‍💼 | 1h | — |
+| A5 | Soumettre 10 templates à Meta (3-4/jour, étalé sur 3j) | 👨‍💼 | 3j × 30min | E |
+| A6 | Stocker access_token permanent dans `whatsapp_config` (System User Business Settings) | 👨‍💼 | 15min | F, H |
+| A7 | Enregistrer screencasts pour App Review (selon `META_APP_REVIEW_GUIDE.md`) | 👨‍💼 | 4-6h | A8 |
+| A8 | Submit App Review (`whatsapp_business_messaging` + `_management`) | 👨‍💼 | 1h | H |
+
+**Coûts Phase A** : ~15,000 DZD (SIM + 1 mois abonnement)
+
+### Phase B — Dev parallèle (peut démarrer **MAINTENANT**, ~8 jours)
+
+Ces étapes ne dépendent pas de Meta. On code pendant que Phase A tourne.
+
+| # MVP | Étape | Acteur | Durée | Dépendance |
+|---|---|---|---|---|
+| **A** | Webhook entrant `whatsapp-webhook` | 🤖 | 1j | aucune (test sur n° founder) |
+| **B** | Inbox UI tenant `/messages` | 🤖 | 2j | aucune (RLS déjà OK migration 017) |
+| **C** | Boucle tâche↔réalité | 🤖 | 2j | A |
+| **K** | Dashboard `/admin/costs` | 🤖 | 1j | aucune |
+| **D** | Score engagement simple | 🤖 | 2j | A (signaux replies) |
+
+À chaque étape : déployer + valider sur staging avec ton tenant
+existant + faux clients de test.
+
+### Phase C — Attente Meta App Review (2-8 semaines)
+
+Pas grand-chose à coder. Activités possibles :
+
+| # | Étape | Acteur | Note |
+|---|---|---|---|
+| C1 | Tester en plan B avec deeplink | 👨‍💼 + 🤖 | Onboarder 1-2 tenants pilotes en mode dégradé, Pro à 45k early bird |
+| C2 | Valider templates approuvés par Meta | 👨‍💼 + 🏢 | Re-soumettre les rejets ajustés |
+| C3 | Surveiller App Review status (queue Meta) | 👨‍💼 | Notifications email Meta |
+| C4 | Travailler `/admin/costs` avec vrais chiffres | 👨‍💼 + 🤖 | Saisie manuelle + ajustement |
+| C5 | Préparer pricing page `immoprox.io` (Étape I) | 👨‍💼 + 🤖 | Pas bloquant, peut être fait |
+
+### Phase D — Activation API (1-2 semaines après App Review approved)
+
+| # | Étape | Acteur | Durée |
+|---|---|---|---|
+| **E** | Wire 3 crons à `dispatchAutomation` | 🤖 | 1j |
+| **F** | UI badge + deeplink auto-tasks | 🤖 | 1j |
+| **H** | Embedded Signup tenant `/settings/whatsapp` | 🤖 | 1-2j |
+| D4 | Test E2E avec 1 tenant pilote (Embedded Signup → 1er rappel auto) | 👨‍💼 + 🏪 | 3-5j |
+| D5 | Migration tenants pilotes plan B → plan A (passer à 75k Pro standard) | 👨‍💼 + 🏪 | 1j de comm |
+
+### Phase E — Go-live progressif (3 mois)
+
+| # | Étape | Acteur | Cible |
+|---|---|---|---|
+| E1 | Onboarder 3-5 tenants Pro depuis leads existants `/admin/leads` | 👨‍💼 | 3 tenants signés mois 1 |
+| E2 | Itérer sur retours pilotes (bugs, UX, demandes feature) | 👨‍💼 + 🤖 | Hot-fixes uniquement |
+| E3 | Activer J. CI fix si Actions enfin disponibles | 🤖 | Non-bloquant |
+| E4 | Marketing organique : témoignages tenants pilotes | 👨‍💼 | Sur landing pages |
+| E5 | Atteindre Definition of Done | 👨‍💼 + 🤖 | 10 tenants Pro mix mois 3 |
+| E6 | **Stop dev produit** — passer en mode go-to-market | 👨‍💼 | Maintenance + support |
+
+### Décisions à prendre **avant Phase A** (cette semaine)
+
+- [ ] **Quand acheter la SIM ?** Idéalement cette semaine
+- [ ] **Pricing TVA inclusive ou exclusive ?** Reco : **TTC** (lisible B2B Algérie)
+- [ ] **Setup fee one-shot pour Pro/Extra ?** Reco : **+50,000 DZD** pour onboarding personnalisé
+- [ ] **Plan Extra à 180k ou Sur devis ?** Reco : **Sur devis** au début (1er Extra signé déclenche le builder Approche C)
+- [ ] **Comptable identifié ?** Si non, démarrer recherche en parallèle de Phase A
+- [ ] **Compte bancaire pro + Carte CIB Internationale ?** Si non, lancer démarche en parallèle
+
+### Décisions à prendre **avant Phase B** (avant dev)
+
+- [ ] **A en premier ou B en premier ?** Reco : **A** d'abord (le webhook débloque C et D)
+- [ ] **Test sur ton tenant existant ou tenant pilote dédié ?** Reco : **tenant pilote dédié**
+- [ ] **Valider nouveaux prix dans `/admin/plans`** (Essentiel 28k / Pro 75k / Extra Sur devis)
+- [ ] **Migration `starter`→`essentiel` + `enterprise`→`extra`** ? Ou via UI ?
+
+---
+
+## 📋 WhatsApp Go-Live Checklist — récap exhaustif
+
+### Côté Meta (👨‍💼 toi)
+- [ ] **W1.** Acheter SIM dédiée
+- [ ] **W2.** Display Name "IMMO PRO-X" approuvé
+- [ ] **W3.** Soumettre 10 templates (`WHATSAPP_TEMPLATES_CATALOG.md`)
+- [ ] **W4.** App Review approved (`whatsapp_business_messaging` + `_management`)
+
+### Côté dev (🤖 moi)
+- [ ] **W5.** Étape A — Webhook entrant `whatsapp-webhook`
+- [ ] **W6.** Étape B — Inbox UI tenant `/messages`
+- [ ] **W7.** Étape C — Boucle tâche↔réalité
+- [ ] **W8.** Étape E — Wire 3 crons à `dispatchAutomation`
+- [ ] **W9.** Étape F — UI badge auto-tasks
+- [ ] **W10.** Étape H — Embedded Signup tenant `/settings/whatsapp`
+- [ ] **W11.** Stocker `whatsapp_config` row (app_id + secret + token permanent)
+
+### Per-tenant onboarding (🏪 chaque agence cliente, guidée par notre wizard)
+- [ ] T1. Connexion Facebook Business Manager (via OAuth Embedded Signup)
+- [ ] T2. Vérification entreprise auprès de Meta (registre commerce)
+- [ ] T3. Soumettre Display Name agence (ex: "Agence El-Oued")
+- [ ] T4. Activer numéro WhatsApp Business dédié
+- [ ] T5. Sélectionner les templates du catalogue à utiliser
+
+### Tech Provider model — argument commercial
+- ✅ Chaque tenant garde son identité 100% (numéro + nom + logo agence)
+- ✅ Le client final voit "Agence El-Oued", **JAMAIS "IMMO PRO-X"**
+- ✅ Variables auto-remplies (nom client, date visite, montant, etc.)
+- ⏳ Templates wording custom = exclusivité Extra tier (Approche C en backlog)
 
 ---
 
 ## 💭 Backlog (nice-to-haves, unsorted)
 
+- **Tenant template builder (Extra-tier exclusive)** — UI complet dans
+  `/settings/whatsapp/templates` pour que les tenants Extra créent
+  leurs propres templates WhatsApp from scratch. Tabs : "Catalogue
+  partagé" (10 templates pré-rédigés, dispo pour tous les plans) et
+  "Mes templates" (custom, Extra uniquement). Editeur visuel : header
+  (text/image/video), body avec variables `{{n}}`, footer, boutons CTA.
+  Soumission à Meta via Edge Function `submit-whatsapp-template` (utilise
+  l'`access_token` du tenant). Webhook listen `template_status_update`
+  pour tracker approval/rejection en temps réel dans l'UI.
+  Migration nécessaire :
+  ```
+  ALTER TABLE whatsapp_templates
+    ADD COLUMN tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    ADD COLUMN parent_template_id UUID REFERENCES whatsapp_templates(id),
+    ADD COLUMN meta_template_id TEXT,
+    DROP CONSTRAINT IF EXISTS whatsapp_templates_name_key,
+    ADD CONSTRAINT unique_name_per_tenant UNIQUE (tenant_id, name);
+  ```
+  `tenant_id NULL` = template platform partagé. Effort : ~1 semaine
+  (migration + UI builder + Edge Function + webhook handler).
+  **Déclencheur** : 1er tenant Extra signe. Avant ça, Extra est vendu
+  avec promesse "Templates custom à venir" + accès anticipé.
+- **Smart engagement score (ML version)** — successor to the simple
+  rule-based score from MVP closure plan section C. Compares the live
+  client's signal pattern against historical clients who signed vs
+  churned, weights signals dynamically per tenant, predicts probability
+  of signature. Needs ~3 months of prod data to calibrate. Effort:
+  ~1-2 weeks once data is there. Reconsider only after the simple score
+  is shipped and used.
+- **Sequence builder** (idea #3 from the 25-Apr-2026 brainstorm) —
+  drag-drop UI for tenants to define multi-step automation flows
+  ("J+0 WhatsApp, J+1 SMS si pas de réponse, J+3 appel, J+7 marquer
+  froid"). Effort: ~2-3 days. Deferred until A/B/C from MVP closure
+  plan are in production and we see real friction.
 - **Email drip** when a lead doesn't complete step 2 within 24h
 - **Tenant onboarding tour** after first login (once 3-5 tenants are live
   and we see the confusion points)

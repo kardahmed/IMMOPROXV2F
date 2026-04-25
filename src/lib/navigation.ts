@@ -14,6 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Projets', path: '/projects', icon: 'Building2', roles: 'all', requiredPermission: 'projects.view' },
   { label: 'Pipeline', path: '/pipeline', icon: 'GitBranch', roles: 'all', requiredPermission: 'pipeline.view_own' },
   { label: 'Taches', path: '/tasks', icon: 'CheckSquare', roles: 'all' },
+  { label: 'Boite messages', path: '/inbox', icon: 'MessageSquare', roles: 'all' },
   { label: 'Planning', path: '/planning', icon: 'Calendar', roles: 'all', requiredPermission: 'visits.view_own' },
   { label: 'Dossiers', path: '/dossiers', icon: 'FolderOpen', roles: 'all', requiredPermission: 'dossiers.view' },
   { label: 'Objectifs', path: '/goals', icon: 'Target', roles: 'all', requiredPermission: 'goals.view_own' },

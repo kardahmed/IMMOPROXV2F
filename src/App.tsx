@@ -48,6 +48,7 @@ const LeadsPage = lazy(() => import('@/pages/superadmin/LeadsPage').then(m => ({
 const SecurityAuditPage = lazy(() => import('@/pages/superadmin/SecurityAuditPage').then(m => ({ default: m.SecurityAuditPage })))
 
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage').then(m => ({ default: m.TasksPage })))
+const InboxPage = lazy(() => import('@/pages/inbox/InboxPage').then(m => ({ default: m.InboxPage })))
 const MarketingROIPage = lazy(() => import('@/pages/marketing-roi/MarketingROIPage').then(m => ({ default: m.MarketingROIPage })))
 const CorbeillePage = lazy(() => import('@/pages/corbeille/CorbeillePage').then(m => ({ default: m.CorbeillePage })))
 
@@ -109,6 +110,7 @@ function App() {
             <Route path="/pipeline" element={<PipelinePage />} />
             <Route path="/pipeline/clients/:clientId" element={<ClientDetailPage />} />
             <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/inbox" element={<InboxPage />} />
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/dossiers" element={<DossiersPage />} />
 

@@ -16,7 +16,7 @@ interface PriorityClient {
   pipeline_stage: PipelineStage
   confirmed_budget: number | null
   last_contact_at: string | null
-  created_at: string
+  created_at: string | null
 }
 
 interface PrioritySliderProps {

@@ -61,10 +61,10 @@ export interface KanbanCardClient {
   source: string
   agent_name: string | null
   project_name: string | null
-  created_at: string
+  created_at: string | null
   days_in_stage: number
   is_urgent: boolean
-  is_priority?: boolean
+  is_priority?: boolean | null
 }
 
 interface KanbanCardProps {

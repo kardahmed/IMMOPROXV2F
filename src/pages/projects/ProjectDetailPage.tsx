@@ -284,7 +284,7 @@ export function ProjectDetailPage() {
               <InfoRow
                 icon={<Clock className="h-4 w-4" />}
                 label="Créé le"
-                value={format(new Date(project.created_at), 'dd/MM/yyyy')}
+                value={project.created_at ? format(new Date(project.created_at), 'dd/MM/yyyy') : '—'}
               />
             </div>
           </div>

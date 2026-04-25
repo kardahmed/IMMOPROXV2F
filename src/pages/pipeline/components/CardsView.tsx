@@ -38,8 +38,8 @@ export function CardsView({ clients, daysInStageMap, agentMap, projectMap, urgen
         if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1
         if (a.interest_level !== b.interest_level) return a.interest_level === 'high' ? -1 : 1
       }
-      if (sort === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      if (sort === 'oldest') return new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime()
+      return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
     })
 
     return list

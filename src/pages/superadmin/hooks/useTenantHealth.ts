@@ -54,7 +54,7 @@ export function useTenantHealth() {
       // Group by tenant — latest activity
       const lastActivityMap = new Map<string, string>()
       for (const h of recentHistory ?? []) {
-        if (!lastActivityMap.has(h.tenant_id)) {
+        if (!lastActivityMap.has(h.tenant_id) && h.created_at) {
           lastActivityMap.set(h.tenant_id, h.created_at)
         }
       }

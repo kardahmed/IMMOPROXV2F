@@ -105,7 +105,7 @@ export function KanbanBoard({
 
   function toCardClient(c: Client): KanbanCardClient {
     const stageChangeDate = changeDates.get(c.id) ?? c.created_at
-    const daysInStage = Math.floor((Date.now() - new Date(stageChangeDate).getTime()) / 86400000)
+    const daysInStage = Math.floor((Date.now() - new Date(stageChangeDate ?? 0).getTime()) / 86400000)
     let projectName: string | null = null
     if (c.interested_projects?.length && projectMap) projectName = projectMap.get(c.interested_projects[0]) ?? null
 

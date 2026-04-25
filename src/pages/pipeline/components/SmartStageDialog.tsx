@@ -124,14 +124,17 @@ export function SmartStageDialog({ isOpen, onClose, onConfirm, clientId, clientN
       case 'reason':
         if (!reason) { toast.error('Sélectionnez une raison'); return }
         finalNote = `${toStage === 'perdue' ? 'Client perdu' : 'Relancement'}: ${reason}${reminderDays ? '. Rappel dans ' + reminderDays + 'j' : ''}`
-        if (reminderDays) {
+        if (reminderDays && tenantId) {
           supabase.from('tasks').insert({
-            tenant_id: tenantId, client_id: clientId, agent_id: userId,
+            tenant_id: tenantId,
+            client_id: clientId,
+            agent_id: userId ?? null,
             title: `Rappel: relancer ${clientName}`,
             stage: toStage,
             type: 'manual' as const,
-            status: 'pending' as const,  // UI derives "Programmé" from scheduled_at > now()
-            channel: 'whatsapp', priority: 'medium',
+            status: 'pending' as const,
+            channel: 'whatsapp',
+            priority: 'medium',
             scheduled_at: new Date(Date.now() + parseInt(reminderDays) * 86400000).toISOString(),
           })
         }

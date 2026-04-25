@@ -14,12 +14,14 @@ import {
   Globe,
   LogOut,
   CheckSquare,
+  MessageSquare,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useBranding } from '@/hooks/useBranding'
 import { getVisibleNavItems } from '@/lib/navigation'
 import { usePermissions } from '@/hooks/usePermissions'
+import { useInboxUnreadCount } from '@/hooks/useInbox'
 import { Separator } from '@/components/ui/separator'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -35,6 +37,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Settings,
   Globe,
   CheckSquare,
+  MessageSquare,
 }
 
 // Map nav path → i18n key
@@ -43,6 +46,7 @@ const NAV_KEYS: Record<string, string> = {
   '/projects': 'nav.projects',
   '/pipeline': 'nav.pipeline',
   '/tasks': 'nav.tasks',
+  '/inbox': 'nav.inbox',
   '/planning': 'nav.planning',
   '/dossiers': 'nav.dossiers',
   '/goals': 'nav.goals',
@@ -63,6 +67,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { logoUrl, appName } = useBranding()
   const { can } = usePermissions()
   const navItems = getVisibleNavItems(role, can)
+  const inboxUnread = useInboxUnreadCount()
 
   return (
     <div className="flex h-full flex-col">
@@ -112,6 +117,12 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
               <span className="truncate">
                 {t(NAV_KEYS[item.path] ?? item.label)}
               </span>
+
+              {item.path === '/inbox' && inboxUnread > 0 && (
+                <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-immo-accent-green px-1.5 text-[10px] font-bold text-white">
+                  {inboxUnread > 99 ? '99+' : inboxUnread}
+                </span>
+              )}
             </Link>
           )
         })}

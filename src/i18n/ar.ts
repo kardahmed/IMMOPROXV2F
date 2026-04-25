@@ -12,8 +12,22 @@ export const ar = {
     landing: 'صفحات الالتقاط',
     reports: 'التقارير',
     tasks: 'المهام',
+    inbox: 'الرسائل',
     marketing_roi: 'عائد التسويق',
     settings: 'الإعدادات',
+  },
+
+  // Inbox WhatsApp
+  inbox: {
+    title: 'رسائل واتساب',
+    subtitle: '{{count}} محادثة',
+    empty_subtitle: 'لا توجد رسائل حتى الآن',
+    empty_list: 'لا توجد محادثات',
+    no_preview: 'لا توجد رسالة',
+    unknown_sender: 'مرسل غير معروف',
+    select_conversation: 'اختر محادثة',
+    select_conversation_hint: 'اختر عميلاً من اليسار لعرض رسائله',
+    send_disabled: 'الإرسال السريع متاح قريبًا',
   },
 
   // Page meta
