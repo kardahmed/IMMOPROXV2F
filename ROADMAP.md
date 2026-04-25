@@ -207,6 +207,67 @@ next one can pick up cleanly.
   réservation (1). Submission order + batching strategy spelled
   out.
 
+### WhatsApp inbound webhook + Inbox UI + auto-close loop (25-Apr-2026)
+- **Step A — Webhook entrant `whatsapp-webhook`** (PR #46). Edge
+  Function with GET handshake + POST event handler. Resolves tenant
+  by `metadata.phone_number_id` → `whatsapp_accounts`. Matches
+  inbound `from` to `clients.phone` (E.164 with or without `+`).
+  Inserts into `whatsapp_messages` with `direction='inbound'`,
+  `body_text`, `message_type` (text/image/document/audio/video/
+  location/contacts/interactive/reaction/sticker), full
+  `raw_payload` preserved. Validated end-to-end on Meta dashboard
+  with `phone_number_id=1016951114843105` (test number `+1 555 630
+  3754`).
+- **Migration 030** — extended `whatsapp_messages` for inbound
+  traffic. Adds `direction` (default outbound), `from_phone`,
+  `body_text`, `message_type`, `read_at`, `raw_payload`. Relaxes
+  `template_name` and `to_phone` to nullable. Status enum
+  extended with `'received'`. New indexes for inbox unread
+  counter, status lookup by `wa_message_id`, per-client thread.
+- **Step B — Inbox UI tenant** (PR #46). Two-pane chat at
+  `/inbox`. Conversations grouped by client (or by phone for
+  unknown senders). Admin sees all tenant convos, agent sees own
+  clients (RLS migration 017 enforces, no UI duplication).
+  WhatsApp-style bubbles + delivery status icons + auto-scroll +
+  30s poll + sidebar unread badge.
+- **Migration 031** — `mark_messages_read(message_ids UUID[])`
+  RPC. SECURITY DEFINER function that flips `read_at` on inbound
+  messages, re-applying the agent-vs-admin tenant filter
+  server-side. Keeps the strict UPDATE policy from migration 017
+  (super-admin-only) untouched while letting the inbox UI mark
+  conversations as read.
+- **Step C — Task ↔ reality auto-close loop** (PR #47). Closes
+  the loop end-to-end: agent types in `/inbox` or task detail →
+  `send-whatsapp` posts to Meta + stamps `tasks.executed_at` →
+  client replies → `whatsapp-webhook` flips the task to `done`
+  + writes `client_response` + history row. Zero clicks on the
+  agent's side after the initial send. `send-whatsapp` extended
+  to support BOTH template mode (existing) and free-form
+  `body_text` mode (new, replies within 24h conversation
+  window). New "Envoyer via CRM" button (green filled) on
+  WhatsApp tasks in `TaskDetailModal`, alongside the existing
+  "Ouvrir WhatsApp" deeplink (kept as Essentiel fallback).
+
+### Hostinger build unblocked (25-Apr-2026, PR #46)
+- Root cause: `src/types/database.ts` was a hand-maintained
+  Database type that the supabase client used. It had drifted
+  massively (missing 18 columns from migration 028 on `tasks`,
+  missing `welcome_modal_seen_at` / `plan` on `tenants`, no
+  whatsapp_* tables). PR #45's regen of `database.generated.ts`
+  was correct but never wired in. Hostinger was therefore
+  red-failing every merge to `main` since 24-Apr (PRs #38–#45).
+- Fix: replace `database.ts` with a re-export of `Database`
+  from `database.generated.ts`. All hand-curated UNION types
+  (PipelineStage, ClientSource, GoalMetric, etc.) stay below
+  since they're used as labels/badges throughout the UI.
+- Knock-on fixes (15 files): the stricter generated types
+  surfaced pre-existing nullable bugs that the loose manual
+  types had hidden. Mostly `new Date(maybeNull)` → `new Date(x
+  ?? 0)` and ClientInfo / KanbanCardClient interfaces
+  realigned. `useEmailLogs` realigned to actual schema
+  (`template_slug` / `to_email` / `error_message` instead of
+  the never-existed `template` / `recipient` / `provider`).
+
 ---
 
 ## 🚧 In progress
@@ -300,7 +361,11 @@ items A → D sont nouveaux ; E → J sont les anciens "Next up"
 ré-ordonnés ; K est nouveau (cost tracking). Effort total estimé :
 **~8 jours de dev** pour A+B+C+D+K, le reste dépend de Meta.
 
-### A. Webhook entrant WhatsApp (~1 jour)
+**État au 25-Apr-2026** : ✅ A, B, C livrés (PRs #46–#47). 🔜 D, K, I, J
+sont les prochains items qui ne dépendent pas de Meta. E, F, H bloqués
+par approval Meta (templates + App Review).
+
+### ✅ A. Webhook entrant WhatsApp (~1 jour) — LIVRÉ (PR #46)
 **But** : capter les réponses des clients dans `whatsapp_messages`
 (direction=inbound) pour alimenter l'automation, le score, et l'inbox
 tenant.
@@ -312,7 +377,7 @@ tenant.
 - Configuration côté Meta (webhook URL + verify token + abonnement
   aux événements `messages` + `message_status`)
 
-### B. Inbox tenant — UI conversations (~2 jours)
+### ✅ B. Inbox tenant — UI conversations (~2 jours) — LIVRÉ (PR #46)
 **But** : que l'admin tenant voie tous les échanges WhatsApp de ses
 agents (oversight) et que chaque agent voit uniquement les siens.
 Sécurité déjà gérée par RLS migration 017 — il reste l'UI.
@@ -330,7 +395,7 @@ Sécurité déjà gérée par RLS migration 017 — il reste l'UI.
 - Onglet "Messages" sur la fiche client (mêmes données, focus 1 client)
 - Marquage "lu" : table `whatsapp_messages.read_at` (migration mineure)
 
-### C. Idée #1 — boucle tâche ↔ réalité (~2 jours)
+### ✅ C. Idée #1 — boucle tâche ↔ réalité (~2 jours) — LIVRÉ (PR #47, sauf cron 48h)
 **But** : que le statut des tâches reflète la réalité automatiquement.
 Dépend de A.
 
@@ -721,13 +786,13 @@ Légende acteurs : 👨‍💼 Founder · 🤖 Claude (dev) · 🏢 Meta · 🏪
 
 Ces étapes ne dépendent pas de Meta. On code pendant que Phase A tourne.
 
-| # MVP | Étape | Acteur | Durée | Dépendance |
-|---|---|---|---|---|
-| **A** | Webhook entrant `whatsapp-webhook` | 🤖 | 1j | aucune (test sur n° founder) |
-| **B** | Inbox UI tenant `/messages` | 🤖 | 2j | aucune (RLS déjà OK migration 017) |
-| **C** | Boucle tâche↔réalité | 🤖 | 2j | A |
-| **K** | Dashboard `/admin/costs` | 🤖 | 1j | aucune |
-| **D** | Score engagement simple | 🤖 | 2j | A (signaux replies) |
+| # MVP | Étape | Acteur | Durée | Dépendance | État |
+|---|---|---|---|---|---|
+| **A** | Webhook entrant `whatsapp-webhook` | 🤖 | 1j | aucune | ✅ PR #46 |
+| **B** | Inbox UI tenant `/inbox` | 🤖 | 2j | aucune (RLS déjà OK migration 017) | ✅ PR #46 |
+| **C** | Boucle tâche↔réalité | 🤖 | 2j | A | ✅ PR #47 (cron 48h reporté) |
+| **K** | Dashboard `/admin/costs` | 🤖 | 1j | aucune | 🔜 next |
+| **D** | Score engagement simple | 🤖 | 2j | A (signaux replies) | 🔜 next |
 
 À chaque étape : déployer + valider sur staging avec ton tenant
 existant + faux clients de test.
@@ -792,9 +857,9 @@ Pas grand-chose à coder. Activités possibles :
 - [ ] **W4.** App Review approved (`whatsapp_business_messaging` + `_management`)
 
 ### Côté dev (🤖 moi)
-- [ ] **W5.** Étape A — Webhook entrant `whatsapp-webhook`
-- [ ] **W6.** Étape B — Inbox UI tenant `/messages`
-- [ ] **W7.** Étape C — Boucle tâche↔réalité
+- [x] **W5.** Étape A — Webhook entrant `whatsapp-webhook` ✅ PR #46
+- [x] **W6.** Étape B — Inbox UI tenant `/inbox` ✅ PR #46
+- [x] **W7.** Étape C — Boucle tâche↔réalité ✅ PR #47 (cron 48h reporté)
 - [ ] **W8.** Étape E — Wire 3 crons à `dispatchAutomation`
 - [ ] **W9.** Étape F — UI badge auto-tasks
 - [ ] **W10.** Étape H — Embedded Signup tenant `/settings/whatsapp`
