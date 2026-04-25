@@ -43,15 +43,33 @@ Deno.serve(async (req) => {
     }> = []
 
     // 1. Payment reminders (due in 3 days)
+    //    Also dispatches the `paiement_echeance_j_moins_3` Utility template
+    //    to the client via dispatchAutomation. The agent-facing email is
+    //    kept (existing behavior) — this adds a parallel, client-facing
+    //    channel.
     const { data: upcomingPayments } = await supabase
       .from('payment_schedules')
-      .select('id, tenant_id, amount, due_date, installment_number, sales(agent_id, clients(full_name), units(code))')
+      .select(`
+        id, tenant_id, amount, due_date, installment_number,
+        sales(
+          agent_id, client_id,
+          clients(full_name, phone),
+          units(code),
+          users!sales_agent_id_fkey(first_name, last_name, phone)
+        )
+      `)
       .eq('status', 'pending')
       .lte('due_date', threeDaysFromNow)
       .gte('due_date', now.toISOString().split('T')[0])
 
     for (const p of upcomingPayments ?? []) {
-      const sale = p.sales as { agent_id: string; clients: { full_name: string } | null; units: { code: string } | null } | null
+      const sale = p.sales as {
+        agent_id: string
+        client_id: string
+        clients: { full_name: string; phone: string | null } | null
+        units: { code: string } | null
+        users: { first_name: string; last_name: string; phone: string | null } | null
+      } | null
       const daysUntilDue = Math.ceil((new Date(p.due_date).getTime() - now.getTime()) / 86400000)
 
       notifications.push({
@@ -76,6 +94,41 @@ Deno.serve(async (req) => {
           days_until_due: daysUntilDue,
         },
       })
+
+      // Client-facing WhatsApp dispatch — only for payments due ≥ 2 days out
+      // so the J-3 template fires once on its proper window. dispatchAutomation
+      // is idempotent (related_id = payment_schedule.id) so the cron can
+      // re-run hourly without spamming.
+      if (sale && daysUntilDue >= 2) {
+        const dueDateFr = `${new Date(p.due_date).getDate()} ${FR_MONTHS[new Date(p.due_date).getMonth()]} ${new Date(p.due_date).getFullYear()}`
+        const dossierRef = `DOS-${p.id.slice(0, 8).toUpperCase()}`
+        const agent = sale.users
+        const agentLine = agent ? `${agent.first_name} ${agent.last_name}${agent.phone ? ' - ' + agent.phone : ''}` : 'Contactez votre agence'
+
+        await dispatchAutomation({
+          supabase,
+          tenantId: p.tenant_id,
+          clientId: sale.client_id,
+          agentId: sale.agent_id,
+          templateName: 'paiement_echeance_j_moins_3',
+          templateParams: [
+            sale.clients?.full_name ?? '-',
+            new Intl.NumberFormat('fr-FR').format(p.amount),
+            dueDateFr,
+            dossierRef,
+            // RIB — no dedicated field on tenants yet. Falls back to a
+            // generic line; can be replaced once we add a bank_rib field
+            // to tenant_settings.
+            'Contactez votre conseiller : ' + agentLine,
+          ],
+          clientPhone: sale.clients?.phone ?? null,
+          fallbackTaskTitle: `Rappeler echeance ${dossierRef} a ${sale.clients?.full_name ?? 'client'}`,
+          fallbackDueAt: new Date(now.getTime() + 6 * 3600 * 1000),
+          relatedId: p.id,
+          relatedType: 'payment',
+          triggerSource: 'cron_check_reminders_payment_j_minus_3',
+        })
+      }
     }
 
     // 2. Expiring reservations (in 2 days)

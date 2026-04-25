@@ -1,5 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendEmailInternal } from '../_shared/send-email-internal.ts'
+import { dispatchAutomation } from '../_shared/dispatchAutomation.ts'
+
+const FR_MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre']
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -25,7 +28,15 @@ Deno.serve(async (req) => {
       .update({ status: 'late' })
       .eq('status', 'pending')
       .lt('due_date', new Date().toISOString().split('T')[0])
-      .select('id, tenant_id, sale_id, amount, due_date, installment_number, sales(client_id, agent_id, clients(full_name, phone), units(code))')
+      .select(`
+        id, tenant_id, sale_id, amount, due_date, installment_number,
+        sales(
+          client_id, agent_id,
+          clients(full_name, phone),
+          units(code),
+          users!sales_agent_id_fkey(first_name, last_name, phone)
+        )
+      `)
 
     if (updateErr) {
       console.error('Update error:', updateErr)
@@ -82,12 +93,14 @@ Deno.serve(async (req) => {
       client_id: string | null
     }>>()
 
+    let waDispatches = 0
     for (const payment of updated) {
       const sale = payment.sales as {
         client_id: string
         agent_id: string
         clients: { full_name: string; phone: string } | null
         units: { code: string } | null
+        users: { first_name: string; last_name: string; phone: string | null } | null
       } | null
 
       if (!notifyTenants.has(payment.tenant_id)) continue
@@ -102,6 +115,39 @@ Deno.serve(async (req) => {
         installment: payment.installment_number,
         client_id: sale?.client_id ?? null,
       })
+
+      // Client-facing WhatsApp dispatch — notify the client directly that
+      // the payment is overdue. dispatchAutomation handles the WhatsApp
+      // vs task fallback + plan/feature gating.
+      if (sale) {
+        const dueDate = new Date(payment.due_date)
+        const dueDateFr = `${dueDate.getDate()} ${FR_MONTHS[dueDate.getMonth()]} ${dueDate.getFullYear()}`
+        const dossierRef = `DOS-${payment.id.slice(0, 8).toUpperCase()}`
+        const agent = sale.users
+        const agentLine = agent ? `${agent.first_name} ${agent.last_name}${agent.phone ? ' - ' + agent.phone : ''}` : 'Contactez votre agence'
+
+        const result = await dispatchAutomation({
+          supabase,
+          tenantId: payment.tenant_id,
+          clientId: sale.client_id,
+          agentId: sale.agent_id,
+          templateName: 'paiement_retard',
+          templateParams: [
+            sale.clients?.full_name ?? '-',
+            dueDateFr,
+            new Intl.NumberFormat('fr-FR').format(payment.amount),
+            dossierRef,
+            agentLine,
+          ],
+          clientPhone: sale.clients?.phone ?? null,
+          fallbackTaskTitle: `Relancer impaye ${dossierRef} avec ${sale.clients?.full_name ?? 'client'}`,
+          fallbackDueAt: new Date(Date.now() + 4 * 3600 * 1000),
+          relatedId: payment.id,
+          relatedType: 'payment',
+          triggerSource: 'cron_check_payments_paiement_retard',
+        })
+        if (result.path === 'whatsapp' || result.path === 'task') waDispatches++
+      }
     }
 
     // 5. Send email notifications per tenant
@@ -145,6 +191,7 @@ Deno.serve(async (req) => {
       updated: updated.length,
       notifications_sent: notifications.length,
       emails_sent: emailsSent,
+      whatsapp_dispatches: waDispatches,
       notifications,
     }
 
