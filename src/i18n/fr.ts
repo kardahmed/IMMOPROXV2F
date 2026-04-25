@@ -223,6 +223,16 @@ export const fr = {
     showing: '{{count}} résultat(s)',
   },
 
+  // Feature gating (route + tenant override)
+  feature: {
+    unavailable_title: "{{name}} n'est pas disponible",
+    unavailable_generic: "Cette fonctionnalité n'est pas disponible",
+    unavailable_plan_desc: "Cette fonctionnalité n'est pas incluse dans votre plan actuel. Contactez l'administrateur IMMO PRO-X pour passer à un plan supérieur.",
+    unavailable_tenant_desc: "Cette fonctionnalité a été désactivée par l'administrateur de votre agence. Vous pouvez la réactiver depuis les paramètres.",
+    contact_support: 'Contacter IMMO PRO-X',
+    to_settings: 'Paramètres',
+  },
+
   // KPI
   kpi: {
     total_clients: 'Total clients',
