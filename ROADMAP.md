@@ -464,6 +464,8 @@ basée sur les tarifs Wati + tarifs Meta directs zone MENA.
 | IA matching unités | ❌ | ✅ | ✅ |
 | IA documents auto | ❌ | ❌ | ✅ |
 | IA prompts custom | ❌ | ❌ | ✅ |
+| **Templates WhatsApp personnalisables** (builder full custom) | ❌ | ❌ | ✅ |
+| Catalogue 10 templates pré-rédigés (avec variables agence) | ✅ | ✅ | ✅ |
 | Marketing ROI | ❌ | ✅ | ✅ |
 | Goals + Performance | ❌ | ✅ | ✅ |
 | Custom branding | ❌ | ❌ | ✅ |
@@ -690,6 +692,28 @@ a runner (e.g. a pre-merge check that runs locally via a git hook).
 
 ## 💭 Backlog (nice-to-haves, unsorted)
 
+- **Tenant template builder (Extra-tier exclusive)** — UI complet dans
+  `/settings/whatsapp/templates` pour que les tenants Extra créent
+  leurs propres templates WhatsApp from scratch. Tabs : "Catalogue
+  partagé" (10 templates pré-rédigés, dispo pour tous les plans) et
+  "Mes templates" (custom, Extra uniquement). Editeur visuel : header
+  (text/image/video), body avec variables `{{n}}`, footer, boutons CTA.
+  Soumission à Meta via Edge Function `submit-whatsapp-template` (utilise
+  l'`access_token` du tenant). Webhook listen `template_status_update`
+  pour tracker approval/rejection en temps réel dans l'UI.
+  Migration nécessaire :
+  ```
+  ALTER TABLE whatsapp_templates
+    ADD COLUMN tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+    ADD COLUMN parent_template_id UUID REFERENCES whatsapp_templates(id),
+    ADD COLUMN meta_template_id TEXT,
+    DROP CONSTRAINT IF EXISTS whatsapp_templates_name_key,
+    ADD CONSTRAINT unique_name_per_tenant UNIQUE (tenant_id, name);
+  ```
+  `tenant_id NULL` = template platform partagé. Effort : ~1 semaine
+  (migration + UI builder + Edge Function + webhook handler).
+  **Déclencheur** : 1er tenant Extra signe. Avant ça, Extra est vendu
+  avec promesse "Templates custom à venir" + accès anticipé.
 - **Smart engagement score (ML version)** — successor to the simple
   rule-based score from MVP closure plan section C. Compares the live
   client's signal pattern against historical clients who signed vs
