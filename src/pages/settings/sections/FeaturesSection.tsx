@@ -45,8 +45,8 @@ export function FeaturesSection() {
   const { data: tenantPlan } = useQuery({
     queryKey: ['tenant-plan', tenantId],
     queryFn: async () => {
-      const { data } = await supabase.from('tenants').select('plan' as never).eq('id', tenantId!).single()
-      return (data as unknown as { plan: string } | null)?.plan ?? 'free'
+      const { data } = await supabase.from('tenants').select('plan').eq('id', tenantId!).single()
+      return data?.plan ?? 'free'
     },
     enabled: !!tenantId,
   })
@@ -56,7 +56,7 @@ export function FeaturesSection() {
     queryKey: ['plan-features', tenantPlan],
     queryFn: async () => {
       const { data } = await supabase.from('plan_limits').select('features').eq('plan', tenantPlan!).single()
-      return (data as unknown as { features: Record<string, boolean> } | null)?.features ?? {}
+      return (data?.features as Record<string, boolean> | null) ?? {}
     },
     enabled: !!tenantPlan,
   })
@@ -90,7 +90,7 @@ export function FeaturesSection() {
 
   const save = useMutation({
     mutationFn: async () => {
-      await supabase.from('tenant_settings').update(features as never).eq('tenant_id', tenantId!)
+      await supabase.from('tenant_settings').update(features).eq('tenant_id', tenantId!)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['tenant-features'] }); toast.success('Fonctionnalités mises à jour') },
   })

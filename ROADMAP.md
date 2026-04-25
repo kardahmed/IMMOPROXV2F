@@ -118,6 +118,22 @@ next one can pick up cleanly.
   don't see the option (UI gate) and even if they did, RLS would
   deny the UPDATE.
 
+### Email drip — recover abandoned step-1 leads
+- **Migration 026** — `marketing_leads.drip_sent_at TIMESTAMPTZ` + a
+  partial index on `(created_at) WHERE step_completed=1 AND drip_sent_at IS NULL`
+  so the cron query stays cheap as the table grows.
+- **Edge Function `check-abandoned-leads`** — runs hourly. Picks up
+  every lead that filled step 1 of `/contact` (name/email/phone) but
+  abandoned step 2 for 6+ hours, sends a re-engagement email via
+  Resend (template `lead_drip` — short FR copy with a "Terminer ma
+  demande" CTA pointing to `https://immoprox.io/contact`), and stamps
+  `drip_sent_at` so the same lead is never re-emailed. Skips leads
+  already marked `won` or `lost`.
+- **Migration 027** — `cron.schedule('check-abandoned-leads-edge')`
+  hourly via the existing `call_edge_function()` helper from 013.
+- **`lead_drip` template** added to `_shared/email-templates.ts` and
+  to `TEMPLATE_META` so it shows up in `/admin/emails`.
+
 ### Tenant onboarding — welcome modal
 - **Migration 025** — adds `tenants.welcome_modal_seen_at TIMESTAMPTZ`.
   Distinct from the pre-existing `onboarding_completed` boolean (which

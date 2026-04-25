@@ -72,7 +72,7 @@ export function WelcomeModal() {
       if (!tenantId) return
       await supabase
         .from('tenants')
-        .update({ welcome_modal_seen_at: new Date().toISOString() } as never)
+        .update({ welcome_modal_seen_at: new Date().toISOString() })
         .eq('id', tenantId)
     },
     onSuccess: () => {
