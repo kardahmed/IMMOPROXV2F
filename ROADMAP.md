@@ -296,14 +296,14 @@ leave a half-built feature without a note here.
 ## 🎯 MVP closure plan — features bloquantes avant d'arrêter le dev produit
 
 Tout ce qui doit être livré pour passer en mode go-to-market. Les
-items A → C sont nouveaux ; D → I sont les anciens "Next up"
-ré-ordonnés. Effort total estimé : **~5 jours de dev** pour A+B+C,
+items A → D sont nouveaux ; E → J sont les anciens "Next up"
+ré-ordonnés. Effort total estimé : **~7 jours de dev** pour A+B+C+D,
 le reste dépend de Meta.
 
 ### A. Webhook entrant WhatsApp (~1 jour)
-**But** : capter les réponses des clients pour alimenter l'automation
-et le score d'engagement. Pas d'UI inbox dans le CRM — les agents
-continuent à lire leurs conversations dans WhatsApp Business app/web.
+**But** : capter les réponses des clients dans `whatsapp_messages`
+(direction=inbound) pour alimenter l'automation, le score, et l'inbox
+tenant.
 
 - Edge Function `whatsapp-webhook` (vérification Meta + endpoint POST)
 - Insert dans `whatsapp_messages` avec `direction='inbound'`
@@ -312,7 +312,25 @@ continuent à lire leurs conversations dans WhatsApp Business app/web.
 - Configuration côté Meta (webhook URL + verify token + abonnement
   aux événements `messages` + `message_status`)
 
-### B. Idée #1 — boucle tâche ↔ réalité (~2 jours)
+### B. Inbox tenant — UI conversations (~2 jours)
+**But** : que l'admin tenant voie tous les échanges WhatsApp de ses
+agents (oversight) et que chaque agent voit uniquement les siens.
+Sécurité déjà gérée par RLS migration 017 — il reste l'UI.
+
+- Page `/messages` (onglet sidebar, gated tenant) :
+  - Liste des conversations regroupées par client
+  - Filtres : agent, période, statut (lu / non lu)
+  - Compteur "non lus" sur l'icône sidebar
+  - Admin tenant → voit toutes les convos. Agent → voit les siennes
+    (RLS migration 017 fait le filtre, pas de logique UI à dupliquer)
+- Vue conversation threadée par client :
+  - Bulles entrantes/sortantes type WhatsApp
+  - Affichage timestamp, agent émetteur, statut delivery (sent/delivered/read)
+  - Champ d'envoi rapide (réutilise `send-whatsapp` Edge Function)
+- Onglet "Messages" sur la fiche client (mêmes données, focus 1 client)
+- Marquage "lu" : table `whatsapp_messages.read_at` (migration mineure)
+
+### C. Idée #1 — boucle tâche ↔ réalité (~2 jours)
 **But** : que le statut des tâches reflète la réalité automatiquement.
 Dépend de A.
 
@@ -326,7 +344,7 @@ Dépend de A.
   tâche de relance + suggère un autre canal (`channel='call'` si
   WhatsApp non répondu)
 
-### C. Idée #2 — score engagement, version SIMPLE (~2 jours)
+### D. Idée #2 — score engagement, version SIMPLE (~2 jours)
 **But** : pastille couleur sur la liste pipeline pour voir au coup
 d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
 
@@ -344,23 +362,22 @@ d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
   de signature) est en backlog 💭 — à reconsidérer après ~3 mois
   d'usage prod quand on a la data pour calibrer.
 
-### D. Wire 3 crons à dispatchAutomation
-*(déjà documenté ci-dessous dans "Next up #1" — débloqué dès Meta
-approuve les 10 templates)*
+### E. Wire 3 crons à dispatchAutomation
+*(déjà "Next up #1" — débloqué dès Meta approuve les 10 templates)*
 
-### E. UI badge + deeplink auto-tasks
-*(déjà "Next up #2" — dépend de D)*
+### F. UI badge + deeplink auto-tasks
+*(déjà "Next up #2" — dépend de E)*
 
-### F. Meta App Review submission
+### G. Meta App Review submission
 *(déjà "Next up #3" — externe, attend SIM dédiée)*
 
-### G. Embedded Signup tenant-side
-*(déjà "Next up #4" — dépend de F)*
+### H. Embedded Signup tenant-side
+*(déjà "Next up #4" — dépend de G)*
 
-### H. Pricing + billing page
+### I. Pricing + billing page
 *(déjà "Next up #5")*
 
-### I. CI fix
+### J. CI fix
 *(déjà "Next up #6" — non-bloquant)*
 
 ---
@@ -374,6 +391,9 @@ dev produit s'arrête (sauf bug fixes) :
       et utilisé quotidiennement
 - [ ] **Webhook entrant fonctionnel** : ≥10 réponses clients capturées
       automatiquement dans `whatsapp_messages` direction=inbound sur 7j
+- [ ] **Inbox tenant fonctionnel** : page `/messages` live, admin
+      voit toutes les convos du tenant, agents voient les leurs (RLS),
+      ≥1 admin l'utilise pour superviser ≥1 agent sur 7j
 - [ ] **Auto-close des tâches** : ≥5 tâches passées de pending → done
       automatiquement via réponse client (sans clic agent) sur 7j
 - [ ] **Score engagement** : valeur recalculée pour 100% des clients
@@ -451,11 +471,6 @@ a runner (e.g. a pre-merge check that runs locally via a git hook).
   of signature. Needs ~3 months of prod data to calibrate. Effort:
   ~1-2 weeks once data is there. Reconsider only after the simple score
   is shipped and used.
-- **CRM-side WhatsApp inbox UI** — currently agents read replies
-  directly in WhatsApp Business app/web (their existing habit). If
-  multi-agent on same WABA becomes a need, build a per-client
-  conversation view in the CRM that mirrors `whatsapp_messages`. Not a
-  priority while solo agents handle their own number.
 - **Sequence builder** (idea #3 from the 25-Apr-2026 brainstorm) —
   drag-drop UI for tenants to define multi-step automation flows
   ("J+0 WhatsApp, J+1 SMS si pas de réponse, J+3 appel, J+7 marquer
