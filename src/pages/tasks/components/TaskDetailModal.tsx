@@ -116,19 +116,26 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
 
   const completeTask = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('client_tasks').update({ status: 'completed', completed_at: new Date().toISOString(), executed_at: new Date().toISOString(), message_sent: message, client_response: clientResponse || null } as never).eq('id', task.id)
+      const now = new Date().toISOString()
+      const { error } = await supabase.from('tasks').update({
+        status: 'done',
+        completed_at: now,
+        executed_at: now,
+        message_sent: message,
+        client_response: clientResponse || null,
+      }).eq('id', task.id)
       // Log sent message
       await supabase.from('sent_messages_log').insert({ tenant_id: task.tenant_id, client_id: task.client_id, agent_id: userId, task_id: task.id, channel: task.channel, message } as never)
       if (error) { handleSupabaseError(error); throw error }
       await supabase.from('history').insert({ tenant_id: task.tenant_id, client_id: task.client_id, agent_id: userId, type: task.channel === 'whatsapp' ? 'whatsapp_message' : task.channel === 'sms' ? 'sms' : 'call', title: `Tache executee: ${task.title}` } as never)
-      await supabase.from('clients').update({ last_contact_at: new Date().toISOString() } as never).eq('id', task.client_id)
+      await supabase.from('clients').update({ last_contact_at: new Date().toISOString() }).eq('id', task.client_id)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['all-tasks'] }); toast.success('Tâche marquée comme exécutée'); onClose() },
   })
 
   const rejectTask = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('client_tasks').update({ status: 'skipped' } as never).eq('id', task.id)
+      const { error } = await supabase.from('tasks').update({ status: 'ignored' }).eq('id', task.id)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['all-tasks'] }); toast.success('Tâche rejetée'); onClose() },

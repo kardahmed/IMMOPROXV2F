@@ -234,6 +234,9 @@ async function insertTask(params: {
   }
   if (params.fallbackReason) metadata.fallback_reason = params.fallbackReason
 
+  // task_type enum is ('ai_generated', 'manual') — `automation` was
+  // never legal. The discriminator the UI uses is automation_type IS
+  // NOT NULL (set just below), so the DB-level type stays 'manual'.
   const { data, error } = await params.supabase
     .from('tasks')
     .insert({
@@ -242,13 +245,16 @@ async function insertTask(params: {
       agent_id: params.agentId,
       title: params.title,
       due_at: params.dueAt.toISOString(),
+      scheduled_at: params.dueAt.toISOString(),
       status: 'pending',
-      type: 'automation',
+      type: 'manual',
+      channel: 'whatsapp',
+      priority: 'medium',
       automation_type: params.templateName,
       automation_metadata: metadata,
       template_name: params.templateName,
       template_params: params.templateParams,
-    } as never)
+    })
     .select('id')
     .single()
 
