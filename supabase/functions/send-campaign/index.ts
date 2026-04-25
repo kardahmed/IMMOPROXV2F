@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -37,6 +38,20 @@ Deno.serve(async (req) => {
 
     if (campaign.status === 'sent' || campaign.status === 'sending') {
       return new Response(JSON.stringify({ error: 'Campaign already sent/sending' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    // Plan + tenant feature gate — email campaigns live inside the
+    // ROI Marketing module which is gated on the same feature key.
+    // Mirrors the route-level gate on /marketing-roi.
+    const featureCheck = await checkPlanFeature(supabase, campaign.tenant_id as string, 'roi_marketing')
+    if (!featureCheck.allowed) {
+      return new Response(JSON.stringify({
+        error: featureCheck.reason === 'plan'
+          ? `Le module ROI Marketing (campagnes email) n'est pas inclus dans votre plan (${featureCheck.plan}).`
+          : `Le module ROI Marketing a été désactivé par l'administrateur de votre agence.`,
+        reason: featureCheck.reason,
+        plan: featureCheck.plan,
+      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     // 2. Mark as sending
