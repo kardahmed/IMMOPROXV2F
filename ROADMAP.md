@@ -362,23 +362,78 @@ d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
   de signature) est en backlog 💭 — à reconsidérer après ~3 mois
   d'usage prod quand on a la data pour calibrer.
 
-### E. Wire 3 crons à dispatchAutomation
-*(déjà "Next up #1" — débloqué dès Meta approuve les 10 templates)*
+### E. Wire 3 crons à dispatchAutomation (~1 jour)
+**But** : déclencher les rappels WhatsApp automatiques quand les
+templates sont approuvés. Bloqué tant que les 10 templates de
+`WHATSAPP_TEMPLATES_CATALOG.md` ne sont pas en statut "Approved" chez
+Meta — sinon chaque dispatch fallback en task avec erreur "template
+not found", ce qui pollue `/tasks` pour tous les tenants.
 
-### F. UI badge + deeplink auto-tasks
-*(déjà "Next up #2" — dépend de E)*
+- `check-reminders` → fires `visite_confirmation_j_moins_1` (J-1
+  avant visite planifiée), `visite_rappel_h_moins_2` (H-2),
+  `document_rappel_manquant` (doc en attente trop longtemps).
+- `check-payments` → fires `paiement_echeance_j_moins_3` (J-3 avant
+  échéance), `paiement_retard` (J+1 après impayé).
+- `check-reservations` → fires `reservation_confirmation` quand une
+  réservation passe en `active`.
+- Mostly plumbing — les helpers existent déjà (`dispatchAutomation`).
 
-### G. Meta App Review submission
-*(déjà "Next up #3" — externe, attend SIM dédiée)*
+### F. UI badge + deeplink auto-tasks (~1 jour)
+**But** : sur les tenants Essentiel (sans WhatsApp API), les tâches
+auto-générées par les crons doivent être visuellement distinguables
+des tâches manuelles + offrir un bouton "Open WhatsApp" qui pré-
+remplit le message dans l'app WhatsApp de l'agent.
 
-### H. Embedded Signup tenant-side
-*(déjà "Next up #4" — dépend de G)*
+- Badge 🤖 sur les tâches où `automation_type IS NOT NULL`
+- Bouton "Open WhatsApp" qui génère un `wa.me/<phone>?text=<rendered>`
+  depuis le template + variables (helper local
+  `src/lib/whatsappTemplates.ts` pour rendre côté frontend, sans
+  round-trip Meta).
+- Dépend de E pour avoir des données réelles à afficher.
 
-### I. Pricing + billing page
-*(déjà "Next up #5")*
+### G. Meta App Review submission (externe — attend SIM)
+**But** : faire approuver l'app par Meta avec les 2 permissions
+`whatsapp_business_messaging` + `whatsapp_business_management` pour
+débloquer Embedded Signup tenant-side.
 
-### J. CI fix
-*(déjà "Next up #6" — non-bloquant)*
+- Business Verification : ✅ déjà fait
+- Achat SIM dédiée → activation Display Name "IMMO PRO-X" (1-2j)
+- Préparer screencasts vidéo selon `META_APP_REVIEW_GUIDE.md`
+  Étapes 2-4
+- Submit App Review (queue Meta : 2-8 semaines)
+- 🔴 **Le plus gros bloqueur calendaire du projet**
+
+### H. Embedded Signup tenant-side (~1-2 jours)
+**But** : permettre à chaque tenant de connecter SA propre WhatsApp
+Business depuis `/settings/whatsapp` via OAuth Facebook. Bloqué tant
+que G n'est pas approved.
+
+- FB Login SDK intégré dans la page Settings
+- Callback OAuth atteint l'Edge Function `whatsapp-signup` existante
+- Credentials WABA du tenant stockés dans `whatsapp_accounts`
+- `send-whatsapp` envoie déjà depuis le `access_token` du tenant —
+  rien à changer là
+- UI pour gérer les templates : catalogue partagé pour
+  Essentiel/Pro, builder custom pour Extra (cf backlog Approche C)
+
+### I. Pricing + billing page publique (~2 jours)
+**But** : publier la grille Essentiel/Pro/Extra sur `immoprox.io`
+quand au moins 1 tenant est prêt à passer Pro. Facturation reste
+manuelle (virement bancaire DZ).
+
+- Page `/pricing.html` sur le repo marketing avec la grille
+  finale (cf section 💰 Pricing & Unit Economics ci-dessus)
+- CTA chaque plan → contact form pré-rempli avec plan choisi
+- Mention TVA 19% incluse + setup fee 50k DZD pour Pro/Extra (à
+  valider)
+
+### J. CI fix (~½ jour, non-bloquant)
+**But** : que `ci.yml` arrête de fail rouge sur chaque PR.
+
+- Vérifier billing / quota Actions (probablement le souci)
+- Ou migrer vers un pre-merge git hook local qui run
+  `tsc --noEmit` + `npm run build`
+- Pre-existing depuis avril 2026, safe to merge red en attendant
 
 ### K. Dashboard Unit Economics — `/admin/costs` (~1 jour)
 **But** : suivre la rentabilité réelle, pas juste le MRR. Aujourd'hui
@@ -638,55 +693,125 @@ chambre de commerce. Pas d'action préventive.
 
 ---
 
-### 1. Wire the 3 crons to dispatchAutomation (unblocked once templates approved)
-Once the 10 templates in `WHATSAPP_TEMPLATES_CATALOG.md` land in
-Meta's "Approved" state:
-- `check-reminders` → fires `visite_confirmation_j_moins_1` (J-1
-  before a planned visit), `visite_rappel_h_moins_2` (2h before),
-  `document_rappel_manquant` (doc pending too long).
-- `check-payments` → fires `paiement_echeance_j_moins_3` (J-3
-  before a due installment), `paiement_retard` (J+1 after unpaid).
-- `check-reservations` → fires `reservation_confirmation` when a
-  reservation flips to `active`.
-- Effort: ~1 day of dev. Mostly plumbing — helpers already exist.
+## 🚀 Plan d'exécution — séquence opérationnelle complète
 
-### 2. UI — badge + deeplink for automation tasks
-After #1 is live, `/tasks` (and the pipeline client detail tasks
-tab) need to visually distinguish auto-tasks:
-- 🤖 badge on tasks where `automation_type IS NOT NULL`.
-- "Open WhatsApp" button that generates a `wa.me/<phone>?text=...`
-  deeplink from the rendered template (using a new
-  `src/lib/whatsappTemplates.ts` local map so we don't round-trip
-  to Meta just to render a preview).
-- Effort: 1-2 days. Blocked on #1 having real data to render.
+État au **2026-04-25** : repo nettoyé (34 branches mergées + dangereuse
+supprimées), refactor tasks consolidé (PRs #42-#45), ROADMAP finalisé
+avec MVP closure plan + pricing + risques. SIM Meta pas encore achetée
+→ on est au point de départ Phase A.
 
-### 3. Meta — buy SIM + App Review submission
-The founder has verified Business Manager ✅, just needs a
-dedicated SIM (never used on consumer WhatsApp) to register as the
-WABA phone number. Then follow `META_APP_REVIEW_GUIDE.md` Étapes
-2-4: Display Name (1-2d), screencast videos, submit for App
-Review (2-8 weeks Meta review).
+Légende acteurs : 👨‍💼 Founder · 🤖 Claude (dev) · 🏢 Meta · 🏪 Tenant
 
-### 4. Embedded Signup — offer WhatsApp to tenants
-After Meta approves the app, add a "Connect your WhatsApp" flow in
-`/settings/whatsapp`:
-- FB Login SDK integrated in the CRM settings page
-- Callback lands on the existing `whatsapp-signup` Edge Function
-- Tenant's WABA credentials stored in `whatsapp_accounts`
-- `send-whatsapp` already supports per-tenant sends via their credentials
-- UI for template submission + management per tenant (or curated platform templates)
-- Gives tenants the ability to send booking confirmations, reminders, and follow-ups from their own WhatsApp number inside the CRM.
+### Phase A — Setup Meta (1-2 semaines après achat SIM)
 
-### 5. Pricing + billing page
-Once at least 1 tenant is ready to go Pro, publish the pricing on
-`immoprox.io` (Essentiel / Pro / Extra packs, as designed in the
-2026-04-24 session). Invoicing stays manual (bank transfer) for
-Algeria per CLAUDE.md.
+| # | Étape | Acteur | Durée | Bloque |
+|---|---|---|---|---|
+| A1 | Acheter SIM dédiée (jamais utilisée WhatsApp consumer) | 👨‍💼 | 1-3j | TOUT |
+| A2 | Activer SIM + tester réception SMS | 👨‍💼 | 30min | A3 |
+| A3 | Soumettre Display Name "IMMO PRO-X" | 👨‍💼 | 30min + 1-2j review | A8 |
+| A4 | Préparer 10 templates depuis `WHATSAPP_TEMPLATES_CATALOG.md` | 👨‍💼 | 1h | — |
+| A5 | Soumettre 10 templates à Meta (3-4/jour, étalé sur 3j) | 👨‍💼 | 3j × 30min | E |
+| A6 | Stocker access_token permanent dans `whatsapp_config` (System User Business Settings) | 👨‍💼 | 15min | F, H |
+| A7 | Enregistrer screencasts pour App Review (selon `META_APP_REVIEW_GUIDE.md`) | 👨‍💼 | 4-6h | A8 |
+| A8 | Submit App Review (`whatsapp_business_messaging` + `_management`) | 👨‍💼 | 1h | H |
 
-### 6. Fix CI / GitHub Actions
-`ci.yml` has been failing in 1s on every PR (no runners provisioned).
-Check Actions billing / quota, or move to a workflow that doesn't need
-a runner (e.g. a pre-merge check that runs locally via a git hook).
+**Coûts Phase A** : ~15,000 DZD (SIM + 1 mois abonnement)
+
+### Phase B — Dev parallèle (peut démarrer **MAINTENANT**, ~8 jours)
+
+Ces étapes ne dépendent pas de Meta. On code pendant que Phase A tourne.
+
+| # MVP | Étape | Acteur | Durée | Dépendance |
+|---|---|---|---|---|
+| **A** | Webhook entrant `whatsapp-webhook` | 🤖 | 1j | aucune (test sur n° founder) |
+| **B** | Inbox UI tenant `/messages` | 🤖 | 2j | aucune (RLS déjà OK migration 017) |
+| **C** | Boucle tâche↔réalité | 🤖 | 2j | A |
+| **K** | Dashboard `/admin/costs` | 🤖 | 1j | aucune |
+| **D** | Score engagement simple | 🤖 | 2j | A (signaux replies) |
+
+À chaque étape : déployer + valider sur staging avec ton tenant
+existant + faux clients de test.
+
+### Phase C — Attente Meta App Review (2-8 semaines)
+
+Pas grand-chose à coder. Activités possibles :
+
+| # | Étape | Acteur | Note |
+|---|---|---|---|
+| C1 | Tester en plan B avec deeplink | 👨‍💼 + 🤖 | Onboarder 1-2 tenants pilotes en mode dégradé, Pro à 45k early bird |
+| C2 | Valider templates approuvés par Meta | 👨‍💼 + 🏢 | Re-soumettre les rejets ajustés |
+| C3 | Surveiller App Review status (queue Meta) | 👨‍💼 | Notifications email Meta |
+| C4 | Travailler `/admin/costs` avec vrais chiffres | 👨‍💼 + 🤖 | Saisie manuelle + ajustement |
+| C5 | Préparer pricing page `immoprox.io` (Étape I) | 👨‍💼 + 🤖 | Pas bloquant, peut être fait |
+
+### Phase D — Activation API (1-2 semaines après App Review approved)
+
+| # | Étape | Acteur | Durée |
+|---|---|---|---|
+| **E** | Wire 3 crons à `dispatchAutomation` | 🤖 | 1j |
+| **F** | UI badge + deeplink auto-tasks | 🤖 | 1j |
+| **H** | Embedded Signup tenant `/settings/whatsapp` | 🤖 | 1-2j |
+| D4 | Test E2E avec 1 tenant pilote (Embedded Signup → 1er rappel auto) | 👨‍💼 + 🏪 | 3-5j |
+| D5 | Migration tenants pilotes plan B → plan A (passer à 75k Pro standard) | 👨‍💼 + 🏪 | 1j de comm |
+
+### Phase E — Go-live progressif (3 mois)
+
+| # | Étape | Acteur | Cible |
+|---|---|---|---|
+| E1 | Onboarder 3-5 tenants Pro depuis leads existants `/admin/leads` | 👨‍💼 | 3 tenants signés mois 1 |
+| E2 | Itérer sur retours pilotes (bugs, UX, demandes feature) | 👨‍💼 + 🤖 | Hot-fixes uniquement |
+| E3 | Activer J. CI fix si Actions enfin disponibles | 🤖 | Non-bloquant |
+| E4 | Marketing organique : témoignages tenants pilotes | 👨‍💼 | Sur landing pages |
+| E5 | Atteindre Definition of Done | 👨‍💼 + 🤖 | 10 tenants Pro mix mois 3 |
+| E6 | **Stop dev produit** — passer en mode go-to-market | 👨‍💼 | Maintenance + support |
+
+### Décisions à prendre **avant Phase A** (cette semaine)
+
+- [ ] **Quand acheter la SIM ?** Idéalement cette semaine
+- [ ] **Pricing TVA inclusive ou exclusive ?** Reco : **TTC** (lisible B2B Algérie)
+- [ ] **Setup fee one-shot pour Pro/Extra ?** Reco : **+50,000 DZD** pour onboarding personnalisé
+- [ ] **Plan Extra à 180k ou Sur devis ?** Reco : **Sur devis** au début (1er Extra signé déclenche le builder Approche C)
+- [ ] **Comptable identifié ?** Si non, démarrer recherche en parallèle de Phase A
+- [ ] **Compte bancaire pro + Carte CIB Internationale ?** Si non, lancer démarche en parallèle
+
+### Décisions à prendre **avant Phase B** (avant dev)
+
+- [ ] **A en premier ou B en premier ?** Reco : **A** d'abord (le webhook débloque C et D)
+- [ ] **Test sur ton tenant existant ou tenant pilote dédié ?** Reco : **tenant pilote dédié**
+- [ ] **Valider nouveaux prix dans `/admin/plans`** (Essentiel 28k / Pro 75k / Extra Sur devis)
+- [ ] **Migration `starter`→`essentiel` + `enterprise`→`extra`** ? Ou via UI ?
+
+---
+
+## 📋 WhatsApp Go-Live Checklist — récap exhaustif
+
+### Côté Meta (👨‍💼 toi)
+- [ ] **W1.** Acheter SIM dédiée
+- [ ] **W2.** Display Name "IMMO PRO-X" approuvé
+- [ ] **W3.** Soumettre 10 templates (`WHATSAPP_TEMPLATES_CATALOG.md`)
+- [ ] **W4.** App Review approved (`whatsapp_business_messaging` + `_management`)
+
+### Côté dev (🤖 moi)
+- [ ] **W5.** Étape A — Webhook entrant `whatsapp-webhook`
+- [ ] **W6.** Étape B — Inbox UI tenant `/messages`
+- [ ] **W7.** Étape C — Boucle tâche↔réalité
+- [ ] **W8.** Étape E — Wire 3 crons à `dispatchAutomation`
+- [ ] **W9.** Étape F — UI badge auto-tasks
+- [ ] **W10.** Étape H — Embedded Signup tenant `/settings/whatsapp`
+- [ ] **W11.** Stocker `whatsapp_config` row (app_id + secret + token permanent)
+
+### Per-tenant onboarding (🏪 chaque agence cliente, guidée par notre wizard)
+- [ ] T1. Connexion Facebook Business Manager (via OAuth Embedded Signup)
+- [ ] T2. Vérification entreprise auprès de Meta (registre commerce)
+- [ ] T3. Soumettre Display Name agence (ex: "Agence El-Oued")
+- [ ] T4. Activer numéro WhatsApp Business dédié
+- [ ] T5. Sélectionner les templates du catalogue à utiliser
+
+### Tech Provider model — argument commercial
+- ✅ Chaque tenant garde son identité 100% (numéro + nom + logo agence)
+- ✅ Le client final voit "Agence El-Oued", **JAMAIS "IMMO PRO-X"**
+- ✅ Variables auto-remplies (nom client, date visite, montant, etc.)
+- ⏳ Templates wording custom = exclusivité Extra tier (Approche C en backlog)
 
 ---
 
