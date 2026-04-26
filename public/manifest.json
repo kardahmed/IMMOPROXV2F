@@ -1,0 +1,43 @@
+{
+  "name": "IMMO PRO-X — CRM Immobilier",
+  "short_name": "IMMO PRO-X",
+  "description": "CRM immobilier pour agences et promoteurs algériens — pipeline, agents, WhatsApp, IA.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0F172A",
+  "theme_color": "#7C3AED",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/favicon.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/logo-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/pipeline.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Pipeline 9 étapes — vue Kanban"
+    },
+    {
+      "src": "/screenshots/tasks.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Tâches & relances automatiques"
+    },
+    {
+      "src": "/screenshots/projects.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Projets immobiliers & unités"
+    }
+  ]
+}

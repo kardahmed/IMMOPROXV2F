@@ -1,5 +1,5 @@
 // IMMO PRO-X — Service Worker for basic offline support
-const CACHE_NAME = 'immo-prox-v2'
+const CACHE_NAME = 'immo-prox-v3'
 const OFFLINE_URL = '/offline.html'
 
 // Cache essential assets on install
@@ -8,7 +8,9 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME).then(cache => cache.addAll([
       '/',
       '/logo-180.png',
+      '/logo-512.png',
       '/favicon.png',
+      '/manifest.json',
     ]))
   )
   self.skipWaiting()
