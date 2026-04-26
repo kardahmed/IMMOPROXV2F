@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Save, Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Check, X, Zap, Plus, Trash2 } from 'lucide-react'
+import { Save, Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Check, X, Zap, Plus, Trash2, Bot, Mail, MessageCircle, Database, TrendingUp, TrendingDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { Card, PageHeader, PageSkeleton } from '@/components/common'
@@ -8,6 +8,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import toast from 'react-hot-toast'
+
+/* ═══ Cost rates — keep in sync with supabase/functions/_shared/trackCost.ts ═══ */
+const RATE_ANTHROPIC_DA_PER_CALL = 0.5  // ~3000 input + 1000 output tokens at Haiku 4.5 rates
+const RATE_RESEND_DA_PER_EMAIL = 0.06
+const RATE_WHATSAPP_DA_PER_MESSAGE = 1
+const SUPABASE_FIXED_DA_MONTHLY = 3500
 
 /* ═══ Types ═══ */
 
@@ -22,6 +28,12 @@ interface PlanRow {
   price_monthly: number
   price_yearly: number
   features: Record<string, boolean>
+  // Step Q-A: usage-based quotas
+  quota_ai_calls_monthly?: number
+  quota_emails_monthly?: number
+  quota_whatsapp_messages_monthly?: number
+  quota_burst_per_hour?: number
+  setup_fee_dzd?: number
 }
 
 const FEATURE_LABELS: Record<string, { label: string; icon: typeof Cpu }> = {
@@ -77,7 +89,14 @@ export function PlansConfigPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from('plan_limits').select('*').order('price_monthly')
       if (error) { handleSupabaseError(error); throw error }
-      return data as PlanRow[]
+      return (data as Array<Record<string, unknown>>).map(r => ({
+        ...r,
+        quota_ai_calls_monthly: typeof r.quota_ai_calls_monthly === 'number' ? r.quota_ai_calls_monthly : 0,
+        quota_emails_monthly: typeof r.quota_emails_monthly === 'number' ? r.quota_emails_monthly : 0,
+        quota_whatsapp_messages_monthly: typeof r.quota_whatsapp_messages_monthly === 'number' ? r.quota_whatsapp_messages_monthly : 0,
+        quota_burst_per_hour: typeof r.quota_burst_per_hour === 'number' ? r.quota_burst_per_hour : 100,
+        setup_fee_dzd: typeof r.setup_fee_dzd === 'number' ? r.setup_fee_dzd : 0,
+      })) as unknown as PlanRow[]
     },
   })
 
@@ -138,6 +157,11 @@ export function PlansConfigPage() {
           price_monthly: p.price_monthly,
           price_yearly: p.price_yearly,
           features: p.features,
+          quota_ai_calls_monthly: p.quota_ai_calls_monthly ?? 0,
+          quota_emails_monthly: p.quota_emails_monthly ?? 0,
+          quota_whatsapp_messages_monthly: p.quota_whatsapp_messages_monthly ?? 0,
+          quota_burst_per_hour: p.quota_burst_per_hour ?? 100,
+          setup_fee_dzd: p.setup_fee_dzd ?? 0,
         } as never).eq('plan', p.plan)
         if (error) { handleSupabaseError(error); throw error }
       }
@@ -189,6 +213,60 @@ export function PlansConfigPage() {
     onError: (e) => toast.error((e as Error).message),
   })
 
+  // Live economics simulator — recomputes whenever an input changes.
+  // Input: editPlans (the editable in-memory state, NOT the persisted values).
+  // Output per plan: max revenue, max cost (full quota usage), profit, margin %,
+  //   breakeven % (above which the plan becomes unprofitable).
+  const economicsByPlan = useMemo(() => {
+    const activeTenantsTotal = Math.max(1, Array.from(tenantCounts.values()).reduce((a, b) => a + b, 0))
+    const supabaseSharePerTenant = SUPABASE_FIXED_DA_MONTHLY / activeTenantsTotal
+
+    return editPlans.map(p => {
+      const aiCap = p.quota_ai_calls_monthly ?? 0
+      const emailCap = p.quota_emails_monthly ?? 0
+      const waCap = p.quota_whatsapp_messages_monthly ?? 0
+      const setup = p.setup_fee_dzd ?? 0
+
+      // Treat -1 (unlimited) as a sane upper bound for projection only.
+      // We cap at 10x the Pro values to avoid blowing up the chart.
+      const aiUnits = aiCap === -1 ? 2000 : aiCap
+      const emailUnits = emailCap === -1 ? 50000 : emailCap
+      const waUnits = waCap === -1 ? 30000 : waCap
+
+      const revenueMonthly = p.price_monthly + setup / 12
+
+      const costAnthropicMax = aiUnits * RATE_ANTHROPIC_DA_PER_CALL
+      const costResendMax = emailUnits * RATE_RESEND_DA_PER_EMAIL
+      const costWhatsappMax = waUnits * RATE_WHATSAPP_DA_PER_MESSAGE
+      const costsVariableMax = costAnthropicMax + costResendMax + costWhatsappMax
+      const costsTotal = costsVariableMax + supabaseSharePerTenant
+
+      const profitMax = revenueMonthly - costsTotal
+      const marginPct = revenueMonthly > 0 ? (profitMax / revenueMonthly) * 100 : 0
+
+      // Breakeven: at what % of utilization does revenue == costs?
+      // costs = supabase_fixed + utilization * variable_max
+      // breakeven% = (revenue - supabase_fixed) / variable_max
+      const breakevenPct = costsVariableMax > 0
+        ? ((revenueMonthly - supabaseSharePerTenant) / costsVariableMax) * 100
+        : (revenueMonthly >= supabaseSharePerTenant ? Infinity : 0)
+
+      return {
+        plan: p.plan,
+        revenueMonthly,
+        costAnthropicMax,
+        costResendMax,
+        costWhatsappMax,
+        costSupabase: supabaseSharePerTenant,
+        costsTotal,
+        profitMax,
+        marginPct,
+        breakevenPct,
+        viable: profitMax > 0,
+      }
+    })
+  }, [editPlans, tenantCounts])
+
   if (isLoading || !plans) return <PageSkeleton kpiCount={0} />
 
   return (
@@ -208,6 +286,83 @@ export function PlansConfigPage() {
           </>
         }
       />
+
+      {/* Economics simulator — live profitability per plan */}
+      <Card noPadding className="overflow-hidden">
+        <div className="border-b border-immo-border-default bg-[#7C3AED]/5 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-[#7C3AED]" />
+            <h3 className="text-sm font-semibold text-immo-text-primary">Simulateur économique — coût d'1 tenant à 100% des quotas</h3>
+          </div>
+          <p className="mt-1 text-[11px] text-immo-text-muted">
+            Recalcul en direct selon vos modifications.
+            Tarifs sourcés depuis les Edge Functions
+            (Anthropic ~{RATE_ANTHROPIC_DA_PER_CALL} DA/appel, Resend {RATE_RESEND_DA_PER_EMAIL} DA/mail, WhatsApp {RATE_WHATSAPP_DA_PER_MESSAGE} DA/msg).
+            Quote-part Supabase = {SUPABASE_FIXED_DA_MONTHLY} DA / nb tenants actifs.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-immo-border-default bg-immo-bg-primary text-[10px] uppercase tracking-wide text-immo-text-muted">
+                <th className="px-4 py-2 text-left font-semibold">Plan</th>
+                <th className="px-4 py-2 text-right font-semibold">Revenu</th>
+                <th className="px-4 py-2 text-right font-semibold">
+                  <Bot className="mr-0.5 inline h-3 w-3" /> IA
+                </th>
+                <th className="px-4 py-2 text-right font-semibold">
+                  <Mail className="mr-0.5 inline h-3 w-3" /> Emails
+                </th>
+                <th className="px-4 py-2 text-right font-semibold">
+                  <MessageCircle className="mr-0.5 inline h-3 w-3" /> WhatsApp
+                </th>
+                <th className="px-4 py-2 text-right font-semibold">
+                  <Database className="mr-0.5 inline h-3 w-3" /> Supabase
+                </th>
+                <th className="px-4 py-2 text-right font-semibold">Coût total</th>
+                <th className="px-4 py-2 text-right font-semibold">Profit max</th>
+                <th className="px-4 py-2 text-right font-semibold">Marge</th>
+                <th className="px-4 py-2 text-right font-semibold">Rupture</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-immo-border-default">
+              {economicsByPlan.map(eco => {
+                const profitColor = eco.profitMax >= 0 ? 'text-immo-accent-green' : 'text-immo-status-red'
+                const marginColor = eco.marginPct >= 50 ? 'text-immo-accent-green' : eco.marginPct >= 20 ? 'text-immo-status-orange' : 'text-immo-status-red'
+                return (
+                  <tr key={eco.plan} className="hover:bg-immo-bg-primary/40">
+                    <td className="px-4 py-2 font-bold capitalize" style={{ color: PLAN_COLORS[eco.plan] ?? '#0579DA' }}>{eco.plan}</td>
+                    <td className="px-4 py-2 text-right text-immo-text-primary">{formatPrice(eco.revenueMonthly)}</td>
+                    <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costAnthropicMax).toLocaleString('fr-FR')} DA</td>
+                    <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costResendMax).toLocaleString('fr-FR')} DA</td>
+                    <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costWhatsappMax).toLocaleString('fr-FR')} DA</td>
+                    <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costSupabase).toLocaleString('fr-FR')} DA</td>
+                    <td className="px-4 py-2 text-right font-medium text-immo-status-red">−{Math.round(eco.costsTotal).toLocaleString('fr-FR')} DA</td>
+                    <td className={`px-4 py-2 text-right font-bold ${profitColor}`}>
+                      {eco.profitMax >= 0
+                        ? <TrendingUp className="mr-0.5 inline h-3 w-3" />
+                        : <TrendingDown className="mr-0.5 inline h-3 w-3" />}
+                      {eco.profitMax >= 0 ? '+' : ''}{Math.round(eco.profitMax).toLocaleString('fr-FR')} DA
+                    </td>
+                    <td className={`px-4 py-2 text-right font-semibold ${marginColor}`}>{eco.marginPct.toFixed(0)}%</td>
+                    <td className="px-4 py-2 text-right text-[11px] text-immo-text-muted">
+                      {eco.breakevenPct === Infinity ? '∞' : `${Math.max(0, eco.breakevenPct).toFixed(0)}%`}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        {economicsByPlan.some(e => !e.viable && e.revenueMonthly > 0) && (
+          <div className="border-t border-immo-status-red/30 bg-immo-status-red/5 px-5 py-3">
+            <p className="text-xs font-medium text-immo-status-red">
+              ⚠️ Au moins un plan est <strong>non viable à 100% d'utilisation</strong>.
+              Augmente le prix ou baisse les quotas pour qu'il dégage du profit.
+            </p>
+          </div>
+        )}
+      </Card>
 
       {/* Add plan modal */}
       {showAddPlan && (
@@ -304,6 +459,46 @@ export function PlansConfigPage() {
                     <Input type="number" value={plan.max_ai_tokens_monthly} onChange={e => updatePlan(idx, 'max_ai_tokens_monthly', parseInt(e.target.value) || 0)}
                       className="mt-0.5 h-7 border-immo-border-default bg-immo-bg-primary text-xs text-immo-text-primary" />
                     <p className="mt-0.5 text-[10px] text-immo-text-muted">{formatTokens(plan.max_ai_tokens_monthly)} {plan.max_ai_tokens_monthly === -1 && '(-1 = illimite)'}</p>
+                  </div>
+                </div>
+
+                {/* Quotas API (step Q-A) */}
+                <div className="space-y-2 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#7C3AED]">Quotas API mensuels</p>
+
+                  <div>
+                    <Label className="text-[10px] text-immo-text-muted flex items-center gap-1"><Bot className="h-3 w-3" /> Appels IA / mois</Label>
+                    <Input type="number" value={plan.quota_ai_calls_monthly ?? 0} onChange={e => updatePlan(idx, 'quota_ai_calls_monthly', parseInt(e.target.value) || 0)}
+                      className="mt-0.5 h-7 border-immo-border-default bg-immo-bg-primary text-xs text-immo-text-primary" />
+                    <p className="mt-0.5 text-[10px] text-immo-text-muted">{formatTokens(plan.quota_ai_calls_monthly ?? 0)} {(plan.quota_ai_calls_monthly ?? 0) === -1 && '(illimite)'}</p>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-immo-text-muted flex items-center gap-1"><Mail className="h-3 w-3" /> Emails / mois</Label>
+                    <Input type="number" value={plan.quota_emails_monthly ?? 0} onChange={e => updatePlan(idx, 'quota_emails_monthly', parseInt(e.target.value) || 0)}
+                      className="mt-0.5 h-7 border-immo-border-default bg-immo-bg-primary text-xs text-immo-text-primary" />
+                    <p className="mt-0.5 text-[10px] text-immo-text-muted">{formatTokens(plan.quota_emails_monthly ?? 0)} {(plan.quota_emails_monthly ?? 0) === -1 && '(illimite)'}</p>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-immo-text-muted flex items-center gap-1"><MessageCircle className="h-3 w-3" /> WhatsApp / mois</Label>
+                    <Input type="number" value={plan.quota_whatsapp_messages_monthly ?? 0} onChange={e => updatePlan(idx, 'quota_whatsapp_messages_monthly', parseInt(e.target.value) || 0)}
+                      className="mt-0.5 h-7 border-immo-border-default bg-immo-bg-primary text-xs text-immo-text-primary" />
+                    <p className="mt-0.5 text-[10px] text-immo-text-muted">{formatTokens(plan.quota_whatsapp_messages_monthly ?? 0)} {(plan.quota_whatsapp_messages_monthly ?? 0) === -1 && '(illimite)'}</p>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-immo-text-muted flex items-center gap-1"><Zap className="h-3 w-3" /> Burst max / heure</Label>
+                    <Input type="number" value={plan.quota_burst_per_hour ?? 100} onChange={e => updatePlan(idx, 'quota_burst_per_hour', parseInt(e.target.value) || 0)}
+                      className="mt-0.5 h-7 border-immo-border-default bg-immo-bg-primary text-xs text-immo-text-primary" />
+                    <p className="mt-0.5 text-[10px] text-immo-text-muted">Anti-loop, tous services confondus</p>
+                  </div>
+
+                  <div>
+                    <Label className="text-[10px] text-immo-text-muted flex items-center gap-1"><DollarSign className="h-3 w-3" /> Frais setup unique (DA)</Label>
+                    <Input type="number" value={plan.setup_fee_dzd ?? 0} onChange={e => updatePlan(idx, 'setup_fee_dzd', parseInt(e.target.value) || 0)}
+                      className="mt-0.5 h-7 border-immo-border-default bg-immo-bg-primary text-xs text-immo-text-primary" />
+                    <p className="mt-0.5 text-[10px] text-immo-text-muted">{formatPrice(plan.setup_fee_dzd ?? 0)}</p>
                   </div>
                 </div>
 
