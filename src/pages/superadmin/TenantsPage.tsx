@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn, AlertTriangle } from 'lucide-react'
+import { Building2, Users, UserCheck, Briefcase, Plus, Search, Eye, LogIn, AlertTriangle, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { DataTable, KPICard, PageHeader, PageSkeleton } from '@/components/common'
@@ -9,6 +9,7 @@ import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { CreateTenantModal } from './components/CreateTenantModal'
+import { DeleteTenantModal } from './components/DeleteTenantModal'
 import { RealtimeDashboard } from './components/RealtimeDashboard'
 import { PlanBadge } from './components/PlanBadge'
 import { useTenantHealth } from './hooks/useTenantHealth'
@@ -32,15 +33,17 @@ export function TenantsPage() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
+  const [tenantToDelete, setTenantToDelete] = useState<{ id: string; name: string } | null>(null)
   const { enterTenant } = useSuperAdminStore()
 
-  // Fetch all tenants with counts
+  // Fetch all tenants with counts (excluding soft-deleted)
   const { data: tenants = [], isLoading, refetch } = useQuery({
     queryKey: ['super-admin-tenants'],
     queryFn: async () => {
       const { data: rawTenants, error } = await supabase
         .from('tenants')
         .select('*')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (error) { handleSupabaseError(error); throw error }
@@ -136,6 +139,14 @@ export function TenantsPage() {
           >
             <LogIn className="h-3.5 w-3.5" />
           </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setTenantToDelete({ id: t.id, name: t.name }) }}
+            aria-label={`Supprimer ${t.name}`}
+            title="Supprimer"
+            className="rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-status-red/10 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       ),
     },
@@ -194,6 +205,13 @@ export function TenantsPage() {
       />
 
       <CreateTenantModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSuccess={() => refetch()} />
+
+      <DeleteTenantModal
+        isOpen={!!tenantToDelete}
+        onClose={() => setTenantToDelete(null)}
+        onSuccess={() => refetch()}
+        tenant={tenantToDelete}
+      />
     </div>
   )
 }
