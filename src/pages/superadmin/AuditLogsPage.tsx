@@ -26,8 +26,11 @@ const ACTION_LABELS: Record<string, { label: string; color: 'green' | 'blue' | '
   toggle_status: { label: 'Changement statut', color: 'orange' },
   reset_password: { label: 'Reset mot de passe', color: 'blue' },
   delete_user: { label: 'Suppression utilisateur', color: 'red' },
+  delete_tenant: { label: 'Suppression tenant', color: 'red' },
+  restore_tenant: { label: 'Restauration tenant', color: 'green' },
   enter_tenant: { label: 'Acces tenant', color: 'muted' },
   update_settings: { label: 'Modification parametres', color: 'blue' },
+  update_plan: { label: 'Modification plan / quota', color: 'orange' },
 }
 
 const PAGE_SIZE = 50
