@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackAnthropicCost } from '../_shared/trackCost.ts'
+import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -77,7 +78,11 @@ Deno.serve(async (req) => {
       })
     }
 
-    // 3. Call Anthropic API server-side
+    // 3. Quota check — block if monthly cap or hourly burst is exhausted.
+    const quota = await checkQuota(supabase, tenantId, 'anthropic')
+    if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
+
+    // 4. Call Anthropic API server-side
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {

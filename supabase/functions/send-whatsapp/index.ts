@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackWhatsAppCost } from '../_shared/trackCost.ts'
+import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -52,11 +53,13 @@ Deno.serve(async (req) => {
 
     if (!waAccount) return json({ error: 'WhatsApp non activé pour votre agence. Contactez l\'administrateur.' }, 403)
 
-    // Check quota
+    // Plan-level quota (api_costs based, source of truth post step Q-A).
+    const quota = await checkQuota(supabase, profile.tenant_id, 'whatsapp')
+    if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
+
+    // Legacy whatsapp_accounts.monthly_quota counter — kept in sync
+    // for backwards compatibility but no longer the gate.
     const account = waAccount as unknown as { monthly_quota: number; messages_sent: number; plan: string }
-    if (account.messages_sent >= account.monthly_quota) {
-      return json({ error: `Quota WhatsApp atteint (${account.messages_sent}/${account.monthly_quota}). Passez au pack supérieur.` }, 429)
-    }
 
     // Get platform WhatsApp config
     const { data: waConfig } = await supabase

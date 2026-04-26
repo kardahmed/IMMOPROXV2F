@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle, Calendar, ToggleLeft } from 'lucide-react'
+import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle, Calendar, ToggleLeft, Gauge } from 'lucide-react'
 // Lazy-load sections — only the active section is rendered, no point bundling all 13 up-front
 const CompanySection = lazy(() => import('./sections').then(m => ({ default: m.CompanySection })))
 const PipelineSection = lazy(() => import('./sections').then(m => ({ default: m.PipelineSection })))
@@ -15,12 +15,13 @@ const WhatsAppSection = lazy(() => import('./sections/WhatsAppSection').then(m =
 const VisitScheduleSection = lazy(() => import('./sections/VisitScheduleSection').then(m => ({ default: m.VisitScheduleSection })))
 const PermissionProfilesSection = lazy(() => import('./sections/PermissionProfilesSection').then(m => ({ default: m.PermissionProfilesSection })))
 const FeaturesSection = lazy(() => import('./sections/FeaturesSection').then(m => ({ default: m.FeaturesSection })))
+const QuotasSection = lazy(() => import('./sections/QuotasSection').then(m => ({ default: m.QuotasSection })))
 
 function SectionFallback() {
   return <div className="flex justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" /></div>
 }
 
-type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'visits' | 'profiles' | 'features' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
+type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'visits' | 'profiles' | 'features' | 'quotas' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
 const SECTION_ICONS: Record<Section, typeof Building2> = {
   company: Building2,
@@ -30,6 +31,7 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   visits: Calendar,
   profiles: Shield,
   features: ToggleLeft,
+  quotas: Gauge,
   whatsapp: MessageCircle,
   branding: Palette,
   reservations: Bookmark,
@@ -39,7 +41,7 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   security: Shield,
 }
 
-const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'features', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
+const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'features', 'quotas', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
 const SECTION_LABELS: Record<Section, string> = {
   company: 'Agence',
@@ -49,6 +51,7 @@ const SECTION_LABELS: Record<Section, string> = {
   visits: 'Visites',
   profiles: 'Permissions',
   features: 'Fonctionnalites',
+  quotas: 'Quotas',
   whatsapp: 'WhatsApp',
   branding: 'Personnalisation',
   reservations: 'Reservations',
@@ -94,6 +97,7 @@ export function SettingsPage() {
           {section === 'visits' && <VisitScheduleSection />}
           {section === 'profiles' && <PermissionProfilesSection />}
           {section === 'features' && <FeaturesSection />}
+          {section === 'quotas' && <QuotasSection />}
           {section === 'whatsapp' && <WhatsAppSection />}
           {section === 'branding' && <BrandingSection />}
           {section === 'reservations' && <ReservationsSection />}

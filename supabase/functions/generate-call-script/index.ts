@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackAnthropicCost } from '../_shared/trackCost.ts'
+import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -261,6 +262,10 @@ GENERE un JSON avec:
 5. "suggested_action": action concrete recommandee (ex: "Envoyer simulation F4 12eme etage par WhatsApp")
 
 REPONDS UNIQUEMENT avec le JSON, aucun texte autour.`
+
+    // 6.5 Quota check — block if monthly cap or hourly burst exhausted.
+    const quota = await checkQuota(supabase, tenantId, 'anthropic')
+    if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
 
     // 7. Call Claude API
     const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {

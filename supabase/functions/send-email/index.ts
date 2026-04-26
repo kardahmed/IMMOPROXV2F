@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { renderTemplate } from '../_shared/email-templates.ts'
 import type { TemplateName } from '../_shared/email-templates.ts'
 import { trackResendCost } from '../_shared/trackCost.ts'
+import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,6 +48,13 @@ serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    // Quota check — only if a tenant context is provided (system test
+    // emails without tenant_id bypass quotas, by design).
+    if (tenant_id && !metadata?.test) {
+      const quota = await checkQuota(supabase, tenant_id, 'resend')
+      if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
     }
 
     // Get platform settings for from email
