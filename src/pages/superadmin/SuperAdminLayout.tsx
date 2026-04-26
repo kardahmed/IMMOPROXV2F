@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight, Moon, Sun, Inbox, ShieldAlert } from 'lucide-react'
+import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight, Moon, Sun, Inbox, ShieldAlert, Receipt } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { to: '/admin/changelog', icon: Megaphone, labelKey: 'Changelog' },
   { to: '/admin/monitoring', icon: Activity, labelKey: 'Monitoring' },
   { to: '/admin/stats', icon: BarChart3, labelKey: 'Statistiques' },
+  { to: '/admin/costs', icon: Receipt, labelKey: 'Couts & profit' },
   { to: '/admin/playbook', icon: Sparkles, labelKey: 'Playbook IA' },
   { to: '/admin/emails', icon: Mail, labelKey: 'Emails' },
   { to: '/admin/whatsapp', icon: MessageCircle, labelKey: 'WhatsApp' },

@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { renderTemplate } from '../_shared/email-templates.ts'
 import type { TemplateName } from '../_shared/email-templates.ts'
+import { trackResendCost } from '../_shared/trackCost.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -105,6 +106,14 @@ serve(async (req: Request) => {
     }
 
     const emailStatus = metadata?.test ? 'test' : (sent ? 'sent' : 'failed')
+
+    if (sent && !metadata?.test) {
+      await trackResendCost(supabase, 1, {
+        tenantId: tenant_id ?? null,
+        operation: type ?? template ?? 'send-email',
+        metadata: { template: template ?? null, recipient: to },
+      })
+    }
 
     // Log to email_logs table
     await supabase.from('email_logs').insert({

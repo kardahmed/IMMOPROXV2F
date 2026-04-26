@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
+import { trackWhatsAppCost } from '../_shared/trackCost.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -169,6 +170,12 @@ Deno.serve(async (req) => {
       variables: variables ?? [],
       wa_message_id: waMessageId,
       status: 'sent',
+    })
+
+    await trackWhatsAppCost(supabase, 1, {
+      tenantId: profile.tenant_id,
+      operation: body_text ? 'whatsapp-text' : 'whatsapp-template',
+      metadata: { template: template_name ?? null, type: body_text ? 'text' : 'template' },
     })
 
     // Mark task as executed (step C — task↔reality loop). The

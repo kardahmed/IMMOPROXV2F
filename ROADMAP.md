@@ -361,9 +361,9 @@ items A → D sont nouveaux ; E → J sont les anciens "Next up"
 ré-ordonnés ; K est nouveau (cost tracking). Effort total estimé :
 **~8 jours de dev** pour A+B+C+D+K, le reste dépend de Meta.
 
-**État au 25-Apr-2026** : ✅ A, B, C livrés (PRs #46–#47). 🔜 D, K, I, J
-sont les prochains items qui ne dépendent pas de Meta. E, F, H bloqués
-par approval Meta (templates + App Review).
+**État au 26-Apr-2026** : ✅ A, B, C, D, K livrés (PRs #46–#51). I retiré
+(modèle sales-led — pas de pricing public). 🔜 J seul reste non bloqué
+par Meta. E, F, G, H bloqués par approval Meta (templates + App Review).
 
 ### ✅ A. Webhook entrant WhatsApp (~1 jour) — LIVRÉ (PR #46)
 **But** : capter les réponses des clients dans `whatsapp_messages`
@@ -409,20 +409,17 @@ Dépend de A.
   tâche de relance + suggère un autre canal (`channel='call'` si
   WhatsApp non répondu)
 
-### D. Idée #2 — score engagement, version SIMPLE (~2 jours)
+### ✅ D. Idée #2 — score engagement, version SIMPLE (~2 jours) — LIVRÉ (PR #50)
 **But** : pastille couleur sur la liste pipeline pour voir au coup
 d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
 
-- Migration : `clients.engagement_score INT DEFAULT 50`
-  + `engagement_updated_at TIMESTAMPTZ`
-- Edge Function `recompute-engagement` (cron toutes les 6h) calcule :
-  - +20 si réponse WhatsApp dans les 24h après envoi
-  - +15 si visite réalisée (pas no-show)
-  - −20 si no-show ou délai >7j sans interaction
-  - −10 si tâche `auto_cancelled=true` (relance ignorée)
-  - decay : −5/semaine sans aucun contact
-- UI : pastille couleur (rouge <30, orange 30-60, vert >60) dans
-  `TableView.tsx` (pipeline) + détail client
+- Migration 033 : `clients.engagement_score INT DEFAULT 50`
+  + `engagement_updated_at TIMESTAMPTZ` + cron `recompute-engagement-6h`
+- Edge Function `recompute-engagement` (cron toutes les 6h) :
+  - +20 si réponse WhatsApp récente, +15 par visite réalisée
+  - −20 si silence 14j, −10 par tâche `auto_cancelled=true`
+- UI : `<EngagementBadge />` (pastille rouge/orange/vert) dans
+  `TableView.tsx` (colonne Score) + header de `ClientDetailPage.tsx`
 - Note : la version **smart** (ML, comparaison historique, prédiction
   de signature) est en backlog 💭 — à reconsidérer après ~3 mois
   d'usage prod quand on a la data pour calibrer.
@@ -481,16 +478,13 @@ que G n'est pas approved.
 - UI pour gérer les templates : catalogue partagé pour
   Essentiel/Pro, builder custom pour Extra (cf backlog Approche C)
 
-### I. Pricing + billing page publique (~2 jours)
-**But** : publier la grille Essentiel/Pro/Extra sur `immoprox.io`
-quand au moins 1 tenant est prêt à passer Pro. Facturation reste
-manuelle (virement bancaire DZ).
-
-- Page `/pricing.html` sur le repo marketing avec la grille
-  finale (cf section 💰 Pricing & Unit Economics ci-dessus)
-- CTA chaque plan → contact form pré-rempli avec plan choisi
-- Mention TVA 19% incluse + setup fee 50k DZD pour Pro/Extra (à
-  valider)
+### ❌ I. Pricing + billing page publique — HORS SCOPE (modèle sales-led)
+**Décision (26-Apr-2026)** : pas de pricing page publique. Le marché
+algérien fonctionne en sales-led — la valeur perçue se construit
+pendant la présentation perso, et un prix public hors contexte est
+systématiquement perçu comme "trop cher". Le prix est annoncé à la
+fin du pitch, après la démo. Conséquence : `immoprox.io` reste un
+site de capture de leads (formulaire demo), pas une vitrine tarifaire.
 
 ### J. CI fix (~½ jour, non-bloquant)
 **But** : que `ci.yml` arrête de fail rouge sur chaque PR.
@@ -500,28 +494,27 @@ manuelle (virement bancaire DZ).
   `tsc --noEmit` + `npm run build`
 - Pre-existing depuis avril 2026, safe to merge red en attendant
 
-### K. Dashboard Unit Economics — `/admin/costs` (~1 jour)
-**But** : suivre la rentabilité réelle, pas juste le MRR. Aujourd'hui
-`/admin/stats` montre revenue + churn mais ne calcule **pas le profit
-net** (manque la soustraction des coûts variables Anthropic / Meta /
-Resend / Supabase + coûts fixes).
+### ✅ K. Dashboard Unit Economics — `/admin/costs` (~1 jour) — LIVRÉ (PR #51)
+**But** : suivre la rentabilité réelle, pas juste le MRR.
 
-- Page `/admin/costs` (nav Super Admin) :
-  - Section "Coûts fixes mensuels" : formulaire pour saisir
-    Supabase, Hostinger, Google Workspace, Sentry, comptable, etc.
-    (stocké dans une nouvelle table `platform_costs`).
-  - Section "Coûts variables estimés par tenant" : table avec
-    revenue (depuis `plan_limits`), coûts variables estimés
-    (basés sur quota plan × tarif Meta/Anthropic), **marge brute
-    estimée par tenant et par mois**.
-  - Section "Profit net plateforme" : MRR (depuis stats) − coûts
-    fixes − Σ coûts variables = **profit net mensuel** affiché en
-    KPI. Décomposable par mois sur 6 mois glissants.
-- Migration : table `platform_costs (id, period TEXT, category TEXT,
-  description TEXT, amount_dzd INTEGER, created_at)`.
-- Pas de tracking automatique d'usage par tenant pour le MVP — on
-  estime depuis les quotas plan. Le tracking précis (`tenant_usage_log`)
-  est en backlog 💭.
+- Migration 034 : table `api_costs` (tenant_id, service, operation,
+  units, cost_da, metadata, created_at) + RPC `get_costs_summary(start,
+  end)` qui retourne JSON (revenue, costs_by_service, profit, marge,
+  top tenants, série quotidienne).
+- Tracking auto via shared helper `_shared/trackCost.ts`, branché dans
+  `generate-call-script`, `ai-suggestions`, `send-email`,
+  `send-campaign`, `send-whatsapp`. Une ligne par appel API réussi.
+- Coûts en DZD à 140 DA/USD (Claude Haiku 4.5 input/output, Resend par
+  email, WhatsApp par message). Supabase Pro = 3500 DA/mo fixe pro-raté.
+- UI `/admin/costs` :
+  - 4 KPIs : Revenu actif, Coûts API, Profit, Marge %
+  - Breakdown Anthropic / Resend / WhatsApp / Supabase (4 cartes)
+  - Graphe AreaChart 7/30/90 jours (toggle)
+  - Top 5 tenants par coût avec profit calculé
+- RLS : `api_costs` lisible super_admin only ; `service_insert` libre
+  (les Edge Functions y écrivent en service-role).
+- Tarifs hardcodés dans `trackCost.ts` — à recalibrer quand les
+  premières factures Anthropic/Meta/Resend tombent (post-MVP).
 
 ---
 
@@ -545,9 +538,10 @@ dev produit s'arrête (sauf bug fixes) :
 - [ ] **3 crons WhatsApp opérationnels** (`check-reminders`,
       `check-payments`, `check-reservations`) avec ≥3 dispatches
       réussis chacun
-- [ ] **Dashboard Unit Economics live** : `/admin/costs` montre
-      profit net mensuel (MRR − coûts fixes − coûts variables) sur
-      ≥3 mois consécutifs avec des chiffres validés par le comptable
+- [x] **Dashboard Unit Economics live** : `/admin/costs` montre
+      profit net mensuel (MRR − coûts API − Supabase) — livré PR #51,
+      à valider sur ≥3 mois consécutifs avec le comptable une fois en
+      prod réelle
 - [ ] **0 bug critique ouvert** (pas de bloquant, pas de data loss)
 - [ ] **ROADMAP 🚧 In progress vide**, 🧩 Partial vide ou converti
       en 🚫 Deferred avec justification
