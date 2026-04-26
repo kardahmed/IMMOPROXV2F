@@ -41,7 +41,7 @@ export function PublicLandingPage() {
     queryKey: ['public-landing-sections', slug],
     queryFn: async () => {
       // Get page ID first
-      const { data: pg } = await supabase.from('landing_pages').select('id').eq('slug', slug!).eq('is_active', true).single()
+      const { data: pg } = await supabase.from('landing_pages').select('id').eq('slug', slug!).eq('is_active', true).maybeSingle()
       if (!pg) return []
       const pgId = (pg as unknown as { id: string }).id
       const { data } = await supabase.from('landing_page_sections').select('*').eq('page_id', pgId).order('sort_order')
@@ -56,34 +56,14 @@ export function PublicLandingPage() {
   const { data: page, isLoading } = useQuery({
     queryKey: ['public-landing', slug],
     queryFn: async () => {
-      // Try slug first, then check if current hostname matches a tenant's custom_domain
-      let query = supabase
+      const { data } = await supabase
         .from('landing_pages')
         .select('*, projects(name, location), tenants(name, phone, email, logo_url)')
         .eq('is_active', true)
+        .eq('slug', slug!)
+        .maybeSingle()
 
-      if (slug) {
-        query = query.eq('slug', slug)
-      }
-
-      // If no slug (root of custom domain), find by host
-      const hostname = window.location.hostname
-      if (!slug && hostname !== 'localhost' && !hostname.includes('supabase') && !hostname.includes('vercel')) {
-        // Lookup tenant by custom_domain, then find their first active landing page
-        const { data: tenantData } = await supabase.from('tenants').select('id').eq('custom_domain' as never, hostname).single()
-        if (tenantData) {
-          query = supabase
-            .from('landing_pages')
-            .select('*, projects(name, location), tenants(name, phone, email, logo_url)')
-            .eq('tenant_id', (tenantData as unknown as { id: string }).id)
-            .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(1)
-        }
-      }
-
-      const { data, error } = await query.single()
-      if (error) throw error
+      if (!data) return null
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const d = data as any

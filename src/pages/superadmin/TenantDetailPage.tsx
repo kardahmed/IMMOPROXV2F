@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home, AlertTriangle, Power, Globe, Download } from 'lucide-react'
+import { ArrowLeft, Users, Briefcase, Building2, DollarSign, Bookmark, CheckCircle, Home, AlertTriangle, Power, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { Card, KPICard, PageSkeleton, StatusBadge } from '@/components/common'
@@ -11,7 +11,6 @@ import { formatPriceCompact } from '@/lib/constants'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { UserManagementPanel } from './components/UserManagementPanel'
-import { Input } from '@/components/ui/input'
 import { PlanBadge } from './components/PlanBadge'
 import { ChangePlanModal } from './components/ChangePlanModal'
 import { DuplicateConfigModal } from './components/DuplicateConfigModal'
@@ -25,8 +24,6 @@ export function TenantDetailPage() {
   const { enterTenant } = useSuperAdminStore()
   const [showChangePlan, setShowChangePlan] = useState(false)
   const [showDuplicate, setShowDuplicate] = useState(false)
-  const [customDomain, setCustomDomain] = useState('')
-  const [domainDirty, setDomainDirty] = useState(false)
 
   // Tenant info
   const { data: tenant, isLoading: loadingTenant } = useQuery({
@@ -248,11 +245,8 @@ export function TenantDetailPage() {
         </div>
       </Card>
 
-      {/* Custom Domain + Export */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <CustomDomainPanel tenantId={tenantId!} customDomain={customDomain} setCustomDomain={setCustomDomain} domainDirty={domainDirty} setDomainDirty={setDomainDirty} tenant={tenant} />
-        <ExportPanel tenantId={tenantId!} tenantName={tenant.name as string} />
-      </div>
+      {/* Export */}
+      <ExportPanel tenantId={tenantId!} tenantName={tenant.name as string} />
 
       {/* Duplicate config modal */}
       <DuplicateConfigModal
@@ -271,71 +265,6 @@ export function TenantDetailPage() {
         currentPlan={((tenant.plan as string) ?? 'free') as PlanKey}
       />
     </div>
-  )
-}
-
-/* ─── Custom Domain Panel ─── */
-
-function CustomDomainPanel({ tenantId, customDomain, setCustomDomain, domainDirty, setDomainDirty, tenant }: {
-  tenantId: string
-  customDomain: string
-  setCustomDomain: (v: string) => void
-  domainDirty: boolean
-  setDomainDirty: (v: boolean) => void
-  tenant: Record<string, unknown>
-}) {
-  const qc = useQueryClient()
-
-  useEffect(() => {
-    setCustomDomain((tenant.custom_domain as string) ?? '')
-  }, [tenant.custom_domain, setCustomDomain])
-
-  const saveDomain = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('tenants').update({ custom_domain: customDomain || null } as never).eq('id', tenantId)
-      if (error) { handleSupabaseError(error); throw error }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['super-admin-tenant', tenantId] })
-      setDomainDirty(false)
-      toast.success('Domaine enregistré')
-    },
-  })
-
-  return (
-    <Card>
-      <div className="mb-3 flex items-center gap-2">
-        <Globe className="h-5 w-5 text-[#7C3AED]" />
-        <h3 className="text-sm font-semibold text-immo-text-primary">Domaine custom</h3>
-      </div>
-      <p className="mb-3 text-[11px] text-immo-text-muted">
-        Les landing pages de ce tenant seront aussi accessibles via ce domaine. Le client doit configurer un CNAME vers votre domaine principal.
-      </p>
-      <div className="flex gap-2">
-        <Input
-          value={customDomain}
-          onChange={e => { setCustomDomain(e.target.value); setDomainDirty(true) }}
-          placeholder="landing.monagence.com"
-          variant="immo"
-          className="flex-1"
-        />
-        <Button
-          onClick={() => saveDomain.mutate()}
-          disabled={saveDomain.isPending || !domainDirty}
-          variant="purple"
-        >
-          Enregistrer
-        </Button>
-      </div>
-      {customDomain && (
-        <div className="mt-3 rounded-lg bg-immo-bg-primary p-3">
-          <p className="text-[10px] font-medium text-immo-text-muted">Configuration DNS requise</p>
-          <p className="mt-1 font-mono text-xs text-immo-text-primary">
-            {customDomain} → CNAME → {window.location.hostname}
-          </p>
-        </div>
-      )}
-    </Card>
   )
 }
 
