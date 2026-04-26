@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  RotateCcw, ArrowUpDown, Check, Trophy, Award,
+  RotateCcw, ArrowUpDown, Check, Trophy, Award, Sparkles, Loader2, AlertCircle,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Modal, FilterDropdown } from '@/components/common'
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { UNIT_TYPE_LABELS, UNIT_SUBTYPE_LABELS } from '@/types'
 import type { PipelineStage, UnitType, UnitSubtype } from '@/types'
 import { formatPrice, formatPriceCompact } from '@/lib/constants'
+
+const AI_UNITS_LIMIT = 30
 
 /* ═══ Types ═══ */
 
@@ -56,6 +58,9 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
   const [sortKey, setSortKey] = useState<SortKey>('score')
   const [showTop5, setShowTop5] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [aiScoreMap, setAiScoreMap] = useState<Map<string, number>>(new Map())
+  const [isAiLoading, setIsAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
   // Prefill filters from client profile
   useEffect(() => {
     if (client && isOpen) {
@@ -65,6 +70,8 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
       setSortKey('score')
       setShowTop5(false)
       setSelectedIds([])
+      setAiScoreMap(new Map())
+      setAiError(null)
     }
   }, [client, isOpen])
 
@@ -143,11 +150,52 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
     return score
   }
 
+  // AI score (when present) overrides local rule-based score.
   const scoreMap = useMemo(() => {
     const map = new Map<string, number>()
-    filtered.forEach(u => map.set(u.id, scoreUnit(u)))
+    filtered.forEach(u => map.set(u.id, aiScoreMap.get(u.id) ?? scoreUnit(u)))
     return map
-  }, [filtered, client])
+  }, [filtered, client, aiScoreMap])
+
+  async function rankWithAI() {
+    if (!client || filtered.length === 0) return
+    setIsAiLoading(true)
+    setAiError(null)
+    try {
+      const clientProfile = {
+        budget: client.confirmed_budget,
+        desired_types: client.desired_unit_types,
+        interested_projects: client.interested_projects,
+        interest_level: client.interest_level,
+        pipeline_stage: client.pipeline_stage,
+      }
+      const unitsList = filtered.slice(0, AI_UNITS_LIMIT).map(u => ({
+        unit_id: u.id,
+        type: u.type,
+        subtype: u.subtype,
+        price: u.price,
+        surface: u.surface,
+        floor: u.floor,
+        project: u.project_name,
+      }))
+      const { data, error } = await supabase.functions.invoke('ai-suggestions', {
+        body: { clientProfile, unitsList },
+      })
+      if (error) throw error
+      const ranking = (data?.ranking ?? []) as Array<{ unit_id: string; rank: number }>
+      const newMap = new Map<string, number>()
+      ranking.forEach(r => {
+        newMap.set(r.unit_id, Math.max(0, 100 - (r.rank - 1) * 5))
+      })
+      setAiScoreMap(newMap)
+      setSortKey('score')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Echec du classement IA'
+      setAiError(msg)
+    } finally {
+      setIsAiLoading(false)
+    }
+  }
 
   // Sort
   const sorted = useMemo(() => {
@@ -193,6 +241,8 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
     setSubtypeFilter('all')
     setSortKey('score')
     setShowTop5(false)
+    setAiScoreMap(new Map())
+    setAiError(null)
   }
 
   // Filter options
@@ -224,9 +274,9 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
       <div className="space-y-4">
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          <FilterDropdown label="Projet" options={projectOptions} value={projectFilter} onChange={setProjectFilter} />
-          <FilterDropdown label="Type" options={typeOptions} value={typeFilter} onChange={setTypeFilter} />
-          <FilterDropdown label="Sous-type" options={subtypeOptions} value={subtypeFilter} onChange={setSubtypeFilter} />
+          <FilterDropdown label="Projet" options={projectOptions} value={projectFilter} onChange={v => { setProjectFilter(v); setAiScoreMap(new Map()) }} />
+          <FilterDropdown label="Type" options={typeOptions} value={typeFilter} onChange={v => { setTypeFilter(v); setAiScoreMap(new Map()) }} />
+          <FilterDropdown label="Sous-type" options={subtypeOptions} value={subtypeFilter} onChange={v => { setSubtypeFilter(v); setAiScoreMap(new Map()) }} />
           <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs text-immo-text-muted hover:text-immo-text-primary">
             <RotateCcw className="mr-1 h-3 w-3" /> Réinitialiser
           </Button>
@@ -260,10 +310,31 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
             Top 5
           </button>
 
+          <button
+            onClick={rankWithAI}
+            disabled={isAiLoading || filtered.length === 0}
+            className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              aiScoreMap.size > 0
+                ? 'border-purple-500/50 bg-purple-500/10 text-purple-600'
+                : 'border-purple-500/30 text-purple-600 hover:bg-purple-500/10'
+            }`}
+            title={`Classer les ${Math.min(filtered.length, AI_UNITS_LIMIT)} 1ères unités via Claude`}
+          >
+            {isAiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            {aiScoreMap.size > 0 ? 'Re-classer IA' : 'Classer avec IA'}
+          </button>
+
           <span className="ml-auto text-[11px] text-immo-text-muted">
             {sorted.length} disponible{sorted.length > 1 ? 's' : ''}
           </span>
         </div>
+
+        {aiError && (
+          <div className="flex items-center gap-2 rounded-lg border border-immo-status-red/30 bg-immo-status-red/5 px-3 py-2 text-[11px] text-immo-status-red">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>Classement IA indisponible : {aiError}. Utilisation du score local en fallback.</span>
+          </div>
+        )}
 
         {/* Client match criteria */}
         {client && (
@@ -310,6 +381,11 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                   <div className="mb-2 flex items-center gap-1.5">
                     <span className="text-sm font-semibold text-immo-text-primary">{u.code}</span>
                     {u.subtype && <span className="text-[11px] text-immo-text-muted">{UNIT_SUBTYPE_LABELS[u.subtype] ?? u.subtype}</span>}
+                    {aiScoreMap.has(u.id) && (
+                      <span className="ml-auto flex items-center gap-0.5 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-purple-600">
+                        <Sparkles className="h-2.5 w-2.5" /> IA
+                      </span>
+                    )}
                   </div>
 
                   {/* Match badges */}
