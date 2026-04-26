@@ -8,24 +8,65 @@ import { HealthAlertsBanner } from './components/HealthAlertsBanner'
 import { GlobalSearch } from './components/GlobalSearch'
 import { NotificationCenter } from './components/NotificationCenter'
 
-const NAV_ITEMS = [
-  { to: '/admin', icon: Building2, labelKey: 'Tenants', end: true },
-  { to: '/admin/leads', icon: Inbox, labelKey: 'Leads' },
-  { to: '/admin/plans', icon: Layers, labelKey: 'Plans' },
-  { to: '/admin/billing', icon: CreditCard, labelKey: 'Facturation' },
-  { to: '/admin/messages', icon: MessageSquare, labelKey: 'Messages' },
-  { to: '/admin/support', icon: Headphones, labelKey: 'Support' },
-  { to: '/admin/security', icon: ShieldAlert, labelKey: 'Audit securite' },
-  { to: '/admin/logs', icon: ScrollText, labelKey: 'Audit Trail' },
-  { to: '/admin/changelog', icon: Megaphone, labelKey: 'Changelog' },
-  { to: '/admin/monitoring', icon: Activity, labelKey: 'Monitoring' },
-  { to: '/admin/stats', icon: BarChart3, labelKey: 'Statistiques' },
-  { to: '/admin/costs', icon: Receipt, labelKey: 'Couts & profit' },
-  { to: '/admin/playbook', icon: Sparkles, labelKey: 'Playbook IA' },
-  { to: '/admin/emails', icon: Mail, labelKey: 'Emails' },
-  { to: '/admin/whatsapp', icon: MessageCircle, labelKey: 'WhatsApp' },
-  { to: '/admin/settings', icon: Settings, labelKey: 'Plateforme' },
-] as const
+type NavItem = {
+  to: string
+  icon: typeof Building2
+  labelKey: string
+  end?: boolean
+}
+
+type NavSection = { title: string; items: readonly NavItem[] }
+
+const NAV_SECTIONS: readonly NavSection[] = [
+  {
+    title: 'Activite',
+    items: [
+      { to: '/admin', icon: Building2, labelKey: 'Tenants', end: true },
+      { to: '/admin/leads', icon: Inbox, labelKey: 'Leads' },
+      { to: '/admin/support', icon: Headphones, labelKey: 'Support' },
+      { to: '/admin/messages', icon: MessageSquare, labelKey: 'Messages' },
+    ],
+  },
+  {
+    title: 'Monetisation',
+    items: [
+      { to: '/admin/plans', icon: Layers, labelKey: 'Plans' },
+      { to: '/admin/billing', icon: CreditCard, labelKey: 'Facturation' },
+      { to: '/admin/costs', icon: Receipt, labelKey: 'Couts & profit' },
+    ],
+  },
+  {
+    title: 'Analytique',
+    items: [
+      { to: '/admin/stats', icon: BarChart3, labelKey: 'Statistiques' },
+      { to: '/admin/monitoring', icon: Activity, labelKey: 'Monitoring' },
+    ],
+  },
+  {
+    title: 'Securite',
+    items: [
+      { to: '/admin/security', icon: ShieldAlert, labelKey: 'Audit securite' },
+      { to: '/admin/logs', icon: ScrollText, labelKey: 'Audit Trail' },
+    ],
+  },
+  {
+    title: 'Communications',
+    items: [
+      { to: '/admin/emails', icon: Mail, labelKey: 'Emails' },
+      { to: '/admin/whatsapp', icon: MessageCircle, labelKey: 'WhatsApp' },
+    ],
+  },
+  {
+    title: 'Configuration',
+    items: [
+      { to: '/admin/playbook', icon: Sparkles, labelKey: 'Playbook IA' },
+      { to: '/admin/changelog', icon: Megaphone, labelKey: 'Changelog' },
+      { to: '/admin/settings', icon: Settings, labelKey: 'Plateforme' },
+    ],
+  },
+]
+
+const NAV_ITEMS: readonly NavItem[] = NAV_SECTIONS.flatMap(s => s.items)
 
 export function SuperAdminLayout() {
   const { signOut } = useAuth()
@@ -58,30 +99,39 @@ export function SuperAdminLayout() {
         <div className="my-2 mx-5 h-px bg-immo-border-default/50" />
 
         {/* Nav */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-          {NAV_ITEMS.map(({ to, icon: Icon, labelKey, ...rest }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={'end' in rest}
-              className={({ isActive }) =>
-                `group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
-                  isActive
-                    ? 'bg-[#7C3AED]/15 font-semibold text-[#7C3AED]'
-                    : 'text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#7C3AED]" />
-                  )}
-                  <Icon className={`h-4 w-4 transition-transform ${isActive ? '' : 'group-hover:scale-110'}`} />
-                  {labelKey}
-                </>
-              )}
-            </NavLink>
+        <nav className="flex-1 overflow-y-auto px-3 py-2">
+          {NAV_SECTIONS.map((section, sIdx) => (
+            <div key={section.title} className={sIdx === 0 ? '' : 'mt-4'}>
+              <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted/70">
+                {section.title}
+              </div>
+              <div className="space-y-0.5">
+                {section.items.map(({ to, icon: Icon, labelKey, ...rest }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={'end' in rest}
+                    className={({ isActive }) =>
+                      `group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
+                        isActive
+                          ? 'bg-[#7C3AED]/15 font-semibold text-[#7C3AED]'
+                          : 'text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#7C3AED]" />
+                        )}
+                        <Icon className={`h-4 w-4 transition-transform ${isActive ? '' : 'group-hover:scale-110'}`} />
+                        {labelKey}
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
