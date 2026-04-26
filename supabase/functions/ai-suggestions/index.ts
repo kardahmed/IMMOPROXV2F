@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackAnthropicCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
+import { getGlobalPlaybook } from '../_shared/getGlobalPlaybook.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -82,6 +83,13 @@ Deno.serve(async (req) => {
     const quota = await checkQuota(supabase, tenantId, 'anthropic')
     if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
 
+    // 3b. Inject the global playbook (founder's expertise) into the system prompt.
+    const playbookPrompt = await getGlobalPlaybook(supabase)
+    const baseSystem = 'Tu es un expert immobilier algerien. Classe ces unites selon leur adequation avec le profil client. Criteres : budget, type souhaite, rapport qualite/prix, etage, surface. Reponds UNIQUEMENT avec un JSON array : [{"unit_id":"...","rank":1},...]'
+    const systemPrompt = playbookPrompt
+      ? `${playbookPrompt}\n\n---\n\n${baseSystem}`
+      : baseSystem
+
     // 4. Call Anthropic API server-side
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -93,7 +101,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        system: 'Tu es un expert immobilier algerien. Classe ces unites selon leur adequation avec le profil client. Criteres : budget, type souhaite, rapport qualite/prix, etage, surface. Reponds UNIQUEMENT avec un JSON array : [{"unit_id":"...","rank":1},...]',
+        system: systemPrompt,
         messages: [{
           role: 'user',
           content: `Profil client: ${JSON.stringify(clientProfile)}\n\nUnites disponibles: ${JSON.stringify(unitsList)}`,
