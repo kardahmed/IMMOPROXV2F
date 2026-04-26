@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { CreateTenantModal } from './components/CreateTenantModal'
 import { DeleteTenantModal } from './components/DeleteTenantModal'
+import { DeletedTenantsSection } from './components/DeletedTenantsSection'
 import { RealtimeDashboard } from './components/RealtimeDashboard'
 import { PlanBadge } from './components/PlanBadge'
 import { useTenantHealth } from './hooks/useTenantHealth'
@@ -203,6 +204,8 @@ export function TenantsPage() {
         emptyMessage={search ? 'Aucun tenant ne correspond' : 'Aucun tenant'}
         emptyDescription={search ? 'Modifiez votre recherche pour elargir les resultats.' : 'Creez votre premier tenant pour demarrer.'}
       />
+
+      <DeletedTenantsSection />
 
       <CreateTenantModal isOpen={showCreate} onClose={() => setShowCreate(false)} onSuccess={() => refetch()} />
 
