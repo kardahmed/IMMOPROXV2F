@@ -950,6 +950,35 @@ Pas grand-chose à coder. Activités possibles :
 - **"Marketing ROI dashboard" for tenants** is already built in
   `src/pages/marketing-roi/`. Kept simple — no A/B testing framework
   yet, deferred until a tenant asks for it.
+- **Offline-first with CRDT sync (Level 4 — Notion/Linear style)**.
+  Discussed 26-Apr-2026, deliberately deferred. Levels 1-3 of offline
+  support cover 95% of the field-agent use case: Level 1 (static
+  asset cache via SW) is shipped; Level 2 (read-only persisted React
+  Query cache) is on deck if/when needed; Level 3 (mutation queue
+  with last-write-wins sync on reconnect) is ~1-2 days when a tenant
+  actually asks for offline writes. Level 4 (true CRDT with conflict
+  resolution) was estimated at 6-10 weeks of solo work and rejected
+  because:
+  - Forces a data-layer rewrite (Replicache / PowerSync / Yjs +
+    custom backend), losing all React Query / Supabase RLS
+    integration we currently rely on.
+  - Re-implements security at the sync layer instead of using
+    Supabase RLS — significant tenant-isolation risk.
+  - Requires conflict-resolution UI for non-technical users, which
+    Notion has 15 designers for.
+  - Triples test surface (online normal / offline queued / sync
+    conflict) for every future feature, dropping dev velocity 30-50%
+    permanently.
+  - Replicache pricing: $499-$5000/month; PowerSync free tier exists
+    but enterprise features paid. DIY = becoming a database engineer
+    full-time.
+  - Reversal cost is ~3 months of refactor — effectively a one-way
+    door at our stage.
+  Revisit only when ALL of these are true: ≥20 paying tenants
+  explicitly demand multi-day offline, a 2nd dev specialised in
+  data engineering is on board, the product pivots toward
+  collaborative multi-user real-time editing (Figma-style). Until
+  then Level 2 → Level 3 is the right gradient.
 
 ---
 
