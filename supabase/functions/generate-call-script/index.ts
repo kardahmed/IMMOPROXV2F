@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
+import { trackAnthropicCost } from '../_shared/trackCost.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -309,6 +310,12 @@ REPONDS UNIQUEMENT avec le JSON, aucun texte autour.`
 
     const aiData = await aiResponse.json()
     const text = aiData.content?.[0]?.text ?? ''
+
+    await trackAnthropicCost(supabase, aiData.usage, {
+      tenantId,
+      operation: 'generate-call-script',
+      metadata: { client_id, model: aiData.model ?? 'claude-haiku-4-5-20251001' },
+    })
 
     // Parse JSON
     const jsonMatch = text.match(/\{[\s\S]*\}/)

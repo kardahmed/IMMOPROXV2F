@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
+import { trackResendCost } from '../_shared/trackCost.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -177,6 +178,14 @@ Deno.serve(async (req) => {
             .eq('id', recipient.id)
         }
       }
+    }
+
+    if (resendApiKey && totalSent > 0) {
+      await trackResendCost(supabase, totalSent, {
+        tenantId: campaign.tenant_id,
+        operation: 'send-campaign',
+        metadata: { campaign_id, campaign_name: campaign.name },
+      })
     }
 
     // 8. Update campaign stats

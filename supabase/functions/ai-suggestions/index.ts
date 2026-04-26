@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
+import { trackAnthropicCost } from '../_shared/trackCost.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -106,6 +107,12 @@ Deno.serve(async (req) => {
 
     const data = await response.json()
     const text = data.content?.[0]?.text ?? ''
+
+    await trackAnthropicCost(supabase, data.usage, {
+      tenantId,
+      operation: 'ai-suggestions',
+      metadata: { model: data.model ?? 'claude-haiku-4-5-20251001' },
+    })
 
     // 4. Parse ranking from response
     const jsonMatch = text.match(/\[[\s\S]*\]/)
