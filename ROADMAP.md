@@ -950,6 +950,18 @@ Pas grand-chose à coder. Activités possibles :
 - **"Marketing ROI dashboard" for tenants** is already built in
   `src/pages/marketing-roi/`. Kept simple — no A/B testing framework
   yet, deferred until a tenant asks for it.
+- **Custom domain per tenant for landing pages** (`landing.monagence.com`
+  → tenant's pages). UI was live in `/admin/tenants/:id` but the
+  feature was end-to-end broken: no UNIQUE constraint, no format
+  validation, RLS blocked anonymous lookup, Hostinger had no parked-
+  domain config, no Let's Encrypt provisioning, no DNS verification.
+  Removed from UI on 26-Apr-2026 (tenants couldn't actually use it
+  and a saved value caused an infinite loader on `/p/:slug`). The
+  `tenants.custom_domain` column is kept in the DB (non-blocking) for
+  future re-enable. Public landings stay accessible via
+  `app.immoprox.io/p/:slug`. Re-enable only when there's tenant demand
+  AND we're ready to do the full backend work (RLS public-read policy,
+  format/uniqueness, Hostinger alias domain + SSL automation).
 - **Offline-first with CRDT sync (Level 4 — Notion/Linear style)**.
   Discussed 26-Apr-2026, deliberately deferred. Levels 1-3 of offline
   support cover 95% of the field-agent use case: Level 1 (static
