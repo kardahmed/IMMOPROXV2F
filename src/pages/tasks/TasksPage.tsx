@@ -283,11 +283,11 @@ export function TasksPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-1 border-b border-immo-border-default">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-1 overflow-x-auto border-b border-immo-border-default">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${tab === t.key ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+              className={`flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-medium transition-colors sm:px-4 ${tab === t.key ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
               <t.icon className="h-3.5 w-3.5" />
               {t.label}
               {t.count > 0 && t.key !== 'config' && (
@@ -298,7 +298,7 @@ export function TasksPage() {
         </div>
 
         {!['config', 'messages'].includes(tab) && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {!isAgent && <FilterDropdown label="Agent" options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
             <FilterDropdown label="Etape" options={stageOptions} value={stageFilter} onChange={setStageFilter} />
           </div>

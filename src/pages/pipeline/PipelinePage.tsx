@@ -353,12 +353,12 @@ export function PipelinePage() {
       {/* Stage progress moved to Analytics tab */}
 
       {/* 5. Filters toolbar */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <SearchInput
           placeholder="Nom, téléphone..."
           value={search}
           onChange={setSearch}
-          className="w-[240px]"
+          className="w-full sm:w-[240px]"
         />
         <FilterDropdown
           label="Projet"
