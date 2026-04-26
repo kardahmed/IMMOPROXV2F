@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  RotateCcw, ArrowUpDown, Check, Trophy, Award, Sparkles, Loader2, AlertCircle, Maximize2, Tag,
+  RotateCcw, ArrowUpDown, Check, Trophy, Award, Sparkles, Loader2, AlertCircle, Maximize2, Tag, Download,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Modal, FilterDropdown } from '@/components/common'
@@ -61,6 +61,8 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
   const [aiScoreMap, setAiScoreMap] = useState<Map<string, number>>(new Map())
   const [isAiLoading, setIsAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [isPdfLoading, setIsPdfLoading] = useState(false)
+  const compareRef = useRef<HTMLDivElement | null>(null)
   // Prefill filters from client profile
   useEffect(() => {
     if (client && isOpen) {
@@ -178,6 +180,53 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
     }
     return { surfaceId: bestSurfaceId, priceM2Id: bestPriceM2Id }
   }, [filtered])
+
+  async function exportPDF() {
+    if (!compareRef.current || !client) return
+    setIsPdfLoading(true)
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
+      const canvas = await html2canvas(compareRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+      })
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const margin = 12
+
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(`Comparatif d'unités — ${client.full_name}`, margin, margin + 4)
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(120)
+      pdf.text(`Généré le ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin, margin + 10)
+      pdf.setTextColor(0)
+
+      const imgWidth = pageWidth - margin * 2
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const finalHeight = Math.min(imgHeight, pageHeight - margin * 2 - 16)
+      pdf.addImage(imgData, 'PNG', margin, margin + 14, imgWidth, finalHeight)
+
+      pdf.setFontSize(8)
+      pdf.setTextColor(140)
+      pdf.text('IMMO PRO-X', margin, pageHeight - 6)
+
+      const safeName = client.full_name.replace(/[^a-z0-9-]/gi, '_').slice(0, 40)
+      const dateTag = new Date().toISOString().slice(0, 10)
+      pdf.save(`comparatif-${safeName}-${dateTag}.pdf`)
+    } catch (err) {
+      console.error('[exportPDF]', err)
+    } finally {
+      setIsPdfLoading(false)
+    }
+  }
 
   async function rankWithAI() {
     if (!client || filtered.length === 0) return
@@ -372,7 +421,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
         {sorted.length === 0 ? (
           <div className="py-12 text-center text-sm text-immo-text-muted">Aucune unité disponible avec ces filtres</div>
         ) : (
-          <div className="grid max-h-[400px] grid-cols-3 gap-3 overflow-y-auto">
+          <div className="grid max-h-[400px] grid-cols-1 gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map(u => {
               const rank = getRank(u.id)
               const score = scoreMap.get(u.id) ?? 0
@@ -488,13 +537,23 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
             { label: 'Score', getValue: u => scoreMap.get(u.id) ?? 0, format: v => `${v ?? 0}%`, better: 'higher' },
           ]
           return (
-            <div className="overflow-hidden rounded-xl border border-immo-border-default bg-immo-bg-card">
-              <div className="flex items-center gap-2 border-b border-immo-border-default/50 bg-immo-bg-card-hover/40 px-4 py-2">
+            <div ref={compareRef} className="overflow-hidden rounded-xl border border-immo-border-default bg-immo-bg-card">
+              <div className="flex flex-wrap items-center gap-2 border-b border-immo-border-default/50 bg-immo-bg-card-hover/40 px-4 py-2">
                 <Trophy className="h-3.5 w-3.5 text-immo-accent-green" />
                 <h3 className="text-xs font-semibold text-immo-text-primary">
                   Comparatif des {selectedUnits.length} unités sélectionnées
                 </h3>
-                <span className="ml-auto text-[10px] text-immo-text-muted">Meilleure valeur surlignée par ligne</span>
+                <span className="ml-auto hidden text-[10px] text-immo-text-muted sm:inline">Meilleure valeur surlignée par ligne</span>
+                <button
+                  type="button"
+                  onClick={exportPDF}
+                  disabled={isPdfLoading}
+                  className="flex items-center gap-1 rounded-lg border border-immo-accent-blue/40 bg-immo-accent-blue/10 px-2.5 py-1 text-[11px] font-medium text-immo-accent-blue transition-colors hover:bg-immo-accent-blue/20 disabled:cursor-not-allowed disabled:opacity-50 print:hidden"
+                  title="Exporter ce comparatif en PDF (envoyable au client)"
+                >
+                  {isPdfLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                  Export PDF
+                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
