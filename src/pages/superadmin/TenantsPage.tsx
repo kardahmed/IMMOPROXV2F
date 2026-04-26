@@ -29,9 +29,29 @@ interface TenantRow {
   units_count: number
 }
 
+const PLAN_FILTER_OPTIONS = ['all', 'free', 'starter', 'pro', 'enterprise'] as const
+type PlanFilter = typeof PLAN_FILTER_OPTIONS[number]
+
+const PLAN_FILTER_LABELS: Record<PlanFilter, string> = {
+  all: 'Tous',
+  free: 'Free',
+  starter: 'Starter',
+  pro: 'Pro',
+  enterprise: 'Enterprise',
+}
+
+const PLAN_FILTER_COLORS: Record<PlanFilter, string> = {
+  all: '#7C3AED',
+  free: '#8898AA',
+  starter: '#0579DA',
+  pro: '#7C3AED',
+  enterprise: '#F5A623',
+}
+
 export function TenantsPage() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const [planFilter, setPlanFilter] = useState<PlanFilter>('all')
   const [showCreate, setShowCreate] = useState(false)
   const [tenantToDelete, setTenantToDelete] = useState<{ id: string; name: string } | null>(null)
   const { enterTenant } = useSuperAdminStore()
@@ -95,10 +115,18 @@ export function TenantsPage() {
   const totalClients = tenants.reduce((s, t) => s + t.clients_count, 0)
   const criticalCount = healthData?.critical_count ?? 0
 
+  // Per-plan tenant counts (for the filter chips)
+  const countByPlan = tenants.reduce<Record<string, number>>((acc, t) => {
+    acc[t.plan] = (acc[t.plan] ?? 0) + 1
+    return acc
+  }, {})
+
   // Filter
-  const filtered = tenants.filter(t =>
-    !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.email?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = tenants.filter(t => {
+    if (planFilter !== 'all' && t.plan !== planFilter) return false
+    if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !t.email?.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
 
   function handleAccessTenant(tenant: TenantRow) {
     enterTenant(tenant.id, tenant.name)
@@ -177,6 +205,36 @@ export function TenantsPage() {
         <KPICard label="Total Utilisateurs" value={totalUsers} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
         <KPICard label="Total Clients" value={totalClients} accent="orange" icon={<Briefcase className="h-5 w-5 text-immo-status-orange" />} />
         <KPICard label="Alertes critiques" value={criticalCount} accent={criticalCount > 0 ? 'red' : 'green'} icon={<AlertTriangle className={`h-5 w-5 ${criticalCount > 0 ? 'text-immo-status-red' : 'text-immo-accent-green'}`} />} />
+      </div>
+
+      {/* Plan filter chips */}
+      <div className="flex flex-wrap items-center gap-2">
+        {PLAN_FILTER_OPTIONS.map(p => {
+          const isActive = planFilter === p
+          const count = p === 'all' ? tenants.length : (countByPlan[p] ?? 0)
+          const color = PLAN_FILTER_COLORS[p]
+          return (
+            <button
+              key={p}
+              onClick={() => setPlanFilter(p)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                isActive
+                  ? 'border-transparent text-white shadow-sm'
+                  : 'border-immo-border-default bg-immo-bg-card text-immo-text-secondary hover:border-immo-text-muted hover:text-immo-text-primary'
+              }`}
+              style={isActive ? { backgroundColor: color } : undefined}
+            >
+              {PLAN_FILTER_LABELS[p]}
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-immo-bg-primary text-immo-text-muted'
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Search */}
