@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackAnthropicCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
+import { getGlobalPlaybook } from '../_shared/getGlobalPlaybook.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -170,14 +171,8 @@ Deno.serve(async (req) => {
       })),
     }
 
-    // 4. Load playbook
-    const { data: playbook } = await supabase
-      .from('sale_playbooks')
-      .select('methodology, objective, tone, closing_phrases, objection_rules, custom_instructions')
-      .eq('tenant_id', client.tenant_id as string)
-      .eq('is_active', true)
-      .limit(1)
-      .maybeSingle()
+    // 4. Load global playbook (single platform-wide system prompt set by founder)
+    const playbookPrompt = await getGlobalPlaybook(supabase)
 
     // 5. If no AI key, return template
     if (!anthropicKey) {
@@ -210,19 +205,9 @@ Deno.serve(async (req) => {
     }
 
     // 6. Build the AI prompt with EVERYTHING
-    const playbookContext = playbook ? `
-PLAYBOOK DE VENTE (RESPECTER ABSOLUMENT):
-- Methodologie: ${(playbook as Record<string, unknown>).methodology ?? 'custom'}
-- Objectif: ${(playbook as Record<string, unknown>).objective ?? 'Qualifier et obtenir un rendez-vous visite'}
-- Ton de voix: ${(playbook as Record<string, unknown>).tone ?? 'Professionnel'}
-- Instructions: ${(playbook as Record<string, unknown>).custom_instructions ?? ''}
-
-REGLES D'OBJECTION:
-${JSON.stringify((playbook as Record<string, unknown>).objection_rules ?? [], null, 2)}
-
-PHRASES DE CLOSING:
-${JSON.stringify((playbook as Record<string, unknown>).closing_phrases ?? [], null, 2)}
-` : ''
+    const playbookContext = playbookPrompt
+      ? `\nPLAYBOOK DE VENTE (RESPECTER ABSOLUMENT):\n${playbookPrompt}\n`
+      : ''
 
     const prompt = `Tu es un expert en vente immobiliere en Algerie. Tu dois generer un script d'appel telephonique HYPER-PERSONNALISE pour un agent commercial.
 

@@ -3538,58 +3538,29 @@ export type Database = {
           },
         ]
       }
-      sale_playbooks: {
+      global_playbook: {
         Row: {
-          closing_phrases: Json | null
-          created_at: string | null
-          custom_instructions: string | null
           id: string
-          is_active: boolean | null
-          methodology: string | null
-          name: string
-          objection_rules: Json | null
-          objective: string | null
-          tenant_id: string
-          tone: string | null
-          updated_at: string | null
+          system_prompt: string
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
         }
         Insert: {
-          closing_phrases?: Json | null
-          created_at?: string | null
-          custom_instructions?: string | null
           id?: string
-          is_active?: boolean | null
-          methodology?: string | null
-          name?: string
-          objection_rules?: Json | null
-          objective?: string | null
-          tenant_id: string
-          tone?: string | null
-          updated_at?: string | null
+          system_prompt?: string
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
         }
         Update: {
-          closing_phrases?: Json | null
-          created_at?: string | null
-          custom_instructions?: string | null
           id?: string
-          is_active?: boolean | null
-          methodology?: string | null
-          name?: string
-          objection_rules?: Json | null
-          objective?: string | null
-          tenant_id?: string
-          tone?: string | null
-          updated_at?: string | null
+          system_prompt?: string
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "sale_playbooks_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       sales: {
         Row: {

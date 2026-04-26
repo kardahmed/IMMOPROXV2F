@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, Sparkles, MessageCircle, Calendar, ToggleLeft, Gauge } from 'lucide-react'
+import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, MessageCircle, Calendar, ToggleLeft, Gauge } from 'lucide-react'
 // Lazy-load sections — only the active section is rendered, no point bundling all 13 up-front
 const CompanySection = lazy(() => import('./sections').then(m => ({ default: m.CompanySection })))
 const PipelineSection = lazy(() => import('./sections').then(m => ({ default: m.PipelineSection })))
@@ -21,12 +21,11 @@ function SectionFallback() {
   return <div className="flex justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" /></div>
 }
 
-type Section = 'company' | 'pipeline' | 'playbook' | 'tasks' | 'visits' | 'profiles' | 'features' | 'quotas' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
+type Section = 'company' | 'pipeline' | 'tasks' | 'visits' | 'profiles' | 'features' | 'quotas' | 'whatsapp' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
 const SECTION_ICONS: Record<Section, typeof Building2> = {
   company: Building2,
   pipeline: GitBranch,
-  playbook: Sparkles,
   tasks: Bell,
   visits: Calendar,
   profiles: Shield,
@@ -46,7 +45,6 @@ const SECTION_KEYS: Section[] = ['company', 'pipeline', 'tasks', 'visits', 'feat
 const SECTION_LABELS: Record<Section, string> = {
   company: 'Agence',
   pipeline: 'Pipeline',
-  playbook: 'Playbook IA',
   tasks: 'Taches auto',
   visits: 'Visites',
   profiles: 'Permissions',

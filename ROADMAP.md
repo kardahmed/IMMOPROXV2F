@@ -248,6 +248,34 @@ next one can pick up cleanly.
   WhatsApp tasks in `TaskDetailModal`, alongside the existing
   "Ouvrir WhatsApp" deeplink (kept as Essentiel fallback).
 
+### Global Playbook — single platform-wide brain (26-Apr-2026)
+- **Migration 041** — new `global_playbook` table (singleton, super_admin
+  RLS), DROP of `sale_playbooks`. The founder's expertise now lives in
+  one row with a free-form `system_prompt TEXT` and is shared by every
+  tenant. Per-tenant playbook configuration is removed (sales-led model
+  — the founder owns the brain).
+- **Edge Function helper** — `_shared/getGlobalPlaybook.ts` returns the
+  current `system_prompt`. `generate-call-script` and `ai-suggestions`
+  both inject it at the top of their Claude prompts. Any future AI
+  Edge Function plugs in by importing the same helper.
+- **Super Admin UI** — `/admin/playbook` is now a single textarea +
+  save button. Replaces the previous per-tenant list view (~70 lines
+  of grid + edit-modal logic deleted).
+- **Tenant UI** — the orphaned `PlaybookSection.tsx` and the
+  `playbook` entry in `SettingsPage` were removed. The Playbook is
+  not visible to tenants in any form (no per-tenant config, no
+  read-only banner).
+- **CallScriptModal** — the structured `objection_rules` /
+  `closing_phrases` UI sections were removed (data source is gone).
+  Closing phrases and objection guidance now flow into the script
+  via the global playbook injected into the prompt — output is
+  rendered in `intro` / `talking_points` / `outro` like before.
+- **Why** — every tenant had to re-create the wheel and most had
+  empty playbooks. Now the founder writes once, all tenants benefit.
+  The single override path (per-tenant) is intentionally killed; if
+  a future Enterprise tenant demands their own voice, we re-introduce
+  an override table behind a feature flag.
+
 ### Hostinger build unblocked (25-Apr-2026, PR #46)
 - Root cause: `src/types/database.ts` was a hand-maintained
   Database type that the supabase client used. It had drifted

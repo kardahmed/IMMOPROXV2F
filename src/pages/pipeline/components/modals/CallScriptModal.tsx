@@ -26,11 +26,6 @@ interface ScriptQuestion {
   conditions?: ScriptCondition[]
 }
 
-interface ObjectionRule {
-  trigger: string
-  response: string
-}
-
 interface CallScriptModalProps {
   isOpen: boolean
   onClose: () => void
@@ -167,20 +162,9 @@ export function CallScriptModal({
     enabled: isOpen,
   })
 
-  // Fetch playbook for objection handling
-  const { data: playbook } = useQuery({
-    queryKey: ['sale-playbook', tenantId],
-    queryFn: async () => {
-      const { data } = await supabase.from('sale_playbooks').select('*').eq('tenant_id', tenantId).eq('is_active', true).limit(1).maybeSingle()
-      return data as { objective: string; tone: string; closing_phrases: string[]; objection_rules: ObjectionRule[]; custom_instructions: string } | null
-    },
-    enabled: isOpen && !!tenantId,
-  })
-
   const [showVisitForm, setShowVisitForm] = useState(false)
   const [visitDate, setVisitDate] = useState('')
   const [visitTime, setVisitTime] = useState('')
-  const [activeObjection, setActiveObjection] = useState<string | null>(null)
 
   // Create visit from call script
   const createVisit = useMutation({
@@ -219,39 +203,9 @@ export function CallScriptModal({
     return fallback ? replaceVars(fallback.then_say) : null
   }
 
-  // Map negative answers to objection triggers
-  const OBJECTION_KEYWORDS: Record<string, string[]> = {
-    trop_cher: ['trop cher', 'cher', 'budget', 'pas le budget', 'pas de budget', 'hors budget'],
-    pas_budget: ['pas de budget', 'pas le budget', 'budget', 'moyen'],
-    reflechir: ['reflechis', 'reflechir', 'reflech', 'pas maintenant', 'plus tard', 'veille', 'pas presse', 'pas encore', 'hesite'],
-    concurrent: ['concurrent', 'ailleurs', 'achete ailleurs', 'autre promoteur', 'moins cher ailleurs'],
-    pas_maintenant: ['pas maintenant', 'pas pour le moment', 'pas interesse', 'pas presse', 'reporte', 'plus tard'],
-  }
-
-  function detectObjection(value: string | string[]): string | null {
-    const text = (Array.isArray(value) ? value.join(' ') : value).toLowerCase()
-    for (const [trigger, keywords] of Object.entries(OBJECTION_KEYWORDS)) {
-      if (keywords.some(kw => text.includes(kw))) return trigger
-    }
-    // Also detect negative options
-    if (text.includes('non') || text.includes('decu') || text.includes('mitige')) return 'reflechir'
-    return null
-  }
-
-  const [detectedObjection, setDetectedObjection] = useState<string | null>(null)
-
   function setAnswer(qId: string, value: string | string[]) {
     setAnswers(prev => ({ ...prev, [qId]: value }))
     setCheckedQuestions(prev => new Set([...prev, qId]))
-
-    // Auto-detect objection from answer
-    const objection = detectObjection(value)
-    if (objection) {
-      setActiveObjection(objection)
-      setDetectedObjection(objection)
-      // Auto-clear highlight after 10s
-      setTimeout(() => setDetectedObjection(null), 10000)
-    }
   }
 
   function toggleCheckbox(qId: string, option: string) {
@@ -624,82 +578,6 @@ export function CallScriptModal({
               </div>
             )}
           </div>
-
-          {/* Objection handling — auto-detected from answers */}
-          {playbook?.objection_rules && playbook.objection_rules.length > 0 && (
-            <div className={`mb-4 rounded-lg p-3 transition-all duration-500 ${detectedObjection ? 'bg-immo-status-red/5 border border-immo-status-red/30 ring-2 ring-immo-status-red/20' : ''}`}>
-              {detectedObjection && (
-                <div className="mb-2 flex items-center gap-1.5 animate-pulse">
-                  <AlertTriangle className="h-3.5 w-3.5 text-immo-status-red" />
-                  <span className="text-[10px] font-bold text-immo-status-red">Objection detectee !</span>
-                </div>
-              )}
-              <label className="mb-2 block text-[10px] font-medium text-immo-text-muted">Objection du client ?</label>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {playbook.objection_rules.map(rule => (
-                  <button key={rule.trigger} onClick={() => setActiveObjection(activeObjection === rule.trigger ? null : rule.trigger)}
-                    className={`rounded-md border px-2 py-1 text-[10px] font-medium transition-all ${activeObjection === rule.trigger ? 'border-immo-status-orange/50 bg-immo-status-orange/10 text-immo-status-orange' : 'border-immo-border-default text-immo-text-muted hover:border-immo-status-orange/30'} ${detectedObjection === rule.trigger ? 'ring-2 ring-immo-status-red/40 scale-105' : ''}`}>
-                    <AlertTriangle className="mr-1 inline h-2.5 w-2.5" />
-                    {rule.trigger === 'trop_cher' ? 'Trop cher' : rule.trigger === 'pas_budget' ? 'Pas de budget' : rule.trigger === 'reflechir' ? 'Veut reflechir' : rule.trigger === 'concurrent' ? 'Concurrent' : rule.trigger === 'pas_maintenant' ? 'Pas maintenant' : rule.trigger}
-                  </button>
-                ))}
-              </div>
-              {activeObjection && (
-                <div className={`rounded-lg border p-3 transition-all ${detectedObjection === activeObjection ? 'border-immo-status-red/30 bg-immo-status-red/5' : 'border-immo-status-orange/20 bg-immo-status-orange/5'}`}>
-                  <p className="text-[10px] font-semibold text-immo-status-orange mb-1">
-                    {detectedObjection === activeObjection ? 'Lisez cette reponse au client :' : 'Reponse suggeree :'}
-                  </p>
-                  <p className="text-xs leading-relaxed text-immo-text-primary">{playbook.objection_rules.find(r => r.trigger === activeObjection)?.response}</p>
-                  {/* Client reaction after objection handling */}
-                  <div className="mt-2 pt-2 border-t border-immo-border-default">
-                    <p className="text-[9px] text-immo-text-muted mb-1.5">Reaction du client :</p>
-                    <div className="flex gap-1.5">
-                      {[
-                        { key: 'convinced', label: 'Convaincu', color: 'text-immo-accent-green border-immo-accent-green/30 bg-immo-accent-green/5' },
-                        { key: 'hesitant', label: 'Hesite encore', color: 'text-immo-status-orange border-immo-status-orange/30 bg-immo-status-orange/5' },
-                        { key: 'refused', label: 'Refuse', color: 'text-immo-status-red border-immo-status-red/30 bg-immo-status-red/5' },
-                      ].map(r => (
-                        <button key={r.key}
-                          onClick={() => {
-                            setAnswers(prev => ({ ...prev, [`_objection_${activeObjection}`]: r.key }))
-                            if (r.key === 'convinced') {
-                              setDetectedObjection(null)
-                              setActiveObjection(null)
-                            }
-                          }}
-                          className={`flex-1 rounded-md border px-2 py-1.5 text-[10px] font-medium transition-all ${
-                            answers[`_objection_${activeObjection}`] === r.key ? r.color + ' ring-1' : 'border-immo-border-default text-immo-text-muted hover:bg-immo-bg-card-hover'
-                          }`}>
-                          {r.label}
-                        </button>
-                      ))}
-                    </div>
-                    {answers[`_objection_${activeObjection}`] === 'hesitant' && (
-                      <p className="mt-1.5 text-[10px] italic text-immo-accent-blue">Insistez doucement : proposez d'envoyer les details par WhatsApp et de rappeler dans 2 jours.</p>
-                    )}
-                    {answers[`_objection_${activeObjection}`] === 'refused' && (
-                      <p className="mt-1.5 text-[10px] italic text-immo-status-red">Ne forcez pas. Remerciez et proposez de rester en contact pour les futures opportunites.</p>
-                    )}
-                    {answers[`_objection_${activeObjection}`] === 'convinced' && (
-                      <p className="mt-1.5 text-[10px] italic text-immo-accent-green">Parfait ! Enchainez vers la conclusion et proposez la prochaine etape.</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Closing phrases */}
-          {playbook?.closing_phrases && playbook.closing_phrases.length > 0 && (
-            <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
-              <p className="text-[10px] font-semibold text-purple-600 mb-2">Phrases de closing</p>
-              {playbook.closing_phrases.map((phrase, i) => (
-                <p key={i} className="text-xs text-purple-700 mb-1 flex items-start gap-1.5">
-                  <span className="text-purple-400 mt-0.5">→</span> {phrase}
-                </p>
-              ))}
-            </div>
-          )}
 
           {/* AI suggestion */}
           {script?.suggested_action && (
