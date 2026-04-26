@@ -35,8 +35,14 @@ export function useTenantHealth() {
   return useQuery({
     queryKey: ['super-admin-tenant-health'],
     queryFn: async (): Promise<HealthSummary> => {
-      // Fetch all tenants
-      const { data: tenants } = await supabase.from('tenants').select('id, name')
+      // Fetch all active tenants (excludes soft-deleted and suspended).
+      // A deleted/suspended tenant being "inactive 999 days" is not a
+      // critical alert — it's the expected state.
+      const { data: tenants } = await supabase
+        .from('tenants')
+        .select('id, name')
+        .is('deleted_at', null)
+        .is('suspended_at', null)
       if (!tenants || tenants.length === 0) {
         return { tenants: [], critical_count: 0, warning_count: 0, healthy_count: 0, alerts: [] }
       }
