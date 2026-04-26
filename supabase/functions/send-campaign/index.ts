@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackResendCost } from '../_shared/trackCost.ts'
+import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -96,6 +97,32 @@ Deno.serve(async (req) => {
     if (insErr) throw new Error(`Insert recipients failed: ${insErr.message}`)
 
     await supabase.from('email_campaigns').update({ total_recipients: recipients?.length ?? 0 }).eq('id', campaign_id)
+
+    // 4.5 Quota check — block the whole campaign if it would push the
+    // tenant over its monthly Resend quota. Done once before the loop;
+    // we don't re-check per recipient since BATCH_SIZE=50 paces things.
+    const recipientCount = recipients?.length ?? 0
+    if (recipientCount > 0) {
+      const quota = await checkQuota(supabase, campaign.tenant_id as string, 'resend')
+      if (!quota.allowed) {
+        await supabase.from('email_campaigns').update({ status: 'failed' }).eq('id', campaign_id)
+        return quotaErrorResponse(quota, corsHeaders)
+      }
+      if (!quota.unlimited && quota.used + recipientCount > quota.limit) {
+        await supabase.from('email_campaigns').update({ status: 'failed' }).eq('id', campaign_id)
+        return new Response(JSON.stringify({
+          error: `Campagne refusée : ${recipientCount} destinataires dépasseraient votre quota mensuel (${quota.used}/${quota.limit} déjà utilisés). Augmentez votre plan ou réduisez la liste.`,
+          code: 'QUOTA_EXCEEDED',
+          reason: 'monthly_projected',
+          used: quota.used,
+          limit: quota.limit,
+          requested: recipientCount,
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    }
 
     // 5. Get platform settings
     const { data: settings } = await supabase.from('platform_settings').select('support_email, platform_name').limit(1).single()
