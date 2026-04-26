@@ -5,6 +5,7 @@ import { PIPELINE_STAGES, SOURCE_LABELS } from '@/types'
 import type { Client, PipelineStage, ClientSource } from '@/types'
 import { formatPriceCompact } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
+import { EngagementBadge } from '@/components/common'
 
 type SortCol = 'full_name' | 'pipeline_stage' | 'confirmed_budget' | 'days' | 'created_at'
 type SortDir = 'asc' | 'desc'
@@ -81,6 +82,7 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
             <thead>
               <tr className="bg-immo-bg-card-hover">
                 <SortHeader col="full_name" label="Client" />
+                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Score</th>
                 <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Téléphone</th>
                 <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Source</th>
                 <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Projet</th>
@@ -94,7 +96,7 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
             </thead>
             <tbody className="divide-y divide-immo-border-default">
               {paged.length === 0 ? (
-                <tr><td colSpan={10} className="py-16 text-center text-sm text-immo-text-muted">Aucun client</td></tr>
+                <tr><td colSpan={11} className="py-16 text-center text-sm text-immo-text-muted">Aucun client</td></tr>
               ) : (
                 paged.map((c) => {
                   const stage = PIPELINE_STAGES[c.pipeline_stage]
@@ -109,6 +111,9 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
                           <span className="text-sm font-medium text-immo-text-primary">{c.full_name}</span>
                           {c.is_priority && <span className="h-2 w-2 rounded-full bg-immo-status-orange" />}
                         </div>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <EngagementBadge score={(c as Client & { engagement_score?: number | null }).engagement_score} />
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm text-immo-text-muted">{c.phone}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-immo-text-muted">

@@ -19,6 +19,7 @@ import {
   PageSkeleton,
   StatusBadge,
   ConfirmDialog,
+  EngagementBadge,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -217,6 +218,7 @@ export function ClientDetailPage() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-bold text-immo-text-primary">{client.full_name}</h1>
+            <EngagementBadge score={(client as { engagement_score?: number | null }).engagement_score} size="md" />
             {stage && (
               <span
                 className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
