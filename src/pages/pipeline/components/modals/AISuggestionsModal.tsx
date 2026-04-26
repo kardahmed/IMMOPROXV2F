@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  RotateCcw, ArrowUpDown, Check, Trophy, Award, Sparkles, Loader2, AlertCircle,
+  RotateCcw, ArrowUpDown, Check, Trophy, Award, Sparkles, Loader2, AlertCircle, Maximize2, Tag,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Modal, FilterDropdown } from '@/components/common'
@@ -156,6 +156,28 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
     filtered.forEach(u => map.set(u.id, aiScoreMap.get(u.id) ?? scoreUnit(u)))
     return map
   }, [filtered, client, aiScoreMap])
+
+  // Per-criterion winners across the filtered set (1st place only).
+  const winners = useMemo(() => {
+    let bestSurfaceId: string | null = null
+    let bestSurface = -Infinity
+    let bestPriceM2Id: string | null = null
+    let bestPriceM2 = Infinity
+    for (const u of filtered) {
+      if (u.surface != null && u.surface > bestSurface) {
+        bestSurface = u.surface
+        bestSurfaceId = u.id
+      }
+      if (u.price != null && u.surface != null && u.surface > 0) {
+        const pm2 = u.price / u.surface
+        if (pm2 < bestPriceM2) {
+          bestPriceM2 = pm2
+          bestPriceM2Id = u.id
+        }
+      }
+    }
+    return { surfaceId: bestSurfaceId, priceM2Id: bestPriceM2Id }
+  }, [filtered])
 
   async function rankWithAI() {
     if (!client || filtered.length === 0) return
@@ -388,17 +410,29 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                     )}
                   </div>
 
-                  {/* Match badges */}
-                  {rank === 1 && (
-                    <div className="mb-2 flex items-center gap-1 rounded-full bg-immo-accent-green/10 px-2 py-0.5 text-[10px] font-semibold text-immo-accent-green">
-                      <Trophy className="h-3 w-3" /> Meilleur match
-                    </div>
-                  )}
-                  {rank && rank >= 2 && rank <= 3 && (
-                    <div className="mb-2 flex items-center gap-1 rounded-full bg-immo-accent-blue/10 px-2 py-0.5 text-[10px] font-semibold text-immo-accent-blue">
-                      <Award className="h-3 w-3" /> Top {rank}
-                    </div>
-                  )}
+                  {/* Match badges (multi) */}
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    {rank === 1 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-immo-accent-green/10 px-2 py-0.5 text-[10px] font-semibold text-immo-accent-green">
+                        <Trophy className="h-3 w-3" /> Match
+                      </span>
+                    )}
+                    {rank && rank >= 2 && rank <= 3 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-immo-accent-blue/10 px-2 py-0.5 text-[10px] font-semibold text-immo-accent-blue">
+                        <Award className="h-3 w-3" /> Top {rank}
+                      </span>
+                    )}
+                    {winners.surfaceId === u.id && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
+                        <Maximize2 className="h-3 w-3" /> + Grande
+                      </span>
+                    )}
+                    {winners.priceM2Id === u.id && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-immo-status-orange/10 px-2 py-0.5 text-[10px] font-semibold text-immo-status-orange">
+                        <Tag className="h-3 w-3" /> Meilleur Prix/m²
+                      </span>
+                    )}
+                  </div>
                   {/* Score bar */}
                   <div className="mb-2 flex items-center gap-1.5">
                     <div className="h-1 flex-1 rounded-full bg-immo-border-default">
@@ -433,6 +467,84 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
             })}
           </div>
         )}
+
+        {/* Comparison table — visible when 2+ units selected */}
+        {selectedIds.length >= 2 && (() => {
+          const selectedUnits = filtered.filter(u => selectedIds.includes(u.id))
+          const priceM2 = (u: AvailableUnit) =>
+            u.price != null && u.surface != null && u.surface > 0
+              ? Math.round(u.price / u.surface)
+              : null
+          const rows: Array<{
+            label: string
+            getValue: (u: AvailableUnit) => number | null
+            format: (v: number | null) => string
+            better: 'higher' | 'lower'
+          }> = [
+            { label: 'Prix', getValue: u => u.price, format: v => v != null ? formatPrice(v) : '—', better: 'lower' },
+            { label: 'Surface', getValue: u => u.surface, format: v => v != null ? `${v} m²` : '—', better: 'higher' },
+            { label: 'Prix/m²', getValue: priceM2, format: v => v != null ? `${formatPriceCompact(v)}/m²` : '—', better: 'lower' },
+            { label: 'Étage', getValue: u => u.floor, format: v => v != null ? String(v) : '—', better: 'higher' },
+            { label: 'Score', getValue: u => scoreMap.get(u.id) ?? 0, format: v => `${v ?? 0}%`, better: 'higher' },
+          ]
+          return (
+            <div className="overflow-hidden rounded-xl border border-immo-border-default bg-immo-bg-card">
+              <div className="flex items-center gap-2 border-b border-immo-border-default/50 bg-immo-bg-card-hover/40 px-4 py-2">
+                <Trophy className="h-3.5 w-3.5 text-immo-accent-green" />
+                <h3 className="text-xs font-semibold text-immo-text-primary">
+                  Comparatif des {selectedUnits.length} unités sélectionnées
+                </h3>
+                <span className="ml-auto text-[10px] text-immo-text-muted">Meilleure valeur surlignée par ligne</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-immo-border-default/30 bg-immo-bg-primary">
+                      <th className="px-3 py-2 text-left font-semibold text-immo-text-muted">Critère</th>
+                      {selectedUnits.map(u => (
+                        <th key={u.id} className="px-3 py-2 text-left font-semibold text-immo-text-primary">
+                          {u.code}
+                          <span className="ml-1 text-[10px] font-normal text-immo-text-muted">{u.subtype ? UNIT_SUBTYPE_LABELS[u.subtype] ?? u.subtype : ''}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map(row => {
+                      const values = selectedUnits.map(row.getValue)
+                      const valid = values.filter((v): v is number => v != null)
+                      const best = valid.length > 0
+                        ? (row.better === 'higher' ? Math.max(...valid) : Math.min(...valid))
+                        : null
+                      return (
+                        <tr key={row.label} className="border-b border-immo-border-default/20 last:border-0">
+                          <td className="px-3 py-2 font-medium text-immo-text-muted">{row.label}</td>
+                          {selectedUnits.map(u => {
+                            const v = row.getValue(u)
+                            const isBest = best != null && v === best && v != null
+                            return (
+                              <td
+                                key={u.id}
+                                className={`px-3 py-2 ${
+                                  isBest
+                                    ? 'bg-immo-accent-green/10 font-semibold text-immo-accent-green'
+                                    : 'text-immo-text-primary'
+                                }`}
+                              >
+                                {row.format(v)}
+                                {isBest && <span className="ml-1 text-[9px]">✓</span>}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-immo-border-default pt-4">
