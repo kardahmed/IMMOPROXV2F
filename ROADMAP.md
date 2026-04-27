@@ -578,10 +578,28 @@ dev produit s'arrête (sauf bug fixes) :
 
 ## 💰 Pricing & Unit Economics
 
-Toutes les valeurs sont calculées au **cours parallèle DZD/USD = 250**
-(c'est le taux d'achat réel de l'USD pour payer les fournisseurs
-étrangers Anthropic / Meta / Supabase / Hostinger). Référence WhatsApp
-basée sur les tarifs Wati + tarifs Meta directs zone MENA.
+**Convention de calcul (à appliquer partout dans la conversation
+business — chiffrage, marges, pricing, projections)** :
+
+1. **Cours USD/DZD = 250** (parallèle réel, pas le 130 officiel
+   inutilisable pour payer Anthropic/Meta/Supabase/Hostinger).
+2. **Frais de transaction +6% à AJOUTER sur chaque dépense ET sur
+   chaque recette** :
+   - Pour une dépense en USD : coût réel DZD = montant USD × 250 × **1,06** (= **265 DZD/USD effectif**)
+   - Pour une recette tenant en DZD : net encaissé = facturé × **0,94**
+   (la diff couvre frais bancaires, change parallèle, encaissement).
+
+→ Toujours raisonner sur ces 2 paramètres. Tout chiffre lâché dans
+une discussion business doit déjà inclure le 6%, pas en parallèle.
+
+### Tarifs Meta WhatsApp en DZD réel (avec frais inclus)
+
+| Type message | Prix Meta USD | DZD nominal (×250) | **DZD réel (×265)** |
+|---|---|---|---|
+| Utility | $0,033 | 8,3 | **8,7** |
+| Marketing | $0,082 | 20,5 | **21,7** |
+| Authentication | $0,028 | 7,0 | **7,4** |
+| Service (>24h reply) | gratuit (1000/mois) | 0 | 0 |
 
 ### Grille des 3 plans
 
