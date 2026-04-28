@@ -140,7 +140,7 @@ immoproxv2f/
 
 ### Known rough edges
 - `ci.yml` infra never provisions runners — every PR shows a red `build` check. Pre-existing. Safe to merge on red for now.
-- **Several features are half-built, live code but NOT fully functional** (WhatsApp multi-tenant, lead notifications Edge Function, password reset button, FTPS fallback deploy). See the `🧩 Partial / WIP` section of `ROADMAP.md` for the full list and what's missing on each. Check ROADMAP before assuming any of these works end-to-end.
+- **Several features are half-built, live code but NOT fully functional** (WhatsApp multi-tenant Embedded Signup, FTPS fallback deploy). See the `🧩 Partial / WIP` section of `ROADMAP.md` for the full list and what's missing on each. Check ROADMAP before assuming any of these works end-to-end.
 
 ## How to run locally
 

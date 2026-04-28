@@ -47,12 +47,19 @@ next one can pick up cleanly.
   `new_lead_notification` template re-categorized by Meta as Marketing
   (because "Recontacte sous 1h" read as a sales CTA to Meta's
   classifier), a new `nouveau_lead__immo_prox` template was submitted
-  as pure Utility and replaced the old one. Also learnt the hard way
+  as pure Utility and approved 28-Apr-2026. Also learnt the hard way
   that Meta's "Generate access token" button on the API Setup page
   always returns 24h tokens — permanent tokens must come from
   Business Settings > System Users with expiration=Never. The
-  `notify-lead-whatsapp` function now logs a warning at boot if the
-  stored token is <300 chars so we never debug the symptom again.
+  initial `<300 chars` token-length warning was removed 28-Apr-2026:
+  Meta changed token format in 2024 and modern System User permanent
+  tokens are now ~195-220 chars (same range as 24h temp tokens), so
+  the heuristic produced false positives on every invocation and
+  could no longer distinguish the two token types. Verify token type
+  via the Access Token Debugger instead. **Validated end-to-end
+  28-Apr-2026** with a real form submission on `immoprox.io/contact`:
+  both `[NOUVEAU]` and `[QUALIFIE]` pings delivered to the founder's
+  WhatsApp within 5-10s of each step.
 - Password reset flow live: `LoginPage` "Mot de passe oublie ?" button
   wired to `supabase.auth.resetPasswordForEmail`, paired with a
   dedicated `/reset-password` page that accepts the Supabase recovery
@@ -301,9 +308,6 @@ next one can pick up cleanly.
 ## 🚧 In progress
 
 ### Meta — template reviews (pending)
-- `nouveau_lead__immo_prox` (founder notification, replaces the
-  Marketing-downgraded `new_lead_notification`) — submitted as
-  Utility, in review. Expected 1-24h.
 - 10 templates from `WHATSAPP_TEMPLATES_CATALOG.md` to be submitted
   one by one (or in batches) by the founder. Review 1-24h each,
   independent / parallelizable.
