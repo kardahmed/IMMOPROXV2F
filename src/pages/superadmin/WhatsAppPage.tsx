@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle, Settings, Send, Users, TrendingUp, AlertTriangle, Check, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { handleSupabaseError } from '@/lib/errors'
 import { Card, DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -76,11 +77,18 @@ export function WhatsAppPage() {
   // Toggle tenant WhatsApp
   const toggleTenant = useMutation({
     mutationFn: async ({ tenantId, active }: { tenantId: string; active: boolean }) => {
-      const { data: existing } = await supabase.from('whatsapp_accounts').select('id').eq('tenant_id', tenantId).single()
+      const { data: existing, error: selectErr } = await supabase
+        .from('whatsapp_accounts')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .maybeSingle()
+      if (selectErr) { handleSupabaseError(selectErr); throw selectErr }
       if (existing) {
-        await supabase.from('whatsapp_accounts').update({ is_active: active } as never).eq('tenant_id', tenantId)
+        const { error } = await supabase.from('whatsapp_accounts').update({ is_active: active } as never).eq('tenant_id', tenantId)
+        if (error) { handleSupabaseError(error); throw error }
       } else {
-        await supabase.from('whatsapp_accounts').insert({ tenant_id: tenantId, is_active: true, plan: 'starter', monthly_quota: 500 } as never)
+        const { error } = await supabase.from('whatsapp_accounts').insert({ tenant_id: tenantId, is_active: true, plan: 'starter', monthly_quota: 500 } as never)
+        if (error) { handleSupabaseError(error); throw error }
       }
     },
     onSuccess: () => {
