@@ -90,33 +90,48 @@ export function PublicLandingPage() {
     enabled: !!slug,
   })
 
-  // Inject pixels
+  // Inject pixels.
+  //
+  // Tenant-controlled values like meta_pixel_id and google_tag_id end
+  // up inside `script.innerHTML`, which is an XSS vector if the value
+  // ever escapes its quote: a tenant string of `123');alert(1);//`
+  // would execute on every visitor's browser. We harden in two ways:
+  //   1) reject anything that doesn't match the strict id charset;
+  //   2) inject the validated id via a JSON.stringify so even a
+  //      pathological string can't break out of the literal.
+  function isSafePixelId(v: unknown): v is string {
+    return typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v)
+  }
+
+  // Meta Pixel
   useEffect(() => {
     if (!page) return
+    if (!isSafePixelId(page.meta_pixel_id)) return
 
-    // Meta Pixel
-    if (page.meta_pixel_id) {
-      const script = document.createElement('script')
-      script.innerHTML = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${page.meta_pixel_id}');fbq('track','PageView');`
-      document.head.appendChild(script)
-      return () => { document.head.removeChild(script) }
-    }
+    const safeId = JSON.stringify(page.meta_pixel_id)
+    const script = document.createElement('script')
+    script.innerHTML = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',${safeId});fbq('track','PageView');`
+    document.head.appendChild(script)
+    return () => { document.head.removeChild(script) }
   }, [page?.meta_pixel_id])
 
+  // Google Tag
   useEffect(() => {
     if (!page) return
+    if (!isSafePixelId(page.google_tag_id)) return
 
-    // Google Tag
-    if (page.google_tag_id) {
-      const script = document.createElement('script')
-      script.async = true
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${page.google_tag_id}`
-      document.head.appendChild(script)
-      const script2 = document.createElement('script')
-      script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${page.google_tag_id}');`
-      document.head.appendChild(script2)
-      return () => { document.head.removeChild(script); document.head.removeChild(script2) }
-    }
+    const safeId = JSON.stringify(page.google_tag_id)
+    const script = document.createElement('script')
+    script.async = true
+    // Only the validated id reaches the URL — encodeURIComponent as
+    // belt-and-braces in case a future regex relaxation lets through
+    // a stray ampersand.
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(page.google_tag_id)}`
+    document.head.appendChild(script)
+    const script2 = document.createElement('script')
+    script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${safeId});`
+    document.head.appendChild(script2)
+    return () => { document.head.removeChild(script); document.head.removeChild(script2) }
   }, [page?.google_tag_id])
 
   async function handleSubmit(e: React.FormEvent) {
