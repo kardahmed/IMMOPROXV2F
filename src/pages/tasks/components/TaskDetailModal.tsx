@@ -81,6 +81,40 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
     enabled: isOpen && !!tenantId,
   })
 
+  // ── Auto-generated AI call script for CALL tasks (Phase 7 killer feature) ──
+  // When a CALL task is opened, pre-fetch the personalised script from
+  // generate-call-script so the agent sees intro + points + objections +
+  // closing the moment they look at the task. Cached per (client_id, task.id)
+  // for 10 minutes — opening the same task twice doesn't burn a 2nd call.
+  const isCallTask = task.channel === 'call'
+  const { data: callScript, isLoading: scriptLoading, refetch: refetchScript } = useQuery({
+    queryKey: ['ai-call-script', task.client_id, task.id],
+    enabled: isOpen && isCallTask && !!task.client_id,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Session expirée')
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-call-script`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ client_id: task.client_id }),
+      })
+      if (!res.ok) {
+        // 403 = plan/feature gate (not Pro+); surface gracefully without
+        // throwing so the rest of the modal keeps working.
+        if (res.status === 403) return null
+        throw new Error(`Script generation failed (${res.status})`)
+      }
+      return await res.json() as {
+        intro?: string
+        talking_points?: string[]
+        outro?: string
+        suggested_action?: string | null
+        questions?: Array<{ id: string; question: string; type: string }>
+      }
+    },
+  })
+
   // Build message with variables replaced
   function buildMessage(template?: string | null): string {
     const base = template ?? msgTemplate ?? `Bonjour {client_prenom},\n\nJe suis {agent_prenom} de {agence}.\n\n${task.title}\n\nCordialement,\n{agent_prenom}\n{agent_phone}`
@@ -264,6 +298,86 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
               </div>
             )}
           </div>
+
+          {/* AI Call Script — only on CALL tasks */}
+          {isCallTask && (
+            <div className="rounded-xl border border-immo-accent-blue/30 bg-immo-accent-blue/5 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-semibold text-immo-accent-blue">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Script d'appel IA — préparation
+                </div>
+                <button
+                  onClick={() => refetchScript()}
+                  disabled={scriptLoading}
+                  className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-immo-accent-blue hover:bg-immo-accent-blue/10 disabled:opacity-50"
+                >
+                  {scriptLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  {scriptLoading ? 'Génération...' : 'Régénérer'}
+                </button>
+              </div>
+
+              {scriptLoading && !callScript && (
+                <div className="flex items-center gap-2 py-4 text-xs text-immo-text-secondary">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  L'IA prépare votre script personnalisé selon le profil et l'historique du client...
+                </div>
+              )}
+
+              {callScript === null && (
+                <p className="text-xs text-immo-text-secondary italic">
+                  Les scripts d'appel IA ne sont pas inclus dans votre plan. Passez Pro pour bénéficier de scripts personnalisés générés à chaque appel.
+                </p>
+              )}
+
+              {callScript && (
+                <div className="space-y-3 text-sm text-immo-text-primary">
+                  {callScript.intro && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Introduction</p>
+                      <p className="whitespace-pre-wrap rounded-lg bg-white/60 p-3 text-xs leading-relaxed">{callScript.intro}</p>
+                    </div>
+                  )}
+
+                  {callScript.talking_points && callScript.talking_points.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Points à aborder</p>
+                      <ul className="list-inside list-disc space-y-1 rounded-lg bg-white/60 p-3 text-xs leading-relaxed">
+                        {callScript.talking_points.map((p, i) => (
+                          <li key={i}>{p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {callScript.questions && callScript.questions.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Questions à poser</p>
+                      <ul className="list-inside list-decimal space-y-1 rounded-lg bg-white/60 p-3 text-xs leading-relaxed">
+                        {callScript.questions.map((q) => (
+                          <li key={q.id}>{q.question}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {callScript.outro && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Closing</p>
+                      <p className="whitespace-pre-wrap rounded-lg bg-white/60 p-3 text-xs leading-relaxed">{callScript.outro}</p>
+                    </div>
+                  )}
+
+                  {callScript.suggested_action && (
+                    <div className="rounded-lg border border-immo-accent-green/30 bg-immo-accent-green/10 p-3">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-immo-accent-green">Action recommandée</p>
+                      <p className="text-xs text-immo-text-primary">{callScript.suggested_action}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Actions rapides */}
           <div>
