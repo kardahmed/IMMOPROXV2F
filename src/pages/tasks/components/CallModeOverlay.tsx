@@ -81,6 +81,33 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
     qc.invalidateQueries({ queryKey: ['tasks'] })
     qc.invalidateQueries({ queryKey: ['all-tasks'] })
     qc.invalidateQueries({ queryKey: ['client-tasks', task.client_id] })
+    // Notes tab on the client detail page reads from clients.notes —
+    // refresh that query too so the appended entry shows up live.
+    qc.invalidateQueries({ queryKey: ['client-notes', task.client_id] })
+  }
+
+  // Prepend a timestamped entry to clients.notes so every call is
+  // auto-logged in the client's free-form notes tab. Newest first
+  // (matches the "scroll-up to see history" pattern most agents
+  // expect). No-op when the task isn't tied to a client.
+  async function appendClientNote(header: string, body: string) {
+    if (!task.client_id) return
+    const { data: row } = await supabase
+      .from('clients')
+      .select('notes')
+      .eq('id', task.client_id)
+      .single()
+    const existing = (row as { notes?: string | null } | null)?.notes ?? ''
+    const stamp = new Date().toLocaleString('fr-FR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+    const block = `─── ${stamp} — ${header} ───\n${body.trim() || '(aucune note)'}\n`
+    const next = existing ? `${block}\n${existing}` : block
+    await supabase
+      .from('clients')
+      .update({ notes: next } as never)
+      .eq('id', task.client_id)
   }
 
   const success = useMutation({
@@ -106,6 +133,10 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
         title: `Appel réussi: ${task.title}`,
         description: notes.trim() || null,
       } as never)
+
+      // Auto-append to clients.notes so the call shows up in the
+      // free-form Notes tab without the agent re-typing it there.
+      await appendClientNote(`✓ Appel réussi — ${task.title}`, notes)
     },
     onSuccess: () => {
       toast.success('Appel marqué comme réussi')
@@ -135,6 +166,8 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
         title: `Appel sans réponse: ${task.title}`,
         description: notes.trim() || null,
       } as never)
+
+      await appendClientNote(`⏰ Appel sans réponse — ${task.title}`, notes)
     },
     onSuccess: () => {
       toast.success('Marqué "pas de réponse" — relance auto dans 48h')
@@ -160,6 +193,12 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
         } as never)
         .eq('id', task.id)
       if (error) throw new Error(handleSupabaseError(error))
+
+      const niceDate = new Date(reschedAt).toLocaleString('fr-FR')
+      await appendClientNote(
+        `📅 Replanifié au ${niceDate} — ${task.title}`,
+        notes,
+      )
     },
     onSuccess: () => {
       toast.success(`Replanifié à ${new Date(reschedAt).toLocaleString('fr-FR')}`)
