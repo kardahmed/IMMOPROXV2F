@@ -13,6 +13,7 @@ import { PIPELINE_STAGES } from '@/types'
 import { calculateUrgencyScore, suggestNextAction } from '@/hooks/useTaskScoring'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import { CallModeOverlay } from './CallModeOverlay'
 
 interface ClientTask {
   id: string; title: string; stage: string; status: string; priority: string
@@ -48,6 +49,9 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
   const userId = useAuthStore(s => s.session?.user?.id)
   const { tenantId } = useAuthStore()
   const qc = useQueryClient()
+  // Full-screen "Mode Appel" overlay state — opens when the agent
+  // taps the primary "Démarrer l'appel" CTA on a CALL task.
+  const [callModeOpen, setCallModeOpen] = useState(false)
 
   const [tone, setTone] = useState('professional')
   const [generatingAI, setGeneratingAI] = useState(false)
@@ -379,9 +383,25 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
             </div>
           )}
 
+          {/* Primary CTA — channel-aware. For CALL tasks the dominant
+              action opens the full-screen "Mode Appel" with script +
+              notes + tel: deeplink + outcome buttons. For other channels
+              the regular action grid below stays the main UI. */}
+          {isCallTask && (
+            <button
+              onClick={() => setCallModeOpen(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-immo-accent-blue px-4 py-3.5 text-base font-semibold text-white shadow-md transition-colors hover:bg-immo-accent-blue/90"
+            >
+              <Phone className="h-5 w-5" />
+              Démarrer l'appel
+            </button>
+          )}
+
           {/* Actions rapides */}
           <div>
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Actions rapides</p>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">
+              {isCallTask ? 'Autres actions' : 'Actions rapides'}
+            </p>
             <div className="flex flex-wrap gap-2">
               <button onClick={copyMessage} className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors">
                 <Copy className="h-3.5 w-3.5 text-immo-text-muted" /> Copier le message
@@ -491,6 +511,16 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Full-screen Mode Appel — sits above this modal. Closing it
+          returns the agent to the task detail view. The overlay logs
+          the outcome (réussi / pas répondu / replanifier), updates the
+          task, and refreshes the surrounding queries. */}
+      <CallModeOverlay
+        isOpen={callModeOpen}
+        onClose={() => setCallModeOpen(false)}
+        task={task}
+      />
     </div>
   )
 }
