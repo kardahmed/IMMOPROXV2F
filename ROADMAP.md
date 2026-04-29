@@ -536,7 +536,7 @@ site de capture de leads (formulaire demo), pas une vitrine tarifaire.
 
 ---
 
-## 🎯 Phase 7 — Système d'automation multi-canal v1 (28-Apr-2026)
+## ✅ Phase 7 — Système d'automation multi-canal v1 — LIVRÉ (29-Apr-2026)
 
 Décidé en session du 28-Apr-2026 après audit du système existant et
 réorientation produit. Le système actuel (5 templates WhatsApp wirés)
@@ -575,32 +575,36 @@ du cycle de vente sur les 9 étapes du pipeline.
    Extra-tier).
 4. **Tâches récurrentes par tenant** : reportées (Niveau 2 backlog).
 
-### Découpage technique (~6.5 jours dev + 14 templates Meta async)
+### Découpage technique — réalité du livré (29-Apr-2026)
 
-- **Sprint 1 (2j)** — Backend & wiring
-  - Migration `tenant_automation_settings` (table + RLS + seed
-    function pour les 25 touchpoints)
-  - Update `dispatchAutomation` : check settings + handle
-    `channel` (call / whatsapp / email / internal)
-  - Triggers DB : signature → félicitations, paiement reçu →
-    confirmation, document reçu → confirmation
-  - Étendre crons : reservation J-3 + expiration J-7,
-    impayé escalade J+7, accueil/visite_terminee/négo time-based
-- **Sprint 2 (1j)** — Frontend
-  - Update `whatsappTemplates.ts` : ajouter 14 nouveaux
-  - Page `/settings/automations` : 25 touchpoints avec 3-mode toggle
-  - Branchement `generate-call-script` sur les CALL tasks dans `/tasks`
-  - Bouton `tel:` deeplink
-- **Sprint 3 (1j)** — Tests E2E
-  - Validation des 25 touchpoints avec le numéro perso comme client
-    test
-  - Idempotence (anti-spam) vérifiée
-- **Sprint 4 (1.5j)** — Polish & docs
-  - SEED `task_templates` par stage pour la couche stage-based
-  - Documentation interne
-- **Soumissions Meta (toi, 14 templates + 1-2 sem async)** —
-  catalogue mis à jour dans `WHATSAPP_TEMPLATES_CATALOG.md` avec
-  les 14 nouveaux contenus Utility-compliant.
+- **Sprint A.1** ✅ Migration 043 (`tenant_automation_settings`) +
+  dispatchAutomation lit la table (commit `c0a261a`).
+- **Sprint A.2** ✅ Page `/settings/automations` UI 3-mode toggle,
+  25 touchpoints groupés par stage avec couleurs (commit `e96a40d`).
+- **Sprint A.3** ✅ Migration 047 (`clients.pipeline_stage_changed_at`
+  + trigger + index) + Edge Function `check-stage-touchpoints` cron
+  hourly + pg_cron schedule (commit `751786a`).
+- **Sprint A.4** ✅ AI call script auto-fetch via react-query dans
+  TaskDetailModal (commit `4a0011b`).
+- **Sprint UX A** ✅ CallModeOverlay full-screen + outcomes
+  (réussi/pas répondu/replanifier) + tel: deeplink + notes
+  textarea + auto-mirror dans `clients.notes` (commits `2287096`,
+  `eff3953`, `7effe70`, `348b3e0`, `1e83594`).
+- **Sprint UX A.7-A.8** ✅ `appendClientNote()` shared helper
+  (`src/lib/clientNotes.ts`) wirée sur 7 surfaces (CallModeOverlay,
+  TaskDetailModal, PipelinePage stage change, WhatsAppButton,
+  PlanVisitModal, NewSaleModal, CallScriptModal). Tout note saisi
+  apparaît désormais dans l'onglet Notes du client.
+
+### Reste à faire (post-pilote)
+
+- **Soumissions Meta (toi, 14 templates Utility) :** copier-coller
+  depuis `WHATSAPP_TEMPLATES_CATALOG.md` dans Meta WhatsApp Manager.
+  1-24h approval par template, parallélisable.
+- **Câbler 5 templates restants à des triggers DB / UI :**
+  visite_annulation (action UI), paiement_recu (DB trigger payments),
+  document_demande / document_recu / document_rappel_manquant
+  (triggers + cron). ~½ jour dev une fois les templates approved.
 
 ### Carte des 25 touchpoints
 
