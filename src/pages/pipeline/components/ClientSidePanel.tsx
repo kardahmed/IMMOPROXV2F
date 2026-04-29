@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { PIPELINE_STAGES, SOURCE_LABELS } from '@/types'
 import type { Client, ClientSource, PipelineStage } from '@/types'
 import { formatPrice } from '@/lib/constants'
+import { nameToColor } from '@/lib/avatarColor'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -16,12 +17,6 @@ interface ClientSidePanelProps {
   onClose: () => void
 }
 
-function nameToColor(name: string): string {
-  const COLORS = ['#0579DA', '#00D4A0', '#F5A623', '#A855F7', '#06B6D4', '#EAB308', '#F97316', '#EC4899']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return COLORS[Math.abs(hash) % COLORS.length]
-}
 
 export function ClientSidePanel({ clientId, onClose }: ClientSidePanelProps) {
   const navigate = useNavigate()
