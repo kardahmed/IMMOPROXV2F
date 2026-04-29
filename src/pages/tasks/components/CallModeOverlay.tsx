@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { appendClientNote } from '@/lib/clientNotes'
 import toast from 'react-hot-toast'
 
 interface Task {
@@ -86,29 +87,6 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
     qc.invalidateQueries({ queryKey: ['client-notes', task.client_id] })
   }
 
-  // Prepend a timestamped entry to clients.notes so every call is
-  // auto-logged in the client's free-form notes tab. Newest first
-  // (matches the "scroll-up to see history" pattern most agents
-  // expect). No-op when the task isn't tied to a client.
-  async function appendClientNote(header: string, body: string) {
-    if (!task.client_id) return
-    const { data: row } = await supabase
-      .from('clients')
-      .select('notes')
-      .eq('id', task.client_id)
-      .single()
-    const existing = (row as { notes?: string | null } | null)?.notes ?? ''
-    const stamp = new Date().toLocaleString('fr-FR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    })
-    const block = `─── ${stamp} — ${header} ───\n${body.trim() || '(aucune note)'}\n`
-    const next = existing ? `${block}\n${existing}` : block
-    await supabase
-      .from('clients')
-      .update({ notes: next } as never)
-      .eq('id', task.client_id)
-  }
 
   const success = useMutation({
     mutationFn: async () => {
@@ -136,7 +114,7 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
 
       // Auto-append to clients.notes so the call shows up in the
       // free-form Notes tab without the agent re-typing it there.
-      await appendClientNote(`✓ Appel réussi — ${task.title}`, notes)
+      await appendClientNote(task.client_id, `✓ Appel réussi — ${task.title}`, notes)
     },
     onSuccess: () => {
       toast.success('Appel marqué comme réussi')
@@ -167,7 +145,7 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
         description: notes.trim() || null,
       } as never)
 
-      await appendClientNote(`⏰ Appel sans réponse — ${task.title}`, notes)
+      await appendClientNote(task.client_id, `⏰ Appel sans réponse — ${task.title}`, notes)
     },
     onSuccess: () => {
       toast.success('Marqué "pas de réponse" — relance auto dans 48h')
@@ -196,6 +174,7 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
 
       const niceDate = new Date(reschedAt).toLocaleString('fr-FR')
       await appendClientNote(
+        task.client_id,
         `📅 Replanifié au ${niceDate} — ${task.title}`,
         notes,
       )

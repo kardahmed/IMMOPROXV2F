@@ -14,6 +14,7 @@ import { calculateUrgencyScore, suggestNextAction } from '@/hooks/useTaskScoring
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { CallModeOverlay } from './CallModeOverlay'
+import { appendClientNote } from '@/lib/clientNotes'
 
 interface ClientTask {
   id: string; title: string; stage: string; status: string; priority: string
@@ -167,6 +168,17 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
       if (error) { handleSupabaseError(error); throw error }
       await supabase.from('history').insert({ tenant_id: task.tenant_id, client_id: task.client_id, agent_id: userId, type: task.channel === 'whatsapp' ? 'whatsapp_message' : task.channel === 'sms' ? 'sms' : 'call', title: `Tache executee: ${task.title}` } as never)
       await supabase.from('clients').update({ last_contact_at: new Date().toISOString() }).eq('id', task.client_id)
+
+      // Auto-append the message + agent's response into clients.notes
+      // so the Notes tab on the client detail page reflects what was
+      // sent and what came back, without the agent retyping anything.
+      const channelEmoji = task.channel === 'whatsapp' ? '💬' : task.channel === 'sms' ? '📩' : task.channel === 'email' ? '📧' : '📞'
+      const channelLabel = task.channel === 'whatsapp' ? 'WhatsApp envoyé' : task.channel === 'sms' ? 'SMS envoyé' : task.channel === 'email' ? 'Email envoyé' : 'Appel'
+      const noteBody = [
+        message ? `Message: ${message}` : null,
+        clientResponse ? `Réponse client: ${clientResponse}` : null,
+      ].filter(Boolean).join('\n\n')
+      await appendClientNote(task.client_id, `${channelEmoji} ${channelLabel} — ${task.title}`, noteBody)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['all-tasks'] }); toast.success('Tâche marquée comme exécutée'); onClose() },
   })

@@ -2,6 +2,7 @@ import { MessageCircle } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { appendClientNote } from '@/lib/clientNotes'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -36,6 +37,10 @@ export function WhatsAppButton({ clientId, clientName, phone, tenantId, message,
         description: `Message a ${clientName}`,
       } as never)
       await supabase.from('clients').update({ last_contact_at: new Date().toISOString() } as never).eq('id', clientId)
+
+      // Mirror the message into the client's free-form Notes tab so
+      // the next agent who opens the file can read what was sent.
+      await appendClientNote(clientId, '💬 WhatsApp envoyé', message)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['client-history'] })
