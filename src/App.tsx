@@ -112,7 +112,12 @@ function App() {
             <Route path="/pipeline" element={<PipelinePage />} />
             <Route path="/pipeline/clients/:clientId" element={<ClientDetailPage />} />
             <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/inbox" element={<InboxPage />} />
+            {/* /inbox needs whatsapp feature — Essentiel tenants don't have
+                a connected WhatsApp number, so the inbox stays empty for
+                them and the page shouldn't be surfaced as if it worked. */}
+            <Route element={<FeatureRoute feature="whatsapp" featureName="Inbox WhatsApp" />}>
+              <Route path="/inbox" element={<InboxPage />} />
+            </Route>
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/dossiers" element={<DossiersPage />} />
 
@@ -124,13 +129,17 @@ function App() {
               </Route>
               <Route element={<FeatureRoute feature="goals" featureName="Objectifs de vente" />}>
                 <Route path="/goals" element={<GoalsPage />} />
+                {/* /performance dashboards live behind the same goals
+                    feature key — they pivot off goal completion KPIs and
+                    are listed as Pro+ in ROADMAP. Pre-fix this route was
+                    open to every Essentiel admin. */}
+                <Route path="/performance" element={<PerformancePage />} />
               </Route>
               <Route element={<FeatureRoute feature="roi_marketing" featureName="ROI Marketing" />}>
                 <Route path="/marketing-roi" element={<MarketingROIPage />} />
               </Route>
 
               {/* Core admin routes — no plan gate */}
-              <Route path="/performance" element={<PerformancePage />} />
               <Route path="/agents" element={<AgentsPage />} />
               <Route path="/agents/:agentId" element={<AgentDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
