@@ -26,6 +26,44 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const VERIFY_TOKEN = Deno.env.get('META_WHATSAPP_WEBHOOK_VERIFY_TOKEN') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+// Meta App Secret — used to verify the X-Hub-Signature-256 HMAC on
+// every POST. Without this gate the webhook accepts any anonymous
+// request and an attacker can forge inbound messages, auto-close
+// arbitrary tasks, or inflate engagement scores across all tenants.
+const META_APP_SECRET = Deno.env.get('META_APP_SECRET')
+
+// Verify Meta's HMAC-SHA256 signature header against the raw POST body.
+// Must use a constant-time comparison to defeat timing attacks.
+async function verifyMetaSignature(
+  signatureHeader: string | null,
+  rawBody: string,
+  appSecret: string,
+): Promise<boolean> {
+  if (!signatureHeader || !signatureHeader.startsWith('sha256=')) {
+    return false
+  }
+  const expectedHex = signatureHeader.slice('sha256='.length)
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(appSecret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const sigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(rawBody))
+  const computed = Array.from(new Uint8Array(sigBuf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+
+  // Constant-time string compare.
+  if (computed.length !== expectedHex.length) return false
+  let diff = 0
+  for (let i = 0; i < computed.length; i++) {
+    diff |= computed.charCodeAt(i) ^ expectedHex.charCodeAt(i)
+  }
+  return diff === 0
+}
 
 type MetaMessage = {
   id: string
@@ -131,9 +169,31 @@ Deno.serve(async (req) => {
   }
 
   // ── POST → process incoming events ───────────────────────────────
+  // Read the raw body once: we need the exact bytes for HMAC
+  // verification, then JSON-parse the same string. Calling req.json()
+  // first would consume the body and we couldn't re-read it.
+  const rawBody = await req.text()
+
+  // Signature verification. Fail closed if the secret isn't configured
+  // — running unverified would let an attacker inject inbound messages
+  // and auto-close tasks across every tenant.
+  if (!META_APP_SECRET) {
+    console.error('[whatsapp-webhook] META_APP_SECRET not configured — refusing to process events')
+    return new Response('Webhook not configured', { status: 503 })
+  }
+  const sigValid = await verifyMetaSignature(
+    req.headers.get('X-Hub-Signature-256'),
+    rawBody,
+    META_APP_SECRET,
+  )
+  if (!sigValid) {
+    console.warn('[whatsapp-webhook] X-Hub-Signature-256 verification failed')
+    return new Response('Invalid signature', { status: 401 })
+  }
+
   let payload: MetaWebhookPayload
   try {
-    payload = await req.json()
+    payload = JSON.parse(rawBody)
   } catch {
     return new Response('Invalid JSON', { status: 400 })
   }
@@ -241,12 +301,17 @@ Deno.serve(async (req) => {
         // a manual click.
         const matchedClientId = (client as { id: string } | null)?.id
         if (matchedClientId) {
+          // Restrict auto-close to whatsapp tasks. Without this filter
+          // a client's WhatsApp reply would also close pending call /
+          // email tasks for the same client — those are different
+          // touchpoints and need their own follow-up flow.
           const { data: pendingTask } = await supabase
             .from('tasks')
             .select('id')
             .eq('tenant_id', tenantId)
             .eq('client_id', matchedClientId)
             .eq('status', 'pending')
+            .eq('channel', 'whatsapp')
             .not('executed_at', 'is', null)
             .neq('auto_cancelled', true)
             .is('deleted_at', null)
