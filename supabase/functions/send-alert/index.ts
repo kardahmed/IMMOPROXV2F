@@ -23,9 +23,12 @@ serve(async (req: Request) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    // Verify caller is using service role key
+    // Service-role only — this endpoint triggers arbitrary outbound
+    // webhooks (Slack, Telegram, custom HTTP) per the platform_alerts
+    // config. Pre-fix the check was `.includes('Bearer')` which any
+    // authenticated user JWT satisfies. Use strict equality.
     const authHeader = req.headers.get('Authorization') ?? ''
-    if (!authHeader.includes(serviceKey) && !authHeader.includes('Bearer')) {
+    if (authHeader !== `Bearer ${serviceKey}`) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 

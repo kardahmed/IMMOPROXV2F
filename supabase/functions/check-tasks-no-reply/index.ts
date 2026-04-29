@@ -43,7 +43,18 @@ function suggestNextChannel(channel: string | null): string {
   }
 }
 
-Deno.serve(async (_req) => {
+Deno.serve(async (req) => {
+  // Service-role only — this cron writes new tasks for every tenant
+  // whose pending tasks went 48h without reply. An unauthenticated
+  // caller could trigger arbitrary task creation across tenants.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  if (authHeader !== `Bearer ${SERVICE_KEY}`) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
