@@ -1,18 +1,18 @@
 import { Users, Filter } from 'lucide-react'
 import { useSegmentCount, useProjectsList } from '@/hooks/useEmailMarketing'
 import type { SegmentRules } from '@/hooks/useEmailMarketing'
+import { PIPELINE_STAGES as STAGE_LABELS } from '@/types'
+import { PIPELINE_ORDER } from '@/lib/constants'
 
-const PIPELINE_STAGES = [
-  { value: 'accueil', label: 'Accueil' },
-  { value: 'visite_a_gerer', label: 'Visite à gérer' },
-  { value: 'visite_confirmee', label: 'Visite confirmée' },
-  { value: 'visite_terminee', label: 'Visite terminée' },
-  { value: 'negociation', label: 'Négociation' },
-  { value: 'reservation', label: 'Réservation' },
-  { value: 'vente', label: 'Vente' },
-  { value: 'relancement', label: 'Relancement' },
-  { value: 'perdue', label: 'Perdue' },
-]
+// Derived from the canonical sources — types/index.ts holds the
+// label/colour map, lib/constants.ts holds the order. This component
+// used to inline its own copy of the pairs which drifted whenever a
+// stage was renamed; now {value, label} is built from the two
+// authoritative exports.
+const PIPELINE_STAGES = PIPELINE_ORDER.map(value => ({
+  value,
+  label: STAGE_LABELS[value]?.label ?? value,
+}))
 
 const CLIENT_SOURCES = [
   { value: 'facebook_ads', label: 'Facebook Ads' },

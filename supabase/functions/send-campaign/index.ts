@@ -189,68 +189,95 @@ Deno.serve(async (req) => {
 
     const trackingBaseUrl = `${supabaseUrl}/functions/v1/track-email`
 
+    // Resend POST with up to 3 retries on 429 / 5xx, exponential backoff
+    // (250ms, 500ms, 1s). Returns true on success, false otherwise. Logs
+    // the response body on failure so we can debug from the function
+    // logs instead of "status='failed'" with no context.
+    async function sendOneWithRetry(to: string, html: string): Promise<boolean> {
+      if (!resendApiKey) return true  // log-only mode upstream
+      const body = JSON.stringify({
+        from: `${fromName} <${fromEmail}>`,
+        to: [to],
+        subject: emailSubject,
+        html,
+      })
+      let attempt = 0
+      while (attempt < 3) {
+        try {
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
+            body,
+          })
+          if (res.ok) return true
+          if (res.status === 429 || res.status >= 500) {
+            // Retryable. Read body for diagnostics + back off.
+            const errBody = await res.text().catch(() => '')
+            console.warn(`[send-campaign] Resend ${res.status} for ${to} (attempt ${attempt + 1}/3): ${errBody.slice(0, 200)}`)
+            await new Promise(r => setTimeout(r, 250 * Math.pow(2, attempt)))
+            attempt++
+            continue
+          }
+          // 4xx other than 429 = caller error (bad email, invalid HTML…).
+          // Don't retry — log + return false.
+          const errBody = await res.text().catch(() => '')
+          console.error(`[send-campaign] Resend ${res.status} for ${to} — non-retryable: ${errBody.slice(0, 200)}`)
+          return false
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          console.warn(`[send-campaign] network error for ${to} (attempt ${attempt + 1}/3): ${msg}`)
+          await new Promise(r => setTimeout(r, 250 * Math.pow(2, attempt)))
+          attempt++
+        }
+      }
+      return false
+    }
+
+    // Process each batch with bounded concurrency (Promise.all over the
+    // batch). Pre-fix the loop was sequential — every Resend round-trip
+    // (~150-300ms) blocked the next, so 100-recipient campaigns hit the
+    // 60s Edge Function timeout. Now BATCH_SIZE recipients fly in
+    // parallel and the function finishes 5-10x faster.
     for (let i = 0; i < (recipients?.length ?? 0); i += BATCH_SIZE) {
       const batch = recipients!.slice(i, i + BATCH_SIZE)
 
-      for (const recipient of batch) {
+      const results = await Promise.all(batch.map(async (recipient) => {
         try {
-          // Personalize HTML
           let personalizedHtml = htmlTemplate
             .replace(/\{client_name\}/g, recipient.full_name ?? '')
             .replace(/\{email\}/g, recipient.email)
 
-          // Add tracking pixel
           const openTrackUrl = `${trackingBaseUrl}?t=open&rid=${recipient.id}&cid=${campaign_id}`
           personalizedHtml = personalizedHtml.replace(
             '</body>',
             `<img src="${openTrackUrl}" width="1" height="1" style="display:block;width:1px;height:1px;border:0" alt="" /></body>`
           )
 
-          // Wrap click URLs for tracking
           personalizedHtml = personalizedHtml.replace(
             /href="(https?:\/\/[^"]+)"/g,
             (_match: string, url: string) => {
-              if (url.includes('track-email')) return `href="${url}"` // don't double-wrap
+              if (url.includes('track-email')) return `href="${url}"`
               return `href="${trackingBaseUrl}?t=click&rid=${recipient.id}&cid=${campaign_id}&url=${encodeURIComponent(url)}"`
             }
           )
 
-          if (resendApiKey) {
-            const res = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
-              body: JSON.stringify({
-                from: `${fromName} <${fromEmail}>`,
-                to: [recipient.email],
-                subject: emailSubject,
-                html: personalizedHtml,
-              }),
-            })
-
-            if (res.ok) {
-              await supabase.from('email_campaign_recipients')
-                .update({ status: 'sent', sent_at: new Date().toISOString() })
-                .eq('id', recipient.id)
-              totalSent++
-            } else {
-              await supabase.from('email_campaign_recipients')
-                .update({ status: 'failed' })
-                .eq('id', recipient.id)
-            }
-          } else {
-            // Log-only mode
-            await supabase.from('email_campaign_recipients')
-              .update({ status: 'sent', sent_at: new Date().toISOString() })
-              .eq('id', recipient.id)
-            totalSent++
-          }
+          const ok = await sendOneWithRetry(recipient.email, personalizedHtml)
+          await supabase.from('email_campaign_recipients')
+            .update(ok
+              ? { status: 'sent', sent_at: new Date().toISOString() }
+              : { status: 'failed' })
+            .eq('id', recipient.id)
+          return ok ? 1 : 0
         } catch (err) {
-          console.error(`Failed to send to ${recipient.email}:`, err)
+          console.error(`[send-campaign] uncaught for ${recipient.email}:`, err)
           await supabase.from('email_campaign_recipients')
             .update({ status: 'failed' })
             .eq('id', recipient.id)
+          return 0
         }
-      }
+      }))
+
+      totalSent += results.reduce((sum: number, n: number) => sum + n, 0)
     }
 
     if (resendApiKey && totalSent > 0) {
