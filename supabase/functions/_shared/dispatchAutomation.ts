@@ -85,6 +85,34 @@ export async function dispatchAutomation(input: DispatchInput): Promise<Dispatch
     relatedId, relatedType, triggerSource,
   } = input
 
+  // --- Per-tenant automation toggle (Phase 7) ---
+  // Each tenant decides whether each touchpoint runs in AUTO mode (system
+  // executes), MANUAL mode (a task is created for the agent to validate),
+  // or DISABLED (ignored entirely). The default is `manual` for newly
+  // seeded automations, but the five WhatsApp touchpoints already wired
+  // before Phase 7 (visite J-1, visite H-2, paiement J-3, paiement retard,
+  // reservation_confirmation) keep their seed default of `auto`.
+  //
+  // Lookup is by automation_key, which the seed in migration 043 maps
+  // 1:1 to the templateName the cron passes here. A missing row means
+  // an unmanaged touchpoint — in that case we keep the legacy behaviour
+  // (fall through to plan/feature gates and route to whatsapp/task) so
+  // calling code that hasn't been migrated yet doesn't suddenly stop
+  // firing.
+  const { data: settingRow } = await supabase
+    .from('tenant_automation_settings')
+    .select('mode, channel')
+    .eq('tenant_id', tenantId)
+    .eq('automation_key', templateName)
+    .maybeSingle()
+
+  const mode = (settingRow as { mode?: string } | null)?.mode ?? 'auto'
+  const channel = (settingRow as { channel?: string } | null)?.channel ?? 'whatsapp'
+
+  if (mode === 'disabled') {
+    return { path: 'skipped', reason: 'disabled_by_tenant' }
+  }
+
   // --- Idempotency check ---
   // If a task with the same (tenant, automation_type, related_id) already
   // exists and isn't done, skip. Crons re-run every N minutes; without this
@@ -141,6 +169,26 @@ export async function dispatchAutomation(input: DispatchInput): Promise<Dispatch
       && wa.phone_number_id
       && wa.access_token
       && (wa.messages_sent ?? 0) < (wa.monthly_quota ?? 0))
+  }
+
+  // --- Manual mode short-circuit ---
+  // When the tenant set this touchpoint to `manual`, never call Meta —
+  // always create a task for the agent so they can validate the message
+  // before sending. Skips the whatsapp send path entirely. Channel
+  // metadata flows into the task so the UI can render the right icon
+  // (call, whatsapp deeplink, email, internal) and the right action.
+  if (mode === 'manual') {
+    if (!autoTasksCheck.allowed) {
+      return { path: 'skipped', reason: 'feature_disabled', details: 'manual_mode_but_auto_tasks_disabled' }
+    }
+    return await insertTask({
+      supabase, tenantId, clientId, agentId,
+      templateName, templateParams,
+      title: fallbackTaskTitle, dueAt: fallbackDueAt,
+      relatedId, relatedType, triggerSource,
+      channel,
+      manualMode: true,
+    })
   }
 
   // --- Path A: send via WhatsApp ---
@@ -226,6 +274,8 @@ async function insertTask(params: {
   relatedType: string
   triggerSource: string
   fallbackReason?: string
+  channel?: string  // 'whatsapp' (default) | 'call' | 'email' | 'in_person' | 'internal'
+  manualMode?: boolean  // true when the tenant chose MANUAL mode for this touchpoint
 }): Promise<DispatchResult> {
   const metadata: Record<string, unknown> = {
     related_id: params.relatedId,
@@ -233,6 +283,7 @@ async function insertTask(params: {
     trigger_source: params.triggerSource,
   }
   if (params.fallbackReason) metadata.fallback_reason = params.fallbackReason
+  if (params.manualMode) metadata.manual_mode = true
 
   // task_type enum is ('ai_generated', 'manual') — `automation` was
   // never legal. The discriminator the UI uses is automation_type IS
@@ -248,7 +299,7 @@ async function insertTask(params: {
       scheduled_at: params.dueAt.toISOString(),
       status: 'pending',
       type: 'manual',
-      channel: 'whatsapp',
+      channel: params.channel ?? 'whatsapp',
       priority: 'medium',
       automation_type: params.templateName,
       automation_metadata: metadata,
