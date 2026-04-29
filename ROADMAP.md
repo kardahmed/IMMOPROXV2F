@@ -47,12 +47,19 @@ next one can pick up cleanly.
   `new_lead_notification` template re-categorized by Meta as Marketing
   (because "Recontacte sous 1h" read as a sales CTA to Meta's
   classifier), a new `nouveau_lead__immo_prox` template was submitted
-  as pure Utility and replaced the old one. Also learnt the hard way
+  as pure Utility and approved 28-Apr-2026. Also learnt the hard way
   that Meta's "Generate access token" button on the API Setup page
   always returns 24h tokens — permanent tokens must come from
   Business Settings > System Users with expiration=Never. The
-  `notify-lead-whatsapp` function now logs a warning at boot if the
-  stored token is <300 chars so we never debug the symptom again.
+  initial `<300 chars` token-length warning was removed 28-Apr-2026:
+  Meta changed token format in 2024 and modern System User permanent
+  tokens are now ~195-220 chars (same range as 24h temp tokens), so
+  the heuristic produced false positives on every invocation and
+  could no longer distinguish the two token types. Verify token type
+  via the Access Token Debugger instead. **Validated end-to-end
+  28-Apr-2026** with a real form submission on `immoprox.io/contact`:
+  both `[NOUVEAU]` and `[QUALIFIE]` pings delivered to the founder's
+  WhatsApp within 5-10s of each step.
 - Password reset flow live: `LoginPage` "Mot de passe oublie ?" button
   wired to `supabase.auth.resetPasswordForEmail`, paired with a
   dedicated `/reset-password` page that accepts the Supabase recovery
@@ -301,9 +308,6 @@ next one can pick up cleanly.
 ## 🚧 In progress
 
 ### Meta — template reviews (pending)
-- `nouveau_lead__immo_prox` (founder notification, replaces the
-  Marketing-downgraded `new_lead_notification`) — submitted as
-  Utility, in review. Expected 1-24h.
 - 10 templates from `WHATSAPP_TEMPLATES_CATALOG.md` to be submitted
   one by one (or in batches) by the founder. Review 1-24h each,
   independent / parallelizable.
@@ -348,21 +352,6 @@ leave a half-built feature without a note here.
   - Crons (`check-reminders`, `check-payments`, `check-reservations`)
     not yet calling `dispatchAutomation()`. Blocked on the 10 Utility
     templates being approved by Meta.
-
-### UI wiring for automation tasks (deferred)
-- **What exists**: `dispatchAutomation()` falls back to inserting
-  rows in `tasks` with `automation_type` + `template_name` +
-  `template_params` when the tenant has no active WhatsApp.
-- **What's missing**:
-  - `/tasks` page doesn't yet badge auto-tasks (🤖 Tâche
-    automatique) or offer the "Open WhatsApp deeplink" button —
-    so on Essentiel tenants, auto-tasks look like any other
-    manual task. UI polish to add once the first cron wires
-    actually fire dispatchAutomation.
-  - No template-rendering helper on the frontend yet — the
-    deeplink needs the rendered message body (template + params
-    substituted). Will live in `src/lib/whatsappTemplates.ts`
-    once a cron is live to test against.
 
 ### CI on GitHub Actions (`.github/workflows/ci.yml`)
 - **What exists**: a `build` job that runs on every PR — should run
@@ -452,45 +441,46 @@ d'œil qui est chaud / froid. Calculé à partir de 3-5 signaux simples.
   de signature) est en backlog 💭 — à reconsidérer après ~3 mois
   d'usage prod quand on a la data pour calibrer.
 
-### E. Wire 3 crons à dispatchAutomation (~1 jour)
+### E. Wire 3 crons à dispatchAutomation (~1 jour) — ✅ LIVRÉ
 **But** : déclencher les rappels WhatsApp automatiques quand les
-templates sont approuvés. Bloqué tant que les 10 templates de
-`WHATSAPP_TEMPLATES_CATALOG.md` ne sont pas en statut "Approved" chez
-Meta — sinon chaque dispatch fallback en task avec erreur "template
-not found", ce qui pollue `/tasks` pour tous les tenants.
+templates sont approuvés. Crons branchés sur `dispatchAutomation` :
 
-- `check-reminders` → fires `visite_confirmation_j_moins_1` (J-1
-  avant visite planifiée), `visite_rappel_h_moins_2` (H-2),
-  `document_rappel_manquant` (doc en attente trop longtemps).
-- `check-payments` → fires `paiement_echeance_j_moins_3` (J-3 avant
-  échéance), `paiement_retard` (J+1 après impayé).
-- `check-reservations` → fires `reservation_confirmation` quand une
+- `check-reminders` → tire `visite_confirmation_j_moins_1`,
+  `visite_rappel_h_moins_2`, `paiement_echeance_j_moins_3`.
+- `check-payments` → tire `paiement_retard` (J+1 après impayé).
+- `check-reservations` → tire `reservation_confirmation` quand une
   réservation passe en `active`.
-- Mostly plumbing — les helpers existent déjà (`dispatchAutomation`).
+- `check-tasks-no-reply` → relance multi-canal après 48h sans réponse.
 
-### F. UI badge + deeplink auto-tasks (~1 jour)
-**But** : sur les tenants Essentiel (sans WhatsApp API), les tâches
-auto-générées par les crons doivent être visuellement distinguables
-des tâches manuelles + offrir un bouton "Open WhatsApp" qui pré-
-remplit le message dans l'app WhatsApp de l'agent.
+Templates wirés mais en attente d'approbation Meta : 5 sur 10
+(approbation 1-24h chacun).
 
-- Badge 🤖 sur les tâches où `automation_type IS NOT NULL`
-- Bouton "Open WhatsApp" qui génère un `wa.me/<phone>?text=<rendered>`
-  depuis le template + variables (helper local
-  `src/lib/whatsappTemplates.ts` pour rendre côté frontend, sans
-  round-trip Meta).
-- Dépend de E pour avoir des données réelles à afficher.
+### F. UI badge + deeplink auto-tasks (~1 jour) — ✅ LIVRÉ
+**But** : sur les tenants Essentiel (sans WhatsApp API), tâches auto
+visuellement distinguables + bouton "Ouvrir WhatsApp" pré-rempli.
 
-### G. Meta App Review submission (externe — attend SIM)
+- ✅ `AutomationBadge.tsx` — badge 🤖 sur tâches automation_type
+- ✅ `OpenWhatsAppButton.tsx` — bouton wa.me deeplink pré-rempli
+- ✅ `whatsappTemplates.ts` — renderer frontend des 10 templates
+  + `nouveau_lead__immo_prox` (216 lignes)
+- ✅ `MessageTemplateModal.tsx` — modal envoi template manuel
+- Intégré sur `TasksPage`, `KanbanCard`, `ClientDetailPage`,
+  `ClientSidePanel`, `ClientTasksTab`, `QuickActions`.
+
+### G. Meta App Review submission (externe)
 **But** : faire approuver l'app par Meta avec les 2 permissions
 `whatsapp_business_messaging` + `whatsapp_business_management` pour
 débloquer Embedded Signup tenant-side.
 
-- Business Verification : ✅ déjà fait
-- Achat SIM dédiée → activation Display Name "IMMO PRO-X" (1-2j)
-- Préparer screencasts vidéo selon `META_APP_REVIEW_GUIDE.md`
-  Étapes 2-4
-- Submit App Review (queue Meta : 2-8 semaines)
+- ✅ Business Verification : déjà fait
+- ✅ SIM dédiée acquise (28-Apr-2026) : `+213 551 34 23 21`
+  Phone Number ID Meta : `1117671631432638`
+- 🟡 Display Name `immoproxcrm` : en review chez Meta
+- 🟡 Templates Utility : 1/15 approuvés (`nouveau_lead__immo_prox`)
+  → 14 nouveaux à soumettre dans le sprint v1 (cf Phase 7 ci-dessous)
+- 🔴 Screencasts vidéo App Review : à enregistrer (cf
+  `META_APP_REVIEW_GUIDE.md` Étapes 2-4)
+- 🔴 Submit App Review (queue Meta : 2-8 semaines)
 - 🔴 **Le plus gros bloqueur calendaire du projet**
 
 ### H. Embedded Signup tenant-side (~1-2 jours)
@@ -543,6 +533,155 @@ site de capture de leads (formulaire demo), pas une vitrine tarifaire.
   (les Edge Functions y écrivent en service-role).
 - Tarifs hardcodés dans `trackCost.ts` — à recalibrer quand les
   premières factures Anthropic/Meta/Resend tombent (post-MVP).
+
+---
+
+## 🎯 Phase 7 — Système d'automation multi-canal v1 (28-Apr-2026)
+
+Décidé en session du 28-Apr-2026 après audit du système existant et
+réorientation produit. Le système actuel (5 templates WhatsApp wirés)
+est insuffisant pour un vrai CRM de suivi client immobilier. Plan v1
+ciblé pour passer à **25 touchpoints multi-canal** couvrant l'intégralité
+du cycle de vente sur les 9 étapes du pipeline.
+
+### Architecture validée
+
+- **11 CALL tasks** (44%) — phases décision/négo/escalade. L'agent
+  reçoit une tâche dans `/tasks` avec un script d'appel IA pré-généré
+  (réutilise `generate-call-script` Edge Function). Bouton "Appeler"
+  = `tel:<phone>` deeplink.
+- **9 WhatsApp auto** (36%) — confirmations + rappels factuels. Path A
+  via Meta API si tenant Pro WhatsApp connecté, sinon Path B (task +
+  wa.me deeplink).
+- **5 WhatsApp manuel** (20%) — relances qualifiées avec template
+  pré-rempli + validation agent.
+- **3 auto-moves** stage (background, no client comm) :
+  - J+30 accueil sans activité → `perdue`
+  - J+21 visite_terminee sans progression → `relancement`
+  - J+14 relancement sans réponse → `perdue`
+
+### Décisions structurantes
+
+1. **3-mode toggle par automation** (`auto` / `manual` / `disabled`)
+   stocké dans nouvelle table `tenant_automation_settings`.
+   Default = `manual` à la création tenant (sécurité — tenant active
+   en `auto` ce qu'il veut déléguer progressivement).
+2. **Killer feature** : pour chaque CALL task, `generate-call-script`
+   est appelé automatiquement au moment de l'affichage dans `/tasks`.
+   L'agent voit le script personnalisé (intro, points à aborder,
+   objections probables, closing) AVANT de cliquer "Appeler".
+   Différenciateur produit unique sur le marché algérien.
+3. **Custom tasks par tenant** : reportées (Niveau 3 et 4 backlog
+   Extra-tier).
+4. **Tâches récurrentes par tenant** : reportées (Niveau 2 backlog).
+
+### Découpage technique (~6.5 jours dev + 14 templates Meta async)
+
+- **Sprint 1 (2j)** — Backend & wiring
+  - Migration `tenant_automation_settings` (table + RLS + seed
+    function pour les 25 touchpoints)
+  - Update `dispatchAutomation` : check settings + handle
+    `channel` (call / whatsapp / email / internal)
+  - Triggers DB : signature → félicitations, paiement reçu →
+    confirmation, document reçu → confirmation
+  - Étendre crons : reservation J-3 + expiration J-7,
+    impayé escalade J+7, accueil/visite_terminee/négo time-based
+- **Sprint 2 (1j)** — Frontend
+  - Update `whatsappTemplates.ts` : ajouter 14 nouveaux
+  - Page `/settings/automations` : 25 touchpoints avec 3-mode toggle
+  - Branchement `generate-call-script` sur les CALL tasks dans `/tasks`
+  - Bouton `tel:` deeplink
+- **Sprint 3 (1j)** — Tests E2E
+  - Validation des 25 touchpoints avec le numéro perso comme client
+    test
+  - Idempotence (anti-spam) vérifiée
+- **Sprint 4 (1.5j)** — Polish & docs
+  - SEED `task_templates` par stage pour la couche stage-based
+  - Documentation interne
+- **Soumissions Meta (toi, 14 templates + 1-2 sem async)** —
+  catalogue mis à jour dans `WHATSAPP_TEMPLATES_CATALOG.md` avec
+  les 14 nouveaux contenus Utility-compliant.
+
+### Carte des 25 touchpoints
+
+| Stage | Touchpoint | Canal | Mode défaut |
+|---|---|---|---|
+| Accueil | Bienvenue lead (J+0) | 💬 WhatsApp | auto |
+| Accueil | Premier appel qualification (J+1) | 📞 Call | manuel |
+| Accueil | Relance J+7 | 📞 Call ou 💬 WA | manuel |
+| Visite à gérer | Caler date par tel (J+0) | 📞 Call | manuel |
+| Visite à gérer | Relance créneaux (J+3) | 💬 WhatsApp | manuel |
+| Visite confirmée | Confirmation J-1 | 💬 WhatsApp | auto ✅ |
+| Visite confirmée | Rappel H-2 | 💬 WhatsApp | auto ✅ |
+| Visite confirmée | Annulation → replanif | 📞 Call | manuel |
+| Visite terminée | Remerciement (J+0) | 💬 WhatsApp | auto |
+| Visite terminée | **Feedback à chaud** (J+1) | 📞 Call | manuel |
+| Visite terminée | "2ème visite ?" (J+3) | 💬 WhatsApp | manuel |
+| Visite terminée | Décision check (J+7) | 📞 Call | manuel |
+| Négociation | Récap offre (J+0) | 📞 Call | manuel |
+| Négociation | Suivi négo (J+3) | 📞 Call | manuel |
+| Négociation | Expiration offre (J+7) | 💬 WhatsApp | manuel |
+| Négociation | Décision finale (J+14) | 📞 Call | manuel |
+| Réservation | Confirmation | 💬 WhatsApp | auto ✅ |
+| Réservation | Rappel versement (J-3) | 💬 WhatsApp | auto |
+| Réservation | Versement reçu | 💬 WhatsApp | auto |
+| Réservation | Expiration urgente (J-7) | 📞 Call | manuel |
+| Vente | Félicitations signature (J+0) | 💬 + 📞 | auto + manuel |
+| Vente | Rappel paiement (J-3) | 💬 WhatsApp | auto ✅ |
+| Vente | Paiement reçu | 💬 WhatsApp | auto |
+| Vente | Impayé J+1 | 💬 WhatsApp | auto ✅ |
+| Vente | **Impayé escalade** (J+7) | 📞 Call | manuel |
+
+### Pourquoi multi-canal change la donne
+
+Dans l'immobilier algérien, **l'appel reste le canal de décision n°1**.
+WhatsApp = touchpoint léger ; la signature se joue au tel ou en
+physique. Un système de suivi client crédible doit pousser l'agent à
+téléphoner aux moments-clés (feedback post-visite, négo, escalade
+impayé), pas inonder le client de WhatsApp automatiques.
+
+L'IA scripts d'appel (déjà en prod via `generate-call-script`)
+transforme ces CALL tasks en avantage compétitif unique : aucun CRM
+local ne propose un script personnalisé pour CHAQUE appel à passer.
+
+---
+
+## 🧹 Dette technique & cleanup à faire
+
+Items identifiés au fil des sessions, à corriger dès que possible
+mais non-bloquants pour le MVP.
+
+### Flyers salon BTP — réimpression à prévoir
+- Tirage actuel utilise palette VERTE (legacy avant la consolidation
+  de marque vers BLEU+CYAN du 28-Apr-2026).
+- Faute d'orthographe à corriger : `INTELEGENT` → `INTELLIGENT`
+  dans la tagline du logo.
+- Claims à reformuler :
+  - "Multipliez vos ventes par 3" → métrique factuelle
+    (ex: "Récupérez 5h/agent/semaine")
+  - "ROI Garanti" → "ROI mesurable"
+  - "Le seul système conçu..." → "Le 1er CRM IA conçu pour
+    l'immobilier algérien"
+- Mention pied : "BY SENSIUM X HOLDINGS" → "BY SENSIUM X HOLDINGS LLC"
+  pour cohérence avec entité légale.
+- À planifier au prochain salon ou tirage (post-stock actuel).
+
+### Site marketing — mise à jour complète
+- BRIEF v3 livré en session 28-Apr-2026 (palette bleu+cyan, entité
+  SENSIUM X HOLDINGS LLC, 12 pages structurées, charte CSS
+  complète).
+- À exécuter dans une session dédiée Claude Code ouverte sur le
+  repo `kardahmed/immoprox-marketing-website`.
+- Logo PNG verre 3D bleu à pousser dans `/assets/logo.png` avant.
+- Estimation : 1-2 jours de dev marketing.
+
+### Misc
+- ROADMAP encore à nettoyer : items déprécés à archiver dans
+  `🚫 Deferred`, vérifier que tous les statuts reflètent la réalité
+  du code (audit terminé en partie session 28-Apr).
+- `ci.yml` toujours rouge (pas de runners GitHub Actions). Hors-MVP.
+- `deploy.yml` FTPS fallback : path `server-dir` non vérifié contre
+  Hostinger. À tester un jour.
 
 ---
 

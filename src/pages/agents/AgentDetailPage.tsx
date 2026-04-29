@@ -15,13 +15,7 @@ import type { UserRole, GoalMetric, GoalStatus, PipelineStage, HistoryType } fro
 import { formatPriceCompact } from '@/lib/constants'
 import { format, startOfMonth, endOfMonth, formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
-
-function nameToColor(name: string): string {
-  const C = ['#00D4A0', '#3782FF', '#FF9A1E', '#A855F7', '#06B6D4', '#EAB308', '#F97316', '#EC4899']
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
-  return C[Math.abs(h) % C.length]
-}
+import { nameToColor } from '@/lib/avatarColor'
 
 const STATUS_CONFIG: Record<GoalStatus, { label: string; type: 'blue' | 'green' | 'red' }> = {
   in_progress: { label: 'En cours', type: 'blue' },

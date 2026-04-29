@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackWhatsAppCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
+import { rateLimitResponse } from '../_shared/rateLimit.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -31,6 +32,16 @@ Deno.serve(async (req) => {
     const { data: profile } = await supabase.from('users').select('tenant_id').eq('id', user.id).single()
     if (!profile?.tenant_id) return json({ error: 'No tenant' }, 403)
 
+    // Per-user rate limit. Defends against runaway loops in the
+    // tenant frontend or a malicious user trying to burn through the
+    // tenant's WhatsApp quota / Meta budget. 60 sends per user per
+    // minute is well above the realistic agent burst.
+    const rlRes = rateLimitResponse(`send-whatsapp:${user.id}`, 60, 60_000)
+    if (rlRes) {
+      rlRes.headers.set('Access-Control-Allow-Origin', '*')
+      return rlRes
+    }
+
     // Plan + tenant feature gate
     const featureCheck = await checkPlanFeature(supabase, profile.tenant_id, 'whatsapp')
     if (!featureCheck.allowed) {
@@ -59,19 +70,54 @@ Deno.serve(async (req) => {
 
     // Legacy whatsapp_accounts.monthly_quota counter — kept in sync
     // for backwards compatibility but no longer the gate.
-    const account = waAccount as unknown as { monthly_quota: number; messages_sent: number; plan: string }
+    const account = waAccount as unknown as {
+      monthly_quota: number
+      messages_sent: number
+      plan: string
+      phone_number_id: string | null
+      access_token: string | null
+    }
 
-    // Get platform WhatsApp config
-    const { data: waConfig } = await supabase
-      .from('whatsapp_config')
-      .select('*')
-      .eq('is_active', true)
-      .limit(1)
-      .single()
-
-    if (!waConfig) return json({ error: 'WhatsApp non configuré sur la plateforme.' }, 503)
-
-    const config = waConfig as unknown as { phone_number_id: string; access_token: string }
+    // Tech Provider model: each tenant sends from THEIR OWN WhatsApp
+    // Business number, connected via Embedded Signup. Their access
+    // token + phone number id live in whatsapp_accounts. Pre-fix the
+    // function read from the platform-wide whatsapp_config singleton,
+    // which meant every tenant would have sent from the founder's
+    // number — breaking white-label and burning one shared quota.
+    //
+    // Fallback path: if the tenant hasn't completed Embedded Signup
+    // (no phone_number_id / access_token on their account), fall
+    // back to whatsapp_config so the function still works for the
+    // founder's own outreach. Log a warning so the situation is
+    // visible — in production every Pro tenant should have their
+    // own credentials.
+    let phoneNumberId: string
+    let accessToken: string
+    if (account.phone_number_id && account.access_token) {
+      phoneNumberId = account.phone_number_id
+      accessToken = account.access_token
+    } else {
+      console.warn(
+        `[send-whatsapp] tenant ${profile.tenant_id} has no per-tenant `
+        + `phone_number_id/access_token on whatsapp_accounts — falling `
+        + `back to platform whatsapp_config. Complete Embedded Signup `
+        + `to send from the tenant's own number.`,
+      )
+      const { data: waConfig } = await supabase
+        .from('whatsapp_config')
+        .select('phone_number_id, access_token')
+        .eq('is_active', true)
+        .limit(1)
+        .single()
+      const config = waConfig as unknown as { phone_number_id?: string; access_token?: string } | null
+      if (!config?.phone_number_id || !config?.access_token) {
+        return json({
+          error: 'WhatsApp non configuré pour votre agence. Connectez votre WhatsApp Business depuis /settings/whatsapp.',
+        }, 503)
+      }
+      phoneNumberId = config.phone_number_id
+      accessToken = config.access_token
+    }
 
     // Parse request — supports two modes:
     //   1. template_name + variables  (cold outreach, any time)
@@ -126,12 +172,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Send via Meta Cloud API
-    const response = await fetch(`https://graph.facebook.com/v25.0/${config.phone_number_id}/messages`, {
+    // Send via Meta Cloud API using the tenant's own credentials
+    // (or the platform fallback for tenants pre-Embedded Signup).
+    const response = await fetch(`https://graph.facebook.com/v25.0/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify(metaPayload),
     })
@@ -190,11 +237,16 @@ Deno.serve(async (req) => {
       } as never).eq('id', task_id).eq('tenant_id', profile.tenant_id)
     }
 
-    // Increment tenant message counter
-    await supabase
-      .from('whatsapp_accounts')
-      .update({ messages_sent: account.messages_sent + 1 } as never)
-      .eq('tenant_id', profile.tenant_id)
+    // Increment tenant message counter atomically. The previous
+    // read-then-write (messages_sent + 1) lost races on concurrent
+    // sends — both calls would read the same baseline, both write
+    // baseline+1, and the actual increment was undercounted by N-1.
+    // Migration 046 exposes increment_whatsapp_messages_sent so the
+    // bump is one SQL statement.
+    await supabase.rpc('increment_whatsapp_messages_sent', {
+      p_tenant_id: profile.tenant_id,
+      p_delta: 1,
+    })
 
     // Log in client history if client_id provided
     if (client_id) {

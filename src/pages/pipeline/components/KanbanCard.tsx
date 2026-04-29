@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { SOURCE_LABELS } from '@/types'
 import type { ClientSource } from '@/types'
+import { nameToColor } from '@/lib/avatarColor'
 
 const SOURCE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   facebook_ads: Share2,
@@ -29,19 +30,6 @@ const SOURCE_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   site_web: Globe,
   portail_immobilier: Home,
   autre: Megaphone,
-}
-
-// Derive a stable color from the client name
-function nameToColor(name: string): string {
-  const COLORS = [
-    '#00D4A0', '#3782FF', '#FF9A1E', '#A855F7',
-    '#06B6D4', '#EAB308', '#F97316', '#EC4899',
-  ]
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return COLORS[Math.abs(hash) % COLORS.length]
 }
 
 function getInitials(name: string): string {

@@ -53,17 +53,26 @@ Deno.serve(async (req) => {
 
     // 3. Load COMPLETE client dossier (everything we know about this client)
     const [clientRes, historyRes, visitsRes, reservationsRes, salesRes, tasksRes, callResponsesRes, schedulesRes] = await Promise.all([
-      supabase.from('clients').select('*, users!clients_agent_id_fkey(first_name, last_name, phone), tenants(name, phone)').eq('id', client_id).single(),
-      supabase.from('history').select('type, title, description, created_at').eq('client_id', client_id).order('created_at', { ascending: false }).limit(20),
-      supabase.from('visits').select('scheduled_at, status, visit_type, notes, projects(name)').eq('client_id', client_id).order('scheduled_at', { ascending: false }).limit(5),
-      supabase.from('reservations').select('status, deposit_amount, expires_at, duration_days, units(code, type, subtype, price, surface, floor, projects(name))').eq('client_id', client_id).limit(3),
-      supabase.from('sales').select('final_price, financing_mode, status, units(code, type, price)').eq('client_id', client_id).limit(3),
-      supabase.from('tasks').select('title, status, channel, client_response, completed_at').eq('client_id', client_id).is('deleted_at', null).order('created_at', { ascending: false }).limit(10),
+      // Tenant-scope every query — service role bypasses RLS so we
+      // must enforce the tenant boundary explicitly. Without the
+      // .eq('tenant_id', tenantId), a user could pass any client_id
+      // from another tenant and receive their full dossier.
+      supabase.from('clients').select('*, users!clients_agent_id_fkey(first_name, last_name, phone), tenants(name, phone)').eq('id', client_id).eq('tenant_id', tenantId).single(),
+      supabase.from('history').select('type, title, description, created_at').eq('client_id', client_id).eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(20),
+      supabase.from('visits').select('scheduled_at, status, visit_type, notes, projects(name)').eq('client_id', client_id).eq('tenant_id', tenantId).order('scheduled_at', { ascending: false }).limit(5),
+      supabase.from('reservations').select('status, deposit_amount, expires_at, duration_days, units(code, type, subtype, price, surface, floor, projects(name))').eq('client_id', client_id).eq('tenant_id', tenantId).limit(3),
+      supabase.from('sales').select('id, final_price, financing_mode, status, units(code, type, price)').eq('client_id', client_id).eq('tenant_id', tenantId).limit(3),
+      supabase.from('tasks').select('title, status, channel, client_response, completed_at').eq('client_id', client_id).eq('tenant_id', tenantId).is('deleted_at', null).order('created_at', { ascending: false }).limit(10),
       supabase.from('call_responses').select('responses, result, duration_seconds, ai_summary, created_at').eq('client_id', client_id).order('created_at', { ascending: false }).limit(5),
-      supabase.from('payment_schedules').select('description, amount, due_date, status').eq('sale_id', client_id).order('due_date').limit(10),
+      // payment_schedules is scoped via the sales it belongs to.
+      // Previous code passed client_id to .eq('sale_id', ...) which
+      // matched zero rows because sale_id references sales.id, not
+      // clients.id. Use the !inner join through sales to filter by
+      // client_id while keeping the schedule columns selectable.
+      supabase.from('payment_schedules').select('description, amount, due_date, status, sales!inner(client_id, tenant_id)').eq('sales.client_id', client_id).eq('sales.tenant_id', tenantId).order('due_date').limit(10),
     ])
 
-    if (clientRes.error) return json({ error: 'Client not found' }, 404)
+    if (clientRes.error || !clientRes.data) return json({ error: 'Client not found' }, 404)
 
     const client = clientRes.data as Record<string, unknown>
     const history = (historyRes.data ?? []) as Array<Record<string, unknown>>
@@ -157,8 +166,8 @@ Deno.serve(async (req) => {
         status: s.status,
         unit: s.units,
       })),
-      pending_tasks: tasks.filter(t => t.status === 'pending' || t.status === 'scheduled').map(t => t.title),
-      completed_tasks: tasks.filter(t => t.status === 'completed').map(t => ({
+      pending_tasks: tasks.filter(t => t.status === 'pending').map(t => t.title),
+      completed_tasks: tasks.filter(t => t.status === 'done').map(t => ({
         title: t.title,
         response: t.client_response,
       })),

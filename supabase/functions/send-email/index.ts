@@ -19,7 +19,51 @@ serve(async (req: Request) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     const supabase = createClient(supabaseUrl, serviceKey)
 
+    // ── Auth gate ────────────────────────────────────────────────
+    // Pre-fix this endpoint had no Authorization check at all — it
+    // was a public open relay that anyone could use to send phishing
+    // through our Resend account. Now we require either:
+    //   (a) the service-role bearer (cron jobs and trusted server-
+    //       side callers like check-reminders), OR
+    //   (b) a valid user JWT whose tenant matches the request's
+    //       tenant_id (for in-app email sending).
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const isServiceRole = authHeader === `Bearer ${serviceKey}`
+
+    let callerTenantId: string | null = null
+    if (!isServiceRole) {
+      const { data: authData, error: authErr } = await supabase.auth.getUser(
+        authHeader.replace('Bearer ', ''),
+      )
+      if (authErr || !authData?.user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+      const { data: profile } = await supabase
+        .from('users')
+        .select('tenant_id')
+        .eq('id', authData.user.id)
+        .single()
+      callerTenantId = (profile as { tenant_id: string | null } | null)?.tenant_id ?? null
+      if (!callerTenantId) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
     const { type, to, subject, body, template, template_data, tenant_id, client_id, metadata } = await req.json()
+
+    // Non-service-role callers can only send for their own tenant.
+    if (!isServiceRole && tenant_id && tenant_id !== callerTenantId) {
+      return new Response(
+        JSON.stringify({ error: 'Cannot send for another tenant' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
 
     // Resolve email content: template or raw body
     let emailSubject = subject

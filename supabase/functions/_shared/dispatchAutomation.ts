@@ -96,7 +96,7 @@ export async function dispatchAutomation(input: DispatchInput): Promise<Dispatch
     .eq('automation_type', templateName)
     .eq('automation_metadata->>related_id', relatedId)
     .is('deleted_at', null)
-    .in('status', ['pending', 'in_progress'])
+    .eq('status', 'pending')
     .limit(1)
     .maybeSingle()
 

@@ -22,6 +22,43 @@ Deno.serve(async (req) => {
   })
 
   try {
+    // ── Auth gate ────────────────────────────────────────────────
+    // Pre-fix this endpoint accepted any campaign_id without checking
+    // who was calling. An attacker could enumerate or guess UUIDs and
+    // trigger arbitrary tenants' campaigns to burn their email quota.
+    // Now require either the service-role bearer (for in-app callers
+    // proxying through service code) or a JWT whose tenant matches
+    // the campaign's tenant.
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const isServiceRole = authHeader === `Bearer ${supabaseServiceKey}`
+
+    let callerTenantId: string | null = null
+    if (!isServiceRole) {
+      const { data: authData, error: authErr } = await supabase.auth.getUser(
+        authHeader.replace('Bearer ', ''),
+      )
+      if (authErr || !authData?.user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+      const { data: profile } = await supabase
+        .from('users')
+        .select('tenant_id, role')
+        .eq('id', authData.user.id)
+        .single()
+      const p = profile as { tenant_id: string | null; role: string } | null
+      // Only tenant admins (or super_admins) can launch a campaign.
+      if (!p?.tenant_id || !['admin', 'super_admin'].includes(p.role)) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+      callerTenantId = p.tenant_id
+    }
+
     const { campaign_id } = await req.json()
     if (!campaign_id) {
       return new Response(JSON.stringify({ error: 'Missing campaign_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -36,6 +73,15 @@ Deno.serve(async (req) => {
 
     if (campErr || !campaign) {
       return new Response(JSON.stringify({ error: 'Campaign not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    // Tenant scope: a non-service-role caller can only launch their
+    // own tenant's campaigns.
+    if (!isServiceRole && campaign.tenant_id !== callerTenantId) {
+      return new Response(
+        JSON.stringify({ error: 'Cannot send another tenant\'s campaign' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
     }
 
     if (campaign.status === 'sent' || campaign.status === 'sending') {

@@ -27,17 +27,39 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-Deno.serve(async (_req) => {
+Deno.serve(async (req) => {
+  // Service-role only — this cron rewrites engagement_score for
+  // every active tenant. An unauthenticated caller could fabricate
+  // scores or DoS the database with repeated bulk updates.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  if (authHeader !== `Bearer ${SERVICE_KEY}`) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  // List all tenants that aren't suspended. We update one tenant at
-  // a time so a slow query on a huge tenant doesn't block the others.
+  // Engagement scoring is a Pro+ feature per the pricing grid. Only
+  // run for tenants on plans that ROADMAP grants the feature to.
+  // Pre-fix the cron recomputed for every active tenant including
+  // Essentiel / free — surfacing a paid metric to plans that
+  // aren't supposed to see it.
+  //
+  // TODO(plan-naming): when ROADMAP F1 settles on a single plan
+  // naming convention (Essentiel/Pro/Extra vs free/starter/pro/
+  // enterprise), update this list to match. For now we keep the
+  // technical names that exist in the DB enum.
+  const PLANS_WITH_ENGAGEMENT = ['pro', 'enterprise']
+
   const { data: tenants, error: tenantsErr } = await supabase
     .from('tenants')
-    .select('id, name')
+    .select('id, name, plan')
     .is('suspended_at', null)
+    .in('plan', PLANS_WITH_ENGAGEMENT)
 
   if (tenantsErr) {
     console.error('[recompute-engagement] tenants list failed:', tenantsErr)
@@ -53,7 +75,7 @@ Deno.serve(async (_req) => {
     errors: [] as string[],
   }
 
-  for (const tenant of (tenants ?? []) as Array<{ id: string; name: string }>) {
+  for (const tenant of (tenants ?? []) as Array<{ id: string; name: string; plan: string }>) {
     // Single bulk UPDATE per tenant. The CTE pattern keeps the math
     // readable: each delta is computed once per client, then summed
     // and clamped at the outer level.

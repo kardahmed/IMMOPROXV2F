@@ -29,7 +29,11 @@ export type DepositMethod = 'cash' | 'bank_transfer' | 'cheque'
 export type ReservationStatus = 'active' | 'expired' | 'cancelled' | 'converted'
 export type FinancingMode = 'comptant' | 'credit' | 'mixte'
 export type DiscountType = 'percentage' | 'fixed'
-export type SaleStatus = 'active' | 'cancelled'
+// Aligned with the generated DB enum which now includes 'sale' and
+// 'reservation' (extended via Studio post-001). Without those two
+// members, .eq('status', 'sale') returns no rows + TypeScript loses
+// the safety net on legacy rows.
+export type SaleStatus = 'active' | 'cancelled' | 'sale' | 'reservation'
 export type PaymentStatus = 'pending' | 'paid' | 'late'
 export type ChargeType = 'notaire' | 'agence' | 'promotion' | 'enregistrement' | 'autre'
 export type HistoryType = 'stage_change' | 'visit_planned' | 'visit_confirmed' | 'visit_completed' | 'call' | 'whatsapp_call' | 'whatsapp_message' | 'sms' | 'email' | 'reservation' | 'sale' | 'payment' | 'document' | 'note' | 'ai_task'

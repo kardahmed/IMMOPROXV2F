@@ -56,19 +56,30 @@ immoproxv2f/
 │   ├── store/           # zustand stores (auth, superAdmin, ...)
 │   └── types/           # database.generated.ts + domain types
 ├── supabase/            # SHARED backend (serves both frontends)
-│   ├── migrations/      # 001 base schema → 015 marketing_leads
-│   ├── functions/       # Edge Functions (Deno):
-│   │   ├── capture-lead/           # landing-page lead API
+│   ├── migrations/      # 001 base schema → 046 super-admin RLS hotfix
+│   ├── functions/       # Edge Functions (Deno) — 24 in total:
+│   │   ├── capture-lead/           # public landing-page lead API (rate-limited)
 │   │   ├── create-tenant-user/     # super admin tenant provisioning
-│   │   ├── notify-lead-whatsapp/   # CallMeBot/Meta notification on INSERT
+│   │   ├── manage-user/            # super admin user mgmt (ban/restore/reset)
+│   │   ├── export-tenant/          # super admin GDPR-style tenant export
+│   │   ├── notify-lead-whatsapp/   # founder ping on marketing_leads INSERT
 │   │   ├── send-whatsapp/          # tenant → client WhatsApp (Meta Cloud API)
 │   │   ├── whatsapp-signup/        # Embedded Signup OAuth callback
-│   │   ├── capture-lead/
-│   │   ├── send-email/             # Resend-based outbound email
-│   │   ├── send-campaign/          # bulk email
-│   │   ├── check-payments/, check-reservations/, check-reminders/ → cron jobs
+│   │   ├── whatsapp-webhook/       # Meta inbound messages + delivery status
+│   │   ├── send-email/             # Resend transactional + auth-gated
+│   │   ├── send-campaign/          # bulk email blast
+│   │   ├── send-alert/             # platform_alerts → Slack/Telegram/Discord
+│   │   ├── track-email/            # email open/click tracking pixels
+│   │   ├── check-payments/, check-reservations/, check-reminders/  # crons
+│   │   ├── check-tasks-no-reply/   # 48h no-reply → multi-channel relance
+│   │   ├── check-abandoned-leads/  # 6h abandoned step1 → drip email
+│   │   ├── check-quota-alerts/     # plan quota 90%/100% → email warning
+│   │   ├── recompute-engagement/   # 6h cron, scores Pro+ tenants only
 │   │   ├── ai-suggestions/, generate-call-script/ → Claude API calls
-│   │   └── _shared/                # email-templates, rateLimit, send-email-internal
+│   │   ├── generate-invoices/      # monthly invoice generator
+│   │   └── _shared/                # auth, checkPlanFeature, checkQuota,
+│   │                               # dispatchAutomation, getGlobalPlaybook,
+│   │                               # rateLimit, trackCost, email-templates
 │   └── tests/           # TESTS_CHECKLIST.md, UI_TEST_RESULTS.md
 ├── public/              # app.immoprox.io assets (favicon, logo, robots.txt, sw.js, .htaccess)
 ├── index.html           # Vite entry (has noindex, Inter font)
@@ -140,7 +151,7 @@ immoproxv2f/
 
 ### Known rough edges
 - `ci.yml` infra never provisions runners — every PR shows a red `build` check. Pre-existing. Safe to merge on red for now.
-- **Several features are half-built, live code but NOT fully functional** (WhatsApp multi-tenant, lead notifications Edge Function, password reset button, FTPS fallback deploy). See the `🧩 Partial / WIP` section of `ROADMAP.md` for the full list and what's missing on each. Check ROADMAP before assuming any of these works end-to-end.
+- **Several features are half-built, live code but NOT fully functional** (WhatsApp multi-tenant Embedded Signup, FTPS fallback deploy). See the `🧩 Partial / WIP` section of `ROADMAP.md` for the full list and what's missing on each. Check ROADMAP before assuming any of these works end-to-end.
 
 ## How to run locally
 

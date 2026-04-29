@@ -18,6 +18,7 @@ import toast from 'react-hot-toast'
 import { TaskConfigSection } from '@/pages/settings/sections/TaskConfigSection'
 import { TaskDetailModal } from './components/TaskDetailModal'
 import { deriveDisplayStatus, DISPLAY_STATUS_META, buildStatusPayload } from '@/lib/taskStatus'
+import { CHANNEL_ICONS } from '@/lib/channelIcons'
 
 interface ClientTask {
   id: string; title: string; stage: string; status: string; priority: string
@@ -32,8 +33,6 @@ type TabKey = 'today' | 'overdue' | 'upcoming' | 'completed' | 'messages' | 'con
 // Status display now derived via deriveDisplayStatus + DISPLAY_STATUS_META
 // (see @/lib/taskStatus). The post-028 DB enum is only pending|done|ignored;
 // the 6 visible states are derived from auxiliary fields.
-
-const CHANNEL_ICONS: Record<string, typeof Phone> = { whatsapp: MessageCircle, sms: Mail, call: Phone, email: Mail, system: Zap }
 
 export function TasksPage() {
   const { t } = useTranslation()

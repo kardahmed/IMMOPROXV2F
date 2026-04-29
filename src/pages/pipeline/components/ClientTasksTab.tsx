@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle, Clock, Send, Phone, MessageCircle, Mail, AlertTriangle, Zap, SkipForward } from 'lucide-react'
+import { CheckCircle, Clock, Send, AlertTriangle, Zap, SkipForward } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import { deriveDisplayStatus, DISPLAY_STATUS_META, buildStatusPayload } from '@/lib/taskStatus'
+import { CHANNEL_ICONS } from '@/lib/channelIcons'
 
 interface ClientTask {
   id: string; title: string; description: string | null; stage: string
@@ -25,8 +26,6 @@ interface TaskTemplate {
   id: string; title: string; stage: string; channel: string; message_mode: string
   delay_minutes: number; attached_file_types: string[]
 }
-
-const CHANNEL_ICONS: Record<string, typeof Phone> = { whatsapp: MessageCircle, sms: Mail, call: Phone, email: Mail, system: Zap }
 
 interface Props {
   clientId: string

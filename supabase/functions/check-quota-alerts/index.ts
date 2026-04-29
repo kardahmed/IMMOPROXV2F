@@ -36,6 +36,17 @@ function periodKey(d: Date = new Date()): string {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok')
 
+  // Service-role only — this cron iterates every tenant and may
+  // trigger Resend emails on quota breaches. Without the gate any
+  // unauthenticated caller could DoS the DB and burn Resend.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  if (authHeader !== `Bearer ${serviceKey}`) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
   const supabase = createClient(supabaseUrl, serviceKey)
   const period = periodKey()
 

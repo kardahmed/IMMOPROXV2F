@@ -58,14 +58,7 @@ const PlanVisitModal = lazy(() => import('./components/modals/PlanVisitModal').t
 const AISuggestionsModal = lazy(() => import('./components/modals/AISuggestionsModal').then(m => ({ default: m.AISuggestionsModal })))
 const ReassignModal = lazy(() => import('./components/modals/ReassignModal').then(m => ({ default: m.ReassignModal })))
 import { useAutoTasks } from '@/hooks/useAutoTasks'
-
-// Avatar color from name
-function nameToColor(name: string): string {
-  const COLORS = ['#00D4A0', '#3782FF', '#FF9A1E', '#A855F7', '#06B6D4', '#EAB308', '#F97316', '#EC4899']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return COLORS[Math.abs(hash) % COLORS.length]
-}
+import { nameToColor } from '@/lib/avatarColor'
 
 export function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>()

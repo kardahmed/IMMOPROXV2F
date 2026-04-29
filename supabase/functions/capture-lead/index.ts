@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { rateLimitResponse } from '../_shared/rateLimit.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -45,6 +46,20 @@ Deno.serve(async (req) => {
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
+  // Rate limit by client IP. capture-lead is fully public (anon key
+  // exposed on every landing page) so without this it's trivial to
+  // flood the leads table or burn the Meta CAPI / Google Ads quota.
+  // 10 submissions per IP per minute is generous for real humans
+  // and harsh on bots.
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+    ?? req.headers.get('x-real-ip')
+    ?? 'unknown'
+  const rlRes = rateLimitResponse(`capture-lead:${clientIp}`, 10, 60_000)
+  if (rlRes) {
+    rlRes.headers.set('Access-Control-Allow-Origin', '*')
+    return rlRes
+  }
+
   try {
     const body = await req.json()
     const { slug, full_name, phone, email, budget, unit_type, message, source_utm, event_id, custom_answers } = body as {
@@ -84,11 +99,14 @@ Deno.serve(async (req) => {
       return json({ error: 'Landing page not found or inactive' }, 404)
     }
 
-    // 2. Increment submission count
-    await supabase.rpc('increment_landing_submissions', { page_id: page.id }).catch(() => {
-      // Fallback if RPC doesn't exist
-      supabase.from('landing_pages').update({ submissions_count: (page.submissions_count ?? 0) + 1 } as never).eq('id', page.id)
-    })
+    // 2. Increment submission count. The RPC is declared in migration
+    // 046 — was missing before, and the previous .catch() fallback
+    // was a floating Promise that never actually awaited the update,
+    // so the counter never moved.
+    const { error: incErr } = await supabase.rpc('increment_landing_submissions', { page_id: page.id })
+    if (incErr) {
+      console.warn('[capture-lead] increment_landing_submissions failed:', incErr.message)
+    }
 
     // 3. Determine agent based on distribution mode
     let assignedAgentId = page.default_agent_id

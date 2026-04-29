@@ -12,9 +12,14 @@
 
 const PHONE_NUMBER_ID = Deno.env.get('META_WHATSAPP_PHONE_NUMBER_ID')
 const ACCESS_TOKEN = Deno.env.get('META_WHATSAPP_ACCESS_TOKEN')
-const TEMPLATE_NAME = Deno.env.get('META_WHATSAPP_TEMPLATE_NAME') ?? 'new_lead_notification'
+// Default points at the production template approved 28-Apr-2026.
+// The previous default `new_lead_notification` was re-categorised by
+// Meta as Marketing and is no longer usable — keeping it as fallback
+// would hard-fail the function if the env var is ever missing.
+const TEMPLATE_NAME = Deno.env.get('META_WHATSAPP_TEMPLATE_NAME') ?? 'nouveau_lead__immo_prox'
 const TEMPLATE_LANG = Deno.env.get('META_WHATSAPP_TEMPLATE_LANG') ?? 'fr'
 const NOTIFY_PHONE = Deno.env.get('NOTIFY_PHONE') ?? '213542766068'
+const WEBHOOK_SECRET = Deno.env.get('NOTIFY_LEAD_WEBHOOK_SECRET')
 
 const TIMELINE_LABELS: Record<string, string> = {
   this_week: 'Cette semaine',
@@ -86,6 +91,28 @@ function cleanForTemplate(value: string, maxLen = 1024): string {
 Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'POST only' }), { status: 405 })
+  }
+
+  // Database Webhook authentication via shared secret. Configure the
+  // Supabase Database Webhook to send an "Authorization: Bearer <s>"
+  // header (or "X-Webhook-Secret: <s>") matching NOTIFY_LEAD_WEBHOOK_SECRET.
+  // Without this gate any anon caller could POST a forged record and
+  // make us spam Meta WhatsApp from the founder's number — risking a
+  // Meta ban on the WABA.
+  if (!WEBHOOK_SECRET) {
+    console.error('[notify-lead-whatsapp] NOTIFY_LEAD_WEBHOOK_SECRET not configured — refusing to run')
+    return new Response(
+      JSON.stringify({ error: 'Webhook not configured' }),
+      { status: 503 },
+    )
+  }
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const xWebhook = req.headers.get('X-Webhook-Secret') ?? ''
+  if (authHeader !== `Bearer ${WEBHOOK_SECRET}` && xWebhook !== WEBHOOK_SECRET) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid webhook secret' }),
+      { status: 401 },
+    )
   }
 
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
