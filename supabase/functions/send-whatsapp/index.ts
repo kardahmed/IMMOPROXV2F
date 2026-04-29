@@ -190,11 +190,16 @@ Deno.serve(async (req) => {
       } as never).eq('id', task_id).eq('tenant_id', profile.tenant_id)
     }
 
-    // Increment tenant message counter
-    await supabase
-      .from('whatsapp_accounts')
-      .update({ messages_sent: account.messages_sent + 1 } as never)
-      .eq('tenant_id', profile.tenant_id)
+    // Increment tenant message counter atomically. The previous
+    // read-then-write (messages_sent + 1) lost races on concurrent
+    // sends — both calls would read the same baseline, both write
+    // baseline+1, and the actual increment was undercounted by N-1.
+    // Migration 046 exposes increment_whatsapp_messages_sent so the
+    // bump is one SQL statement.
+    await supabase.rpc('increment_whatsapp_messages_sent', {
+      p_tenant_id: profile.tenant_id,
+      p_delta: 1,
+    })
 
     // Log in client history if client_id provided
     if (client_id) {

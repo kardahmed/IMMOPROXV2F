@@ -84,11 +84,14 @@ Deno.serve(async (req) => {
       return json({ error: 'Landing page not found or inactive' }, 404)
     }
 
-    // 2. Increment submission count
-    await supabase.rpc('increment_landing_submissions', { page_id: page.id }).catch(() => {
-      // Fallback if RPC doesn't exist
-      supabase.from('landing_pages').update({ submissions_count: (page.submissions_count ?? 0) + 1 } as never).eq('id', page.id)
-    })
+    // 2. Increment submission count. The RPC is declared in migration
+    // 046 — was missing before, and the previous .catch() fallback
+    // was a floating Promise that never actually awaited the update,
+    // so the counter never moved.
+    const { error: incErr } = await supabase.rpc('increment_landing_submissions', { page_id: page.id })
+    if (incErr) {
+      console.warn('[capture-lead] increment_landing_submissions failed:', incErr.message)
+    }
 
     // 3. Determine agent based on distribution mode
     let assignedAgentId = page.default_agent_id

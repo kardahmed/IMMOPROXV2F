@@ -278,18 +278,31 @@ Deno.serve(async (req) => {
           template_name: null,
         }
 
-        const { error: insertErr } = await supabase
+        // Idempotent insert. Migration 046 added a UNIQUE partial
+        // index on wa_message_id, so on Meta retry we ignore the
+        // duplicate instead of writing twice (which would make the
+        // auto-close fire repeatedly).
+        const { data: insertedRows, error: insertErr } = await supabase
           .from('whatsapp_messages')
-          .insert(insertPayload as never)
+          .upsert(insertPayload as never, {
+            onConflict: 'wa_message_id',
+            ignoreDuplicates: true,
+          })
+          .select('id')
 
         if (insertErr) {
-          // Most likely cause: duplicate wa_message_id (Meta retries
-          // the same event). We don't have a UNIQUE on wa_message_id
-          // yet — log and move on rather than fail the batch.
           result.errors.push(`Insert message ${msg.id}: ${insertErr.message}`)
-        } else {
-          result.processedMessages++
+          continue
         }
+
+        // ignoreDuplicates returns an empty array on conflict — skip
+        // the auto-close path so a Meta retry can't close the task
+        // a second time.
+        const isDuplicate = !insertedRows || insertedRows.length === 0
+        if (isDuplicate) {
+          continue
+        }
+        result.processedMessages++
 
         // ── Auto-close pending tasks (step C — task↔reality loop) ──
         // When a client we know replies, mark the latest pending task
