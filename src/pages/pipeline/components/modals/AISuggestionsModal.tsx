@@ -252,7 +252,22 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
       const { data, error } = await supabase.functions.invoke('ai-suggestions', {
         body: { clientProfile, unitsList },
       })
-      if (error) throw error
+      // supabase-js wraps every non-2xx response into a generic
+      // FunctionsHttpError ("Edge Function returned a non-2xx status
+      // code"), throwing away the JSON body where the function put the
+      // real reason (plan gate, quota, Anthropic 502, etc). Read the
+      // body off `error.context.response` so we can surface it.
+      if (error) {
+        let realMsg = error.message
+        const ctx = (error as { context?: { response?: Response } }).context
+        if (ctx?.response) {
+          try {
+            const body = await ctx.response.clone().json() as { error?: string }
+            if (body?.error) realMsg = body.error
+          } catch { /* body wasn't JSON, keep generic message */ }
+        }
+        throw new Error(realMsg)
+      }
       const ranking = (data?.ranking ?? []) as Array<{ unit_id: string; rank: number }>
       const newMap = new Map<string, number>()
       ranking.forEach(r => {
@@ -419,7 +434,28 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
 
         {/* Grid */}
         {sorted.length === 0 ? (
-          <div className="py-12 text-center text-sm text-immo-text-muted">Aucune unité disponible avec ces filtres</div>
+          rawUnits.length === 0 ? (
+            // Tenant has zero `units` rows with status='available' —
+            // it's not a filter issue, the database is empty.
+            <div className="py-12 text-center">
+              <p className="text-sm text-immo-text-muted">Aucune unité disponible dans votre catalogue.</p>
+              <p className="mt-1 text-xs text-immo-text-muted">
+                Créez vos projets et unités depuis <span className="font-medium text-immo-text-secondary">Projets</span> pour activer les suggestions.
+              </p>
+            </div>
+          ) : (
+            // Stock exists but the active filters wipe it — let the
+            // user know they can reset rather than assume it's broken.
+            <div className="py-12 text-center">
+              <p className="text-sm text-immo-text-muted">Aucune unité ne correspond aux filtres actifs</p>
+              <p className="mt-1 text-xs text-immo-text-muted">
+                {rawUnits.length} unité{rawUnits.length > 1 ? 's' : ''} disponible{rawUnits.length > 1 ? 's' : ''} en tout — élargissez les critères.
+              </p>
+              <Button onClick={resetFilters} variant="ghost" size="sm" className="mt-3 text-xs text-immo-accent-green hover:bg-immo-accent-green/10">
+                <RotateCcw className="mr-1 h-3 w-3" /> Réinitialiser les filtres
+              </Button>
+            </div>
+          )
         ) : (
           <div className="grid max-h-[400px] grid-cols-1 gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map(u => {
