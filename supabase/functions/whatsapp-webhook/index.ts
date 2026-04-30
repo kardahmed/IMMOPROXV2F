@@ -361,7 +361,26 @@ Deno.serve(async (req) => {
       }
 
       // ── Delivery status updates ──────────────────────────────────
+      // Audit (HIGH): replay protection — refuse to regress a status
+      // (e.g. an old delivered cannot overwrite a current read).
+      // Order: sent < delivered < read; failed is a terminal state
+      // that cannot be overwritten either.
+      const STATUS_RANK: Record<string, number> = { sent: 1, delivered: 2, read: 3, failed: 99 }
       for (const status of value.statuses ?? []) {
+        const incomingRank = STATUS_RANK[status.status] ?? 0
+        const { data: current } = await supabase
+          .from('whatsapp_messages')
+          .select('status')
+          .eq('wa_message_id', status.id)
+          .eq('tenant_id', tenantId)
+          .maybeSingle()
+        const currentStatus = (current as { status?: string } | null)?.status
+        const currentRank = currentStatus ? (STATUS_RANK[currentStatus] ?? 0) : 0
+        if (currentStatus === 'failed' || (currentRank >= incomingRank && currentStatus !== status.status)) {
+          // Skip — replay or out-of-order. Audit-trail nothing.
+          continue
+        }
+
         const { error: updateErr } = await supabase
           .from('whatsapp_messages')
           .update({

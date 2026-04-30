@@ -18,7 +18,8 @@ const ACCESS_TOKEN = Deno.env.get('META_WHATSAPP_ACCESS_TOKEN')
 // would hard-fail the function if the env var is ever missing.
 const TEMPLATE_NAME = Deno.env.get('META_WHATSAPP_TEMPLATE_NAME') ?? 'nouveau_lead__immo_prox'
 const TEMPLATE_LANG = Deno.env.get('META_WHATSAPP_TEMPLATE_LANG') ?? 'fr'
-const NOTIFY_PHONE = Deno.env.get('NOTIFY_PHONE') ?? '213542766068'
+// Audit (MED): no hardcoded fallback — fail closed when env missing.
+const NOTIFY_PHONE = Deno.env.get('NOTIFY_PHONE')
 const WEBHOOK_SECRET = Deno.env.get('NOTIFY_LEAD_WEBHOOK_SECRET')
 
 const TIMELINE_LABELS: Record<string, string> = {
@@ -115,8 +116,8 @@ Deno.serve(async (req) => {
     )
   }
 
-  if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    console.error('Missing META_WHATSAPP_PHONE_NUMBER_ID or META_WHATSAPP_ACCESS_TOKEN secret')
+  if (!PHONE_NUMBER_ID || !ACCESS_TOKEN || !NOTIFY_PHONE) {
+    console.error('Missing META_WHATSAPP_PHONE_NUMBER_ID / META_WHATSAPP_ACCESS_TOKEN / NOTIFY_PHONE secret')
     return new Response(
       JSON.stringify({ error: 'Meta WhatsApp secrets not configured' }),
       { status: 503 },

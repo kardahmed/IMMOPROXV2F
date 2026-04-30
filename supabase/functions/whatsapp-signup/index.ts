@@ -52,20 +52,43 @@ Deno.serve(async (req) => {
       return json({ error: 'Echec d\'echange du code Meta. Reessayez.' }, 502)
     }
 
-    const userToken = tokenData.access_token
+    const shortLivedToken = tokenData.access_token
 
-    // 2. Get the shared WABA IDs using debug_token or the business endpoint
-    // First, get the user's WABA
-    const wabaRes = await fetch(`https://graph.facebook.com/v25.0/debug_token?input_token=${userToken}&access_token=${config.meta_app_id}|${config.meta_app_secret}`)
-    const wabaData = await wabaRes.json()
+    // 2. Exchange the short-lived user token for a long-lived one
+    //    (60-day expiry instead of ~1h). The audit flagged that we
+    //    were storing the short-lived token directly — it expires
+    //    fast and gives full Cloud API access while alive.
+    const longLivedRes = await fetch(
+      `https://graph.facebook.com/v25.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${config.meta_app_id}&client_secret=${config.meta_app_secret}&fb_exchange_token=${shortLivedToken}`,
+    )
+    const longLivedData = await longLivedRes.json()
+    const userToken: string = longLivedData?.access_token ?? shortLivedToken
+    if (!longLivedData?.access_token) {
+      console.warn('Long-lived token exchange did not return a new token; falling back to short-lived')
+    }
 
-    // 3. List phone numbers from the WABA that was just connected
-    // Try to get WABA from the granular scopes
+    // 3. Verify token via debug_token AND extract the granted WABAs
+    //    instead of trusting the first item from /me/whatsapp_business_accounts.
+    //    Audit finding: the previous code blindly took shared[0], allowing
+    //    a tenant to onboard a WABA that's already linked to another
+    //    tenant or doesn't actually belong to them.
+    const debugRes = await fetch(`https://graph.facebook.com/v25.0/debug_token?input_token=${userToken}&access_token=${config.meta_app_id}|${config.meta_app_secret}`)
+    const debugData = await debugRes.json()
+    const grantedScopes: string[] = debugData?.data?.scopes ?? []
+    const tokenAppId: string | undefined = debugData?.data?.app_id
+    if (tokenAppId && tokenAppId !== config.meta_app_id) {
+      return json({ error: 'Token appartient a une autre application Meta' }, 401)
+    }
+    if (!grantedScopes.includes('whatsapp_business_management') &&
+        !grantedScopes.includes('whatsapp_business_messaging')) {
+      return json({ error: 'Permissions WhatsApp non accordees' }, 403)
+    }
+
+    // 4. List phone numbers from the WABA that was just connected.
     let wabaId: string | null = null
     let phoneNumberId: string | null = null
     let displayPhone: string | null = null
 
-    // Get WABA IDs the user shared
     const sharedWabaRes = await fetch(`https://graph.facebook.com/v25.0/me/whatsapp_business_accounts`, {
       headers: { 'Authorization': `Bearer ${userToken}` },
     })
@@ -74,7 +97,19 @@ Deno.serve(async (req) => {
     if (sharedWabaData.data && sharedWabaData.data.length > 0) {
       wabaId = sharedWabaData.data[0].id
 
-      // Get phone numbers for this WABA
+      // Cross-tenant takeover guard: if this WABA is already linked
+      // to a DIFFERENT tenant, refuse the signup. The matching DB
+      // UNIQUE INDEX in 050 is the second-line defense.
+      const { data: existingWaba } = await supabase
+        .from('whatsapp_accounts')
+        .select('tenant_id')
+        .eq('waba_id', wabaId)
+        .neq('tenant_id', profile.tenant_id)
+        .maybeSingle()
+      if (existingWaba) {
+        return json({ error: 'Ce compte WhatsApp Business est deja relie a une autre agence' }, 409)
+      }
+
       const phonesRes = await fetch(`https://graph.facebook.com/v25.0/${wabaId}/phone_numbers`, {
         headers: { 'Authorization': `Bearer ${config.access_token}` },
       })
@@ -83,6 +118,17 @@ Deno.serve(async (req) => {
       if (phonesData.data && phonesData.data.length > 0) {
         phoneNumberId = phonesData.data[0].id
         displayPhone = phonesData.data[0].display_phone_number
+
+        // Same guard on phone_number_id collision.
+        const { data: existingPhone } = await supabase
+          .from('whatsapp_accounts')
+          .select('tenant_id')
+          .eq('phone_number_id', phoneNumberId)
+          .neq('tenant_id', profile.tenant_id)
+          .maybeSingle()
+        if (existingPhone) {
+          return json({ error: 'Ce numero WhatsApp est deja relie a une autre agence' }, 409)
+        }
       }
     }
 
