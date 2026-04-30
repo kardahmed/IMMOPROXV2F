@@ -14,7 +14,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import {
-  KPICard, FilterDropdown, PageSkeleton,
+  KPICard, FilterDropdown, PageSkeleton, PageHeader,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { HISTORY_TYPE_LABELS } from '@/types'
@@ -237,6 +237,11 @@ export function ReportsPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Rapports d'activité"
+        subtitle="Vue par équipe ou par agent — appels, visites, ventes, conversion"
+      />
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <FilterDropdown label="Période" options={periodOptions} value={period} onChange={(v) => setPeriod(v as PeriodKey)} />

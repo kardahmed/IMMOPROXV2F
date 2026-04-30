@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Inbox, User } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { getInitials } from '@/lib/format'
 import type { Conversation } from '@/hooks/useInbox'
 
 interface Props {
@@ -17,13 +18,6 @@ function formatPhone(phone: string): string {
   return phone.startsWith('+') ? phone : `+${phone}`
 }
 
-function initials(label: string): string {
-  return label
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('')
-}
 
 export function ConversationList({ conversations, selectedKey, onSelect, agentMap }: Props) {
   const { t } = useTranslation()
@@ -58,7 +52,7 @@ export function ConversationList({ conversations, selectedKey, onSelect, agentMa
               }`}
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-immo-accent-green/15 text-xs font-semibold text-immo-accent-green">
-                {initials(label)}
+                {getInitials(label)}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">

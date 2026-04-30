@@ -20,6 +20,7 @@ import {
   addWeeks, addDays, getHours,
 } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { WEEKDAYS_FR } from '@/lib/format'
 import { PlanVisitModal } from '../pipeline/components/modals/PlanVisitModal'
 import { ManageVisitModal } from '../pipeline/components/modals/ManageVisitModal'
 import { usePlanningEvents, type PlanEvent, type PlanEventType } from './lib/planningEvents'
@@ -313,7 +314,7 @@ function MonthView({ currentDate, events, onDayClick, onEventClick }: {
   const calStart = startOfWeek(monthStart, { locale: fr })
   const calEnd = endOfWeek(monthEnd, { locale: fr })
   const days = eachDayOfInterval({ start: calStart, end: calEnd })
-  const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+  const WEEKDAYS = WEEKDAYS_FR
 
   return (
     <div className="overflow-hidden rounded-xl border border-immo-border-default">

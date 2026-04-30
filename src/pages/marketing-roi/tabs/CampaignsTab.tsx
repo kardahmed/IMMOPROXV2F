@@ -7,6 +7,7 @@ import { LoadingSpinner, StatusBadge, Modal } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatPriceCompact } from '@/lib/constants'
+import { slugify } from '@/lib/format'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
@@ -393,14 +394,8 @@ export function CampaignsTab() {
   )
 }
 
-function slugifyTrackingCode(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40)
-}
+// Tracking-code slug — uses the shared slugify helper.
+const slugifyTrackingCode = slugify
 
 function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState('')

@@ -12,7 +12,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
-import { KPICard, FilterDropdown, PageSkeleton } from '@/components/common'
+import { KPICard, FilterDropdown, PageSkeleton, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { PIPELINE_STAGES, SOURCE_LABELS } from '@/types'
 import { exportToCsv } from '@/lib/exportCsv'
@@ -209,6 +209,11 @@ export function PerformancePage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Performance commerciale"
+        subtitle="KPIs, sources, entonnoir et objectifs en temps réel"
+      />
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-1 rounded-lg border border-immo-border-default p-0.5">

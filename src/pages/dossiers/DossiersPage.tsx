@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore'
 const PaymentSchedulePanel = lazy(() => import('./components/PaymentSchedulePanel').then(m => ({ default: m.PaymentSchedulePanel })))
 import { usePermissions } from '@/hooks/usePermissions'
 import {
-  KPICard, SearchInput, FilterDropdown, PageSkeleton,
+  KPICard, SearchInput, FilterDropdown, PageSkeleton, PageHeader,
   StatusBadge,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -272,6 +272,11 @@ export function DossiersPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title={t('nav.dossiers')}
+        subtitle={t('dossiers_extra.subtitle', { defaultValue: 'Suivi des ventes, encaissements et impayés' })}
+      />
+
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         <KPICard label={t('dossiers_extra.kpi_total_sales')} value={kpi.totalSales} accent="blue" icon={<FileText className="h-4 w-4 text-immo-accent-blue" />} />

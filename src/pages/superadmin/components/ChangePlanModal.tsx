@@ -43,9 +43,10 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['super-admin-tenants'] })
       qc.invalidateQueries({ queryKey: ['super-admin-tenant', tenantId] })
-      toast.success(`Plan de ${tenantName} change en ${PLAN_LABELS[selected].label}`)
+      toast.success(`Plan de ${tenantName} changé en ${PLAN_LABELS[selected].label}`)
       onClose()
     },
+    onError: (err: Error) => toast.error(err.message),
   })
 
   return (

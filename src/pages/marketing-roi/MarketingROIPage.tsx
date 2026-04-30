@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
 import { DollarSign, BarChart3, Megaphone, Mail, FileText } from 'lucide-react'
+import { PageHeader } from '@/components/common'
 // Lazy-load tabs — only the active tab is rendered, so no point downloading all 5 up-front
 const ExpensesTab = lazy(() => import('./tabs/ExpensesTab').then(m => ({ default: m.ExpensesTab })))
 const AnalyticsTab = lazy(() => import('./tabs/AnalyticsTab').then(m => ({ default: m.AnalyticsTab })))
@@ -26,6 +27,11 @@ export function MarketingROIPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Marketing & ROI"
+        subtitle="Dépenses, campagnes, ROI réel par source et par campagne"
+      />
+
       {/* Tabs */}
       <div className="flex gap-1 border-b border-immo-border-default overflow-x-auto">
         {TABS.map(t => (
