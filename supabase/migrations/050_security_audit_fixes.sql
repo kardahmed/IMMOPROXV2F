@@ -156,8 +156,16 @@ CREATE TRIGGER users_backup_agent_tenant_check
 -- 4. H16 — email_campaigns / templates / events role gates
 -- ════════════════════════════════════════════════════════════════════
 -- Migration 014 created FOR ALL policies that didn't separate agent
--- vs admin. Tighten UPDATE/DELETE to admin+.
+-- vs admin. Tighten UPDATE/DELETE to admin+. Note: email_events and
+-- email_campaign_recipients have no tenant_id column — scope passes
+-- through campaign_id → email_campaigns.
 
+-- Drop the actual policy names from 014.
+DROP POLICY IF EXISTS "tenant_email_campaigns" ON email_campaigns;
+DROP POLICY IF EXISTS "tenant_email_templates" ON email_templates;
+DROP POLICY IF EXISTS "tenant_email_events" ON email_events;
+DROP POLICY IF EXISTS "tenant_ecr" ON email_campaign_recipients;
+-- Defensive: also drop the older names from earlier drafts.
 DROP POLICY IF EXISTS "tenant_isolation_email_campaigns" ON email_campaigns;
 DROP POLICY IF EXISTS "tenant_isolation_email_templates" ON email_templates;
 DROP POLICY IF EXISTS "tenant_isolation_email_events" ON email_events;
@@ -180,18 +188,48 @@ CREATE POLICY "email_templates_admin_write" ON email_templates FOR ALL
   USING (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')))
   WITH CHECK (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')));
 
--- email_events: read-only for everyone in tenant. Inserted by
--- track-email service-role.
+-- email_events: read-only for tenant members. Inserted by track-email
+-- service-role. Tenant scope joins through campaign_id.
 CREATE POLICY "email_events_select" ON email_events FOR SELECT
-  USING (is_super_admin() OR tenant_id = get_my_tenant_id());
+  USING (
+    is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM email_campaigns c
+      WHERE c.id = email_events.campaign_id
+        AND c.tenant_id = get_my_tenant_id()
+    )
+  );
 
--- email_campaign_recipients: same as events.
+-- email_campaign_recipients: tenant scope joins through campaign_id.
 CREATE POLICY "email_recipients_select" ON email_campaign_recipients FOR SELECT
-  USING (is_super_admin() OR tenant_id = get_my_tenant_id());
+  USING (
+    is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM email_campaigns c
+      WHERE c.id = email_campaign_recipients.campaign_id
+        AND c.tenant_id = get_my_tenant_id()
+    )
+  );
 
 CREATE POLICY "email_recipients_admin_write" ON email_campaign_recipients FOR ALL
-  USING (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')))
-  WITH CHECK (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')));
+  USING (
+    is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM email_campaigns c
+      WHERE c.id = email_campaign_recipients.campaign_id
+        AND c.tenant_id = get_my_tenant_id()
+        AND get_user_role() IN ('admin','super_admin')
+    )
+  )
+  WITH CHECK (
+    is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM email_campaigns c
+      WHERE c.id = email_campaign_recipients.campaign_id
+        AND c.tenant_id = get_my_tenant_id()
+        AND get_user_role() IN ('admin','super_admin')
+    )
+  );
 
 -- ════════════════════════════════════════════════════════════════════
 -- 5. marketing_leads — anon insert tightened
