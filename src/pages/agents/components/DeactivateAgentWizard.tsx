@@ -113,101 +113,29 @@ export function DeactivateAgentWizard({ isOpen, onClose, agent }: Props) {
 
     setSubmitting(true)
     try {
-      // 1. Reassign clients
-      if ((inventory?.clients ?? 0) > 0) {
-        const { error: clientsErr } = await supabase
-          .from('clients')
-          .update({ agent_id: targetAgentId } as never)
-          .eq('agent_id', agent.id)
-          .is('deleted_at', null)
-        if (clientsErr) throw new Error(`Réassignation clients : ${clientsErr.message}`)
+      // Audit (HIGH): the previous version ran 5 sequential UPDATEs
+      // from the browser. Any partial failure left the pipeline in a
+      // half-moved state (clients with new agent, source agent still
+      // active). The atomic RPC `deactivate_agent_atomic` (migration
+      // 050) wraps everything in a single Postgres transaction so it
+      // either fully succeeds or fully rolls back.
+      const { data, error } = await supabase.rpc('deactivate_agent_atomic' as never, {
+        p_agent_id: agent.id,
+        p_target_agent_id: targetAgentId || null,
+        p_task_action: taskAction,
+        p_visit_action: visitAction,
+        p_reservation_action: reservationAction,
+        p_actor_id: actorId ?? null,
+      } as never)
+      if (error) throw new Error(error.message)
 
-        // History row per affected client.
-        const { data: movedClients } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('agent_id', targetAgentId)
-          .is('deleted_at', null)
-        if (movedClients && movedClients.length > 0 && target) {
-          const targetName = `${target.first_name} ${target.last_name}`.trim()
-          const histRows = movedClients.map(c => ({
-            tenant_id: agent.tenant_id,
-            client_id: c.id,
-            agent_id: actorId ?? null,
-            type: 'note',
-            title: `Réassigné de ${agent.first_name} ${agent.last_name} → ${targetName} suite au départ de l'agent`,
-          }))
-          await supabase.from('history').insert(histRows as never)
-        }
-      }
-
-      // 2. Tasks — transfer or cancel.
-      if ((inventory?.tasks ?? 0) > 0) {
-        if (taskAction === 'transfer') {
-          const { error } = await supabase
-            .from('tasks')
-            .update({ agent_id: targetAgentId } as never)
-            .eq('agent_id', agent.id)
-            .eq('status', 'pending')
-            .is('deleted_at', null)
-          if (error) throw new Error(`Transfert tâches : ${error.message}`)
-        } else {
-          // cancel — set status='ignored' so check-tasks-no-reply skips them.
-          const { error } = await supabase
-            .from('tasks')
-            .update({ status: 'ignored' } as never)
-            .eq('agent_id', agent.id)
-            .eq('status', 'pending')
-            .is('deleted_at', null)
-          if (error) throw new Error(`Annulation tâches : ${error.message}`)
-        }
-      }
-
-      // 3. Visits — transfer or cancel.
-      if ((inventory?.visits ?? 0) > 0) {
-        if (visitAction === 'transfer') {
-          const { error } = await supabase
-            .from('visits')
-            .update({ agent_id: targetAgentId } as never)
-            .eq('agent_id', agent.id)
-            .in('status', ['planned', 'confirmed'])
-            .is('deleted_at', null)
-          if (error) throw new Error(`Transfert visites : ${error.message}`)
-        } else {
-          const { error } = await supabase
-            .from('visits')
-            .update({ status: 'cancelled' } as never)
-            .eq('agent_id', agent.id)
-            .in('status', ['planned', 'confirmed'])
-            .is('deleted_at', null)
-          if (error) throw new Error(`Annulation visites : ${error.message}`)
-        }
-      }
-
-      // 4. Reservations — transfer or keep (admin manages).
-      if ((inventory?.reservations ?? 0) > 0 && reservationAction === 'transfer') {
-        const { error } = await supabase
-          .from('reservations')
-          .update({ agent_id: targetAgentId } as never)
-          .eq('agent_id', agent.id)
-          .eq('status', 'active')
-        if (error) throw new Error(`Transfert réservations : ${error.message}`)
-      }
-
-      // 5. Final flip — agent is now inactive.
-      const { error: deactErr } = await supabase
-        .from('users')
-        .update({
-          status: 'inactive',
-          leave_starts_at: null,
-          leave_ends_at: null,
-          backup_agent_id: null,
-          leave_reason: null,
-        } as never)
-        .eq('id', agent.id)
-      if (deactErr) throw new Error(`Désactivation : ${deactErr.message}`)
-
-      toast.success(`${agent.first_name} ${agent.last_name} désactivé. Tout son portefeuille a été réparti.`)
+      const summary = data as { clients_moved: number; tasks_handled: number; visits_handled: number; reservations_handled: number } | null
+      const moved = summary?.clients_moved ?? 0
+      toast.success(
+        moved > 0
+          ? `${agent.first_name} ${agent.last_name} désactivé. ${moved} client${moved > 1 ? 's' : ''} réparti${moved > 1 ? 's' : ''}.`
+          : `${agent.first_name} ${agent.last_name} désactivé.`,
+      )
       qc.invalidateQueries({ queryKey: ['agents-list'] })
       qc.invalidateQueries({ queryKey: ['clients'] })
       qc.invalidateQueries({ queryKey: ['tasks'] })

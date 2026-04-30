@@ -44,17 +44,43 @@ Deno.serve(async (req) => {
     const jsonStr = JSON.stringify({ exported_at: new Date().toISOString(), tenant_id, data: exportData }, null, 2)
     const blob = new Blob([jsonStr], { type: 'application/json' })
 
-    // Upload to storage
-    const filename = `exports/${tenant_id}/backup-${Date.now()}.json`
-    await supabase.storage.from('landing-assets').upload(filename, blob, { contentType: 'application/json' })
-    const { data: urlData } = supabase.storage.from('landing-assets').getPublicUrl(filename)
+    // Upload to a PRIVATE bucket with an unguessable name. Audit
+    // (HIGH/GDPR) flagged: previous code wrote to the public
+    // landing-assets bucket with a Date.now() suffix that could be
+    // brute-forced within seconds. Now: dedicated private
+    // tenant-exports bucket + UUID name + 15 min signed URL.
+    const filename = `${tenant_id}/${crypto.randomUUID()}.json`
+    const { error: uploadErr } = await supabase.storage
+      .from('tenant-exports')
+      .upload(filename, blob, { contentType: 'application/json', upsert: false })
+    if (uploadErr) {
+      console.error('[export-tenant] upload failed', uploadErr)
+      return new Response(JSON.stringify({ error: 'Upload failed' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
-    // Log
+    const { data: signed, error: signErr } = await supabase.storage
+      .from('tenant-exports')
+      .createSignedUrl(filename, 900)  // 15 minutes
+    if (signErr || !signed?.signedUrl) {
+      return new Response(JSON.stringify({ error: 'Signature failed' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     await supabase.from('super_admin_logs').insert({
       super_admin_id: user.id, action: 'export_tenant', tenant_id, details: { tables: Object.keys(exportData).length, rows: Object.values(exportData).reduce((s, d) => s + d.length, 0) },
     } as never)
 
-    return new Response(JSON.stringify({ url: urlData.publicUrl, tables: Object.keys(exportData).length, total_rows: Object.values(exportData).reduce((s, d) => s + d.length, 0) }), {
+    return new Response(JSON.stringify({
+      url: signed.signedUrl,
+      expires_in: 900,
+      tables: Object.keys(exportData).length,
+      total_rows: Object.values(exportData).reduce((s, d) => s + d.length, 0),
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {

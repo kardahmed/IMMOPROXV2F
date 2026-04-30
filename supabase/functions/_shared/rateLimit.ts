@@ -1,7 +1,17 @@
 /**
- * Simple in-memory rate limiter for Edge Functions.
- * Limits requests per IP within a time window.
+ * Rate limiters for Edge Functions.
+ *
+ * `rateLimit` is in-memory (per-isolate) — fine for soft throttling
+ * a single instance, but doesn't enforce a global ceiling because
+ * Supabase Edge runs multiple isolates per region.
+ *
+ * `rateLimitDb` is the audit-recommended replacement: it calls the
+ * `rate_limit_bump` RPC (migration 050) which atomically increments
+ * a Postgres-backed bucket, so the limit is enforced across every
+ * isolate.
  */
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 const store = new Map<string, { count: number; resetAt: number }>()
 
 export function rateLimit(
@@ -52,3 +62,48 @@ setInterval(() => {
     if (now > entry.resetAt) store.delete(key)
   }
 }, 5 * 60_000)
+
+// ────────────────────────────────────────────────────────────────────
+// DB-backed rate limiter — replaces the per-isolate Map for endpoints
+// that absolutely need a global ceiling (capture-lead, signup, etc).
+// ────────────────────────────────────────────────────────────────────
+
+export async function rateLimitDb(
+  supabase: SupabaseClient,
+  bucketKey: string,
+  maxRequests = 30,
+  windowMs = 60_000,
+): Promise<{ allowed: boolean; count: number; limit: number; retryAfterMs: number }> {
+  const { data, error } = await supabase.rpc('rate_limit_bump' as never, {
+    p_bucket_key: bucketKey,
+    p_window_ms: windowMs,
+  } as never)
+  if (error) {
+    // Fail open — better to let one or two extra requests through
+    // than to lock down the system on a transient DB hiccup.
+    console.warn('[rateLimitDb] RPC failed, allowing request', error.message)
+    return { allowed: true, count: 0, limit: maxRequests, retryAfterMs: 0 }
+  }
+  const count = Number(data ?? 0)
+  return {
+    allowed: count <= maxRequests,
+    count,
+    limit: maxRequests,
+    retryAfterMs: windowMs,
+  }
+}
+
+export function rateLimitDbResponse(
+  state: { allowed: boolean; count: number; limit: number; retryAfterMs: number },
+): Response | null {
+  if (state.allowed) return null
+  return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+    status: 429,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-RateLimit-Limit': String(state.limit),
+      'X-RateLimit-Remaining': '0',
+      'Retry-After': String(Math.ceil(state.retryAfterMs / 1000)),
+    },
+  })
+}

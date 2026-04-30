@@ -60,6 +60,15 @@ export function PutOnLeaveModal({ isOpen, onClose, agent }: Props) {
       if (!startDate || !endDate) throw new Error('Dates requises')
       if (endDate < startDate) throw new Error('La date de retour doit être après la date de départ')
 
+      // Audit (MED): refuse a leave_ends_at already in the past —
+      // the auto-reactivate cron would flip the agent back to active
+      // on its very next tick, which is surprising for the admin.
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (new Date(endDate) < today) {
+        throw new Error('La date de retour doit être aujourd\'hui ou ultérieure')
+      }
+
       const { error } = await supabase.from('users').update({
         status: 'on_leave',
         leave_starts_at: new Date(`${startDate}T00:00:00`).toISOString(),

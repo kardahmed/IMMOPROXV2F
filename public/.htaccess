@@ -3,13 +3,21 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.html [QSA,L]
 
-# Security Headers
+# Security Headers — audit-hardened.
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "DENY"
   Header set X-XSS-Protection "1; mode=block"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
-  Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';"
+  Header set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  Header set Cross-Origin-Opener-Policy "same-origin"
+  Header set Cross-Origin-Resource-Policy "same-site"
+  Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" env=HTTPS
+
+  # Audit (HIGH): drop 'unsafe-eval' (Vite prod doesn't need it) and
+  # tighten connect-src to the actual Supabase project so a stolen
+  # token can't exfil to an arbitrary host. 'unsafe-inline' kept only
+  # because Tailwind 4 + lazy-loaded chunks rely on inline style
+  # attributes — replace with hash-based CSP in a follow-up.
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://lbnqccsebwiifxcucflg.supabase.co wss://lbnqccsebwiifxcucflg.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';"
 </IfModule>

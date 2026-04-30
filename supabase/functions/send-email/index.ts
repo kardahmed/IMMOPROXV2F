@@ -94,9 +94,35 @@ serve(async (req: Request) => {
       })
     }
 
-    // Quota check — only if a tenant context is provided (system test
-    // emails without tenant_id bypass quotas, by design).
+    // Audit (HIGH): validate recipient format and constrain it to a
+    // member of the caller's tenant unless the call is service-role.
+    // Without this, a tenant admin could blast phishing emails from
+    // the platform's verified Resend domain to arbitrary recipients.
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!EMAIL_RE.test(String(to))) {
+      return new Response(JSON.stringify({ error: 'Invalid recipient email' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     if (tenant_id && !metadata?.test) {
+      // Verify the recipient belongs to the tenant — either as a
+      // client.email, a user.email, or matching the platform support
+      // mailbox itself (which is what most automation rows hit).
+      const lowerTo = String(to).toLowerCase()
+      const [clientMatch, userMatch, leadMatch] = await Promise.all([
+        supabase.from('clients').select('id').eq('tenant_id', tenant_id).ilike('email', lowerTo).limit(1).maybeSingle(),
+        supabase.from('users').select('id').eq('tenant_id', tenant_id).ilike('email', lowerTo).limit(1).maybeSingle(),
+        supabase.from('marketing_leads').select('id').eq('tenant_id', tenant_id).ilike('email', lowerTo).limit(1).maybeSingle(),
+      ])
+      if (!clientMatch.data && !userMatch.data && !leadMatch.data) {
+        return new Response(JSON.stringify({ error: 'Recipient not part of tenant' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
       const quota = await checkQuota(supabase, tenant_id, 'resend')
       if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
     }

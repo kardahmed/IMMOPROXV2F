@@ -88,12 +88,18 @@ Deno.serve(async (req) => {
           return json({ error: 'Role must be admin or agent' }, 400)
         }
 
-        // Invite via Supabase Auth
+        // Audit (HIGH): inviteUserByEmail leaks "User already
+        // registered" which lets an attacker enumerate accounts.
+        // Always return a generic message and a fixed status to
+        // hide the difference.
         const { data: authUser, error: inviteErr } = await supabase.auth.admin.inviteUserByEmail(
           email,
           { data: { tenant_id, role } }
         )
-        if (inviteErr) return json({ error: `Invite failed: ${inviteErr.message}` }, 500)
+        if (inviteErr) {
+          console.error('[manage-user] invite failed:', inviteErr.message)
+          return json({ error: 'Invitation could not be sent. The email may already be registered.' }, 400)
+        }
 
         // Insert profile
         const { error: profileErr } = await supabase.from('users').insert({
@@ -125,6 +131,29 @@ Deno.serve(async (req) => {
         if (!user_id || !body.new_role) return json({ error: 'Missing user_id or new_role' }, 400)
         if (!['admin', 'agent'].includes(body.new_role)) {
           return json({ error: 'Role must be admin or agent' }, 400)
+        }
+
+        // Audit (HIGH): forbid downgrading the LAST admin of a tenant
+        // — that would lock the tenant out of any further admin
+        // operation. Same protection applies if the action is
+        // demoting an admin to agent.
+        if (body.new_role === 'agent') {
+          const { data: targetUser } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user_id)
+            .single()
+          if ((targetUser as { role?: string } | null)?.role === 'admin') {
+            const { count } = await supabase
+              .from('users')
+              .select('id', { count: 'exact', head: true })
+              .eq('tenant_id', tenant_id)
+              .eq('role', 'admin')
+              .eq('status', 'active')
+            if ((count ?? 0) <= 1) {
+              return json({ error: 'Cannot demote the last active admin of the tenant' }, 409)
+            }
+          }
         }
 
         const { error } = await supabase

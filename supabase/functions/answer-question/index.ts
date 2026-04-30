@@ -18,6 +18,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackAnthropicCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
+import { sanitizeForPrompt, wrapUntrusted } from '../_shared/promptSanitize.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -113,7 +114,7 @@ Réponds UNIQUEMENT avec le texte que l'agent doit dire, rien d'autre.`
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 300,
         system: systemPrompt,
-        messages: [{ role: 'user', content: question }],
+        messages: [{ role: 'user', content: wrapUntrusted('QUESTION_CLIENT', sanitizeForPrompt(question, 500)) }],
       }),
     })
 

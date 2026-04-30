@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { rateLimitResponse } from '../_shared/rateLimit.ts'
+import { rateLimitDb, rateLimitDbResponse } from '../_shared/rateLimit.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -46,18 +46,21 @@ Deno.serve(async (req) => {
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-  // Rate limit by client IP. capture-lead is fully public (anon key
-  // exposed on every landing page) so without this it's trivial to
-  // flood the leads table or burn the Meta CAPI / Google Ads quota.
-  // 10 submissions per IP per minute is generous for real humans
-  // and harsh on bots.
+  // Rate limit by client IP — DB-backed so it works across edge
+  // isolates (the previous in-memory Map let an attacker hit
+  // N×10/min by hitting different isolates).
   const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
     ?? req.headers.get('x-real-ip')
     ?? 'unknown'
-  const rlRes = rateLimitResponse(`capture-lead:${clientIp}`, 10, 60_000)
-  if (rlRes) {
-    rlRes.headers.set('Access-Control-Allow-Origin', '*')
-    return rlRes
+
+  const rlSupabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const rlState = await rateLimitDb(rlSupabase, `capture-lead:${clientIp}`, 10, 60_000)
+  const rlBlock = rateLimitDbResponse(rlState)
+  if (rlBlock) {
+    rlBlock.headers.set('Access-Control-Allow-Origin', '*')
+    return rlBlock
   }
 
   try {

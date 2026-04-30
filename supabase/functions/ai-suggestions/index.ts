@@ -3,6 +3,7 @@ import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackAnthropicCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 import { getGlobalPlaybook } from '../_shared/getGlobalPlaybook.ts'
+import { sanitizeObject, wrapUntrusted } from '../_shared/promptSanitize.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -104,7 +105,10 @@ Deno.serve(async (req) => {
         system: systemPrompt,
         messages: [{
           role: 'user',
-          content: `Profil client: ${JSON.stringify(clientProfile)}\n\nUnites disponibles: ${JSON.stringify(unitsList)}`,
+          content: [
+            wrapUntrusted('PROFIL_CLIENT', JSON.stringify(sanitizeObject(clientProfile, 400))),
+            wrapUntrusted('UNITES_DISPONIBLES', JSON.stringify(sanitizeObject(unitsList, 400))),
+          ].join('\n\n'),
         }],
       }),
     })
