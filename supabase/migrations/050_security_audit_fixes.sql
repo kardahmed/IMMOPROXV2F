@@ -523,7 +523,7 @@ CREATE POLICY "auth_upload_email_assets" ON storage.objects
   WITH CHECK (
     bucket_id = 'email-assets'
     AND (storage.foldername(name))[1] = (
-      SELECT tenant_id::text FROM users WHERE id = auth.uid()
+      SELECT tenant_id::text FROM public.users WHERE id = auth.uid()
     )
   );
 
@@ -533,7 +533,7 @@ CREATE POLICY "auth_update_email_assets" ON storage.objects
   USING (
     bucket_id = 'email-assets'
     AND (storage.foldername(name))[1] = (
-      SELECT tenant_id::text FROM users WHERE id = auth.uid()
+      SELECT tenant_id::text FROM public.users WHERE id = auth.uid()
     )
   );
 
@@ -543,7 +543,7 @@ CREATE POLICY "auth_delete_email_assets" ON storage.objects
   USING (
     bucket_id = 'email-assets'
     AND (storage.foldername(name))[1] = (
-      SELECT tenant_id::text FROM users WHERE id = auth.uid()
+      SELECT tenant_id::text FROM public.users WHERE id = auth.uid()
     )
   );
 
