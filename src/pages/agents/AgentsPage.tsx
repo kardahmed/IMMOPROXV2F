@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import { nameToColor } from '@/lib/avatarColor'
 import {
-  KPICard, SearchInput, StatusBadge, PageSkeleton, Modal,
+  KPICard, SearchInput, StatusBadge, PageSkeleton, Modal, ConfirmDialog,
 } from '@/components/common'
 import { PutOnLeaveModal } from './components/PutOnLeaveModal'
 import { DeactivateAgentWizard } from './components/DeactivateAgentWizard'
@@ -70,6 +70,7 @@ export function AgentsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [leaveAgent, setLeaveAgent] = useState<AgentRow | null>(null)
   const [deactivateAgent, setDeactivateAgent] = useState<AgentRow | null>(null)
+  const [suspendAgent, setSuspendAgent] = useState<AgentRow | null>(null)
 
   // Fetch agents with counts
   const { data: agents = [], isLoading } = useQuery({
@@ -287,7 +288,7 @@ export function AgentsPage() {
                               <DropdownMenuItem onClick={() => setLeaveAgent(a)} className="text-sm text-immo-status-orange focus:bg-immo-status-orange/5">
                                 <CalendarDays className="mr-2 h-3.5 w-3.5" /> Mettre en congé
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => suspend.mutate(a.id)} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
+                              <DropdownMenuItem onClick={() => setSuspendAgent(a)} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
                                 <Lock className="mr-2 h-3.5 w-3.5" /> Suspendre
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setDeactivateAgent(a)} className="text-sm text-immo-status-red focus:bg-immo-status-red/5">
@@ -335,6 +336,25 @@ export function AgentsPage() {
         isOpen={!!deactivateAgent}
         onClose={() => setDeactivateAgent(null)}
         agent={deactivateAgent}
+      />
+
+      {/* Suspend confirm — login blocked + clients deviennent
+          orphelins jusqu'à la levée de la suspension. */}
+      <ConfirmDialog
+        isOpen={!!suspendAgent}
+        onClose={() => setSuspendAgent(null)}
+        onConfirm={() => {
+          if (suspendAgent) suspend.mutate(suspendAgent.id)
+          setSuspendAgent(null)
+        }}
+        title={`Suspendre ${suspendAgent?.first_name ?? 'cet agent'} ?`}
+        description={
+          suspendAgent
+            ? `Le login de ${suspendAgent.first_name} ${suspendAgent.last_name} sera immédiatement bloqué. Ses ${suspendAgent.clients_count} client${suspendAgent.clients_count > 1 ? 's' : ''} restent assignés à lui — pendant la suspension, l'admin doit les gérer manuellement. Pour réassigner, utilisez "Désactiver…" plutôt.`
+            : ''
+        }
+        confirmLabel="Suspendre"
+        confirmVariant="danger"
       />
       </>
       )}

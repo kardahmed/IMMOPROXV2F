@@ -15,6 +15,11 @@ export function WhatsAppPage() {
   const qc = useQueryClient()
   const [showToken, setShowToken] = useState(false)
   const [editToken, setEditToken] = useState('')
+  // Audit (HIGH): the previous version put the full token in
+  // defaultValue, leaving it visible in the DOM via Inspect Element.
+  // Now we only render a masked preview until the operator clicks
+  // "Modifier" (which gates the real edit textarea behind a click).
+  const [editingToken, setEditingToken] = useState(false)
   const [editPhoneId, setEditPhoneId] = useState('')
   const [editWabaId, setEditWabaId] = useState('')
   const [tab, setTab] = useState<'config' | 'tenants' | 'messages' | 'templates'>('config')
@@ -71,7 +76,10 @@ export function WhatsAppPage() {
       qc.invalidateQueries({ queryKey: ['wa-config'] })
       toast.success('Configuration WhatsApp sauvegardée')
       setEditToken('')
+      setEditingToken(false)
+      setShowToken(false)
     },
+    onError: (err: Error) => toast.error(err.message),
   })
 
   // Toggle tenant WhatsApp
@@ -238,17 +246,47 @@ export function WhatsAppPage() {
             </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs text-immo-text-muted">Access Token</label>
-              <div className="flex gap-2">
-                <Input
-                  type={showToken ? 'text' : 'password'}
-                  defaultValue={config.access_token as string}
-                  onChange={e => setEditToken(e.target.value)}
-                  className="text-sm font-mono flex-1"
-                />
-                <Button size="sm" variant="ghost" onClick={() => setShowToken(!showToken)} className="border border-immo-border-default">
-                  {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
+              {!editingToken ? (
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded-md border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-sm font-mono text-immo-text-secondary">
+                    {(() => {
+                      const tok = (config.access_token as string) ?? ''
+                      if (!tok) return '(non défini)'
+                      const tail = tok.slice(-4)
+                      return `••••••••••••••••••••${tail}`
+                    })()}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => { setEditToken(''); setEditingToken(true) }}
+                    className="border border-immo-border-default"
+                  >
+                    Modifier
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    type={showToken ? 'text' : 'password'}
+                    value={editToken}
+                    onChange={e => setEditToken(e.target.value)}
+                    placeholder="Coller le nouveau token (System User permanent recommandé)"
+                    className="text-sm font-mono flex-1"
+                  />
+                  <Button size="sm" variant="ghost" onClick={() => setShowToken(!showToken)} className="border border-immo-border-default">
+                    {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => { setEditToken(''); setEditingToken(false); setShowToken(false) }}
+                    className="border border-immo-border-default text-immo-text-muted"
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              )}
               <p className="mt-1 text-[10px] text-immo-status-orange">Le token temporaire expire en 24h. Utilisez un System User Token permanent.</p>
             </div>
           </div>

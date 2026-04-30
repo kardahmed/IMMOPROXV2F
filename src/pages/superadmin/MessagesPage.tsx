@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Send, FileText, Megaphone, Bell, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { Card, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
+import { Card, PageHeader, PageSkeleton, StatusBadge, ConfirmDialog } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +28,7 @@ export function MessagesPage() {
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [targetTenant, setTargetTenant] = useState('')
+  const [broadcastConfirm, setBroadcastConfirm] = useState(false)
 
   // Banner state
   const [bannerText, setBannerText] = useState('')
@@ -163,11 +164,20 @@ export function MessagesPage() {
                 <textarea value={body} onChange={e => setBody(e.target.value)} rows={8} className="mt-1 w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 text-sm text-immo-text-primary" />
               </div>
               <div className="flex items-center gap-3">
-                <Button onClick={() => sendMessage.mutate()} disabled={!subject || !body || sendMessage.isPending} variant="purple">
+                <Button
+                  onClick={() => {
+                    // Audit (CRIT): broadcast to ALL tenants needs an
+                    // explicit confirm — typo or test = catastrophe.
+                    if (!targetTenant) setBroadcastConfirm(true)
+                    else sendMessage.mutate()
+                  }}
+                  disabled={!subject || !body || sendMessage.isPending}
+                  variant="purple"
+                >
                   {sendMessage.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="mr-1.5 h-4 w-4" />}
                   Envoyer
                 </Button>
-                {!targetTenant && <span className="text-[10px] text-immo-status-orange">⚠ Broadcast a tous les tenants</span>}
+                {!targetTenant && <span className="text-[10px] text-immo-status-orange">⚠ Broadcast à tous les tenants</span>}
               </div>
             </div>
           </Card>
@@ -276,6 +286,16 @@ export function MessagesPage() {
           </Card>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={broadcastConfirm}
+        onClose={() => setBroadcastConfirm(false)}
+        onConfirm={() => { setBroadcastConfirm(false); sendMessage.mutate() }}
+        title="Diffuser à TOUS les tenants ?"
+        description={`Ce message sera envoyé à tous les tenants actifs de la plateforme. Sujet : « ${subject} ». Cette action ne peut pas être annulée.`}
+        confirmLabel="Confirmer le broadcast"
+        confirmVariant="danger"
+      />
     </div>
   )
 }

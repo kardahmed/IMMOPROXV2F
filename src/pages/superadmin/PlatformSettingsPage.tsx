@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Save, AlertTriangle, Bell, Plus, Trash2 } from 'lucide-react'
+import { Save, AlertTriangle, Bell, Plus, Trash2, Lock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
-import { Card, PageHeader, PageSkeleton } from '@/components/common'
+import { Card, PageHeader, PageSkeleton, ConfirmDialog } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,7 +17,7 @@ export function PlatformSettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from('platform_settings').select('*').limit(1).single()
       if (error) { handleSupabaseError(error); throw error }
-      return data as { id: string; platform_name: string; version: string; support_email: string; maintenance_mode: boolean; anthropic_api_key: string | null; openai_api_key: string | null; default_ai_provider: string }
+      return data as { id: string; platform_name: string; version: string; support_email: string; maintenance_mode: boolean }
     },
   })
 
@@ -25,9 +25,7 @@ export function PlatformSettingsPage() {
   const [version, setVersion] = useState('')
   const [supportEmail, setSupportEmail] = useState('')
   const [maintenance, setMaintenance] = useState(false)
-  const [anthropicKey, setAnthropicKey] = useState('')
-  const [openaiKey, setOpenaiKey] = useState('')
-  const [aiProvider, setAiProvider] = useState('anthropic')
+  const [maintenanceConfirm, setMaintenanceConfirm] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (settings) {
@@ -35,9 +33,6 @@ export function PlatformSettingsPage() {
       setVersion(settings.version)
       setSupportEmail(settings.support_email)
       setMaintenance(settings.maintenance_mode)
-      setAnthropicKey(settings.anthropic_api_key ?? '')
-      setOpenaiKey(settings.openai_api_key ?? '')
-      setAiProvider(settings.default_ai_provider ?? 'anthropic')
     }
   }, [settings])
 
@@ -49,9 +44,6 @@ export function PlatformSettingsPage() {
         version,
         support_email: supportEmail,
         maintenance_mode: maintenance,
-        anthropic_api_key: anthropicKey || null,
-        openai_api_key: openaiKey || null,
-        default_ai_provider: aiProvider,
         updated_at: new Date().toISOString(),
       } as never).eq('id', settings.id)
       if (error) { handleSupabaseError(error); throw error }
@@ -60,6 +52,7 @@ export function PlatformSettingsPage() {
       qc.invalidateQueries({ queryKey: ['platform-settings'] })
       toast.success('Paramètres enregistrés')
     },
+    onError: (err: Error) => toast.error(err.message),
   })
 
   if (isLoading) return <PageSkeleton kpiCount={0} />
@@ -98,11 +91,14 @@ export function PlatformSettingsPage() {
                 <AlertTriangle className={`h-5 w-5 ${maintenance ? 'text-immo-status-red' : 'text-immo-text-secondary'}`} />
                 <div>
                   <p className="text-sm font-medium text-immo-text-primary">Mode maintenance</p>
-                  <p className="text-[11px] text-immo-text-secondary">Bloque l'acces a tous les utilisateurs</p>
+                  <p className="text-[11px] text-immo-text-secondary">Bloque l'accès à tous les utilisateurs</p>
                 </div>
               </div>
+              {/* Audit (CRIT): un toggle global qui peut bloquer tous
+                  les tenants ne doit JAMAIS s'activer en un clic.
+                  Confirm explicite. */}
               <button
-                onClick={() => setMaintenance(!maintenance)}
+                onClick={() => setMaintenanceConfirm(!maintenance)}
                 role="switch"
                 aria-checked={maintenance}
                 aria-label="Mode maintenance"
@@ -114,31 +110,31 @@ export function PlatformSettingsPage() {
           </div>
         </Card>
 
-        {/* AI Configuration */}
+        {/* AI configuration — keys live in Edge Function secrets */}
         <div className="space-y-4 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-6">
-          <div>
-            <h3 className="text-sm font-semibold text-[#7C3AED]">Configuration IA</h3>
-            <p className="mt-1 text-[11px] text-immo-text-muted">Les cles API sont utilisees par toutes les fonctionnalites IA de la plateforme. Les tenants y accedent selon leur plan.</p>
-          </div>
-          <div>
-            <Label className="text-[11px] font-medium text-immo-text-muted">Fournisseur IA par defaut</Label>
-            <select value={aiProvider} onChange={e => setAiProvider(e.target.value)} className="mt-1 h-9 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary">
-              <option value="anthropic">Anthropic (Claude)</option>
-              <option value="openai">OpenAI (GPT)</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex items-start gap-3">
+            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[#7C3AED]" />
             <div>
-              <Label className="text-[11px] font-medium text-immo-text-muted">Cle API Anthropic</Label>
-              <Input type="password" value={anthropicKey} onChange={e => setAnthropicKey(e.target.value)} placeholder="sk-ant-..." variant="immo" />
-            </div>
-            <div>
-              <Label className="text-[11px] font-medium text-immo-text-muted">Cle API OpenAI</Label>
-              <Input type="password" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." variant="immo" />
+              <h3 className="text-sm font-semibold text-[#7C3AED]">Configuration IA</h3>
+              <p className="mt-1 text-[11px] text-immo-text-muted">
+                Les clés API <strong>ANTHROPIC_API_KEY</strong> et <strong>OPENAI_API_KEY</strong> sont stockées
+                dans les <strong>Edge Functions Secrets</strong> de Supabase (jamais exposées au client).
+              </p>
+              <p className="mt-2 text-[11px] text-immo-text-muted">
+                Pour les modifier :
+                <a
+                  href="https://supabase.com/dashboard/project/lbnqccsebwiifxcucflg/settings/functions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 font-semibold text-[#7C3AED] hover:underline"
+                >
+                  Dashboard → Edge Functions → Secrets
+                </a>
+              </p>
             </div>
           </div>
           <p className="text-[10px] text-immo-text-muted">
-            Acces IA par plan : Free = aucun | Starter = suggestions | Pro = suggestions + scripts + documents | Enterprise = tout
+            Accès IA par plan : Free = aucun · Starter = suggestions · Pro = suggestions + scripts + documents · Enterprise = tout
           </p>
         </div>
       </div>
@@ -155,6 +151,23 @@ export function PlatformSettingsPage() {
 
       {/* Alerts Configuration */}
       <AlertsSection />
+
+      <ConfirmDialog
+        isOpen={maintenanceConfirm !== null}
+        onClose={() => setMaintenanceConfirm(null)}
+        onConfirm={() => {
+          if (maintenanceConfirm !== null) setMaintenance(maintenanceConfirm)
+          setMaintenanceConfirm(null)
+        }}
+        title={maintenanceConfirm ? 'Activer le mode maintenance ?' : 'Désactiver le mode maintenance ?'}
+        description={
+          maintenanceConfirm
+            ? 'Tous les utilisateurs de tous les tenants seront bloqués hors de la plateforme jusqu\'à désactivation. À utiliser uniquement pour des opérations critiques. Pensez à sauvegarder ensuite.'
+            : 'La plateforme redevient accessible à tous les tenants.'
+        }
+        confirmLabel={maintenanceConfirm ? 'Activer maintenance' : 'Désactiver maintenance'}
+        confirmVariant={maintenanceConfirm ? 'danger' : 'default'}
+      />
     </div>
   )
 }

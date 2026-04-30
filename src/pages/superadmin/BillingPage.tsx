@@ -2,16 +2,23 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DollarSign, FileText, AlertTriangle, Check, Send, Filter } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
+import { DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge, ConfirmDialog } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatPriceCompact } from '@/lib/constants'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
+interface InvoiceLite { id: string; tenant_name: string; amount: number }
+
 export function BillingPage() {
   const qc = useQueryClient()
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  // Audit (CRIT): markPaid / markOverdue had no confirm — a misclick
+  // falsifies revenue / MRR / overdue stats and triggers downstream
+  // automations on the tenant. Now both go through a confirm dialog.
+  const [paidConfirm, setPaidConfirm] = useState<InvoiceLite | null>(null)
+  const [overdueConfirm, setOverdueConfirm] = useState<InvoiceLite | null>(null)
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['super-admin-invoices'],
@@ -105,17 +112,25 @@ export function BillingPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => markPaid.mutate(inv.id as string)}
+                onClick={() => setPaidConfirm({
+                  id: inv.id as string,
+                  tenant_name: (inv.tenants as { name?: string } | null)?.name ?? '-',
+                  amount: (inv.amount as number) ?? 0,
+                })}
                 className="h-7 border border-immo-accent-green/30 text-[11px] text-immo-accent-green hover:bg-immo-accent-green/10"
               >
-                <Check className="mr-1 h-3 w-3" /> Paye
+                <Check className="mr-1 h-3 w-3" /> Payé
               </Button>
             )}
             {isPending && (
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => markOverdue.mutate(inv.id as string)}
+                onClick={() => setOverdueConfirm({
+                  id: inv.id as string,
+                  tenant_name: (inv.tenants as { name?: string } | null)?.name ?? '-',
+                  amount: (inv.amount as number) ?? 0,
+                })}
                 className="h-7 border border-immo-status-red/30 text-[11px] text-immo-status-red hover:bg-immo-status-red/10"
               >
                 <Send className="mr-1 h-3 w-3" /> Relancer
@@ -167,6 +182,35 @@ export function BillingPage() {
         emptyIcon={<FileText className="h-10 w-10" />}
         emptyMessage={statusFilter === 'all' ? 'Aucune facture' : 'Aucune facture dans ce statut'}
         emptyDescription={statusFilter === 'all' ? "Les factures apparaitront ici des qu'elles seront generees." : 'Changez de filtre pour voir d\'autres factures.'}
+      />
+
+      <ConfirmDialog
+        isOpen={!!paidConfirm}
+        onClose={() => setPaidConfirm(null)}
+        onConfirm={() => {
+          if (paidConfirm) markPaid.mutate(paidConfirm.id)
+          setPaidConfirm(null)
+        }}
+        title="Marquer comme payée ?"
+        description={paidConfirm
+          ? `${paidConfirm.tenant_name} — ${formatPriceCompact(paidConfirm.amount)} DA. Cette action met à jour les revenus, le MRR et déclenche les automations downstream. Vérifiez avant de confirmer.`
+          : ''}
+        confirmLabel="Confirmer le paiement"
+      />
+
+      <ConfirmDialog
+        isOpen={!!overdueConfirm}
+        onClose={() => setOverdueConfirm(null)}
+        onConfirm={() => {
+          if (overdueConfirm) markOverdue.mutate(overdueConfirm.id)
+          setOverdueConfirm(null)
+        }}
+        title="Marquer en retard ?"
+        description={overdueConfirm
+          ? `${overdueConfirm.tenant_name} — ${formatPriceCompact(overdueConfirm.amount)} DA passera en statut "En retard". Le tenant peut être notifié automatiquement.`
+          : ''}
+        confirmLabel="Marquer en retard"
+        confirmVariant="danger"
       />
     </div>
   )
