@@ -3,6 +3,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type D
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Type, ImageIcon, MousePointer, Columns, Minus, ArrowUpDown, GripVertical, Trash2, Save, Eye, X } from 'lucide-react'
+import DOMPurify from 'isomorphic-dompurify'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
@@ -12,6 +13,17 @@ import type { EmailBlock } from '@/lib/blocksToHtml'
 import { useSaveTemplate } from '@/hooks/useEmailMarketing'
 import { DragDropZone } from '@/components/common/DragDropZone'
 import toast from 'react-hot-toast'
+
+// Sanitize HTML used inside text blocks. Allowed tags = simple
+// formatting only. Event handlers, script, iframe, and javascript:
+// URLs are stripped by DOMPurify defaults.
+function sanitizeRichText(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 'a', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'span'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'style'],
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+  })
+}
 
 // ─── Block type palette ─────────────────────────────────────────────────────
 
@@ -259,10 +271,16 @@ function SortableBlock({
 function BlockPreview({ block, onImageUpload }: { block: EmailBlock; onImageUpload: (files: File[]) => void }) {
   switch (block.type) {
     case 'text':
+      // Audit (CRIT): the previous version dropped raw HTML straight
+      // into the DOM via dangerouslySetInnerHTML, so any admin /
+      // imported template that included <img src=x onerror=…> or
+      // <script> would execute. DOMPurify with a tight allowlist
+      // keeps formatting (bold, italic, links) but strips scripts,
+      // event handlers and javascript: URLs.
       return (
         <div
           className="text-sm text-immo-text-primary"
-          dangerouslySetInnerHTML={{ __html: String(block.content.text ?? '') }}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichText(String(block.content.text ?? '')) }}
         />
       )
     case 'image': {

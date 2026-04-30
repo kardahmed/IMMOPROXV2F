@@ -37,7 +37,12 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <h2 className="text-lg font-bold text-immo-text-primary">Une erreur est survenue</h2>
             <p className="mt-2 text-sm text-immo-text-secondary">
-              {this.state.error?.message ?? 'Erreur inconnue'}
+              {/* Audit (HIGH/A09): leaking raw error.message in prod
+                  could expose Postgres / RLS / SQL details. Show a
+                  generic line in production builds. */}
+              {import.meta.env.PROD
+                ? 'Une erreur inattendue est survenue. Rechargez la page ou contactez le support si le problème persiste.'
+                : (this.state.error?.message ?? 'Erreur inconnue')}
             </p>
             <button
               onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload() }}

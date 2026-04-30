@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Send, FileText, Megaphone, Bell, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -102,13 +102,17 @@ export function MessagesPage() {
     if (tpl) { setSubject(tpl.subject); setBody(tpl.body) }
   }
 
-  // Init banner from settings
-  useState(() => {
+  // Init banner from settings. Audit (HIGH): the previous version
+  // used `useState(() => sideEffect())` — that runs only at mount
+  // when platformSettings was still undefined (async query), so the
+  // banner inputs stayed empty forever. useEffect with the right
+  // deps re-runs once the query lands.
+  useEffect(() => {
     if (platformSettings) {
       setBannerText(((platformSettings as Record<string, unknown>).announcement_banner as string) ?? '')
       setBannerType(((platformSettings as Record<string, unknown>).announcement_type as 'info' | 'warning' | 'success') ?? 'info')
     }
-  })
+  }, [platformSettings])
 
   if (isLoading) return <PageSkeleton kpiCount={0} />
 

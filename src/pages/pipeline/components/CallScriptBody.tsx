@@ -13,7 +13,7 @@
 // outer shell owns its own outcome flow (qualified/callback/... vs
 // success/no_answer/reschedule).
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Sparkles, MessageCircle, AlertTriangle, Lightbulb, ArrowRight,
@@ -154,10 +154,20 @@ export function CallScriptBody({
     enabled: !!clientId,
   })
 
-  // Bubble the script up to the parent so it can grab script_id / suggested_action.
-  if (onScriptLoaded && script !== undefined) {
-    queueMicrotask(() => onScriptLoaded(script))
-  }
+  // Bubble the script up to the parent so it can grab script_id /
+  // suggested_action. Audit (HIGH): the previous version called
+  // queueMicrotask in render — if the parent setState in
+  // onScriptLoaded triggered a re-render, we re-queued the same
+  // microtask in a loop. useEffect with [script] as dep runs once
+  // per actual change.
+  useEffect(() => {
+    if (onScriptLoaded && script !== undefined) {
+      onScriptLoaded(script)
+    }
+    // onScriptLoaded is intentionally stable from the parent's setState;
+    // re-running solely on script change keeps the contract.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [script])
 
   function setAnswer(qId: string, value: string | string[]) {
     onAnswersChange({ ...answers, [qId]: value })
