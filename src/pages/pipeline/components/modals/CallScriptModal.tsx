@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Phone, Clock, Sparkles, CheckCircle, Lightbulb, ArrowRight, Calendar, AlertTriangle, MessageCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { appendClientNote } from '@/lib/clientNotes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PIPELINE_STAGES } from '@/types'
@@ -247,17 +248,21 @@ export function CallScriptModal({
         }
       }
 
-      // Add notes + client questions
-      const qaText = clientQA.length > 0 ? clientQA.map(q => `Q: ${q.question} → R: ${q.answer}`).join(' | ') : ''
-      const fullNotes = [notes, qaText].filter(Boolean).join('\n')
-      if (fullNotes) {
-        const { data: currentClient } = await supabase.from('clients').select('notes').eq('id', clientId).single()
-        const existingNotes = (currentClient as { notes: string | null } | null)?.notes ?? ''
-        clientUpdate.notes = existingNotes ? `${existingNotes}\n\n[Appel ${new Date().toLocaleDateString('fr')}] ${fullNotes}` : `[Appel ${new Date().toLocaleDateString('fr')}] ${fullNotes}`
-      }
-
+      // Persist non-notes client updates (payment_method, etc.) first.
       if (Object.keys(clientUpdate).length > 0) {
         await supabase.from('clients').update(clientUpdate as never).eq('id', clientId)
+      }
+
+      // Mirror call notes + Q&A into the Notes tab via the shared
+      // helper (matches the format used by CallModeOverlay,
+      // TaskDetailModal, etc.). Replaces the inline "[Appel DD/MM]"
+      // string concatenation that diverged from the standardised
+      // header convention.
+      const qaText = clientQA.length > 0 ? clientQA.map(q => `Q: ${q.question} → R: ${q.answer}`).join('\n') : ''
+      const fullNotes = [notes, qaText].filter(Boolean).join('\n\n')
+      if (fullNotes) {
+        const resultLabel = result === 'qualified' ? 'Qualifié' : result === 'callback' ? 'À rappeler' : 'Pas intéressé'
+        await appendClientNote(clientId, `📞 Appel guidé — ${resultLabel} (${Math.floor(timer / 60)}min)`, fullNotes)
       }
 
       // 3. Log in history

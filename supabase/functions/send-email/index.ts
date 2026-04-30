@@ -135,25 +135,49 @@ serve(async (req: Request) => {
     let sent = false
     let provider = 'none'
 
-    // Try Resend if configured
+    // Try Resend if configured. Up to 3 attempts on 429 / 5xx with
+    // exponential backoff (250ms, 500ms, 1s) — matches the helper in
+    // send-campaign. Pre-fix the function silently swallowed Resend
+    // errors and stamped status='failed' with no diagnostic; now the
+    // response body is logged on each non-2xx so post-mortem from
+    // function logs is feasible.
     if (resendApiKey) {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${resendApiKey}`,
-        },
-        body: JSON.stringify({
-          from: `${fromName} <${fromEmail}>`,
-          to: [to],
-          subject: emailSubject,
-          html: emailHtml,
-        }),
+      const body = JSON.stringify({
+        from: `${fromName} <${fromEmail}>`,
+        to: [to],
+        subject: emailSubject,
+        html: emailHtml,
       })
-
-      if (res.ok) {
-        sent = true
-        provider = 'resend'
+      let attempt = 0
+      while (attempt < 3 && !sent) {
+        try {
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
+            body,
+          })
+          if (res.ok) {
+            sent = true
+            provider = 'resend'
+            break
+          }
+          if (res.status === 429 || res.status >= 500) {
+            const errBody = await res.text().catch(() => '')
+            console.warn(`[send-email] Resend ${res.status} for ${to} (attempt ${attempt + 1}/3): ${errBody.slice(0, 200)}`)
+            await new Promise(r => setTimeout(r, 250 * Math.pow(2, attempt)))
+            attempt++
+            continue
+          }
+          // 4xx other than 429 = caller error — don't retry.
+          const errBody = await res.text().catch(() => '')
+          console.error(`[send-email] Resend ${res.status} for ${to} — non-retryable: ${errBody.slice(0, 200)}`)
+          break
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          console.warn(`[send-email] network error for ${to} (attempt ${attempt + 1}/3): ${msg}`)
+          await new Promise(r => setTimeout(r, 250 * Math.pow(2, attempt)))
+          attempt++
+        }
       }
     }
 

@@ -17,6 +17,7 @@ import { fr } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import { TaskConfigSection } from '@/pages/settings/sections/TaskConfigSection'
 import { TaskDetailModal } from './components/TaskDetailModal'
+import { CallModeOverlay } from './components/CallModeOverlay'
 import { deriveDisplayStatus, DISPLAY_STATUS_META, buildStatusPayload } from '@/lib/taskStatus'
 import { CHANNEL_ICONS } from '@/lib/channelIcons'
 
@@ -46,6 +47,11 @@ export function TasksPage() {
   const [agentFilter, setAgentFilter] = useState('all')
   const [stageFilter, setStageFilter] = useState('all')
   const [detailTask, setDetailTask] = useState<ClientTask | null>(null)
+  // Tracks the task currently in full-screen "Mode Appel". Set when the
+  // user taps the inline "Appeler" button on a CALL task — opens the
+  // overlay directly without going through TaskDetailModal first, so
+  // the field-agent workflow stays one tap.
+  const [callTask, setCallTask] = useState<ClientTask | null>(null)
 
   // Fetch all tasks with client + agent relations (post-028 unified)
   const { data: allTasks = [], isLoading } = useQuery({
@@ -420,7 +426,7 @@ export function TasksPage() {
                       </button>
                     )}
                     {task.channel === 'call' && (
-                      <button onClick={() => executeTask(task)} title="Lancer l'appel"
+                      <button onClick={() => setCallTask(task)} title="Démarrer l'appel — ouvre le script + notes en plein écran"
                         className="flex items-center gap-1 rounded-lg bg-immo-accent-blue/10 px-2.5 py-1.5 text-[10px] font-semibold text-immo-accent-blue hover:bg-immo-accent-blue/20 transition-colors">
                         <Phone className="h-3 w-3" /> Appeler
                       </button>
@@ -451,6 +457,16 @@ export function TasksPage() {
       {/* Task detail modal */}
       {detailTask && (
         <TaskDetailModal task={detailTask} isOpen={!!detailTask} onClose={() => setDetailTask(null)} />
+      )}
+      {/* Full-screen Mode Appel — opens directly from the inline
+          "Appeler" button on the task list so the agent doesn't have
+          to go through the detail modal first. */}
+      {callTask && (
+        <CallModeOverlay
+          isOpen={!!callTask}
+          onClose={() => setCallTask(null)}
+          task={callTask}
+        />
       )}
     </div>
   )

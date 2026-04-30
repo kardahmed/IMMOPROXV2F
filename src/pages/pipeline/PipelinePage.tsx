@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom'
 import { useClients } from '@/hooks/useClients'
 import { useAutoTasks } from '@/hooks/useAutoTasks'
 import { exportToCsv } from '@/lib/exportCsv'
+import { appendClientNote } from '@/lib/clientNotes'
 import { usePipelineStats } from '@/hooks/usePipelineStats'
 import type { PipelineAlert } from '@/hooks/usePipelineStats'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -197,7 +198,9 @@ export function PipelinePage() {
         onSuccess: () => {
           // Auto-generate tasks for new stage + cancel old
           generateForStage.mutate({ clientId: pendingMove.clientId, newStage: pendingMove.toStage, oldStage: pendingMove.fromStage })
-          // If note provided, add to history
+          // If note provided, log into history AND prepend the same
+          // text into clients.notes so the agent sees the stage-change
+          // context in the Notes tab on the client detail page.
           if (note) {
             supabase.from('history').insert({
               tenant_id: tenantId,
@@ -207,6 +210,11 @@ export function PipelinePage() {
               title: note,
               metadata: { from: pendingMove.fromStage, to: pendingMove.toStage },
             } as never)
+            appendClientNote(
+              pendingMove.clientId,
+              `🔀 Étape: ${pendingMove.fromStage} → ${pendingMove.toStage}`,
+              note,
+            )
           }
           setPendingMove(null)
         },

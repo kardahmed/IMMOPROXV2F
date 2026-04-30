@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarDays, MapPin, Building2, Video } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { appendClientNote } from '@/lib/clientNotes'
 import { useAuthStore } from '@/store/authStore'
 import { Modal } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -105,6 +106,14 @@ export function PlanVisitModal({
         metadata: { visit_type: visitType, scheduled_at: scheduledAt },
       } as never)
       if (histErr) { handleSupabaseError(histErr); throw histErr }
+
+      // 4. Mirror in clients.notes so the Notes tab keeps the
+      // chronological context even when agents rotate.
+      await appendClientNote(
+        effectiveClient.id,
+        `📅 Visite planifiée le ${date} à ${effectiveTime} (${visitType})`,
+        notes,
+      )
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['client-visits'] })

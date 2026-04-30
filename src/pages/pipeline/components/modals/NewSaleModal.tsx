@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { appendClientNote } from '@/lib/clientNotes'
 import { useAuthStore } from '@/store/authStore'
 import { useProjects } from '@/hooks/useProjects'
 import { Modal } from '@/components/common'
@@ -274,6 +275,15 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
         title: `Vente créée : ${unitCodes} — ${formatPriceCompact(finalPrice)}`,
         metadata: { unit_ids: formData.selectedUnits, final_price: finalPrice },
       } as never)
+
+      // 6. Mirror the sale + any internal note into clients.notes so
+      // the Notes tab on the client detail page tells the next agent
+      // who walks in what was sold and on what terms.
+      await appendClientNote(
+        client.id,
+        `🟢 Vente créée — ${unitCodes} (${formatPriceCompact(finalPrice)})`,
+        formData.internalNotes ?? null,
+      )
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['clients'] })

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { PIPELINE_ORDER } from '@/lib/constants'
 
 interface ProjectProgress {
   id: string
@@ -94,7 +95,10 @@ interface AgentRow { id: string; first_name: string; last_name: string; last_act
 interface ReservationRow { agent_id: string }
 interface HistoryRow { id: string; type: string; title: string; created_at: string; clients: { full_name: string } | null; users: { first_name: string; last_name: string } | null }
 
-const PIPELINE_STAGES = ['accueil', 'visite_a_gerer', 'visite_confirmee', 'visite_terminee', 'negociation', 'reservation', 'vente', 'relancement', 'perdue']
+// Single source of truth — was duplicated as a local array, kept in
+// sync manually with src/types/index.ts (PIPELINE_STAGES Record) and
+// SegmentBuilder. Now reads PIPELINE_ORDER from lib/constants.
+const PIPELINE_STAGES = PIPELINE_ORDER
 
 export function useDashboardStats() {
   const { tenantId: authTenantId, role, session } = useAuthStore()
