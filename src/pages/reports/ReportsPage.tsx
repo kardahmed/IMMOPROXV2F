@@ -84,7 +84,6 @@ export function ReportsPage() {
 
   const [period, setPeriod] = useState<PeriodKey>('month')
   const [agentFilter, setAgentFilter] = useState('all')
-  const [_projectFilter] = useState('all')
   const [view, setView] = useState<'team' | 'agent'>('team')
   const [selectedAgent, setSelectedAgent] = useState('')
   const [detailPage, setDetailPage] = useState(0)
@@ -147,7 +146,13 @@ export function ReportsPage() {
 
   // Team view data
   const teamData = useMemo(() => {
-    const filteredAgents = isAgent && userId ? agents.filter(a => a.id === userId) : agents
+    let filteredAgents = isAgent && userId ? agents.filter(a => a.id === userId) : agents
+    // Audit (HIGH): le FilterDropdown "Agent" était relié à
+    // setAgentFilter mais agentFilter n'était jamais utilisé dans la
+    // query/teamData → le filtre ne filtrait rien.
+    if (agentFilter !== 'all') {
+      filteredAgents = filteredAgents.filter(a => a.id === agentFilter)
+    }
 
     return filteredAgents.map(a => {
       const agentHistory = allHistory.filter(h => h.agent_id === a.id)
@@ -172,7 +177,7 @@ export function ReportsPage() {
         new_clients: newClientsMap.get(a.id) ?? 0,
       }
     })
-  }, [agents, allHistory, newClientsMap, isAgent, userId])
+  }, [agents, allHistory, newClientsMap, isAgent, userId, agentFilter])
 
   // Team totals
   const totals = useMemo(() => {
@@ -280,12 +285,21 @@ export function ReportsPage() {
                         {a.inactive_long && <span className="h-2 w-2 rounded-full bg-immo-status-red" title="Inactif 7+ jours" />}
                       </div>
                     </td>
-                    {ACTION_TYPES.map(t => (
-                      <td key={t.key} className="whitespace-nowrap px-3 py-2.5 text-center text-xs text-immo-text-primary">
-                        {(a as unknown as Record<string, number>)[t.key] || <span className="text-immo-text-muted">-</span>}
-                      </td>
-                    ))}
-                    <td className="whitespace-nowrap px-3 py-2.5 text-center text-xs text-immo-text-primary">{a.new_clients || <span className="text-immo-text-muted">-</span>}</td>
+                    {/* Audit (HIGH): `|| '-'` masque les vrais 0 — un
+                        agent à 0 actions affichait "-", indistinguable
+                        d'une donnée manquante. Préciser la sémantique
+                        en n'affichant '-' que si la valeur est nulle. */}
+                    {ACTION_TYPES.map(t => {
+                      const v = (a as unknown as Record<string, number | null | undefined>)[t.key]
+                      return (
+                        <td key={t.key} className="whitespace-nowrap px-3 py-2.5 text-center text-xs text-immo-text-primary">
+                          {v == null ? <span className="text-immo-text-muted">-</span> : v}
+                        </td>
+                      )
+                    })}
+                    <td className="whitespace-nowrap px-3 py-2.5 text-center text-xs text-immo-text-primary">
+                      {a.new_clients == null ? <span className="text-immo-text-muted">-</span> : a.new_clients}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-center">
                       <span className={`text-[11px] ${a.inactive_long ? 'font-medium text-immo-status-red' : 'text-immo-text-muted'}`}>
                         {a.last_activity ? format(new Date(a.last_activity), 'dd/MM HH:mm') : '-'}

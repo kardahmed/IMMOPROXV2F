@@ -50,6 +50,9 @@ export function PublicLandingPage() {
     enabled: !!slug,
   })
   const [loading, setLoading] = useState(false)
+  // Audit (MED): replace blocking native alert() with an inline
+  // banner — alert() is unprofessional on a public marketing page.
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [form, setForm] = useState({ full_name: '', phone: '', email: '', budget: '', unit_type: '', message: '', website_url: '' })
   const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({})
 
@@ -177,8 +180,9 @@ export function PublicLandingPage() {
       }
 
       setSubmitted(true)
+      setSubmitError(null)
     } catch {
-      alert('Erreur, veuillez reessayer')
+      setSubmitError('Une erreur est survenue. Veuillez réessayer.')
     } finally {
       setLoading(false)
     }
@@ -384,6 +388,12 @@ export function PublicLandingPage() {
               </>
             )}
           </div>
+
+          {submitError && (
+            <div role="alert" className="mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {submitError}
+            </div>
+          )}
 
           <button
             type="submit"

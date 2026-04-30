@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, X } from 'lucide-react'
 import { PageHeader, PageSkeleton, FilterDropdown } from '@/components/common'
@@ -61,14 +61,20 @@ export function InboxPage() {
     })
   }, [conversations, agentFilter, readFilter, search])
 
-  // Auto-select the first conversation on mount (desktop UX). Only fires
-  // once — when the user changes filters and the previous selection is
-  // filtered out, we don't pull them out of an open thread automatically.
+  // Auto-select the first conversation on first mount only (desktop UX).
+  // Audit (HIGH): the previous version had `filteredConversations` in
+  // the dep array and re-ran on every keystroke in the search bar,
+  // which is wasteful and caused unnecessary re-renders. The ref
+  // ensures we only auto-select once per page mount.
+  const didAutoSelectRef = useRef(false)
   useEffect(() => {
+    if (didAutoSelectRef.current) return
     if (selectedKey === null && filteredConversations.length > 0 && window.innerWidth >= 768) {
       setSelectedKey(filteredConversations[0].key)
+      didAutoSelectRef.current = true
     }
-  }, [filteredConversations, selectedKey])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredConversations.length])
 
   const selectedConversation = useMemo<Conversation | null>(
     () => conversations.find((c) => c.key === selectedKey) ?? null,

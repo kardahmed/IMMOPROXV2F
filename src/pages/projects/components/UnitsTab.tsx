@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/store/authStore'
 import { handleSupabaseError } from '@/lib/errors'
 import {
   Home,
@@ -74,6 +75,39 @@ export function UnitsTab() {
   const { canManageProjects, canDeleteData } = usePermissions()
 
   const units = rawUnits as unknown as Unit[]
+  const tenantId = useAuthStore(s => s.tenantId)
+
+  // Audit (HIGH): the previous version showed `agent_id.slice(0, 8)`
+  // (UUID truncated) instead of the agent's name — looked like the
+  // page was cut off mid-development. Build name maps so the table
+  // shows actual humans.
+  const { data: agentNames = new Map<string, string>() } = useQuery({
+    queryKey: ['units-agent-names', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase.from('users').select('id, first_name, last_name').eq('tenant_id', tenantId!)
+      const m = new Map<string, string>()
+      for (const u of (data ?? []) as Array<{ id: string; first_name: string; last_name: string }>) {
+        m.set(u.id, `${u.first_name} ${u.last_name}`.trim())
+      }
+      return m
+    },
+    enabled: !!tenantId,
+    staleTime: 5 * 60_000,
+  })
+
+  const { data: clientNames = new Map<string, string>() } = useQuery({
+    queryKey: ['units-client-names', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase.from('clients').select('id, full_name').eq('tenant_id', tenantId!).is('deleted_at', null)
+      const m = new Map<string, string>()
+      for (const c of (data ?? []) as Array<{ id: string; full_name: string }>) {
+        m.set(c.id, c.full_name)
+      }
+      return m
+    },
+    enabled: !!tenantId,
+    staleTime: 60_000,
+  })
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -255,8 +289,8 @@ export function UnitsTab() {
                       <td className="whitespace-nowrap px-3 py-3 text-xs">{u.surface != null ? `${u.surface} m²` : '-'}</td>
                       <td className="whitespace-nowrap px-3 py-3 text-xs font-medium text-immo-text-primary">{u.price != null ? formatPrice(u.price) : '-'}</td>
                       <td className="whitespace-nowrap px-3 py-3 text-xs text-immo-text-muted">{u.delivery_date ? format(new Date(u.delivery_date), 'MM/yyyy') : '-'}</td>
-                      <td className="whitespace-nowrap px-3 py-3 text-xs text-immo-text-muted">{u.agent_id ? u.agent_id.slice(0, 8) : '-'}</td>
-                      <td className="whitespace-nowrap px-3 py-3 text-xs text-immo-text-muted">{u.client_id ? u.client_id.slice(0, 8) : '-'}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-xs text-immo-text-muted">{u.agent_id ? (agentNames.get(u.agent_id) ?? '—') : '-'}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-xs text-immo-text-muted">{u.client_id ? (clientNames.get(u.client_id) ?? '—') : '-'}</td>
                       <td className="whitespace-nowrap px-3 py-3">
                         {u.plan_2d_url ? (
                           <a href={u.plan_2d_url} target="_blank" rel="noopener noreferrer" className="text-immo-accent-blue hover:underline">

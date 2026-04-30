@@ -82,10 +82,14 @@ export function ConversationThread({ conversation }: Props) {
         },
       })
       if (error) throw error
-      return data as { success: boolean; error?: string; remaining?: number }
+      const payload = data as { success: boolean; error?: string; remaining?: number }
+      // Audit (HIGH): a thrown error inside onSuccess is NOT caught by
+      // react-query — the success toast still fires. Throw here in
+      // mutationFn so onError handles the surface message correctly.
+      if (!payload?.success) throw new Error(payload?.error ?? 'Échec de l\'envoi')
+      return payload
     },
-    onSuccess: (data) => {
-      if (!data?.success) throw new Error(data?.error ?? 'Echec envoi')
+    onSuccess: () => {
       setDraft('')
       qc.invalidateQueries({ queryKey: ['inbox'] })
       toast.success(t('inbox.send_success'))

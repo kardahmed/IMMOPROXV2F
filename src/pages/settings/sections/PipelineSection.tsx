@@ -62,7 +62,9 @@ export function PipelineSection() {
               <span className="text-xs text-immo-text-muted">{i + 1}</span>
               <span className="h-3 w-3 rounded-full" style={{ background: meta.color }} />
               <span className="flex-1 text-sm text-immo-text-primary">{meta.label}</span>
-              <input type="color" defaultValue={meta.color} className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent" />
+              {/* Audit (HIGH): the color input had no onChange handler
+                  so editing did nothing — UI ment. Removed until per-
+                  tenant stage colors are actually wired through DB. */}
             </div>
           )
         })}

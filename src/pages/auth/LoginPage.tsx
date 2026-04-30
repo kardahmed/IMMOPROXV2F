@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -28,10 +28,16 @@ export function LoginPage() {
 
   const { register, handleSubmit, getValues, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
-  if (isAuthenticated && role) {
-    navigate(role === 'super_admin' ? '/admin' : '/dashboard', { replace: true })
-    return null
-  }
+  // Audit (HIGH): the previous version called navigate() during
+  // render, which trips React's "cannot update during render" warning
+  // and risks double-navigation. Move into a useEffect.
+  useEffect(() => {
+    if (isAuthenticated && role) {
+      navigate(role === 'super_admin' ? '/admin' : '/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, role, navigate])
+
+  if (isAuthenticated && role) return null
 
   if (isAuthenticated && !role) {
     return (

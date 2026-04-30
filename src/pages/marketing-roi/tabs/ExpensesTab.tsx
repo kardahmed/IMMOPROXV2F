@@ -168,7 +168,7 @@ export function ExpensesTab() {
             <YAxis tick={{ fontSize: 10, fill: 'var(--immo-text-muted, #8898AA)' }} width={60} tickFormatter={v => formatPriceCompact(v as number)} />
             <Tooltip contentStyle={{ background: 'var(--immo-bg-card, #fff)', border: '1px solid var(--immo-border-default, #E3E8EF)', borderRadius: 8, fontSize: 11 }} />
             <Legend wrapperStyle={{ fontSize: 10 }} />
-            {CATEGORIES.filter(c => byCategory.find(b => b.value === c.value)?.total ?? 0 > 0).map(cat => (
+            {CATEGORIES.filter(c => (byCategory.find(b => b.value === c.value)?.total ?? 0) > 0).map(cat => (
               <Bar key={cat.value} dataKey={cat.label} stackId="a" fill={cat.color} />
             ))}
           </BarChart>
