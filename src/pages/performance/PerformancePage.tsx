@@ -62,7 +62,6 @@ export function PerformancePage() {
 
   const [period, setPeriod] = useState<PeriodKey>('month')
   const [agentFilter, setAgentFilter] = useState('all')
-  const [projectFilter] = useState('all')
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [showAlert, setShowAlert] = useState(true)
 
@@ -81,7 +80,7 @@ export function PerformancePage() {
 
   // Fetch all performance data
   const { data, isLoading } = useQuery({
-    queryKey: ['perf', tenantId, rangeStart, rangeEnd, agentFilter, projectFilter],
+    queryKey: ['perf', tenantId, rangeStart, rangeEnd, agentFilter],
     queryFn: async () => {
       if (!tenantId) throw new Error('No tenant')
 
