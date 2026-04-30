@@ -153,21 +153,25 @@ CREATE TRIGGER users_backup_agent_tenant_check
   EXECUTE FUNCTION enforce_backup_agent_tenant();
 
 -- ════════════════════════════════════════════════════════════════════
--- 4. H16 — email_campaigns / templates / events role gates
+-- 4. H16 — email_campaigns / events / recipients role gates
 -- ════════════════════════════════════════════════════════════════════
 -- Migration 014 created FOR ALL policies that didn't separate agent
 -- vs admin. Tighten UPDATE/DELETE to admin+. Note: email_events and
 -- email_campaign_recipients have no tenant_id column — scope passes
 -- through campaign_id → email_campaigns.
+--
+-- email_templates is intentionally OUT of scope here: in production
+-- it's a platform-wide table (slug-based transactional templates
+-- like password reset, invite) without tenant_id. It's already
+-- handled by super_admin via service role; tenants don't read it
+-- directly through this policy.
 
 -- Drop the actual policy names from 014.
 DROP POLICY IF EXISTS "tenant_email_campaigns" ON email_campaigns;
-DROP POLICY IF EXISTS "tenant_email_templates" ON email_templates;
 DROP POLICY IF EXISTS "tenant_email_events" ON email_events;
 DROP POLICY IF EXISTS "tenant_ecr" ON email_campaign_recipients;
 -- Defensive: also drop the older names from earlier drafts.
 DROP POLICY IF EXISTS "tenant_isolation_email_campaigns" ON email_campaigns;
-DROP POLICY IF EXISTS "tenant_isolation_email_templates" ON email_templates;
 DROP POLICY IF EXISTS "tenant_isolation_email_events" ON email_events;
 DROP POLICY IF EXISTS "tenant_isolation_email_campaign_recipients" ON email_campaign_recipients;
 
@@ -177,14 +181,6 @@ CREATE POLICY "email_campaigns_select" ON email_campaigns FOR SELECT
   USING (is_super_admin() OR tenant_id = get_my_tenant_id());
 
 CREATE POLICY "email_campaigns_admin_write" ON email_campaigns FOR ALL
-  USING (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')))
-  WITH CHECK (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')));
-
--- email_templates: same.
-CREATE POLICY "email_templates_select" ON email_templates FOR SELECT
-  USING (is_super_admin() OR tenant_id = get_my_tenant_id());
-
-CREATE POLICY "email_templates_admin_write" ON email_templates FOR ALL
   USING (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')))
   WITH CHECK (is_super_admin() OR (tenant_id = get_my_tenant_id() AND get_user_role() IN ('admin','super_admin')));
 
