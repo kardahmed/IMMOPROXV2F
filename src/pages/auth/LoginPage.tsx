@@ -172,11 +172,6 @@ export function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Demo request — sales-led model, no self-service signup */}
-          <p className="mt-6 text-center text-[13px] text-[#8898AA]">
-            Pas encore client ? <a href="https://immoprox.io/contact" className="text-[#0579DA] hover:underline" style={{fontWeight:600}}>Demander une demo</a>
-          </p>
         </div>
 
         {/* Legal footer */}
