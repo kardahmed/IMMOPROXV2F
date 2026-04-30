@@ -27,20 +27,24 @@ export function AnalyticsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ['marketing-roi', tenantId, period],
     queryFn: async () => {
-      const [expensesRes, clientsRes, visitsRes, reservationsRes, salesRes] = await Promise.all([
-        supabase.from('marketing_expenses').select('amount, category, project_id, expense_date').eq('tenant_id', tenantId!).gte('expense_date', dateStr),
-        supabase.from('clients').select('id, source, pipeline_stage, created_at').eq('tenant_id', tenantId!).gte('created_at', dateFrom.toISOString()),
+      const [expensesRes, clientsRes, visitsRes, reservationsRes, salesRes, campaignsRes] = await Promise.all([
+        // Pull campaign join so we can attribute spend per campaign source.
+        supabase.from('marketing_expenses').select('amount, category, project_id, campaign_id, expense_date, scope').eq('tenant_id', tenantId!).gte('expense_date', dateStr),
+        supabase.from('clients').select('id, source, pipeline_stage, created_at, marketing_campaign_id').eq('tenant_id', tenantId!).gte('created_at', dateFrom.toISOString()),
         // Visits: filter by scheduled_at (the actual visit date), not created_at
         supabase.from('visits').select('id, client_id, status').eq('tenant_id', tenantId!).in('status', ['completed', 'confirmed']),
         supabase.from('reservations').select('id').eq('tenant_id', tenantId!),
         supabase.from('sales').select('id, final_price, client_id').eq('tenant_id', tenantId!).eq('status', 'active'),
+        supabase.from('marketing_campaigns').select('id, name, source').eq('tenant_id', tenantId!),
       ])
 
-      const expenses = (expensesRes.data ?? []) as Array<{ amount: number; category: string; project_id: string | null; expense_date: string }>
-      const clients = (clientsRes.data ?? []) as Array<{ id: string; source: string; pipeline_stage: string; created_at: string }>
+      const expenses = (expensesRes.data ?? []) as unknown as Array<{ amount: number; category: string; project_id: string | null; campaign_id: string | null; expense_date: string; scope: string }>
+      const clients = (clientsRes.data ?? []) as unknown as Array<{ id: string; source: string; pipeline_stage: string; created_at: string; marketing_campaign_id: string | null }>
       const visits = (visitsRes.data ?? []) as Array<{ id: string; client_id: string; status: string }>
       const reservations = (reservationsRes.data ?? []) as Array<{ id: string }>
       const sales = (salesRes.data ?? []) as Array<{ id: string; final_price: number; client_id: string }>
+      const campaigns = (campaignsRes.data ?? []) as Array<{ id: string; name: string; source: string }>
+      const campaignById = new Map(campaigns.map(c => [c.id, c]))
 
       const totalSpent = expenses.reduce((s, e) => s + e.amount, 0)
       const totalLeads = clients.length
@@ -56,7 +60,24 @@ export function AnalyticsTab() {
       const roi = totalSpent > 0 ? ((totalRevenue - totalSpent) / totalSpent) * 100 : 0
       const avgDealValue = totalSales > 0 ? totalRevenue / totalSales : 0
 
-      // By source
+      // Real per-source spend: sum expenses whose linked campaign has
+      // matching source. Falls back to the lead's source when the
+      // expense has no campaign (project_overhead / agency_overhead),
+      // distributed proportionally to the source's lead share.
+      const spendBySource = new Map<string, number>()
+      let unattributedSpend = 0
+      for (const e of expenses) {
+        if (e.scope === 'campaign' && e.campaign_id) {
+          const camp = campaignById.get(e.campaign_id)
+          const src = camp?.source ?? 'autre'
+          spendBySource.set(src, (spendBySource.get(src) ?? 0) + e.amount)
+        } else {
+          unattributedSpend += e.amount
+        }
+      }
+
+      // Per-source aggregation for the table — leads / visits / sales
+      // / revenue + a TRUE CPL (source's own attributable spend ÷ leads).
       const sources = new Map<string, { leads: number; visits: number; sales: number; revenue: number }>()
       for (const c of clients) {
         const src = c.source ?? 'autre'
@@ -73,11 +94,56 @@ export function AnalyticsTab() {
         if (src && sources.has(src)) { sources.get(src)!.sales++; sources.get(src)!.revenue += s.final_price ?? 0 }
       }
 
-      const bySource = [...sources.entries()].map(([source, data]) => ({
-        source, label: SOURCE_LABELS[source] ?? source, ...data,
-        cpl: totalLeads > 0 ? totalSpent / totalLeads : 0, // Global CPL (no per-source expense tracking)
-        conversionRate: data.leads > 0 ? (data.sales / data.leads) * 100 : 0,
-      })).sort((a, b) => b.leads - a.leads)
+      const bySource = [...sources.entries()].map(([source, dataRow]) => {
+        const directSpend = spendBySource.get(source) ?? 0
+        const sharePct = totalLeads > 0 ? dataRow.leads / totalLeads : 0
+        const allocatedOverhead = unattributedSpend * sharePct
+        const totalSourceSpend = directSpend + allocatedOverhead
+        return {
+          source,
+          label: SOURCE_LABELS[source] ?? source,
+          ...dataRow,
+          spend: totalSourceSpend,
+          cpl: dataRow.leads > 0 ? totalSourceSpend / dataRow.leads : 0,
+          conversionRate: dataRow.leads > 0 ? (dataRow.sales / dataRow.leads) * 100 : 0,
+        }
+      }).sort((a, b) => b.leads - a.leads)
+
+      // Per-campaign aggregation for the new "Top campagnes" panel.
+      const campaignAttribution = new Map<string, { leads: number; sales: number; revenue: number; spend: number }>()
+      for (const c of clients) {
+        if (!c.marketing_campaign_id) continue
+        const m = campaignAttribution.get(c.marketing_campaign_id) ?? { leads: 0, sales: 0, revenue: 0, spend: 0 }
+        m.leads++
+        campaignAttribution.set(c.marketing_campaign_id, m)
+      }
+      const campaignClientIds = new Map(clients.map(c => [c.id, c.marketing_campaign_id]))
+      for (const s of sales) {
+        const cid = campaignClientIds.get(s.client_id)
+        if (!cid) continue
+        const m = campaignAttribution.get(cid) ?? { leads: 0, sales: 0, revenue: 0, spend: 0 }
+        m.sales++
+        m.revenue += s.final_price ?? 0
+        campaignAttribution.set(cid, m)
+      }
+      for (const e of expenses) {
+        if (e.scope === 'campaign' && e.campaign_id) {
+          const m = campaignAttribution.get(e.campaign_id) ?? { leads: 0, sales: 0, revenue: 0, spend: 0 }
+          m.spend += e.amount
+          campaignAttribution.set(e.campaign_id, m)
+        }
+      }
+      const byCampaign = [...campaignAttribution.entries()]
+        .map(([id, m]) => ({
+          id,
+          name: campaignById.get(id)?.name ?? 'Campagne',
+          source: campaignById.get(id)?.source ?? 'autre',
+          ...m,
+          roi: m.spend > 0 ? ((m.revenue - m.spend) / m.spend) * 100 : 0,
+          cpl: m.leads > 0 ? m.spend / m.leads : 0,
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10)
 
       // Monthly CPL trend
       const cplTrend: Array<{ month: string; cpl: number }> = []
@@ -90,7 +156,7 @@ export function AnalyticsTab() {
         cplTrend.push({ month: monthNames[d.getMonth()], cpl: monthLeads > 0 ? monthExpenses / monthLeads : 0 })
       }
 
-      return { totalSpent, totalLeads, totalVisits, totalReservations, totalSales, totalRevenue, cpl, cpv, cpr, cpa, roi, avgDealValue, bySource, cplTrend }
+      return { totalSpent, totalLeads, totalVisits, totalReservations, totalSales, totalRevenue, cpl, cpv, cpr, cpa, roi, avgDealValue, bySource, cplTrend, byCampaign }
     },
     enabled: !!tenantId,
   })
@@ -148,7 +214,7 @@ export function AnalyticsTab() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead><tr className="bg-immo-bg-card-hover">
-              {['Source', 'Leads', 'Visites', 'Ventes', 'CA', 'Taux conversion', 'CPL estime'].map(h => (
+              {['Source', 'Leads', 'Visites', 'Ventes', 'CA', 'Conversion', 'Dépense', 'CPL réel'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
               ))}
             </tr></thead>
@@ -159,7 +225,7 @@ export function AnalyticsTab() {
                   <td className="px-4 py-3 text-sm text-immo-accent-blue font-semibold">{s.leads}</td>
                   <td className="px-4 py-3 text-sm text-immo-text-secondary">{s.visits}</td>
                   <td className="px-4 py-3 text-sm font-semibold text-immo-accent-green">{s.sales}</td>
-                  <td className="px-4 py-3 text-sm text-immo-text-primary">{formatPriceCompact(s.revenue)} DA</td>
+                  <td className="px-4 py-3 text-sm text-immo-text-primary">{formatPriceCompact(s.revenue)} DZD</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-16 overflow-hidden rounded-full bg-immo-bg-primary">
@@ -168,14 +234,50 @@ export function AnalyticsTab() {
                       <span className="text-[11px] font-semibold text-immo-text-secondary">{s.conversionRate.toFixed(1)}%</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-immo-text-muted">{s.cpl > 0 ? formatPriceCompact(s.cpl) + ' DA' : '-'}</td>
+                  <td className="px-4 py-3 text-xs text-immo-text-secondary">{s.spend > 0 ? formatPriceCompact(s.spend) + ' DZD' : '-'}</td>
+                  <td className="px-4 py-3 text-xs text-immo-text-muted">{s.cpl > 0 ? formatPriceCompact(s.cpl) + ' DZD' : '-'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {data.bySource.length === 0 && <div className="py-12 text-center text-sm text-immo-text-muted">Aucune donnee</div>}
+          {data.bySource.length === 0 && <div className="py-12 text-center text-sm text-immo-text-muted">Aucune donnée</div>}
         </div>
       </div>
+
+      {/* Top campaigns by revenue */}
+      {data.byCampaign.length > 0 && (
+        <div className="rounded-xl border border-immo-border-default bg-immo-bg-card">
+          <div className="border-b border-immo-border-default px-5 py-4">
+            <h3 className="text-sm font-semibold text-immo-text-primary">Top campagnes — par CA généré</h3>
+            <p className="text-[10px] text-immo-text-muted">Attribution réelle via <code className="font-mono">utm_campaign</code> sur les leads</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead><tr className="bg-immo-bg-card-hover">
+                {['Campagne', 'Source', 'Leads', 'Ventes', 'Dépense', 'CA généré', 'CPL', 'ROI'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
+                ))}
+              </tr></thead>
+              <tbody className="divide-y divide-immo-border-default">
+                {data.byCampaign.map(c => (
+                  <tr key={c.id} className="bg-immo-bg-card hover:bg-immo-bg-card-hover">
+                    <td className="px-4 py-3 text-sm font-medium text-immo-text-primary">{c.name}</td>
+                    <td className="px-4 py-3 text-xs text-immo-text-muted">{SOURCE_LABELS[c.source] ?? c.source}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-immo-accent-blue">{c.leads}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-immo-accent-green">{c.sales}</td>
+                    <td className="px-4 py-3 text-xs text-immo-text-secondary">{formatPriceCompact(c.spend)} DZD</td>
+                    <td className="px-4 py-3 text-sm font-medium text-immo-accent-green">{formatPriceCompact(c.revenue)} DZD</td>
+                    <td className="px-4 py-3 text-xs text-immo-text-muted">{c.cpl > 0 ? formatPriceCompact(c.cpl) + ' DZD' : '-'}</td>
+                    <td className={`px-4 py-3 text-sm font-bold ${c.roi > 0 ? 'text-immo-accent-green' : c.roi < 0 ? 'text-immo-status-red' : 'text-immo-text-muted'}`}>
+                      {c.spend > 0 ? c.roi.toFixed(0) + '%' : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* CPL trend */}
       <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">

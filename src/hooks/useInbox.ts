@@ -130,3 +130,32 @@ export function useMarkMessagesRead() {
     },
   })
 }
+
+export interface TenantAgent {
+  id: string
+  first_name: string | null
+  last_name: string | null
+}
+
+// Fetch the active agents + admins of the current tenant — used by the
+// inbox agent filter so an admin can isolate one agent's conversations.
+// Disabled until a tenantId is provided so it doesn't fire on the login
+// page or for super_admin viewing nothing.
+export function useTenantAgents(tenantId: string | null | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['tenant-agents', tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, first_name, last_name')
+        .eq('tenant_id', tenantId!)
+        .in('role', ['agent', 'admin'])
+        .eq('status', 'active')
+        .order('first_name', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as TenantAgent[]
+    },
+    enabled: enabled && !!tenantId,
+    staleTime: 5 * 60_000,
+  })
+}

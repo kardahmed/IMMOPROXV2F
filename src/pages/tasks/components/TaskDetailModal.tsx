@@ -8,13 +8,13 @@ import {
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
-// import { Button } from '@/components/ui/button'
 import { PIPELINE_STAGES } from '@/types'
 import { calculateUrgencyScore, suggestNextAction } from '@/hooks/useTaskScoring'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { CallModeOverlay } from './CallModeOverlay'
 import { appendClientNote } from '@/lib/clientNotes'
+import { MessageComposer } from '@/components/common'
 
 interface ClientTask {
   id: string; title: string; stage: string; status: string; priority: string
@@ -32,12 +32,15 @@ const CHANNEL_BADGE: Record<string, { label: string; color: string; bg: string }
   system: { label: 'Systeme', color: 'text-immo-text-muted', bg: 'bg-immo-bg-primary' },
 }
 
-const TONES = [
-  { value: 'professional', label: 'Professionnel' },
-  { value: 'friendly', label: 'Amical' },
-  { value: 'urgent', label: 'Urgent' },
-  { value: 'formal', label: 'Formel' },
-]
+// Match the task channel to the most relevant default chip in the
+// MessageComposer so the agent doesn't have to pick every time.
+function defaultTemplateForTask(stage: string): string {
+  if (stage === 'reservation_a_signer' || stage === 'a_payer') return 'rappel_paiement'
+  if (stage === 'visite_a_gerer' || stage === 'visite_terminee') return 'visite_confirm'
+  if (stage === 'vendu' || stage === 'livre') return 'felicitations'
+  if (stage === 'accueil') return 'bienvenue'
+  return 'relance'
+}
 
 interface Props {
   task: ClientTask
@@ -54,10 +57,9 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
   // taps the primary "Démarrer l'appel" CTA on a CALL task.
   const [callModeOpen, setCallModeOpen] = useState(false)
 
-  const [tone, setTone] = useState('professional')
-  const [generatingAI, setGeneratingAI] = useState(false)
   const [clientResponse, setClientResponse] = useState('')
   const [reminderDays, setReminderDays] = useState('')
+  const [message, setMessage] = useState('')
   const urgencyScore = calculateUrgencyScore(task)
   const nextAction = task.client ? suggestNextAction({ pipeline_stage: task.client.pipeline_stage, last_contact_at: null, confirmed_budget: null, visit_note: null }) : ''
 
@@ -74,16 +76,6 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
       return { agentName: `${a?.first_name ?? ''} ${a?.last_name ?? ''}`.trim(), agentPrenom: a?.first_name ?? '', agentPhone: a?.phone ?? '', agence: t?.name ?? '' }
     },
     enabled: isOpen && !!userId && !!tenantId,
-  })
-
-  // Fetch message template
-  const { data: msgTemplate } = useQuery({
-    queryKey: ['task-msg-tpl', task.stage, task.channel, tenantId],
-    queryFn: async () => {
-      const { data } = await supabase.from('message_templates').select('body').eq('tenant_id', tenantId!).eq('stage', task.stage).limit(1).maybeSingle()
-      return (data as { body: string } | null)?.body ?? null
-    },
-    enabled: isOpen && !!tenantId,
   })
 
   // ── Auto-generated AI call script for CALL tasks (Phase 7 killer feature) ──
@@ -119,39 +111,6 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
       }
     },
   })
-
-  // Build message with variables replaced
-  function buildMessage(template?: string | null): string {
-    const base = template ?? msgTemplate ?? `Bonjour {client_prenom},\n\nJe suis {agent_prenom} de {agence}.\n\n${task.title}\n\nCordialement,\n{agent_prenom}\n{agent_phone}`
-    const clientName = task.client?.full_name ?? ''
-    const parts = clientName.split(' ')
-    return base
-      .replace(/\\n/g, '\n')
-      .replace(/\{client_nom\}/g, clientName)
-      .replace(/\{client_prenom\}/g, parts[0] ?? '')
-      .replace(/\{client_phone\}/g, task.client?.phone ?? '')
-      .replace(/\{agent_nom\}/g, context?.agentName ?? '')
-      .replace(/\{agent_prenom\}/g, context?.agentPrenom ?? '')
-      .replace(/\{agent_phone\}/g, context?.agentPhone ?? '')
-      .replace(/\{agence\}/g, context?.agence ?? '')
-      .replace(/\{projet\}/g, '')
-      .replace(/\{prix_min\}/g, '')
-      .replace(/\{date_visite\}/g, '')
-      .replace(/\{heure_visite\}/g, '')
-      .replace(/\{adresse_projet\}/g, '')
-  }
-
-  const [message, setMessage] = useState('')
-
-  // Init message when modal opens
-  useState(() => {
-    if (isOpen) setMessage(buildMessage())
-  })
-
-  // If message is empty, build it
-  if (!message && isOpen && context) {
-    setMessage(buildMessage())
-  }
 
   const completeTask = useMutation({
     mutationFn: async () => {
@@ -236,36 +195,6 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
 
   function openCall() {
     window.open(`tel:${task.client?.phone ?? ''}`, '_blank')
-  }
-
-  function copyMessage() {
-    navigator.clipboard.writeText(message)
-    toast.success('Message copié')
-  }
-
-  async function generateWithAI() {
-    setGeneratingAI(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { toast.error('Session expirée'); return }
-
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-call-script`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ client_id: task.client_id }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        const intro = data.intro ?? ''
-        const outro = data.outro ?? ''
-        setMessage(`${intro}\n\n${outro}`)
-        toast.success('Message généré par IA')
-      } else {
-        toast.error('Erreur génération IA')
-      }
-    } catch { toast.error('Erreur génération IA') }
-    finally { setGeneratingAI(false) }
   }
 
   if (!isOpen) return null
@@ -415,7 +344,10 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
               {isCallTask ? 'Autres actions' : 'Actions rapides'}
             </p>
             <div className="flex flex-wrap gap-2">
-              <button onClick={copyMessage} className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors">
+              <button
+                onClick={() => { navigator.clipboard.writeText(message); toast.success('Message copié') }}
+                className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors"
+              >
                 <Copy className="h-3.5 w-3.5 text-immo-text-muted" /> Copier le message
               </button>
               <button onClick={() => navigate(`/pipeline/clients/${task.client_id}?tab=auto_tasks`)} className="flex items-center gap-1.5 rounded-lg border border-immo-border-default px-3 py-2 text-xs font-medium text-immo-text-primary hover:bg-immo-bg-card-hover transition-colors">
@@ -443,23 +375,24 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
             </div>
           </div>
 
-          {/* Message editable */}
+          {/* Message — same chip-based composer as the client detail
+              page so an agent gets the same UX no matter where they
+              start. Pre-selects the most relevant template based on
+              the client's pipeline stage. */}
           <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold text-immo-text-primary">Message (modifiable)</p>
-              <div className="flex items-center gap-2">
-                <select value={tone} onChange={e => setTone(e.target.value)} className="h-7 rounded-md border border-immo-border-default bg-immo-bg-primary px-2 text-[10px] text-immo-text-primary">
-                  {TONES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-                <button onClick={generateWithAI} disabled={generatingAI}
-                  className="flex items-center gap-1 rounded-lg bg-purple-50 border border-purple-200 px-2.5 py-1 text-[10px] font-semibold text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50">
-                  {generatingAI ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" /> : <Sparkles className="h-3 w-3" />}
-                  Generer IA
-                </button>
-              </div>
-            </div>
-            <textarea value={message} onChange={e => setMessage(e.target.value)} rows={6}
-              className="w-full rounded-xl border border-immo-border-default bg-immo-bg-primary p-4 text-sm text-immo-text-primary leading-relaxed focus:border-immo-accent-green focus:outline-none" />
+            <p className="mb-2 text-xs font-semibold text-immo-text-primary">Message (modifiable)</p>
+            <MessageComposer
+              vars={{
+                clientName: task.client?.full_name ?? '',
+                clientPhone: task.client?.phone ?? '',
+                agentName: context?.agentName,
+                agencyName: context?.agence,
+              }}
+              defaultTemplateId={defaultTemplateForTask(task.stage)}
+              onMessageChange={setMessage}
+              showCopy={false}            /* "Copier le message" lives in the actions row above */
+              showWhatsAppDeeplink={false} /* "Ouvrir WhatsApp" lives in the actions row above */
+            />
           </div>
 
           {/* Suggestion */}

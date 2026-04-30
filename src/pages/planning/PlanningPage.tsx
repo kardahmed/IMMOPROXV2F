@@ -1,20 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, ChevronRight, CalendarDays, Clock,
   CheckCircle, AlertCircle, Bot,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { handleSupabaseError } from '@/lib/errors'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import {
   KPICard, FilterDropdown, PageSkeleton, EmptyState,
-  SidePanel, StatusBadge,
+  SidePanel,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { VISIT_STATUS_LABELS } from '@/types'
-import type { VisitStatus, PipelineStage } from '@/types'
+import type { PipelineStage, VisitStatus } from '@/types'
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isToday, isSameDay, addMonths,
@@ -23,30 +22,28 @@ import {
 import { fr } from 'date-fns/locale'
 import { PlanVisitModal } from '../pipeline/components/modals/PlanVisitModal'
 import { ManageVisitModal } from '../pipeline/components/modals/ManageVisitModal'
-
-/* ═══ Types ═══ */
-
-interface VisitRow {
-  id: string
-  client_id: string
-  agent_id: string
-  project_id: string | null
-  scheduled_at: string
-  visit_type: string
-  status: VisitStatus
-  notes: string | null
-  client_name: string
-  agent_name: string
-  client_phone: string
-  client_stage: PipelineStage
-  tenant_id: string
-}
+import { usePlanningEvents, type PlanEvent, type PlanEventType } from './lib/planningEvents'
+import { EVENT_VISUALS, urgencyRing } from './lib/eventVisuals'
 
 type ViewMode = 'month' | 'week' | 'day'
 
-/* ═══ Component ═══ */
+// Re-renders every minute so the "Maintenant" line tracks the clock
+// without forcing a full-page refresh.
+function useNow() {
+  const [now, setNow] = useState(new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(t)
+  }, [])
+  return now
+}
+
+const HOUR_PX = 48  // matches min-h-[48px] on each hourly row
+const HOUR_START = 8
+const HOUR_END = 19
 
 export function PlanningPage() {
+  const navigate = useNavigate()
   const { tenantId, session } = useAuthStore()
   const userId = session?.user?.id
   const { isAgent } = usePermissions()
@@ -55,65 +52,31 @@ export function PlanningPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [agentFilter, setAgentFilter] = useState('all')
   const [projectFilter, setProjectFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [showTasks, setShowTasks] = useState(false)
 
-  // Visit modal states
-  const [planDate, setPlanDate] = useState<string | null>(null)
-  const [manageVisit, setManageVisit] = useState<VisitRow | null>(null)
+  // Source toggles — drive the chip filter row.
+  const [include, setInclude] = useState({
+    visits: true,
+    tasks: true,
+    payments: true,
+    reservations: true,
+  })
 
-  // Date range for query
+  const [planDate, setPlanDate] = useState<string | null>(null)
+  const [manageVisit, setManageVisit] = useState<PlanEvent | null>(null)
+
   const rangeStart = format(startOfWeek(startOfMonth(currentDate), { locale: fr }), 'yyyy-MM-dd')
   const rangeEnd = format(endOfWeek(endOfMonth(currentDate), { locale: fr }), 'yyyy-MM-dd')
 
-  // Fetch visits
-  const { data: visits = [], isLoading } = useQuery({
-    queryKey: ['planning-visits', tenantId, rangeStart, rangeEnd, agentFilter],
-    queryFn: async () => {
-      let q = supabase
-        .from('visits')
-        .select('id, client_id, agent_id, project_id, scheduled_at, visit_type, status, notes, clients(full_name, phone, pipeline_stage, tenant_id), users!visits_agent_id_fkey(first_name, last_name)')
-        .eq('tenant_id', tenantId!)
-        .is('deleted_at', null)
-        .gte('scheduled_at', `${rangeStart}T00:00:00`)
-        .lte('scheduled_at', `${rangeEnd}T23:59:59`)
-        .order('scheduled_at')
-
-      if (isAgent && userId) {
-        q = q.eq('agent_id', userId)
-      } else if (agentFilter !== 'all') {
-        q = q.eq('agent_id', agentFilter)
-      }
-      if (projectFilter !== 'all') q = q.eq('project_id', projectFilter)
-      if (statusFilter !== 'all') q = q.eq('status', statusFilter as VisitStatus)
-
-      const { data, error } = await q
-      if (error) { handleSupabaseError(error); throw error }
-
-      return (data ?? []).map((v: Record<string, unknown>) => {
-        const client = v.clients as { full_name: string; phone: string; pipeline_stage: PipelineStage; tenant_id: string } | null
-        const agent = v.users as { first_name: string; last_name: string } | null
-        return {
-          id: v.id as string,
-          client_id: v.client_id as string,
-          agent_id: v.agent_id as string,
-          project_id: v.project_id as string | null,
-          scheduled_at: v.scheduled_at as string,
-          visit_type: v.visit_type as string,
-          status: v.status as VisitStatus,
-          notes: v.notes as string | null,
-          client_name: client?.full_name ?? '-',
-          agent_name: agent ? `${agent.first_name} ${agent.last_name}` : '-',
-          client_phone: client?.phone ?? '',
-          client_stage: client?.pipeline_stage ?? 'accueil',
-          tenant_id: client?.tenant_id ?? tenantId!,
-        } satisfies VisitRow
-      })
-    },
-    enabled: !!tenantId,
+  const { data: events = [], isLoading } = usePlanningEvents({
+    tenantId: tenantId ?? '',
+    rangeStart,
+    rangeEnd,
+    agentId: isAgent ? userId : (agentFilter === 'all' ? null : agentFilter),
+    projectFilter: projectFilter === 'all' ? null : projectFilter,
+    include,
   })
 
-  // Fetch agents for filter
   const { data: agents = [] } = useQuery({
     queryKey: ['planning-agents', tenantId],
     queryFn: async () => {
@@ -123,7 +86,6 @@ export function PlanningPage() {
     enabled: !!tenantId && !isAgent,
   })
 
-  // Fetch projects for filter
   const { data: projectsList = [] } = useQuery({
     queryKey: ['planning-projects', tenantId],
     queryFn: async () => {
@@ -133,7 +95,6 @@ export function PlanningPage() {
     enabled: !!tenantId,
   })
 
-  // AI Tasks
   const { data: aiTasks = [] } = useQuery({
     queryKey: ['ai-tasks', tenantId],
     queryFn: async () => {
@@ -146,34 +107,50 @@ export function PlanningPage() {
     enabled: !!tenantId,
   })
 
-  // KPIs
   const today = new Date()
-  const todayVisits = visits.filter(v => isSameDay(new Date(v.scheduled_at), today)).length
-  const upcoming = visits.filter(v => new Date(v.scheduled_at) > today && ['planned', 'confirmed'].includes(v.status)).length
-  const confirmed = visits.filter(v => v.status === 'confirmed').length
-  const planned = visits.filter(v => v.status === 'planned').length
+  const todayCount = events.filter(e => isSameDay(new Date(e.at), today)).length
+  const upcoming = events.filter(e => new Date(e.at) > today).length
+  const visitsCount = events.filter(e => e.type === 'visit').length
+  const dueCount = events.filter(e => e.type === 'payment_due' || e.type === 'reservation_expires').length
 
-  // Filter options
   const agentOptions = [{ value: 'all', label: 'Tous les agents' }, ...agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` }))]
   const projectOptions = [{ value: 'all', label: 'Tous les projets' }, ...projectsList.map(p => ({ value: p.id, label: p.name }))]
-  const statusOptions = [
-    { value: 'all', label: 'Tous les statuts' },
-    { value: 'planned', label: 'Planifiée' },
-    { value: 'confirmed', label: 'Confirmée' },
-    { value: 'completed', label: 'Terminée' },
-    { value: 'cancelled', label: 'Annulée' },
-  ]
 
-  // Navigation
-  function navigate(dir: number) {
+  function navigateDate(dir: number) {
     if (viewMode === 'month') setCurrentDate(d => addMonths(d, dir))
     else if (viewMode === 'week') setCurrentDate(d => addWeeks(d, dir))
     else setCurrentDate(d => addDays(d, dir))
   }
 
-  // Build client info for modals
-  function getClientInfo(v: VisitRow) {
-    return { id: v.client_id, full_name: v.client_name, phone: v.client_phone, pipeline_stage: v.client_stage, tenant_id: v.tenant_id, nin_cin: null }
+  // Click handler — visits open the manage modal in-place; everything
+  // else routes to the surface where the agent actually does the work.
+  function onEventClick(e: PlanEvent) {
+    if (e.type === 'visit') {
+      setManageVisit(e)
+      return
+    }
+    if (e.type.startsWith('task_')) {
+      navigate('/tasks')
+      return
+    }
+    if (e.type === 'payment_due' && e.client_id) {
+      navigate(`/dossiers?clientId=${e.client_id}`)
+      return
+    }
+    if (e.type === 'reservation_expires' && e.client_id) {
+      navigate(`/pipeline?clientId=${e.client_id}`)
+    }
+  }
+
+  function getVisitClient(e: PlanEvent) {
+    return {
+      id: e.client_id ?? '',
+      full_name: e.client_name ?? '-',
+      phone: e.client_phone ?? '',
+      pipeline_stage: ((e.meta?.pipeline_stage as PipelineStage) ?? 'accueil'),
+      tenant_id: ((e.meta?.tenant_id as string) ?? tenantId!),
+      nin_cin: null,
+    }
   }
 
   if (isLoading) return <PageSkeleton kpiCount={4} />
@@ -182,9 +159,9 @@ export function PlanningPage() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-immo-text-muted">Ce planning affiche uniquement les visites</p>
-        </div>
+        <p className="text-xs text-immo-text-muted">
+          Vue unifiée — visites, tâches, échéances paiement et expirations réservation
+        </p>
         <Button onClick={() => setShowTasks(true)} variant="ghost" className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
           <Bot className="mr-1.5 h-3.5 w-3.5 text-purple-400" /> Tâches AI ({aiTasks.length})
         </Button>
@@ -192,22 +169,50 @@ export function PlanningPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KPICard label="Aujourd'hui" value={todayVisits} accent="green" icon={<CalendarDays className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label="Aujourd'hui" value={todayCount} accent="green" icon={<CalendarDays className="h-4 w-4 text-immo-accent-green" />} />
         <KPICard label="À venir" value={upcoming} accent="blue" icon={<Clock className="h-4 w-4 text-immo-accent-blue" />} />
-        <KPICard label="Confirmées" value={confirmed} accent="green" icon={<CheckCircle className="h-4 w-4 text-immo-accent-green" />} />
-        <KPICard label="En attente" value={planned} accent="orange" icon={<AlertCircle className="h-4 w-4 text-immo-status-orange" />} />
+        <KPICard label="Visites" value={visitsCount} accent="green" icon={<CheckCircle className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label="Échéances" value={dueCount} accent="orange" icon={<AlertCircle className="h-4 w-4 text-immo-status-orange" />} />
+      </div>
+
+      {/* Source chips */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-medium text-immo-text-muted">Sources :</span>
+        {([
+          ['visits',       'Visites',       'visit'              as PlanEventType],
+          ['tasks',        'Tâches',        'task_call'          as PlanEventType],
+          ['payments',     'Paiements',     'payment_due'        as PlanEventType],
+          ['reservations', 'Réservations',  'reservation_expires' as PlanEventType],
+        ] as const).map(([key, label, sample]) => {
+          const v = EVENT_VISUALS[sample]
+          const on = include[key]
+          return (
+            <button
+              key={key}
+              onClick={() => setInclude(prev => ({ ...prev, [key]: !prev[key] }))}
+              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                on
+                  ? `${v.bg} ${v.text} border-current`
+                  : 'border-immo-border-default text-immo-text-muted hover:bg-immo-bg-card-hover'
+              }`}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ background: on ? v.hex : '#41506E' }} />
+              {label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Calendar nav + filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="h-8 w-8 p-0 text-immo-text-muted hover:text-immo-text-primary">
+          <Button variant="ghost" size="sm" onClick={() => navigateDate(-1)} className="h-8 w-8 p-0 text-immo-text-muted hover:text-immo-text-primary">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setCurrentDate(new Date())} className="text-xs text-immo-text-secondary hover:text-immo-text-primary">
             Aujourd'hui
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate(1)} className="h-8 w-8 p-0 text-immo-text-muted hover:text-immo-text-primary">
+          <Button variant="ghost" size="sm" onClick={() => navigateDate(1)} className="h-8 w-8 p-0 text-immo-text-muted hover:text-immo-text-primary">
             <ChevronRight className="h-4 w-4" />
           </Button>
           <span className="text-sm font-semibold capitalize text-immo-text-primary">
@@ -215,7 +220,6 @@ export function PlanningPage() {
           </span>
         </div>
 
-        {/* View toggle */}
         <div className="flex gap-1 rounded-lg border border-immo-border-default p-0.5">
           {(['month', 'week', 'day'] as ViewMode[]).map((m) => (
             <button
@@ -231,7 +235,6 @@ export function PlanningPage() {
         <div className="ml-auto flex gap-2">
           {!isAgent && <FilterDropdown label="Agent" options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
           <FilterDropdown label="Projet" options={projectOptions} value={projectFilter} onChange={setProjectFilter} />
-          <FilterDropdown label="Statut" options={statusOptions} value={statusFilter} onChange={setStatusFilter} />
         </div>
       </div>
 
@@ -239,16 +242,16 @@ export function PlanningPage() {
       {viewMode === 'month' && (
         <MonthView
           currentDate={currentDate}
-          visits={visits}
+          events={events}
           onDayClick={(d) => setPlanDate(format(d, 'yyyy-MM-dd'))}
-          onVisitClick={setManageVisit}
+          onEventClick={onEventClick}
         />
       )}
       {viewMode === 'week' && (
-        <WeekView currentDate={currentDate} visits={visits} onVisitClick={setManageVisit} />
+        <WeekView currentDate={currentDate} events={events} onEventClick={onEventClick} />
       )}
       {viewMode === 'day' && (
-        <DayView currentDate={currentDate} visits={visits} onVisitClick={setManageVisit} />
+        <DayView currentDate={currentDate} events={events} onEventClick={onEventClick} />
       )}
 
       {/* AI Tasks side panel */}
@@ -270,7 +273,6 @@ export function PlanningPage() {
         )}
       </SidePanel>
 
-      {/* Plan visit modal */}
       {planDate && (
         <PlanVisitModal
           isOpen
@@ -280,13 +282,18 @@ export function PlanningPage() {
         />
       )}
 
-      {/* Manage visit modal */}
       {manageVisit && (
         <ManageVisitModal
           isOpen
           onClose={() => setManageVisit(null)}
-          visit={{ id: manageVisit.id, scheduled_at: manageVisit.scheduled_at, visit_type: manageVisit.visit_type, status: manageVisit.status, notes: manageVisit.notes }}
-          client={getClientInfo(manageVisit)}
+          visit={{
+            id: (manageVisit.meta?.raw_id as string) ?? manageVisit.id.replace(/^visit_/, ''),
+            scheduled_at: manageVisit.at,
+            visit_type: (manageVisit.meta?.visit_type as string) ?? '',
+            status: (manageVisit.meta?.status as VisitStatus) ?? 'planned',
+            notes: (manageVisit.meta?.notes as string | null) ?? null,
+          }}
+          client={getVisitClient(manageVisit)}
         />
       )}
     </div>
@@ -295,45 +302,48 @@ export function PlanningPage() {
 
 /* ═══ Month View ═══ */
 
-function MonthView({ currentDate, visits, onDayClick, onVisitClick }: {
-  currentDate: Date; visits: VisitRow[]; onDayClick: (d: Date) => void; onVisitClick: (v: VisitRow) => void
+function MonthView({ currentDate, events, onDayClick, onEventClick }: {
+  currentDate: Date
+  events: PlanEvent[]
+  onDayClick: (d: Date) => void
+  onEventClick: (e: PlanEvent) => void
 }) {
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
   const calStart = startOfWeek(monthStart, { locale: fr })
   const calEnd = endOfWeek(monthEnd, { locale: fr })
   const days = eachDayOfInterval({ start: calStart, end: calEnd })
-
   const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 
   return (
     <div className="overflow-hidden rounded-xl border border-immo-border-default">
-      {/* Header */}
       <div className="grid grid-cols-7 bg-immo-bg-card-hover">
         {WEEKDAYS.map((d) => (
           <div key={d} className="px-2 py-2 text-center text-[11px] font-semibold text-immo-text-muted">{d}</div>
         ))}
       </div>
-      {/* Grid */}
       <div className="grid grid-cols-7">
         {days.map((day) => {
           const inMonth = isSameMonth(day, currentDate)
-          const today = isToday(day)
-          const dayVisits = visits.filter(v => isSameDay(new Date(v.scheduled_at), day))
+          const isCurrent = isToday(day)
+          const dayEvents = events.filter(e => isSameDay(new Date(e.at), day))
 
           return (
             <div
               key={day.toISOString()}
               onClick={() => onDayClick(day)}
               className={`min-h-[100px] cursor-pointer border-b border-r border-immo-border-default p-1.5 transition-colors hover:bg-immo-bg-card-hover ${
-                inMonth ? 'bg-immo-bg-card' : 'bg-immo-bg-primary/30'
+                isCurrent
+                  ? 'bg-immo-accent-green/5 ring-1 ring-inset ring-immo-accent-green/30'
+                  : inMonth
+                    ? 'bg-immo-bg-card'
+                    : 'bg-immo-bg-primary/30'
               }`}
             >
-              {/* Day number */}
               <div className="mb-1 flex justify-end">
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                    today
+                    isCurrent
                       ? 'bg-immo-accent-green font-bold text-immo-bg-primary'
                       : inMonth
                         ? 'text-immo-text-primary'
@@ -343,24 +353,28 @@ function MonthView({ currentDate, visits, onDayClick, onVisitClick }: {
                   {format(day, 'd')}
                 </span>
               </div>
-              {/* Visit pills */}
+
               <div className="space-y-0.5">
-                {dayVisits.slice(0, 3).map((v) => {
-                  const st = VISIT_STATUS_LABELS[v.status]
+                {dayEvents.slice(0, 3).map((ev) => {
+                  const v = EVENT_VISUALS[ev.type]
+                  const Icon = v.icon
+                  const ring = urgencyRing(ev.type, ev.at, ev.meta?.status as string | undefined)
                   return (
                     <button
-                      key={v.id}
-                      onClick={(e) => { e.stopPropagation(); onVisitClick(v) }}
-                      className="flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-[10px] transition-colors hover:bg-immo-accent-green/10"
-                      style={{ borderLeft: `2px solid ${st?.color ?? '#7F96B7'}` }}
+                      key={ev.id}
+                      onClick={(e) => { e.stopPropagation(); onEventClick(ev) }}
+                      className={`flex w-full items-center gap-1 rounded border-l-2 px-1 py-0.5 text-left text-[10px] transition-colors hover:brightness-125 ${v.bg} ${v.border} ${ring}`}
                     >
-                      <span className="text-immo-text-muted">{format(new Date(v.scheduled_at), 'HH:mm')}</span>
-                      <span className="truncate text-immo-text-primary">{v.client_name.split(' ')[0]}</span>
+                      <Icon className={`h-2.5 w-2.5 shrink-0 ${v.text}`} />
+                      <span className="text-immo-text-muted">{format(new Date(ev.at), 'HH:mm')}</span>
+                      <span className="truncate text-immo-text-primary">
+                        {ev.client_name?.split(' ')[0] ?? ev.title}
+                      </span>
                     </button>
                   )
                 })}
-                {dayVisits.length > 3 && (
-                  <span className="block text-center text-[9px] text-immo-text-muted">+{dayVisits.length - 3}</span>
+                {dayEvents.length > 3 && (
+                  <span className="block text-center text-[9px] text-immo-text-muted">+{dayEvents.length - 3}</span>
                 )}
               </div>
             </div>
@@ -373,20 +387,29 @@ function MonthView({ currentDate, visits, onDayClick, onVisitClick }: {
 
 /* ═══ Week View ═══ */
 
-function WeekView({ currentDate, visits, onVisitClick }: {
-  currentDate: Date; visits: VisitRow[]; onVisitClick: (v: VisitRow) => void
+function WeekView({ currentDate, events, onEventClick }: {
+  currentDate: Date
+  events: PlanEvent[]
+  onEventClick: (e: PlanEvent) => void
 }) {
   const weekStart = startOfWeek(currentDate, { locale: fr })
   const weekDays = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) })
-  const hours = Array.from({ length: 12 }, (_, i) => i + 8) // 8h-19h
+  const hours = Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => i + HOUR_START)
+  const now = useNow()
+
+  // The "now" line only renders when today is within this week AND
+  // the clock is inside the 8-19 visible band.
+  const todayIdx = weekDays.findIndex(d => isSameDay(d, now))
+  const nowHour = now.getHours() + now.getMinutes() / 60
+  const showNowLine = todayIdx !== -1 && nowHour >= HOUR_START && nowHour <= HOUR_END + 1
+  const nowTopPx = showNowLine ? (nowHour - HOUR_START) * HOUR_PX : 0
 
   return (
     <div className="overflow-hidden rounded-xl border border-immo-border-default">
-      {/* Header */}
       <div className="grid grid-cols-[60px_repeat(7,1fr)] bg-immo-bg-card-hover">
         <div />
         {weekDays.map((d) => (
-          <div key={d.toISOString()} className="px-2 py-2 text-center">
+          <div key={d.toISOString()} className={`px-2 py-2 text-center ${isToday(d) ? 'bg-immo-accent-green/5' : ''}`}>
             <span className="text-[10px] text-immo-text-muted">{format(d, 'EEE', { locale: fr })}</span>
             <span className={`ml-1 text-xs font-semibold ${isToday(d) ? 'text-immo-accent-green' : 'text-immo-text-primary'}`}>
               {format(d, 'd')}
@@ -394,28 +417,42 @@ function WeekView({ currentDate, visits, onVisitClick }: {
           </div>
         ))}
       </div>
-      {/* Grid */}
-      <div className="max-h-[500px] overflow-y-auto">
+      <div className="relative max-h-[500px] overflow-y-auto">
+        {showNowLine && (
+          <div
+            className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
+            style={{ top: `${nowTopPx}px` }}
+          >
+            <span className="ml-[60px] -translate-y-1/2 rounded-full bg-immo-status-red px-1.5 py-0.5 text-[9px] font-bold text-white">
+              {format(now, 'HH:mm')}
+            </span>
+            <div className="h-px flex-1 bg-immo-status-red" />
+          </div>
+        )}
         {hours.map((hour) => (
           <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-t border-immo-border-default">
             <div className="px-2 py-2 text-right text-[10px] text-immo-text-muted">{hour}:00</div>
             {weekDays.map((day) => {
-              const cellVisits = visits.filter(v => {
-                const d = new Date(v.scheduled_at)
+              const cellEvents = events.filter(e => {
+                const d = new Date(e.at)
                 return isSameDay(d, day) && getHours(d) === hour
               })
               return (
-                <div key={day.toISOString()} className="min-h-[48px] border-l border-immo-border-default bg-immo-bg-card p-0.5">
-                  {cellVisits.map((v) => {
-                    const st = VISIT_STATUS_LABELS[v.status]
+                <div key={day.toISOString()} className={`min-h-[48px] border-l border-immo-border-default p-0.5 ${isToday(day) ? 'bg-immo-accent-green/5' : 'bg-immo-bg-card'}`}>
+                  {cellEvents.map((ev) => {
+                    const v = EVENT_VISUALS[ev.type]
+                    const Icon = v.icon
+                    const ring = urgencyRing(ev.type, ev.at, ev.meta?.status as string | undefined)
                     return (
                       <button
-                        key={v.id}
-                        onClick={() => onVisitClick(v)}
-                        className="mb-0.5 flex w-full items-center gap-1 rounded px-1 py-0.5 text-[10px] transition-colors hover:bg-immo-accent-green/10"
-                        style={{ borderLeft: `2px solid ${st?.color ?? '#7F96B7'}` }}
+                        key={ev.id}
+                        onClick={() => onEventClick(ev)}
+                        className={`mb-0.5 flex w-full items-center gap-1 rounded border-l-2 px-1 py-0.5 text-[10px] transition-colors hover:brightness-125 ${v.bg} ${v.border} ${ring}`}
                       >
-                        <span className="truncate text-immo-text-primary">{v.client_name.split(' ')[0]}</span>
+                        <Icon className={`h-2.5 w-2.5 shrink-0 ${v.text}`} />
+                        <span className="truncate text-immo-text-primary">
+                          {ev.client_name?.split(' ')[0] ?? ev.title}
+                        </span>
                       </button>
                     )
                   })}
@@ -431,54 +468,80 @@ function WeekView({ currentDate, visits, onVisitClick }: {
 
 /* ═══ Day View ═══ */
 
-function DayView({ currentDate, visits, onVisitClick }: {
-  currentDate: Date; visits: VisitRow[]; onVisitClick: (v: VisitRow) => void
+function DayView({ currentDate, events, onEventClick }: {
+  currentDate: Date
+  events: PlanEvent[]
+  onEventClick: (e: PlanEvent) => void
 }) {
-  const dayVisits = visits
-    .filter(v => isSameDay(new Date(v.scheduled_at), currentDate))
-    .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
+  const now = useNow()
+  const isCurrentDay = isSameDay(currentDate, now)
+  const dayEvents = events
+    .filter(e => isSameDay(new Date(e.at), currentDate))
+    .sort((a, b) => a.at.localeCompare(b.at))
 
-  if (dayVisits.length === 0) {
+  if (dayEvents.length === 0) {
     return (
       <EmptyState
         icon={<CalendarDays className="h-10 w-10" />}
-        title="Aucune visite"
-        description={`Pas de visite prévue le ${format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}`}
+        title="Aucun événement"
+        description={`Pas d'activité prévue le ${format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}`}
       />
     )
   }
 
+  // Index of the first future event — the "Maintenant" separator
+  // slips in just before it so past/future are visually split.
+  const firstFutureIdx = isCurrentDay
+    ? dayEvents.findIndex(e => new Date(e.at).getTime() > now.getTime())
+    : -1
+
   return (
     <div className="space-y-2">
-      {dayVisits.map((v) => {
-        const st = VISIT_STATUS_LABELS[v.status] ?? { label: v.status, color: '#7F96B7' }
-        const typeLabel = v.visit_type === 'on_site' ? 'Sur site' : v.visit_type === 'office' ? 'Bureau' : 'Virtuel'
+      {dayEvents.map((ev, idx) => {
+        const showNowLine = isCurrentDay && idx === firstFutureIdx
         return (
-          <button
-            key={v.id}
-            onClick={() => onVisitClick(v)}
-            className="flex w-full items-center gap-4 rounded-xl border border-immo-border-default bg-immo-bg-card p-4 text-left transition-colors hover:border-immo-border-glow/30"
-          >
-            {/* Time */}
-            <div className="w-[60px] shrink-0 text-center">
-              <p className="text-lg font-bold text-immo-text-primary">{format(new Date(v.scheduled_at), 'HH:mm')}</p>
-              <p className="text-[10px] text-immo-text-muted">{typeLabel}</p>
-            </div>
+          <div key={ev.id}>
+            {showNowLine && (
+              <div className="my-3 flex items-center gap-2">
+                <span className="rounded-full bg-immo-status-red px-2 py-0.5 text-[10px] font-bold text-white">
+                  Maintenant · {format(now, 'HH:mm')}
+                </span>
+                <div className="h-px flex-1 bg-immo-status-red/50" />
+              </div>
+            )}
+            {(() => {
+              const v = EVENT_VISUALS[ev.type]
+              const Icon = v.icon
+              const ring = urgencyRing(ev.type, ev.at, ev.meta?.status as string | undefined)
+              return (
+                <button
+                  onClick={() => onEventClick(ev)}
+                  className={`flex w-full items-center gap-4 rounded-xl border border-l-4 border-immo-border-default ${v.border} ${ring} bg-immo-bg-card p-4 text-left transition-colors hover:border-immo-border-glow/30`}
+                >
+                  <div className="w-[60px] shrink-0 text-center">
+                    <p className="text-lg font-bold text-immo-text-primary">{format(new Date(ev.at), 'HH:mm')}</p>
+                    <p className={`text-[10px] ${v.text}`}>{v.label}</p>
+                  </div>
 
-            <div className="h-10 w-px bg-immo-border-default" />
+                  <div className="h-10 w-px bg-immo-border-default" />
 
-            {/* Info */}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-immo-text-primary">{v.client_name}</p>
-              <p className="text-xs text-immo-text-muted">{v.client_phone} · Agent : {v.agent_name}</p>
-              {v.notes && <p className="mt-1 text-[11px] text-immo-text-muted">{v.notes}</p>}
-            </div>
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${v.bg}`}>
+                    <Icon className={`h-4 w-4 ${v.text}`} />
+                  </div>
 
-            <StatusBadge
-              label={st.label}
-              type={st.color === '#00D4A0' ? 'green' : st.color === '#FF4949' ? 'red' : st.color === '#FF9A1E' ? 'orange' : st.color === '#3782FF' ? 'blue' : 'muted'}
-            />
-          </button>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-immo-text-primary">
+                      {ev.title}{ev.client_name ? ` · ${ev.client_name}` : ''}
+                    </p>
+                    <p className="text-xs text-immo-text-muted">
+                      {ev.client_phone ? `${ev.client_phone} · ` : ''}
+                      {ev.agent_name ? `Agent : ${ev.agent_name}` : ''}
+                    </p>
+                  </div>
+                </button>
+              )
+            })()}
+          </div>
         )
       })}
     </div>

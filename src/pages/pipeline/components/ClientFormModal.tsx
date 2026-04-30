@@ -26,6 +26,7 @@ const schema = z.object({
   birth_date: z.string().optional(),
   nationality: z.string().optional(),
   source: z.string().min(1, 'Source obligatoire'),
+  marketing_campaign_id: z.string().optional(),
   interested_projects: z.array(z.string()).optional(),
   desired_unit_types: z.array(z.string()).optional(),
   confirmed_budget: z.string().optional(),
@@ -70,6 +71,24 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
     enabled: !!tenantId && isOpen,
   })
 
+  // Campaigns for the manual attribution dropdown — agencies often
+  // know "ce lead vient de la pub Facebook lancement" but the lead
+  // didn't come through the landing page tracking, so they need a
+  // way to attribute by hand.
+  const { data: marketingCampaigns = [] } = useQuery({
+    queryKey: ['tenant-marketing-campaigns', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('marketing_campaigns')
+        .select('id, name, status')
+        .eq('tenant_id', tenantId!)
+        .in('status', ['active', 'paused'])
+        .order('start_date', { ascending: false })
+      return (data ?? []) as Array<{ id: string; name: string; status: string }>
+    },
+    enabled: !!tenantId && isOpen,
+  })
+
   const {
     register,
     handleSubmit,
@@ -89,6 +108,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
       birth_date: '',
       nationality: 'Algérienne',
       source: '',
+      marketing_campaign_id: '',
       interested_projects: [],
       desired_unit_types: [],
       confirmed_budget: '',
@@ -113,6 +133,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
         birth_date: client.birth_date ?? '',
         nationality: client.nationality ?? 'Algérienne',
         source: client.source,
+        marketing_campaign_id: (client as { marketing_campaign_id?: string | null }).marketing_campaign_id ?? '',
         interested_projects: client.interested_projects ?? [],
         desired_unit_types: client.desired_unit_types ?? [],
         confirmed_budget: client.confirmed_budget != null ? String(client.confirmed_budget) : '',
@@ -138,6 +159,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
       birth_date: data.birth_date || null,
       nationality: data.nationality || 'Algérienne',
       source: data.source as ClientSource,
+      marketing_campaign_id: data.marketing_campaign_id || null,
       interested_projects: data.interested_projects?.length ? data.interested_projects : null,
       desired_unit_types: data.desired_unit_types?.length ? data.desired_unit_types : null,
       confirmed_budget: data.confirmed_budget ? Number(data.confirmed_budget) : null,
@@ -235,6 +257,23 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                   <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass} ${errors.source ? 'border-immo-status-red' : ''}`}>
                     <option value="">Selectionner la source</option>
                     {Object.entries(SOURCE_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                  </select>
+                )}
+              />
+            </Field>
+
+            <Field label="Campagne marketing">
+              <Controller
+                control={control}
+                name="marketing_campaign_id"
+                render={({ field }) => (
+                  <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
+                    <option value="">— Aucune —</option>
+                    {marketingCampaigns.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}{c.status === 'paused' ? ' (en pause)' : ''}
+                      </option>
+                    ))}
                   </select>
                 )}
               />

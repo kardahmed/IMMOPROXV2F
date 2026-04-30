@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Users, UserCheck, UserX, Plus, Eye, Pencil, Ban, Shield, MoreHorizontal,
+  CalendarDays, RotateCcw, Lock,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
@@ -10,8 +11,10 @@ import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import { nameToColor } from '@/lib/avatarColor'
 import {
-  KPICard, SearchInput, StatusBadge, PageSkeleton, Modal, ConfirmDialog,
+  KPICard, SearchInput, StatusBadge, PageSkeleton, Modal,
 } from '@/components/common'
+import { PutOnLeaveModal } from './components/PutOnLeaveModal'
+import { DeactivateAgentWizard } from './components/DeactivateAgentWizard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,8 +41,21 @@ interface AgentRow {
   role: UserRole
   status: string
   last_activity: string | null
+  leave_ends_at: string | null
+  leave_reason: string | null
+  backup_agent_id: string | null
   clients_count: number
   sales_count: number
+  tenant_id: string
+}
+
+type StatusKey = 'active' | 'on_leave' | 'suspended' | 'inactive'
+
+const STATUS_DEF: Record<StatusKey, { label: string; type: 'green' | 'orange' | 'red' | 'muted' }> = {
+  active:    { label: 'Actif',     type: 'green' },
+  on_leave:  { label: 'En congé',  type: 'orange' },
+  suspended: { label: 'Suspendu',  type: 'red' },
+  inactive:  { label: 'Inactif',   type: 'muted' },
 }
 
 export function AgentsPage() {
@@ -52,20 +68,25 @@ export function AgentsPage() {
   const [activeTab, setActiveTab] = useState<'agents' | 'permissions'>('agents')
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
-  const [deactivateId, setDeactivateId] = useState<string | null>(null)
+  const [leaveAgent, setLeaveAgent] = useState<AgentRow | null>(null)
+  const [deactivateAgent, setDeactivateAgent] = useState<AgentRow | null>(null)
 
   // Fetch agents with counts
   const { data: agents = [], isLoading } = useQuery({
     queryKey: ['agents-list', tenantId],
     queryFn: async () => {
-      const { data: users, error } = await supabase
+      const { data: usersRaw, error } = await supabase
         .from('users')
-        .select('id, first_name, last_name, email, phone, role, status, last_activity')
+        .select('id, first_name, last_name, email, phone, role, status, last_activity, leave_ends_at, leave_reason, backup_agent_id')
         .eq('tenant_id', tenantId!)
         .order('first_name')
       if (error) { handleSupabaseError(error); throw error }
 
-      const agentIds = (users ?? []).map(u => u.id)
+      // Cast through unknown because the leave_* columns added by
+      // migration 049 aren't yet in the generated types.
+      const users = (usersRaw ?? []) as unknown as Array<Omit<AgentRow, 'role' | 'clients_count' | 'sales_count' | 'tenant_id'> & { role: string }>
+
+      const agentIds = users.map(u => u.id)
       if (agentIds.length === 0) return []
 
       const [clientsRes, salesRes] = await Promise.all([
@@ -82,33 +103,59 @@ export function AgentsPage() {
         saleCounts.set(s.agent_id, (saleCounts.get(s.agent_id) ?? 0) + 1)
       }
 
-      return (users ?? []).map((u): AgentRow => ({
+      return users.map((u): AgentRow => ({
         ...u,
         role: u.role as UserRole,
         clients_count: clientCounts.get(u.id) ?? 0,
         sales_count: saleCounts.get(u.id) ?? 0,
+        tenant_id: tenantId!,
       }))
     },
     enabled: !!tenantId,
   })
 
-  // Deactivate agent
-  const deactivate = useMutation({
+  // Lightweight reactivate / suspend mutations — the heavy
+  // "deactivate with reassignment" path lives in
+  // DeactivateAgentWizard. These two are simple status flips.
+  const reactivate = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('users').update({ status: 'inactive' } as never).eq('id', id)
+      const { error } = await supabase
+        .from('users')
+        .update({
+          status: 'active',
+          leave_starts_at: null,
+          leave_ends_at: null,
+          backup_agent_id: null,
+          leave_reason: null,
+        } as never)
+        .eq('id', id)
       if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['agents-list'] })
-      toast.success('Agent désactivé')
-      setDeactivateId(null)
+      toast.success('Agent réactivé')
+    },
+  })
+
+  const suspend = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('users')
+        .update({ status: 'suspended' } as never)
+        .eq('id', id)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['agents-list'] })
+      toast.success('Agent suspendu — login bloqué')
     },
   })
 
   // KPIs
   const total = agents.length
   const active = agents.filter(a => a.status === 'active').length
-  const inactive = agents.filter(a => a.status === 'inactive').length
+  const onLeave = agents.filter(a => a.status === 'on_leave').length
+  const inactive = agents.filter(a => a.status === 'inactive' || a.status === 'suspended').length
   const totalClients = agents.reduce((s, a) => s + a.clients_count, 0)
 
   // Filter
@@ -143,10 +190,11 @@ export function AgentsPage() {
       ) : (
       <>
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <KPICard label="Total agents" value={total} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Actifs" value={active} accent="green" icon={<UserCheck className="h-4 w-4 text-immo-accent-green" />} />
-        <KPICard label="Inactifs" value={inactive} accent="red" icon={<UserX className="h-4 w-4 text-immo-status-red" />} />
+        <KPICard label="En congé" value={onLeave} accent="orange" icon={<CalendarDays className="h-4 w-4 text-immo-status-orange" />} />
+        <KPICard label="Inactifs / Suspendus" value={inactive} accent="red" icon={<UserX className="h-4 w-4 text-immo-status-red" />} />
         <KPICard label="Clients assignés" value={totalClients} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
       </div>
 
@@ -209,7 +257,17 @@ export function AgentsPage() {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      <StatusBadge label={a.status === 'active' ? 'Actif' : 'Inactif'} type={a.status === 'active' ? 'green' : 'red'} />
+                      <div className="flex flex-col gap-0.5">
+                        <StatusBadge
+                          label={STATUS_DEF[(a.status as StatusKey)]?.label ?? a.status}
+                          type={STATUS_DEF[(a.status as StatusKey)]?.type ?? 'muted'}
+                        />
+                        {a.status === 'on_leave' && a.leave_ends_at && (
+                          <span className="text-[10px] text-immo-text-muted">
+                            Retour {formatDistanceToNow(new Date(a.leave_ends_at), { addSuffix: true, locale: fr })}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-2">
                       <DropdownMenu>
@@ -223,9 +281,30 @@ export function AgentsPage() {
                           <DropdownMenuItem onClick={() => navigate(`/agents/${a.id}`)} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
                             <Pencil className="mr-2 h-3.5 w-3.5" /> Modifier
                           </DropdownMenuItem>
-                          {a.status === 'active' && canManageAgents && (
-                            <DropdownMenuItem onClick={() => setDeactivateId(a.id)} className="text-sm text-immo-status-red focus:bg-immo-status-red-bg">
-                              <Ban className="mr-2 h-3.5 w-3.5" /> Désactiver
+
+                          {canManageAgents && a.status === 'active' && (
+                            <>
+                              <DropdownMenuItem onClick={() => setLeaveAgent(a)} className="text-sm text-immo-status-orange focus:bg-immo-status-orange/5">
+                                <CalendarDays className="mr-2 h-3.5 w-3.5" /> Mettre en congé
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => suspend.mutate(a.id)} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
+                                <Lock className="mr-2 h-3.5 w-3.5" /> Suspendre
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setDeactivateAgent(a)} className="text-sm text-immo-status-red focus:bg-immo-status-red/5">
+                                <Ban className="mr-2 h-3.5 w-3.5" /> Désactiver…
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          {canManageAgents && (a.status === 'on_leave' || a.status === 'suspended') && (
+                            <DropdownMenuItem onClick={() => reactivate.mutate(a.id)} className="text-sm text-immo-accent-green focus:bg-immo-accent-green/5">
+                              <RotateCcw className="mr-2 h-3.5 w-3.5" /> Réactiver
+                            </DropdownMenuItem>
+                          )}
+
+                          {canManageAgents && a.status === 'inactive' && (
+                            <DropdownMenuItem onClick={() => reactivate.mutate(a.id)} className="text-sm text-immo-text-secondary focus:bg-immo-bg-card-hover">
+                              <RotateCcw className="mr-2 h-3.5 w-3.5" /> Réactiver le compte
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -242,16 +321,20 @@ export function AgentsPage() {
       {/* Create modal */}
       <CreateAgentModal isOpen={showCreate} onClose={() => setShowCreate(false)} tenantId={tenantId!} />
 
-      {/* Deactivate confirm */}
-      <ConfirmDialog
-        isOpen={!!deactivateId}
-        onClose={() => setDeactivateId(null)}
-        onConfirm={() => deactivateId && deactivate.mutate(deactivateId)}
-        title="Désactiver cet agent ?"
-        description="L'agent ne pourra plus se connecter. Ses données seront conservées."
-        confirmLabel="Désactiver"
-        confirmVariant="danger"
-        loading={deactivate.isPending}
+      {/* Put on leave — temporary absence with optional backup */}
+      <PutOnLeaveModal
+        isOpen={!!leaveAgent}
+        onClose={() => setLeaveAgent(null)}
+        agent={leaveAgent}
+      />
+
+      {/* Deactivate wizard — mass-reassign clients/tasks/visits before
+          flipping to inactive. Replaces the old single-click flip
+          which left the agent's portfolio orphaned. */}
+      <DeactivateAgentWizard
+        isOpen={!!deactivateAgent}
+        onClose={() => setDeactivateAgent(null)}
+        agent={deactivateAgent}
       />
       </>
       )}

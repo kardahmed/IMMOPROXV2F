@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Inbox } from 'lucide-react'
+import { Inbox, User } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Conversation } from '@/hooks/useInbox'
@@ -8,6 +8,8 @@ interface Props {
   conversations: Conversation[]
   selectedKey: string | null
   onSelect: (conv: Conversation) => void
+  /** When provided (admin view), each row shows the assigned agent. */
+  agentMap?: Map<string, string>
 }
 
 function formatPhone(phone: string): string {
@@ -23,7 +25,7 @@ function initials(label: string): string {
     .join('')
 }
 
-export function ConversationList({ conversations, selectedKey, onSelect }: Props) {
+export function ConversationList({ conversations, selectedKey, onSelect, agentMap }: Props) {
   const { t } = useTranslation()
 
   if (conversations.length === 0) {
@@ -42,6 +44,7 @@ export function ConversationList({ conversations, selectedKey, onSelect }: Props
         const isSelected = conv.key === selectedKey
         const subtitle = conv.lastMessage.body_text ?? ''
         const time = formatDistanceToNow(new Date(conv.lastMessageAt), { locale: fr, addSuffix: false })
+        const agentName = agentMap && conv.agentId ? agentMap.get(conv.agentId) : null
 
         return (
           <li key={conv.key}>
@@ -78,6 +81,12 @@ export function ConversationList({ conversations, selectedKey, onSelect }: Props
                     </span>
                   )}
                 </div>
+                {agentName && (
+                  <div className="mt-1 flex items-center gap-1 text-[10px] text-immo-text-muted">
+                    <User className="h-2.5 w-2.5" />
+                    <span className="truncate">{agentName}</span>
+                  </div>
+                )}
               </div>
             </button>
           </li>

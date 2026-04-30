@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Megaphone, Calendar, Pause, Play, Check, Trash2, Save, ChevronDown, ChevronUp, Receipt } from 'lucide-react'
+import { Plus, Megaphone, Calendar, Pause, Play, Check, Trash2, Save, ChevronDown, ChevronUp, Receipt, AlertTriangle, TrendingUp, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { LoadingSpinner, StatusBadge, Modal } from '@/components/common'
@@ -28,6 +28,7 @@ interface Campaign {
   id: string; name: string; source: string; start_date: string; end_date: string | null
   planned_budget: number; target_leads: number; status: string; notes: string | null
   project_id: string | null; projects?: { name: string } | null
+  tracking_code: string | null
 }
 
 interface CampaignExpense {
@@ -41,6 +42,7 @@ export function CampaignsTab() {
   const [showCreate, setShowCreate] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showAddExpense, setShowAddExpense] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'completed'>('all')
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['marketing-campaigns', tenantId],
@@ -60,6 +62,63 @@ export function CampaignsTab() {
     },
     enabled: !!tenantId,
   })
+
+  // Per-campaign attribution: how many leads / visites / ventes /
+  // revenue did each campaign actually generate? Joined client-side
+  // so we don't fan out a request per campaign.
+  const { data: attribution } = useQuery({
+    queryKey: ['campaigns-attribution', tenantId],
+    queryFn: async () => {
+      const [leadsRes, visitsRes, salesRes] = await Promise.all([
+        supabase.from('clients')
+          .select('id, marketing_campaign_id')
+          .eq('tenant_id', tenantId!)
+          .is('deleted_at', null)
+          .not('marketing_campaign_id', 'is', null),
+        supabase.from('visits')
+          .select('id, client_id, status, clients!inner(marketing_campaign_id)')
+          .eq('tenant_id', tenantId!)
+          .is('deleted_at', null)
+          .in('status', ['confirmed', 'completed']),
+        supabase.from('sales')
+          .select('id, final_price, client_id, clients!inner(marketing_campaign_id)')
+          .eq('tenant_id', tenantId!)
+          .eq('status', 'active'),
+      ])
+      return {
+        leads: (leadsRes.data ?? []) as unknown as Array<{ id: string; marketing_campaign_id: string }>,
+        visits: (visitsRes.data ?? []) as unknown as Array<{ id: string; clients: { marketing_campaign_id: string | null } }>,
+        sales: (salesRes.data ?? []) as unknown as Array<{ id: string; final_price: number | null; clients: { marketing_campaign_id: string | null } }>,
+      }
+    },
+    enabled: !!tenantId,
+  })
+
+  // Build per-campaign metric map: cid → {leads, visits, sales, revenue}
+  const metricsByCampaign = useMemo(() => {
+    const map = new Map<string, { leads: number; visits: number; sales: number; revenue: number }>()
+    for (const l of attribution?.leads ?? []) {
+      const m = map.get(l.marketing_campaign_id) ?? { leads: 0, visits: 0, sales: 0, revenue: 0 }
+      m.leads++
+      map.set(l.marketing_campaign_id, m)
+    }
+    for (const v of attribution?.visits ?? []) {
+      const cid = v.clients?.marketing_campaign_id
+      if (!cid) continue
+      const m = map.get(cid) ?? { leads: 0, visits: 0, sales: 0, revenue: 0 }
+      m.visits++
+      map.set(cid, m)
+    }
+    for (const s of attribution?.sales ?? []) {
+      const cid = s.clients?.marketing_campaign_id
+      if (!cid) continue
+      const m = map.get(cid) ?? { leads: 0, visits: 0, sales: 0, revenue: 0 }
+      m.sales++
+      m.revenue += s.final_price ?? 0
+      map.set(cid, m)
+    }
+    return map
+  }, [attribution])
 
   const toggleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -93,30 +152,56 @@ export function CampaignsTab() {
   const totalBudget = campaigns.reduce((s, c) => s + (c.planned_budget ?? 0), 0)
   const totalSpent = allExpenses.reduce((s, e) => s + e.amount, 0)
 
+  const filteredCampaigns = statusFilter === 'all'
+    ? campaigns
+    : campaigns.filter(c => c.status === statusFilter)
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header + status filter */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
-          <p className="text-xs text-immo-text-muted">{campaigns.length} campagne(s)</p>
+          <p className="text-xs text-immo-text-muted">{filteredCampaigns.length} / {campaigns.length} campagne(s)</p>
           <div className="flex gap-3 text-xs">
-            <span className="text-immo-text-muted">Budget total: <strong className="text-immo-text-primary">{formatPriceCompact(totalBudget)} DA</strong></span>
-            <span className="text-immo-text-muted">Depense: <strong className="text-immo-accent-green">{formatPriceCompact(totalSpent)} DA</strong></span>
+            <span className="text-immo-text-muted">Budget total : <strong className="text-immo-text-primary">{formatPriceCompact(totalBudget)} DZD</strong></span>
+            <span className="text-immo-text-muted">Dépensé : <strong className="text-immo-accent-green">{formatPriceCompact(totalSpent)} DZD</strong></span>
           </div>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="bg-immo-accent-green text-white text-xs">
-          <Plus className="mr-1.5 h-3.5 w-3.5" /> Nouvelle campagne
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 rounded-lg border border-immo-border-default p-0.5">
+            {(['all', 'active', 'paused', 'completed'] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`rounded-md px-2.5 py-1 text-[11px] font-medium ${
+                  statusFilter === s ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted'
+                }`}
+              >
+                {s === 'all' ? 'Toutes' : s === 'active' ? 'Actives' : s === 'paused' ? 'En pause' : 'Terminées'}
+              </button>
+            ))}
+          </div>
+          <Button onClick={() => setShowCreate(true)} className="bg-immo-accent-green text-xs text-white">
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Nouvelle campagne
+          </Button>
+        </div>
       </div>
 
       {/* Campaign list with expandable expenses */}
       <div className="space-y-4">
-        {campaigns.map(c => {
+        {filteredCampaigns.map(c => {
           const st = STATUS_MAP[c.status] ?? STATUS_MAP.active
           const expenses = allExpenses.filter(e => e.campaign_id === c.id)
           const spent = expenses.reduce((s, e) => s + e.amount, 0)
           const budgetPct = c.planned_budget > 0 ? (spent / c.planned_budget) * 100 : 0
+          const overBudget = budgetPct >= 90
           const isExpanded = expandedId === c.id
+
+          // Real ROI metrics from attribution map.
+          const metrics = metricsByCampaign.get(c.id) ?? { leads: 0, visits: 0, sales: 0, revenue: 0 }
+          const cpl = metrics.leads > 0 ? spent / metrics.leads : 0
+          const roi = spent > 0 ? ((metrics.revenue - spent) / spent) * 100 : 0
+          const leadsPct = c.target_leads > 0 ? (metrics.leads / c.target_leads) * 100 : 0
 
           return (
             <div key={c.id} className="rounded-xl border border-immo-border-default bg-immo-bg-card overflow-hidden">
@@ -154,12 +239,72 @@ export function CampaignsTab() {
                   </div>
                 </div>
 
+                {/* Tracking code + budget over-90% alert */}
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {c.tracking_code && (
+                    <span className="rounded-md border border-immo-border-default bg-immo-bg-primary px-2 py-0.5 font-mono text-[10px] text-immo-text-secondary">
+                      utm_campaign = {c.tracking_code}
+                    </span>
+                  )}
+                  {overBudget && c.status === 'active' && (
+                    <span className="flex items-center gap-1 rounded-full bg-immo-status-red/10 px-2 py-0.5 text-[10px] font-semibold text-immo-status-red">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Budget dépassé à {budgetPct.toFixed(0)}%
+                    </span>
+                  )}
+                </div>
+
+                {/* Real ROI metrics — leads / visits / sales / revenue / ROI% */}
+                <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  <div className="rounded-lg bg-immo-bg-primary p-2">
+                    <p className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-immo-text-muted">
+                      <Users className="h-2.5 w-2.5" /> Leads
+                    </p>
+                    <p className="text-sm font-bold text-immo-text-primary">
+                      {metrics.leads}
+                      {c.target_leads > 0 && <span className="ml-1 text-[10px] font-normal text-immo-text-muted">/ {c.target_leads}</span>}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-immo-bg-primary p-2">
+                    <p className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-immo-text-muted">
+                      <Calendar className="h-2.5 w-2.5" /> Visites
+                    </p>
+                    <p className="text-sm font-bold text-immo-text-primary">{metrics.visits}</p>
+                  </div>
+                  <div className="rounded-lg bg-immo-bg-primary p-2">
+                    <p className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-immo-text-muted">
+                      <Check className="h-2.5 w-2.5" /> Ventes
+                    </p>
+                    <p className="text-sm font-bold text-immo-text-primary">{metrics.sales}</p>
+                  </div>
+                  <div className="rounded-lg bg-immo-bg-primary p-2">
+                    <p className="text-[9px] uppercase tracking-wider text-immo-text-muted">CA généré</p>
+                    <p className="text-sm font-bold text-immo-accent-green">{formatPriceCompact(metrics.revenue)} DZD</p>
+                  </div>
+                  <div className="rounded-lg bg-immo-bg-primary p-2">
+                    <p className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-immo-text-muted">
+                      <TrendingUp className="h-2.5 w-2.5" /> ROI
+                    </p>
+                    <p className={`text-sm font-bold ${roi > 0 ? 'text-immo-accent-green' : roi < 0 ? 'text-immo-status-red' : 'text-immo-text-muted'}`}>
+                      {spent > 0 ? `${roi.toFixed(0)}%` : '—'}
+                    </p>
+                    {cpl > 0 && (
+                      <p className="text-[9px] text-immo-text-muted">CPL : {formatPriceCompact(cpl)} DZD</p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Budget bar */}
                 <div className="mb-3">
-                  <div className="flex items-center justify-between text-[10px] mb-1">
-                    <span className="text-immo-text-muted">Budget consomme</span>
+                  <div className="mb-1 flex items-center justify-between text-[10px]">
+                    <span className="text-immo-text-muted">
+                      Budget consommé
+                      {c.target_leads > 0 && (
+                        <span className="ml-1.5 text-immo-text-muted">· Leads {leadsPct.toFixed(0)}% de l'objectif</span>
+                      )}
+                    </span>
                     <span className="font-semibold text-immo-text-primary">
-                      {formatPriceCompact(spent)} / {formatPriceCompact(c.planned_budget)} DA ({budgetPct.toFixed(0)}%)
+                      {formatPriceCompact(spent)} / {formatPriceCompact(c.planned_budget)} DZD ({budgetPct.toFixed(0)}%)
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-immo-bg-primary">
@@ -248,6 +393,15 @@ export function CampaignsTab() {
   )
 }
 
+function slugifyTrackingCode(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40)
+}
+
 function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState('')
   const [source, setSource] = useState('facebook_ads')
@@ -256,7 +410,14 @@ function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string;
   const [budget, setBudget] = useState('')
   const [targetLeads, setTargetLeads] = useState('')
   const [projectId, setProjectId] = useState('')
+  const [trackingCode, setTrackingCode] = useState('')
+  const [trackingTouched, setTrackingTouched] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Auto-derive tracking_code from the name unless the user has typed
+  // their own. Lets agencies type "Marina Bay Phase 2 - Facebook" and
+  // get "marina-bay-phase-2-facebook" without hand-rolling slugs.
+  const effectiveTrackingCode = trackingTouched ? trackingCode : slugifyTrackingCode(name)
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects-simple', tenantId],
@@ -273,9 +434,10 @@ function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string;
       tenant_id: tenantId, name: name.trim(), source, start_date: startDate,
       end_date: endDate || null, planned_budget: Number(budget) || 0,
       target_leads: Number(targetLeads) || 0, project_id: projectId || null, status: 'active',
+      tracking_code: effectiveTrackingCode || null,
     } as never)
     setSaving(false)
-    if (error) { toast.error('Erreur'); return }
+    if (error) { toast.error(error.message ?? 'Erreur'); return }
     toast.success('Campagne créée')
     onSaved()
   }
@@ -314,7 +476,7 @@ function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string;
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs text-immo-text-muted">Budget prevu (DA)</label>
+            <label className="mb-1 block text-xs text-immo-text-muted">Budget prévu (DZD)</label>
             <Input type="number" value={budget} onChange={e => setBudget(e.target.value)} placeholder="500000" className="text-sm" />
           </div>
           <div>
@@ -322,8 +484,22 @@ function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string;
             <Input type="number" value={targetLeads} onChange={e => setTargetLeads(e.target.value)} placeholder="50" className="text-sm" />
           </div>
         </div>
+        <div>
+          <label className="mb-1 block text-xs text-immo-text-muted">
+            Code de suivi <span className="text-immo-text-muted/70">(utm_campaign)</span>
+          </label>
+          <Input
+            value={effectiveTrackingCode}
+            onChange={e => { setTrackingTouched(true); setTrackingCode(slugifyTrackingCode(e.target.value)) }}
+            placeholder="marina-bay-fb"
+            className="font-mono text-xs"
+          />
+          <p className="mt-1 text-[10px] text-immo-text-muted">
+            Ajoutez <code className="font-mono">?utm_campaign={effectiveTrackingCode || 'votre-code'}</code> à l'URL de votre landing page pour attribuer chaque lead à cette campagne.
+          </p>
+        </div>
         <Button onClick={handleSave} disabled={saving} className="w-full bg-immo-accent-green text-white">
-          <Save className="mr-1.5 h-4 w-4" /> {saving ? 'Creation...' : 'Creer la campagne'}
+          <Save className="mr-1.5 h-4 w-4" /> {saving ? 'Création…' : 'Créer la campagne'}
         </Button>
       </div>
     </Modal>
@@ -344,11 +520,17 @@ function AddExpenseToCampaignModal({ tenantId, campaignId, onClose, onSaved }: {
     if (!amount || Number(amount) <= 0) { toast.error('Montant requis'); return }
     setSaving(true)
     const { error } = await supabase.from('marketing_expenses').insert({
-      tenant_id: tenantId, category, subcategory: subcategory || null, amount: Number(amount),
-      expense_date: date, campaign_id: campaignId, notes: notes || null,
+      tenant_id: tenantId,
+      scope: 'campaign',  // mandatory after migration 048
+      category,
+      subcategory: subcategory || null,
+      amount: Number(amount),
+      expense_date: date,
+      campaign_id: campaignId,
+      notes: notes || null,
     } as never)
     setSaving(false)
-    if (error) { toast.error('Erreur'); return }
+    if (error) { toast.error(error.message ?? 'Erreur'); return }
     toast.success('Dépense ajoutée à la campagne')
     onSaved()
   }

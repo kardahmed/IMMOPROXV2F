@@ -62,7 +62,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { slug, full_name, phone, email, budget, unit_type, message, source_utm, event_id, custom_answers } = body as {
+    const {
+      slug, full_name, phone, email, budget, unit_type, message,
+      source_utm, utm_campaign, event_id, custom_answers,
+    } = body as {
       slug: string
       full_name: string
       phone: string
@@ -71,6 +74,9 @@ Deno.serve(async (req) => {
       unit_type?: string
       message?: string
       source_utm?: string
+      /** utm_campaign param from the landing page URL — resolved to
+       *  marketing_campaigns.id via tracking_code. */
+      utm_campaign?: string
       event_id?: string
       custom_answers?: Record<string, string>
     }
@@ -140,7 +146,20 @@ Deno.serve(async (req) => {
       if (agent) assignedAgentId = agent.id
     }
 
-    // 4. Create client in pipeline
+    // 4. Resolve utm_campaign tracking_code → campaign id (so the
+    //    lead is linked to the campaign that generated it for ROI math).
+    let marketingCampaignId: string | null = null
+    if (utm_campaign) {
+      const { data: camp } = await supabase
+        .from('marketing_campaigns')
+        .select('id')
+        .eq('tenant_id', page.tenant_id)
+        .ilike('tracking_code', utm_campaign.trim())
+        .maybeSingle()
+      marketingCampaignId = (camp as { id?: string } | null)?.id ?? null
+    }
+
+    // 5. Create client in pipeline
     const clientSource = source_utm || page.default_source || 'landing_page'
     const { data: newClient, error: clientErr } = await supabase
       .from('clients')
@@ -154,6 +173,7 @@ Deno.serve(async (req) => {
         desired_unit_types: unit_type ? [unit_type] : null,
         interested_projects: page.project_id ? [page.project_id] : null,
         source: clientSource,
+        marketing_campaign_id: marketingCampaignId,
         pipeline_stage: 'accueil',
         interest_level: 'medium',
         notes: buildNotes(message, custom_answers, page.custom_questions),
