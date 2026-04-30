@@ -1,4 +1,5 @@
-import { useState, lazy, Suspense } from 'react'
+import { lazy, Suspense } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, MessageCircle, Calendar, ToggleLeft, Gauge, Bot } from 'lucide-react'
 // Lazy-load sections — only the active section is rendered, no point bundling all 13 up-front
@@ -64,7 +65,13 @@ const SECTION_LABELS: Record<Section, string> = {
 
 export function SettingsPage() {
   const { t } = useTranslation()
-  const [section, setSection] = useState<Section>('company')
+  // Audit (MED): the active section was held in local state, so F5
+  // and deep-link both reset to "company". Sync with the URL query
+  // string so /settings?section=branding bookmarks correctly.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlSection = searchParams.get('section') as Section | null
+  const section: Section = urlSection && SECTION_KEYS.includes(urlSection) ? urlSection : 'company'
+  const setSection = (s: Section) => setSearchParams({ section: s }, { replace: true })
 
   return (
     <div className="flex gap-6">

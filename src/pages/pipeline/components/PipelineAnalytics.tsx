@@ -32,16 +32,48 @@ export function PipelineAnalytics() {
     queryFn: async () => {
       const [clientsRes, historyRes, visitsRes] = await Promise.all([
         supabase.from('clients').select('id, pipeline_stage, created_at, last_contact_at').eq('tenant_id', tenantId!),
-        supabase.from('history').select('client_id, type, created_at').eq('tenant_id', tenantId!),
+        supabase.from('history').select('client_id, type, created_at, metadata').eq('tenant_id', tenantId!),
         supabase.from('visits').select('client_id, status').eq('tenant_id', tenantId!),
       ])
 
       const clients = (clientsRes.data ?? []) as Array<{ id: string; pipeline_stage: string; created_at: string; last_contact_at: string | null }>
-      const history = (historyRes.data ?? []) as Array<{ client_id: string; type: string; created_at: string }>
+      const history = (historyRes.data ?? []) as Array<{ client_id: string; type: string; created_at: string; metadata: Record<string, unknown> | null }>
       const visits = (visitsRes.data ?? []) as Array<{ client_id: string; status: string }>
 
       const now = Date.now()
       const fiveDaysAgo = now - 5 * 86400000
+
+      // Audit (HIGH): proper conversion rate via stage_change history.
+      // The previous version counted clients CURRENTLY past the stage,
+      // missing those who passed through and were later lost — which
+      // strongly under-estimated early-stage conversion. We now build
+      // a "did this client ever reach stage X?" set per stage.
+      const everReached: Record<string, Set<string>> = {}
+      for (const stage of STAGES_ORDER) everReached[stage] = new Set<string>()
+      // Seed: every client who is currently AT or PAST a stage has
+      // reached it.
+      for (const c of clients) {
+        const idx = STAGES_ORDER.indexOf(c.pipeline_stage as PipelineStage)
+        for (let i = 0; i <= idx; i++) {
+          everReached[STAGES_ORDER[i]].add(c.id)
+        }
+      }
+      // Then layer history.stage_change events: if the metadata
+      // contains the previous stage, we know the client also passed
+      // through it (even if they're now back somewhere else, e.g.
+      // 'perdue').
+      for (const h of history) {
+        if (h.type !== 'stage_change') continue
+        const meta = h.metadata ?? {}
+        const fromStage = (meta as { from?: string }).from
+        const toStage = (meta as { to?: string }).to
+        if (fromStage && STAGES_ORDER.includes(fromStage as PipelineStage)) {
+          everReached[fromStage].add(h.client_id)
+        }
+        if (toStage && STAGES_ORDER.includes(toStage as PipelineStage)) {
+          everReached[toStage].add(h.client_id)
+        }
+      }
 
       const stats: StageStats[] = STAGES_ORDER.map((stage, idx) => {
         const stageInfo = PIPELINE_STAGES[stage]
@@ -70,16 +102,16 @@ export function PipelineAnalytics() {
           return new Date(c.last_contact_at).getTime() < fiveDaysAgo
         }).length
 
-        // Conversion rate: clients who moved past this stage / clients who were in this stage
+        // Real conversion rate: of all clients who EVER reached this
+        // stage, how many also reached the next stage? Uses the
+        // everReached map built above so we count clients who later
+        // bounced (e.g. 'perdue').
         const nextStage = STAGES_ORDER[idx + 1]
         let conversionRate = 0
-        if (nextStage && idx < 7) {
-          const movedPast = clients.filter(c => {
-            const cIdx = STAGES_ORDER.indexOf(c.pipeline_stage as PipelineStage)
-            return cIdx > idx
-          }).length
-          const totalWhoWereHere = stageClients.length + movedPast
-          conversionRate = totalWhoWereHere > 0 ? (movedPast / totalWhoWereHere) * 100 : 0
+        if (nextStage && idx < STAGES_ORDER.length - 1) {
+          const here = everReached[stage].size
+          const next = everReached[nextStage].size
+          conversionRate = here > 0 ? (next / here) * 100 : 0
         }
 
         return {
