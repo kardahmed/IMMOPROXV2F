@@ -15,10 +15,20 @@ interface ClientFilters {
   search?: string
   isPriority?: boolean
   page?: number
-  pageSize?: number
+  /**
+   * Number of rows per page, or 'all' to fetch every client of the
+   * tenant in a single round-trip. The kanban / pipeline view needs
+   * `'all'` so its 9 columns aren't capped at the default 50.
+   */
+  pageSize?: number | 'all'
 }
 
 const DEFAULT_PAGE_SIZE = 50
+
+// Hard ceiling when `pageSize: 'all'` is requested — PostgREST caps
+// itself anyway, but explicit bound makes the intent clear and
+// prevents a runaway query if a tenant somehow hit 100k clients.
+const ALL_LIMIT = 10_000
 
 /** Escape special PostgREST filter characters to prevent filter injection */
 function sanitizeSearch(input: string): string {
@@ -47,11 +57,14 @@ export function useClients(filters?: ClientFilters) {
         query = query.or(`full_name.ilike.%${s}%,phone.ilike.%${s}%,email.ilike.%${s}%`)
       }
 
-      // Pagination
+      // Pagination — `'all'` skips the page math and caps at ALL_LIMIT
+      // so views like the Kanban can render every column without
+      // tripping over the default 50-row page size.
+      const ps = filters?.pageSize ?? DEFAULT_PAGE_SIZE
+      const isAll = ps === 'all'
       const page = filters?.page ?? 0
-      const pageSize = filters?.pageSize ?? DEFAULT_PAGE_SIZE
-      const from = page * pageSize
-      const to = from + pageSize - 1
+      const from = isAll ? 0 : page * (ps as number)
+      const to = isAll ? ALL_LIMIT - 1 : from + (ps as number) - 1
 
       const { data, error, count } = await query
         .order('created_at', { ascending: false })

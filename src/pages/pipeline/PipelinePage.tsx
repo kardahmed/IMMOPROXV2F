@@ -56,7 +56,10 @@ type ViewMode = 'kanban' | 'cards' | 'table' | 'analytics'
 
 export function PipelinePage() {
   const navigate = useNavigate()
-  const { clients: rawClients, isLoading: loadingClients, updateClientStage } = useClients()
+  // The Kanban renders every active client across 9 stage columns —
+  // the default page size of 50 was capping the entire pipeline at
+  // 50 rows total. Pass 'all' so each column gets its true count.
+  const { clients: rawClients, isLoading: loadingClients, updateClientStage } = useClients({ pageSize: 'all' })
   const { generateForStage } = useAutoTasks()
   const { data: stats, isLoading: loadingStats } = usePipelineStats()
   const { canManageProjects } = usePermissions()
