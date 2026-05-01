@@ -42,10 +42,10 @@ export function InboxPage() {
   const agentMap = useMemo(() => {
     const m = new Map<string, string>()
     for (const a of agents) {
-      m.set(a.id, `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim() || 'Agent')
+      m.set(a.id, `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim() || t('inbox.agent_default'))
     }
     return m
-  }, [agents])
+  }, [agents, t])
 
   const filteredConversations = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -104,10 +104,10 @@ export function InboxPage() {
       : t('inbox.subtitle', { count: conversations.length })
 
   const agentOptions = [
-    { value: 'all', label: 'Tous les agents' },
+    { value: 'all', label: t('inbox.filter_all_agents') },
     ...agents.map((a) => ({
       value: a.id,
-      label: `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim() || 'Agent',
+      label: `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim() || t('inbox.agent_default'),
     })),
   ]
 
@@ -131,14 +131,14 @@ export function InboxPage() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher nom ou téléphone…"
+                  placeholder={t('inbox.search_placeholder')}
                   className="h-8 w-full rounded-md border border-immo-border-default bg-immo-bg-primary pl-7 pr-7 text-xs text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:outline-none"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    aria-label="Effacer"
+                    aria-label={t('inbox.clear_search')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-immo-text-muted hover:text-immo-text-primary"
                   >
                     <X className="h-3 w-3" />
@@ -156,7 +156,7 @@ export function InboxPage() {
                       : 'border border-immo-border-default text-immo-text-muted hover:text-immo-text-primary'
                   }`}
                 >
-                  Tout
+                  {t('inbox.filter_all')}
                 </button>
                 <button
                   type="button"
@@ -167,7 +167,7 @@ export function InboxPage() {
                       : 'border border-immo-border-default text-immo-text-muted hover:text-immo-text-primary'
                   }`}
                 >
-                  Non lu
+                  {t('inbox.filter_unread')}
                   {totalUnread > 0 && (
                     <span className="rounded-full bg-immo-accent-green px-1.5 text-[10px] font-bold text-white">
                       {totalUnread}
@@ -178,7 +178,7 @@ export function InboxPage() {
                 {isAdmin && agents.length > 0 && (
                   <div className="ml-auto">
                     <FilterDropdown
-                      label="Agent"
+                      label={t('inbox.filter_agent')}
                       options={agentOptions}
                       value={agentFilter}
                       onChange={setAgentFilter}
@@ -200,7 +200,7 @@ export function InboxPage() {
             {/* Footer count — useful when filters narrow the list */}
             {(search || agentFilter !== 'all' || readFilter !== 'all') && (
               <div className="border-t border-immo-border-default px-3 py-2 text-[11px] text-immo-text-muted">
-                {totalConversations} sur {conversations.length} conversation{conversations.length > 1 ? 's' : ''}
+                {t('inbox.list_count', { shown: totalConversations, total: conversations.length })}
               </div>
             )}
           </div>

@@ -194,11 +194,11 @@ export function AgentsPage() {
       <>
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <KPICard label="Total agents" value={total} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
-        <KPICard label="Actifs" value={active} accent="green" icon={<UserCheck className="h-4 w-4 text-immo-accent-green" />} />
-        <KPICard label="En congé" value={onLeave} accent="orange" icon={<CalendarDays className="h-4 w-4 text-immo-status-orange" />} />
-        <KPICard label="Inactifs / Suspendus" value={inactive} accent="red" icon={<UserX className="h-4 w-4 text-immo-status-red" />} />
-        <KPICard label="Clients assignés" value={totalClients} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
+        <KPICard label={t('agents_page.total_agents')} value={total} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
+        <KPICard label={t('agents_page.active_agents')} value={active} accent="green" icon={<UserCheck className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label={t('agents_page.on_leave_agents')} value={onLeave} accent="orange" icon={<CalendarDays className="h-4 w-4 text-immo-status-orange" />} />
+        <KPICard label={t('agents_page.inactive_agents')} value={inactive} accent="red" icon={<UserX className="h-4 w-4 text-immo-status-red" />} />
+        <KPICard label={t('agents_page.assigned_clients')} value={totalClients} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
       </div>
 
       {/* Plan limit banner */}
@@ -208,7 +208,7 @@ export function AgentsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-3">
-        <SearchInput placeholder="Rechercher un agent..." value={search} onChange={setSearch} className="w-[260px]" />
+        <SearchInput placeholder={t('agents_page.search_agent')} value={search} onChange={setSearch} className="w-[260px]" />
         {canManageAgents && (
           <Button
             onClick={() => setShowCreate(true)}

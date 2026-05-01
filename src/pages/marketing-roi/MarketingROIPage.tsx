@@ -1,4 +1,5 @@
 import { useState, lazy, Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DollarSign, BarChart3, Megaphone, Mail, FileText } from 'lucide-react'
 import { PageHeader } from '@/components/common'
 // Lazy-load tabs — only the active tab is rendered, so no point downloading all 5 up-front
@@ -15,21 +16,22 @@ function TabFallback() {
 type Tab = 'expenses' | 'analytics' | 'campaigns' | 'email_campaigns' | 'email_templates'
 
 export function MarketingROIPage() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('analytics')
 
   const TABS: Array<{ key: Tab; label: string; icon: typeof DollarSign }> = [
-    { key: 'analytics', label: 'Analytique ROI', icon: BarChart3 },
-    { key: 'expenses', label: 'Budgets & Dépenses', icon: DollarSign },
-    { key: 'campaigns', label: 'Campagnes Ads', icon: Megaphone },
-    { key: 'email_campaigns', label: 'Email Marketing', icon: Mail },
-    { key: 'email_templates', label: 'Templates Email', icon: FileText },
+    { key: 'analytics', label: t('marketing_roi.tab_analytics'), icon: BarChart3 },
+    { key: 'expenses', label: t('marketing_roi.tab_expenses'), icon: DollarSign },
+    { key: 'campaigns', label: t('marketing_roi.tab_campaigns'), icon: Megaphone },
+    { key: 'email_campaigns', label: t('marketing_roi.tab_email_campaigns'), icon: Mail },
+    { key: 'email_templates', label: t('marketing_roi.tab_email_templates'), icon: FileText },
   ]
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Marketing & ROI"
-        subtitle="Dépenses, campagnes, ROI réel par source et par campagne"
+        title={t('marketing_roi.title')}
+        subtitle={t('marketing_roi.subtitle')}
       />
 
       {/* Tabs */}
