@@ -17,7 +17,7 @@ export function HeroSection({ title, content, accent }: { title?: string; conten
           <source src={content.background_video} type="video/mp4" />
         </video>
       ) : content.background_image ? (
-        <img src={content.background_image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={content.background_image} alt="" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}15, ${accent}05)` }} />
       )}

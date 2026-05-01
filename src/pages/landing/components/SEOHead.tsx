@@ -49,9 +49,30 @@ export function SEOHead({ title, description, ogImage, slug, tenantName }: SEOHe
     }
     scriptEl.textContent = JSON.stringify(schema)
 
+    // Audit (MED): preconnect to the hosts the page WILL hit so the
+    // DNS / TLS handshake overlaps with HTML parsing instead of
+    // queuing behind the LCP image. ~100-200ms shaved off Lighthouse
+    // mobile.
+    const preconnectHosts = [
+      'https://lbnqccsebwiifxcucflg.supabase.co',
+      'https://connect.facebook.net',
+      'https://www.googletagmanager.com',
+    ]
+    const preconnectLinks: HTMLLinkElement[] = []
+    for (const href of preconnectHosts) {
+      if (document.querySelector(`link[rel="preconnect"][href="${href}"]`)) continue
+      const link = document.createElement('link')
+      link.rel = 'preconnect'
+      link.href = href
+      link.crossOrigin = 'anonymous'
+      document.head.appendChild(link)
+      preconnectLinks.push(link)
+    }
+
     return () => {
       document.title = 'IMMO PRO-X'
       scriptEl?.remove()
+      for (const l of preconnectLinks) l.remove()
     }
   }, [title, description, ogImage, slug, tenantName])
 

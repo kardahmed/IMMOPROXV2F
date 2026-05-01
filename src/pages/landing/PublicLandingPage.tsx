@@ -106,7 +106,9 @@ export function PublicLandingPage() {
     return typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v)
   }
 
-  // Meta Pixel
+  // Meta Pixel — defer until idle to keep the LCP fast (audit MED).
+  // Using requestIdleCallback (with setTimeout fallback) lets the
+  // hero/form paint before we kick off the 30-50KB tracker payload.
   useEffect(() => {
     if (!page) return
     if (!isSafePixelId(page.meta_pixel_id)) return
@@ -114,11 +116,24 @@ export function PublicLandingPage() {
     const safeId = JSON.stringify(page.meta_pixel_id)
     const script = document.createElement('script')
     script.innerHTML = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',${safeId});fbq('track','PageView');`
-    document.head.appendChild(script)
-    return () => { document.head.removeChild(script) }
+
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (h: number) => void }
+    const ric = w.requestIdleCallback
+    const handle: number = ric
+      ? ric(() => document.head.appendChild(script), { timeout: 2000 })
+      : (window.setTimeout(() => document.head.appendChild(script), 1500) as unknown as number)
+
+    return () => {
+      if (ric) w.cancelIdleCallback?.(handle)
+      else clearTimeout(handle)
+      // Use .remove() — safer than removeChild, doesn't throw if the
+      // node was never attached (deferred load may not have fired yet
+      // when React strict-mode double-mounts run cleanup).
+      script.remove()
+    }
   }, [page?.meta_pixel_id])
 
-  // Google Tag
+  // Google Tag — same idle-defer treatment.
   useEffect(() => {
     if (!page) return
     if (!isSafePixelId(page.google_tag_id)) return
@@ -126,15 +141,28 @@ export function PublicLandingPage() {
     const safeId = JSON.stringify(page.google_tag_id)
     const script = document.createElement('script')
     script.async = true
-    // Only the validated id reaches the URL — encodeURIComponent as
-    // belt-and-braces in case a future regex relaxation lets through
-    // a stray ampersand.
     script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(page.google_tag_id)}`
-    document.head.appendChild(script)
     const script2 = document.createElement('script')
     script2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${safeId});`
-    document.head.appendChild(script2)
-    return () => { document.head.removeChild(script); document.head.removeChild(script2) }
+
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (h: number) => void }
+    const ric = w.requestIdleCallback
+    const handle: number = ric
+      ? ric(() => {
+          document.head.appendChild(script)
+          document.head.appendChild(script2)
+        }, { timeout: 2000 })
+      : (window.setTimeout(() => {
+          document.head.appendChild(script)
+          document.head.appendChild(script2)
+        }, 1500) as unknown as number)
+
+    return () => {
+      if (ric) w.cancelIdleCallback?.(handle)
+      else clearTimeout(handle)
+      script.remove()
+      script2.remove()
+    }
   }, [page?.google_tag_id])
 
   async function handleSubmit(e: React.FormEvent) {

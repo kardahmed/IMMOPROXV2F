@@ -36,84 +36,24 @@ export function DuplicateConfigModal({ isOpen, onClose, sourceTenantId, sourceTe
 
   const duplicate = useMutation({
     mutationFn: async () => {
-      if (!targetId) throw new Error('Selectionnez un tenant cible')
+      if (!targetId) throw new Error('Sélectionnez un tenant cible')
 
-      // 1. Copy tenant_settings
-      if (copySettings || copyPipeline) {
-        const { data: sourceSettings } = await supabase
-          .from('tenant_settings')
-          .select('*')
-          .eq('tenant_id', sourceTenantId)
-          .single()
-
-        if (sourceSettings) {
-          const settingsPayload: Record<string, unknown> = {}
-          if (copySettings) {
-            settingsPayload.reservation_duration_days = sourceSettings.reservation_duration_days
-            settingsPayload.min_deposit_amount = sourceSettings.min_deposit_amount
-            settingsPayload.notif_agent_inactive = sourceSettings.notif_agent_inactive
-            settingsPayload.notif_payment_late = sourceSettings.notif_payment_late
-            settingsPayload.notif_reservation_expired = sourceSettings.notif_reservation_expired
-            settingsPayload.notif_new_client = sourceSettings.notif_new_client
-            settingsPayload.notif_new_sale = sourceSettings.notif_new_sale
-            settingsPayload.notif_goal_achieved = sourceSettings.notif_goal_achieved
-          }
-          if (copyPipeline) {
-            settingsPayload.urgent_alert_days = sourceSettings.urgent_alert_days
-            settingsPayload.relaunch_alert_days = sourceSettings.relaunch_alert_days
-          }
-
-          // Check if target already has settings
-          const { data: existing } = await supabase.from('tenant_settings').select('id').eq('tenant_id', targetId).single()
-          if (existing) {
-            await supabase.from('tenant_settings').update(settingsPayload as never).eq('tenant_id', targetId)
-          } else {
-            await supabase.from('tenant_settings').insert({ tenant_id: targetId, ...settingsPayload } as never)
-          }
-        }
-      }
-
-      // 2. Copy document_templates
-      if (copyTemplates) {
-        const { data: sourceTemplates } = await supabase
-          .from('document_templates')
-          .select('type, content')
-          .eq('tenant_id', sourceTenantId)
-
-        if (sourceTemplates && sourceTemplates.length > 0) {
-          for (const tpl of sourceTemplates) {
-            const { data: existingTpl } = await supabase
-              .from('document_templates')
-              .select('id')
-              .eq('tenant_id', targetId)
-              .eq('type', tpl.type)
-              .single()
-
-            if (existingTpl) {
-              await supabase.from('document_templates').update({ content: tpl.content } as never).eq('id', existingTpl.id)
-            } else {
-              await supabase.from('document_templates').insert({
-                tenant_id: targetId, type: tpl.type, content: tpl.content,
-              } as never)
-            }
-          }
-        }
-      }
-
-      // 3. Log action
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        await supabase.from('super_admin_logs').insert({
-          super_admin_id: session.user.id,
-          action: 'duplicate_config',
-          tenant_id: targetId,
-          details: {
-            source_tenant_id: sourceTenantId,
-            source_tenant_name: sourceTenantName,
-            copied: { settings: copySettings, templates: copyTemplates, pipeline: copyPipeline },
-          },
-        } as never)
-      }
+      // Audit (HIGH): the previous version ran 6+ sequential awaits
+      // (settings select / upsert / templates select / per-template
+      // upsert / log). A failure mid-flight left the target tenant
+      // with a partial config. The atomic RPC (migration 051) wraps
+      // everything in a single Postgres transaction.
+      const { error } = await supabase.rpc('duplicate_tenant_config_atomic' as never, {
+        p_source_tenant_id: sourceTenantId,
+        p_target_tenant_id: targetId,
+        p_copy_settings: copySettings,
+        p_copy_templates: copyTemplates,
+        p_copy_pipeline: copyPipeline,
+      } as never)
+      if (error) { handleSupabaseError(error); throw error }
+      // Note: source_tenant_name is logged inside the RPC's
+      // super_admin_logs row via auth.uid(), but we don't pass it
+      // explicitly. The audit row carries the IDs only.
     },
     onSuccess: () => {
       const targetName = tenants.find(t => t.id === targetId)?.name ?? targetId
