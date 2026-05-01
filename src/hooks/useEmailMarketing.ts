@@ -21,6 +21,7 @@ export interface EmailCampaign {
   id: string
   tenant_id: string
   template_id: string | null
+  marketing_template_id: string | null
   name: string
   subject: string
   status: string
@@ -32,7 +33,7 @@ export interface EmailCampaign {
   total_opened: number
   total_clicked: number
   created_at: string
-  email_templates?: { name: string } | null
+  marketing_email_templates?: { name: string } | null
 }
 
 export interface SegmentRules {
@@ -61,7 +62,7 @@ export function useEmailTemplates() {
     queryKey: ['email-templates', tenantId],
     queryFn: async () => {
       const { data, error } = await (supabase as never as { from: (t: string) => { select: (s: string) => { eq: (k: string, v: string) => { order: (k: string, o: { ascending: boolean }) => Promise<{ data: EmailTemplate[] | null; error: { message: string } | null }> } } } })
-        .from('email_templates')
+        .from('marketing_email_templates')
         .select('*')
         .eq('tenant_id', tenantId)
         .order('updated_at', { ascending: false })
@@ -78,7 +79,7 @@ export function useSaveTemplate() {
   return useMutation({
     mutationFn: async (template: { id?: string; name: string; subject: string; blocks: EmailBlock[]; html_cache: string }) => {
       if (template.id) {
-        const { error } = await supabase.from('email_templates' as never)
+        const { error } = await supabase.from('marketing_email_templates' as never)
           .update({
             name: template.name,
             subject: template.subject,
@@ -89,7 +90,7 @@ export function useSaveTemplate() {
           .eq('id', template.id)
         if (error) throw error
       } else {
-        const { error } = await supabase.from('email_templates' as never)
+        const { error } = await supabase.from('marketing_email_templates' as never)
           .insert({
             tenant_id: tenantId,
             name: template.name,
@@ -108,7 +109,7 @@ export function useDeleteTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('email_templates' as never).delete().eq('id', id)
+      const { error } = await supabase.from('marketing_email_templates' as never).delete().eq('id', id)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['email-templates'] }),
@@ -124,7 +125,7 @@ export function useEmailCampaigns() {
     queryFn: async () => {
       const { data, error } = await (supabase as never as { from: (t: string) => { select: (s: string) => { eq: (k: string, v: string) => { order: (k: string, o: { ascending: boolean }) => Promise<{ data: EmailCampaign[] | null; error: { message: string } | null }> } } } })
         .from('email_campaigns')
-        .select('*, email_templates(name)')
+        .select('*, marketing_email_templates(name)')
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
       if (error) { handleSupabaseError(error as never); throw error }
@@ -155,7 +156,7 @@ export function useSaveCampaign() {
           .update({
             name: campaign.name,
             subject: campaign.subject,
-            template_id: campaign.template_id,
+            marketing_template_id: campaign.template_id,
             segment_rules: campaign.segment_rules,
             scheduled_at: campaign.scheduled_at ?? null,
             status: campaign.status ?? 'draft',
@@ -169,7 +170,7 @@ export function useSaveCampaign() {
             tenant_id: tenantId,
             name: campaign.name,
             subject: campaign.subject,
-            template_id: campaign.template_id,
+            marketing_template_id: campaign.template_id,
             segment_rules: campaign.segment_rules,
             scheduled_at: campaign.scheduled_at ?? null,
             status: campaign.status ?? 'draft',

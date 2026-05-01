@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     // 1. Get campaign details
     const { data: campaign, error: campErr } = await supabase
       .from('email_campaigns')
-      .select('*, email_templates(html_cache, subject)')
+      .select('*, marketing_email_templates(html_cache, subject)')
       .eq('id', campaign_id)
       .single()
 
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
     const fromEmail = (settings as { support_email: string } | null)?.support_email ?? 'noreply@immoprox.com'
 
     // 6. Get template HTML
-    const template = campaign.email_templates as { html_cache: string; subject: string } | null
+    const template = campaign.marketing_email_templates as { html_cache: string; subject: string } | null
     let htmlTemplate = template?.html_cache ?? ''
     const emailSubject = campaign.subject || template?.subject || 'Email'
 

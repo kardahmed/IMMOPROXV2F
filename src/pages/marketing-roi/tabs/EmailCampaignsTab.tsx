@@ -120,7 +120,7 @@ export function EmailCampaignsTab() {
                     <StatusBadge label={st.label} type={st.type} />
                   </div>
                   <p className="text-xs text-immo-text-muted mt-0.5 truncate">
-                    {c.subject} · Template: {c.email_templates?.name ?? '—'}
+                    {c.subject} · Template: {c.marketing_email_templates?.name ?? '—'}
                   </p>
                   <p className="text-[10px] text-immo-text-muted mt-1">
                     {c.sent_at ? `Envoyée le ${format(new Date(c.sent_at), 'dd/MM/yy HH:mm')}` :
