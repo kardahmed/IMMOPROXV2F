@@ -230,20 +230,20 @@ export function ProjectsPage() {
           onClick={() => setActiveTab('projects')}
           className="border-b-2 border-immo-accent-green px-4 py-2.5 text-sm font-medium text-immo-accent-green"
         >
-          <Building2 className="mr-1.5 inline h-4 w-4" /> Projets
+          <Building2 className="mr-1.5 inline h-4 w-4" /> {t('projects_extra.tab_projects')}
         </button>
         <button
           onClick={() => setActiveTab('units')}
           className="border-b-2 border-transparent px-4 py-2.5 text-sm text-immo-text-muted hover:text-immo-text-primary"
         >
-          <Home className="mr-1.5 inline h-4 w-4" /> Biens
+          <Home className="mr-1.5 inline h-4 w-4" /> {t('projects_extra.tab_units')}
         </button>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <KPICard
-          label="Total projets"
+          label={t('projects_extra.kpi_total_projects')}
           value={totalProjects}
           accent="blue"
           icon={<Building2 className="h-5 w-5 text-immo-accent-blue" />}
@@ -255,7 +255,7 @@ export function ProjectsPage() {
           icon={<Building2 className="h-5 w-5 text-immo-accent-green" />}
         />
         <KPICard
-          label="Total unités"
+          label={t('projects_extra.kpi_total_units')}
           value={totalUnits}
           accent="blue"
           icon={<Home className="h-5 w-5 text-immo-accent-blue" />}
@@ -278,7 +278,7 @@ export function ProjectsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <SearchInput
-            placeholder="Rechercher un projet..."
+            placeholder={t('projects_extra.search_placeholder')}
             value={search}
             onChange={setSearch}
             className="w-[260px]"
@@ -311,9 +311,9 @@ export function ProjectsPage() {
             onClick={() => setShowCreate(true)}
             disabled={!canAddProject}
             className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            title={!canAddProject ? 'Limite atteinte — Passez au plan superieur' : undefined}
+            title={!canAddProject ? t('projects_extra.limit_reached') : undefined}
           >
-            <Plus className="mr-1.5 h-4 w-4" /> Nouveau projet
+            <Plus className="mr-1.5 h-4 w-4" /> {t('projects_extra.btn_new')}
           </Button>
         )}
       </div>
