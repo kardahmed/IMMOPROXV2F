@@ -29,21 +29,41 @@ export function ImageUploader({ value, onChange, label, multiple = false, onMult
     const urls: string[] = []
 
     try {
+      let failures = 0
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
 
-        // Validate
+        // Validate by MIME first.
         if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-          toast.error(`${file.name} : type non supporte`)
+          toast.error(`${file.name} : type non supporté`)
+          failures++
           continue
         }
         if (file.size > 10 * 1024 * 1024) { // 10MB max
           toast.error(`${file.name} : taille max 10MB`)
+          failures++
           continue
         }
 
-        const ext = file.name.split('.').pop() ?? 'jpg'
-        const path = `${tenantId ?? 'public'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+        // Audit (LOW): client-side MIME check is spoofable. Cross-
+        // check with the file's magic bytes so a renamed .exe → .png
+        // gets rejected before upload.
+        const okMagic = await verifyMagicBytes(file)
+        if (!okMagic) {
+          toast.error(`${file.name} : contenu non reconnu (image/vidéo)`)
+          failures++
+          continue
+        }
+
+        // Tenant-scoped path. Refuse to upload without tenant context
+        // so we never write to a shared `public/` prefix.
+        if (!tenantId) {
+          toast.error('Session expirée — veuillez vous reconnecter')
+          failures++
+          continue
+        }
+        const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+        const path = `${tenantId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
         const { error } = await supabase.storage
           .from('landing-assets')
@@ -64,7 +84,7 @@ export function ImageUploader({ value, onChange, label, multiple = false, onMult
         } else {
           onChange(urls[0])
         }
-        toast.success(`${urls.length} fichier(s) uploade(s)`)
+        toast.success(`${urls.length} fichier${urls.length > 1 ? 's' : ''} uploadé${urls.length > 1 ? 's' : ''}${failures > 0 ? ` (${failures} échec${failures > 1 ? 's' : ''})` : ''}`)
       }
     } catch (err) {
       toast.error('Erreur lors de l\'upload')
@@ -117,7 +137,45 @@ export function ImageUploader({ value, onChange, label, multiple = false, onMult
         className="hidden"
       />
 
-      <p className="mt-1 text-[9px] text-immo-text-muted">Max 10MB par fichier. Images: JPG, PNG, WebP. Videos: MP4, WebM.</p>
+      <p className="mt-1 text-[9px] text-immo-text-muted">Max 10MB par fichier. Images : JPG, PNG, WebP. Vidéos : MP4, WebM.</p>
     </div>
   )
+}
+
+// Magic-byte signatures for the image / video formats we accept.
+// Reference: https://en.wikipedia.org/wiki/List_of_file_signatures
+const MAGIC_SIGNATURES: Array<{ bytes: number[]; offset?: number }> = [
+  { bytes: [0xFF, 0xD8, 0xFF] },                          // JPEG
+  { bytes: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A] }, // PNG
+  { bytes: [0x47, 0x49, 0x46, 0x38] },                    // GIF
+  { bytes: [0x52, 0x49, 0x46, 0x46], offset: 0 },         // RIFF (WebP / WAV) — we double-check WEBP below
+  { bytes: [0x66, 0x74, 0x79, 0x70], offset: 4 },         // ftyp box (MP4 / MOV / generic ISO BMFF)
+  { bytes: [0x1A, 0x45, 0xDF, 0xA3] },                    // WebM / Matroska
+]
+
+async function verifyMagicBytes(file: File): Promise<boolean> {
+  try {
+    const slice = file.slice(0, 16)
+    const buf = await slice.arrayBuffer()
+    const bytes = new Uint8Array(buf)
+    for (const sig of MAGIC_SIGNATURES) {
+      const off = sig.offset ?? 0
+      let match = true
+      for (let i = 0; i < sig.bytes.length; i++) {
+        if (bytes[off + i] !== sig.bytes[i]) { match = false; break }
+      }
+      if (match) {
+        // RIFF: also require WEBP marker at offset 8 to exclude WAV.
+        if (sig.bytes[0] === 0x52 && sig.bytes[1] === 0x49) {
+          const isWebp = bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+          if (!isWebp) continue
+        }
+        return true
+      }
+    }
+    return false
+  } catch {
+    // Reading failed — fail closed.
+    return false
+  }
 }

@@ -105,8 +105,9 @@ export function TenantDetailPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['super-admin-tenant-settings', tenantId] })
       const wasOn = tenantSettings?.maintenance_mode ?? false
-      toast.success(wasOn ? 'Maintenance desactivee' : 'Maintenance activee')
+      toast.success(wasOn ? 'Maintenance désactivée' : 'Maintenance activée')
     },
+    onError: (err: Error) => toast.error(err.message),
   })
 
   const isMaintenance = tenantSettings?.maintenance_mode ?? false

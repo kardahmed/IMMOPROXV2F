@@ -106,45 +106,89 @@ export function GoalsPage() {
   // Fetch actuals for all agents with goals
   const agentIds = useMemo(() => [...new Set(rawGoals.map(g => g.agent_id))], [rawGoals])
 
+  // Tenant-wide window covering ALL agent goals so we can fetch the
+  // actuals in a single round-trip per source table instead of N×4.
+  // Audit (HIGH): the previous version did `for (agentId of agentIds)`
+  // with 4 awaits per loop = 4×N round-trips. With 10 agents that's
+  // 40 sequential queries per page open. Now: 4 queries, period.
+  const { minStart, maxEnd } = useMemo(() => {
+    if (rawGoals.length === 0) return { minStart: null, maxEnd: null }
+    let minS = rawGoals[0].started_at
+    let maxE = rawGoals[0].ended_at
+    for (const g of rawGoals) {
+      if (g.started_at < minS) minS = g.started_at
+      if (g.ended_at > maxE) maxE = g.ended_at
+    }
+    return { minStart: minS, maxEnd: maxE }
+  }, [rawGoals])
+
   const { data: actuals = new Map<string, AgentActuals>(), isLoading: loadingActuals } = useQuery({
-    queryKey: ['goal-actuals', tenantId, agentIds.join(',')],
+    queryKey: ['goal-actuals', tenantId, minStart, maxEnd, agentIds.join(',')],
     queryFn: async () => {
-      if (agentIds.length === 0) return new Map<string, AgentActuals>()
+      if (agentIds.length === 0 || !minStart || !maxEnd) return new Map<string, AgentActuals>()
+
+      const [salesRes, resRes, visitsRes, clientsRes] = await Promise.all([
+        supabase.from('sales')
+          .select('id, final_price, agent_id')
+          .in('agent_id', agentIds)
+          .eq('status', 'active')
+          .gte('created_at', minStart)
+          .lte('created_at', maxEnd),
+        supabase.from('reservations')
+          .select('id, agent_id')
+          .in('agent_id', agentIds)
+          .eq('status', 'active')
+          .gte('created_at', minStart)
+          .lte('created_at', maxEnd),
+        supabase.from('visits')
+          .select('id, agent_id')
+          .in('agent_id', agentIds)
+          .eq('status', 'completed')
+          .gte('scheduled_at', minStart)
+          .lte('scheduled_at', maxEnd),
+        supabase.from('clients')
+          .select('id, agent_id')
+          .in('agent_id', agentIds)
+          .gte('created_at', minStart)
+          .lte('created_at', maxEnd),
+      ])
 
       const map = new Map<string, AgentActuals>()
-
-      for (const agentId of agentIds) {
-        // Get date range from goals for this agent
-        const agentGoals = rawGoals.filter(g => g.agent_id === agentId)
-        const starts = agentGoals.map(g => g.started_at)
-        const ends = agentGoals.map(g => g.ended_at)
-        const minStart = starts.sort()[0]
-        const maxEnd = ends.sort().reverse()[0]
-
-        const [salesRes, resRes, visitsRes, clientsRes] = await Promise.all([
-          supabase.from('sales').select('id, final_price').eq('agent_id', agentId).eq('status', 'active').gte('created_at', minStart).lte('created_at', maxEnd),
-          supabase.from('reservations').select('id').eq('agent_id', agentId).eq('status', 'active').gte('created_at', minStart).lte('created_at', maxEnd),
-          supabase.from('visits').select('id').eq('agent_id', agentId).eq('status', 'completed').gte('scheduled_at', minStart).lte('scheduled_at', maxEnd),
-          supabase.from('clients').select('id').eq('agent_id', agentId).gte('created_at', minStart).lte('created_at', maxEnd),
-        ])
-
-        const salesCount = salesRes.data?.length ?? 0
-        const revenue = (salesRes.data ?? []).reduce((s: number, r: { final_price?: number }) => s + (r.final_price ?? 0), 0)
-        const newClients = clientsRes.data?.length ?? 0
-
-        map.set(agentId, {
-          sales_count: salesCount,
-          reservations_count: resRes.data?.length ?? 0,
-          visits_count: visitsRes.data?.length ?? 0,
-          revenue,
-          new_clients: newClients,
-          conversion_rate: newClients > 0 ? (salesCount / newClients) * 100 : 0,
+      for (const id of agentIds) {
+        map.set(id, {
+          sales_count: 0,
+          reservations_count: 0,
+          visits_count: 0,
+          revenue: 0,
+          new_clients: 0,
+          conversion_rate: 0,
         })
+      }
+
+      for (const s of (salesRes.data ?? []) as Array<{ agent_id: string; final_price?: number }>) {
+        const a = map.get(s.agent_id)
+        if (a) { a.sales_count++; a.revenue += s.final_price ?? 0 }
+      }
+      for (const r of (resRes.data ?? []) as Array<{ agent_id: string }>) {
+        const a = map.get(r.agent_id)
+        if (a) a.reservations_count++
+      }
+      for (const v of (visitsRes.data ?? []) as Array<{ agent_id: string }>) {
+        const a = map.get(v.agent_id)
+        if (a) a.visits_count++
+      }
+      for (const c of (clientsRes.data ?? []) as Array<{ agent_id: string }>) {
+        const a = map.get(c.agent_id)
+        if (a) a.new_clients++
+      }
+      // Conversion rate after totals are known.
+      for (const a of map.values()) {
+        a.conversion_rate = a.new_clients > 0 ? (a.sales_count / a.new_clients) * 100 : 0
       }
 
       return map
     },
-    enabled: !!tenantId && agentIds.length > 0,
+    enabled: !!tenantId && agentIds.length > 0 && !!minStart && !!maxEnd,
   })
 
   // Build goal rows with computed values

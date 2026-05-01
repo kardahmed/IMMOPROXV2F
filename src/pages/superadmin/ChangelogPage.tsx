@@ -26,13 +26,15 @@ export function ChangelogPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      await supabase.from('changelogs').insert({ version, title, body } as never)
+      const { error } = await supabase.from('changelogs').insert({ version, title, body } as never)
+      if (error) throw new Error(error.message)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['changelogs'] })
       toast.success('Release note publiée')
       setShowAdd(false); setVersion(''); setTitle(''); setBody('')
     },
+    onError: (err: Error) => toast.error(err.message),
   })
 
   if (isLoading) return <PageSkeleton kpiCount={0} />

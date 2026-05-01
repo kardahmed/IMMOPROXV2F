@@ -70,38 +70,41 @@ export function TenantsPage() {
       if (error) { handleSupabaseError(error); throw error }
       if (!rawTenants) return []
 
-      // Fetch counts in bulk (4 queries total instead of 4 × N)
-      const [allAgents, allClients, allProjects, allUnits] = await Promise.all([
-        supabase.from('users').select('tenant_id').eq('role', 'agent'),
-        supabase.from('clients').select('tenant_id'),
-        supabase.from('projects').select('tenant_id'),
-        supabase.from('units').select('tenant_id'),
-      ])
+      // Audit (HIGH): the previous version did `select('tenant_id')`
+      // on agents/clients/projects/units to count rows client-side.
+      // For a busy tenant that's hundreds of MB just to derive 4
+      // numbers. Replaced with the tenant_counts_view (migration 051)
+      // which computes the counts in Postgres in a single round-trip.
+      const { data: counts } = await supabase
+        .from('tenant_counts_view' as never)
+        .select('tenant_id, total_users, total_clients, active_projects, total_units')
 
-      // Build count maps
-      const countByTenant = (rows: Array<{ tenant_id: string }> | null) => {
-        const map = new Map<string, number>()
-        for (const r of rows ?? []) map.set(r.tenant_id, (map.get(r.tenant_id) ?? 0) + 1)
-        return map
+      const countsByTenant = new Map<string, { agents: number; clients: number; projects: number; units: number }>()
+      for (const c of (counts ?? []) as unknown as Array<{ tenant_id: string; total_users: number; total_clients: number; active_projects: number; total_units: number }>) {
+        countsByTenant.set(c.tenant_id, {
+          agents: c.total_users,
+          clients: c.total_clients,
+          projects: c.active_projects,
+          units: c.total_units,
+        })
       }
-      const agentCounts = countByTenant((allAgents.data ?? []) as Array<{ tenant_id: string }>)
-      const clientCounts = countByTenant((allClients.data ?? []) as Array<{ tenant_id: string }>)
-      const projectCounts = countByTenant((allProjects.data ?? []) as Array<{ tenant_id: string }>)
-      const unitCounts = countByTenant((allUnits.data ?? []) as Array<{ tenant_id: string }>)
 
-      return rawTenants.map((t: Record<string, unknown>): TenantRow => ({
-        id: t.id as string,
-        name: t.name as string,
-        email: t.email as string | null,
-        phone: t.phone as string | null,
-        wilaya: t.wilaya as string | null,
-        plan: (t.plan as string) ?? 'free',
-        created_at: t.created_at as string,
-        agents_count: agentCounts.get(t.id as string) ?? 0,
-        clients_count: clientCounts.get(t.id as string) ?? 0,
-        projects_count: projectCounts.get(t.id as string) ?? 0,
-        units_count: unitCounts.get(t.id as string) ?? 0,
-      }))
+      return rawTenants.map((t: Record<string, unknown>): TenantRow => {
+        const c = countsByTenant.get(t.id as string)
+        return {
+          id: t.id as string,
+          name: t.name as string,
+          email: t.email as string | null,
+          phone: t.phone as string | null,
+          wilaya: t.wilaya as string | null,
+          plan: (t.plan as string) ?? 'free',
+          created_at: t.created_at as string,
+          agents_count: c?.agents ?? 0,
+          clients_count: c?.clients ?? 0,
+          projects_count: c?.projects ?? 0,
+          units_count: c?.units ?? 0,
+        }
+      })
     },
   })
 

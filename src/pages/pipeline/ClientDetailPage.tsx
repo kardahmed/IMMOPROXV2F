@@ -101,14 +101,22 @@ export function ClientDetailPage() {
   }
 
   // Project names lookup
+  // Audit (HIGH): the previous version had no tenant_id filter, so
+  // a super_admin querying the page would receive every project of
+  // every tenant. Always scope to the client's tenant.
+  const clientTenantId = client?.tenant_id ?? null
   const { data: projectMap } = useQuery({
-    queryKey: ['project-names-map'],
+    queryKey: ['project-names-map', clientTenantId],
     queryFn: async () => {
-      const { data } = await supabase.from('projects').select('id, name')
+      const { data } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('tenant_id', clientTenantId!)
       const m = new Map<string, string>()
       for (const p of (data ?? []) as Array<{ id: string; name: string }>) m.set(p.id, p.name)
       return m
     },
+    enabled: !!clientTenantId,
     staleTime: 300_000,
   })
 
@@ -280,9 +288,11 @@ export function ClientDetailPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  if (client) {
-                    updateClientStage.mutate({ clientId: client.id, newStage: 'perdue' })
-                  }
+                  // Audit (HIGH): un clic accidentel détruit
+                  // l'historique de pipeline. Passer par le confirm
+                  // pattern qui existe déjà pour les autres changements
+                  // d'étape.
+                  if (client) setStageConfirm('perdue')
                 }}
                 className="text-sm text-immo-status-red focus:bg-immo-status-red-bg"
               >

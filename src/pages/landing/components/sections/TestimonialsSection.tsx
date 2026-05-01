@@ -16,7 +16,7 @@ export function TestimonialsSection({ title, content }: { title?: string; conten
               <p className="text-sm leading-relaxed text-[#425466]">"{item.text}"</p>
               <div className="mt-4 flex items-center gap-3">
                 {item.photo_url ? (
-                  <img src={item.photo_url} alt={item.name} className="h-10 w-10 rounded-full object-cover" />
+                  <img src={item.photo_url} alt={item.name} loading="lazy" decoding="async" className="h-10 w-10 rounded-full object-cover" />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F0F4F8] text-sm font-bold text-[#425466]">
                     {item.name.split(' ').map(w => w[0]).join('').slice(0, 2)}

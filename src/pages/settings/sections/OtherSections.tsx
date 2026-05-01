@@ -252,14 +252,31 @@ export function SecuritySection() {
   const { t } = useTranslation()
   const [oldPass, setOldPass] = useState(''); const [newPass, setNewPass] = useState(''); const [confirmPass, setConfirmPass] = useState('')
 
+  // Audit (HIGH): the previous version (a) used the wrong i18n keys
+  // (action.login / action.save) for password input labels — broken
+  // copy. (b) collapsed every error to t('error.generic') so the user
+  // couldn't tell "passwords don't match" from "password too short".
+  // (c) collected `oldPass` but never validated it — security UX trap
+  // that suggests the old password is checked when it isn't.
   const changePassword = useMutation({
     mutationFn: async () => {
-      if (newPass !== confirmPass) throw new Error(t('error.generic'))
-      if (newPass.length < 8) throw new Error(t('error.generic'))
+      if (!oldPass) throw new Error('Saisissez votre mot de passe actuel')
+      if (newPass.length < 8) throw new Error('Le nouveau mot de passe doit contenir au moins 8 caractères')
+      if (newPass !== confirmPass) throw new Error('Les mots de passe ne correspondent pas')
+
+      // Validate old password by re-authenticating against Supabase.
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.email) throw new Error('Session invalide')
+      const { error: verifyErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: oldPass,
+      })
+      if (verifyErr) throw new Error('Mot de passe actuel incorrect')
+
       const { error } = await supabase.auth.updateUser({ password: newPass })
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => { toast.success(t('success.updated')); setOldPass(''); setNewPass(''); setConfirmPass('') },
+    onSuccess: () => { toast.success('Mot de passe mis à jour'); setOldPass(''); setNewPass(''); setConfirmPass('') },
     onError: (err: Error) => toast.error(err.message),
   })
 
@@ -267,16 +284,21 @@ export function SecuritySection() {
     <div className="space-y-5">
       <SectionHeader title={t('nav.settings')} subtitle="" />
       <div className="max-w-md space-y-4">
-        <Field label={t('action.login')}><Input type="password" value={oldPass} onChange={e => setOldPass(e.target.value)} className={inputClass} /></Field>
-        <Field label={t('action.save')}><Input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Min. 8" className={inputClass} /></Field>
-        <Field label={t('action.confirm')}>
-          <Input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} className={inputClass} />
-          {confirmPass && newPass !== confirmPass && <p className="mt-1 text-[11px] text-immo-status-red">{t('error.generic')}</p>}
+        <Field label="Mot de passe actuel">
+          <Input type="password" value={oldPass} onChange={e => setOldPass(e.target.value)} className={inputClass} />
         </Field>
-        <Button onClick={() => changePassword.mutate()} disabled={!newPass || !confirmPass || newPass !== confirmPass || changePassword.isPending}
+        <Field label="Nouveau mot de passe">
+          <Input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Min. 8 caractères" className={inputClass} />
+          {newPass && newPass.length < 8 && <p className="mt-1 text-[11px] text-immo-status-red">8 caractères minimum requis</p>}
+        </Field>
+        <Field label="Confirmer le nouveau mot de passe">
+          <Input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} className={inputClass} />
+          {confirmPass && newPass !== confirmPass && <p className="mt-1 text-[11px] text-immo-status-red">Les mots de passe ne correspondent pas</p>}
+        </Field>
+        <Button onClick={() => changePassword.mutate()} disabled={!oldPass || !newPass || !confirmPass || newPass !== confirmPass || newPass.length < 8 || changePassword.isPending}
           className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
           <Lock className="mr-1.5 h-4 w-4" />
-          {changePassword.isPending ? t('common.loading') : t('action.save')}
+          {changePassword.isPending ? t('common.loading') : 'Modifier le mot de passe'}
         </Button>
       </div>
     </div>

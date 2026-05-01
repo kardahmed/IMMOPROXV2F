@@ -146,25 +146,30 @@ export function PlansConfigPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      for (const p of editPlans) {
-        const { error } = await supabase.from('plan_limits').update({
-          max_agents: p.max_agents,
-          max_projects: p.max_projects,
-          max_units: p.max_units,
-          max_clients: p.max_clients,
-          max_storage_mb: p.max_storage_mb,
-          max_ai_tokens_monthly: p.max_ai_tokens_monthly,
-          price_monthly: p.price_monthly,
-          price_yearly: p.price_yearly,
-          features: p.features,
-          quota_ai_calls_monthly: p.quota_ai_calls_monthly ?? 0,
-          quota_emails_monthly: p.quota_emails_monthly ?? 0,
-          quota_whatsapp_messages_monthly: p.quota_whatsapp_messages_monthly ?? 0,
-          quota_burst_per_hour: p.quota_burst_per_hour ?? 100,
-          setup_fee_dzd: p.setup_fee_dzd ?? 0,
-        } as never).eq('plan', p.plan)
-        if (error) { handleSupabaseError(error); throw error }
-      }
+      // Audit (HIGH): the previous version ran a sequential loop of
+      // UPDATE queries from the browser. A failure mid-loop left
+      // plan_limits in a half-saved state. The atomic RPC
+      // (migration 051) wraps the whole batch in a single
+      // transaction so it's all-or-nothing.
+      const payload = editPlans.map(p => ({
+        plan: p.plan,
+        max_agents: p.max_agents,
+        max_projects: p.max_projects,
+        max_units: p.max_units,
+        max_clients: p.max_clients,
+        max_storage_mb: p.max_storage_mb,
+        max_ai_tokens_monthly: p.max_ai_tokens_monthly,
+        price_monthly: p.price_monthly,
+        price_yearly: p.price_yearly,
+        features: p.features,
+        quota_ai_calls_monthly: p.quota_ai_calls_monthly ?? 0,
+        quota_emails_monthly: p.quota_emails_monthly ?? 0,
+        quota_whatsapp_messages_monthly: p.quota_whatsapp_messages_monthly ?? 0,
+        quota_burst_per_hour: p.quota_burst_per_hour ?? 100,
+        setup_fee_dzd: p.setup_fee_dzd ?? 0,
+      }))
+      const { error } = await supabase.rpc('save_plan_features_atomic' as never, { p_plans: payload } as never)
+      if (error) { handleSupabaseError(error); throw error }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['plan-limits'] })

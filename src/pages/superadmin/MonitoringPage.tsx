@@ -41,27 +41,39 @@ export function MonitoringPage() {
       // Errors last 24h
       const errors24h = logs.filter(l => l.action === 'error' && new Date(l.created_at) > new Date(oneDayAgo))
 
-      // Activity by hour (last 24h)
+      // Audit (HIGH): pre-bucket the logs in a single pass instead of
+      // running a `.filter` for every hour and every day. The previous
+      // version was O(24 × N) + O(7 × N) — for 10k logs that's 240k
+      // iterations per render. Now: one pass, two Maps.
+      const hourlyMap = new Map<number, { actions: number; errors: number }>()
+      const dailyMap = new Map<number, number>()
+      for (const l of allLogs) {
+        const d = new Date(l.created_at)
+        // Hour bucket = floor(epoch / 3600000)
+        const hourBucket = Math.floor(d.getTime() / 3_600_000)
+        const hr = hourlyMap.get(hourBucket) ?? { actions: 0, errors: 0 }
+        hr.actions++
+        if (l.action === 'error') hr.errors++
+        hourlyMap.set(hourBucket, hr)
+        // Day bucket = floor(epoch / 86400000) in local TZ
+        const day = new Date(d); day.setHours(0, 0, 0, 0)
+        const dayBucket = day.getTime()
+        dailyMap.set(dayBucket, (dailyMap.get(dayBucket) ?? 0) + 1)
+      }
+
       const hourlyActivity: Array<{ hour: string; actions: number; errors: number }> = []
       for (let i = 23; i >= 0; i--) {
         const h = subHours(now, i)
-        const hStr = format(h, 'HH:00')
-        const hStart = new Date(h); hStart.setMinutes(0, 0, 0)
-        const hEnd = new Date(h); hEnd.setMinutes(59, 59, 999)
-        const actions = allLogs.filter(l => { const d = new Date(l.created_at); return d >= hStart && d <= hEnd }).length
-        const errs = allLogs.filter(l => l.action === 'error' && (() => { const d = new Date(l.created_at); return d >= hStart && d <= hEnd })()).length
-        hourlyActivity.push({ hour: hStr, actions, errors: errs })
+        const bucket = Math.floor(h.getTime() / 3_600_000)
+        const stats = hourlyMap.get(bucket) ?? { actions: 0, errors: 0 }
+        hourlyActivity.push({ hour: format(h, 'HH:00'), actions: stats.actions, errors: stats.errors })
       }
 
-      // Activity by day (last 7 days)
       const dailyActivity: Array<{ day: string; actions: number }> = []
       for (let i = 6; i >= 0; i--) {
         const d = subDays(now, i)
-        const dayStr = format(d, 'dd/MM')
-        const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
-        const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999)
-        const actions = allLogs.filter(l => { const ld = new Date(l.created_at); return ld >= dayStart && ld <= dayEnd }).length
-        dailyActivity.push({ day: dayStr, actions })
+        const day = new Date(d); day.setHours(0, 0, 0, 0)
+        dailyActivity.push({ day: format(d, 'dd/MM'), actions: dailyMap.get(day.getTime()) ?? 0 })
       }
 
       // Tenant usage

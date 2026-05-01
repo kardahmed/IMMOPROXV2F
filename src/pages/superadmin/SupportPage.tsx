@@ -38,17 +38,22 @@ export function SupportPage() {
 
   const sendReply = useMutation({
     mutationFn: async () => {
-      await supabase.from('ticket_messages').insert({ ticket_id: selectedTicket, sender_id: userId, body: reply } as never)
-      await supabase.from('support_tickets').update({ updated_at: new Date().toISOString() } as never).eq('id', selectedTicket!)
+      const { error: msgErr } = await supabase.from('ticket_messages').insert({ ticket_id: selectedTicket, sender_id: userId, body: reply } as never)
+      if (msgErr) throw new Error(msgErr.message)
+      const { error: tErr } = await supabase.from('support_tickets').update({ updated_at: new Date().toISOString() } as never).eq('id', selectedTicket!)
+      if (tErr) throw new Error(tErr.message)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ticket-messages'] }); setReply(''); toast.success('Réponse envoyée') },
+    onError: (err: Error) => toast.error(err.message),
   })
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await supabase.from('support_tickets').update({ status, updated_at: new Date().toISOString() } as never).eq('id', id)
+      const { error } = await supabase.from('support_tickets').update({ status, updated_at: new Date().toISOString() } as never).eq('id', id)
+      if (error) throw new Error(error.message)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['super-admin-tickets'] }); toast.success('Statut mis à jour') },
+    onError: (err: Error) => toast.error(err.message),
   })
 
   const STATUS_MAP: Record<string, { label: string; type: 'green' | 'orange' | 'blue' | 'muted' }> = {

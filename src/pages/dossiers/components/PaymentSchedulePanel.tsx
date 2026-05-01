@@ -31,9 +31,10 @@ interface Charge {
 }
 
 const STATUS_STYLES: Record<string, { label: string; type: 'green' | 'orange' | 'red' | 'muted' }> = {
-  paid: { label: 'Paye', type: 'green' },
+  paid: { label: 'Payé', type: 'green' },
   pending: { label: 'En attente', type: 'orange' },
   late: { label: 'En retard', type: 'red' },
+  cancelled: { label: 'Annulé', type: 'muted' },
 }
 
 interface Props {

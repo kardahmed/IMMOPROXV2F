@@ -122,7 +122,7 @@ export function ExpensesTab() {
         <KPICard label="Total depense" value={formatPriceCompact(totalSpent) + ' DA'} accent="blue" icon={<Receipt className="h-4 w-4 text-immo-accent-blue" />} />
         <KPICard label="Ce mois" value={formatPriceCompact(expenses.filter(e => e.expense_date.startsWith(format(now, 'yyyy-MM'))).reduce((s, e) => s + e.amount, 0)) + ' DA'} accent="green" icon={<Receipt className="h-4 w-4 text-immo-accent-green" />} />
         <KPICard label="Depenses" value={filtered.length} accent="blue" icon={<Receipt className="h-4 w-4 text-immo-accent-blue" />} />
-        <KPICard label="Categories" value={new Set(expenses.map(e => e.category)).size} accent="green" icon={<Receipt className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label="Catégories" value={new Set(expenses.map(e => e.category)).size} accent="green" icon={<Receipt className="h-4 w-4 text-immo-accent-green" />} />
       </div>
 
       {/* Filters + Add */}
@@ -140,7 +140,7 @@ export function ExpensesTab() {
         <Button
           onClick={() => exportToCsv('depenses-marketing', filtered, [
             { header: 'Date', value: e => e.expense_date },
-            { header: 'Categorie', value: e => CATEGORIES.find(c => c.value === e.category)?.label ?? e.category },
+            { header: 'Catégorie', value: e => CATEGORIES.find(c => c.value === e.category)?.label ?? e.category },
             { header: 'Scope', value: e => SCOPE_LABELS[e.scope]?.label ?? e.scope },
             { header: 'Detail', value: e => e.subcategory ?? '' },
             { header: 'Projet', value: e => e.projects?.name ?? '' },
@@ -168,7 +168,7 @@ export function ExpensesTab() {
             <YAxis tick={{ fontSize: 10, fill: 'var(--immo-text-muted, #8898AA)' }} width={60} tickFormatter={v => formatPriceCompact(v as number)} />
             <Tooltip contentStyle={{ background: 'var(--immo-bg-card, #fff)', border: '1px solid var(--immo-border-default, #E3E8EF)', borderRadius: 8, fontSize: 11 }} />
             <Legend wrapperStyle={{ fontSize: 10 }} />
-            {CATEGORIES.filter(c => byCategory.find(b => b.value === c.value)?.total ?? 0 > 0).map(cat => (
+            {CATEGORIES.filter(c => (byCategory.find(b => b.value === c.value)?.total ?? 0) > 0).map(cat => (
               <Bar key={cat.value} dataKey={cat.label} stackId="a" fill={cat.color} />
             ))}
           </BarChart>
@@ -193,7 +193,7 @@ export function ExpensesTab() {
       <div className="overflow-hidden rounded-xl border border-immo-border-default">
         <table className="w-full">
           <thead><tr className="bg-immo-bg-card-hover">
-            {['Date', 'Categorie', 'Scope', 'Detail', 'Projet / Campagne', 'Montant', ''].map(h => (
+            {['Date', 'Catégorie', 'Scope', 'Detail', 'Projet / Campagne', 'Montant', ''].map(h => (
               <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
             ))}
           </tr></thead>

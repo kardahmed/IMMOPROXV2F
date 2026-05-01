@@ -7,6 +7,7 @@ import { LoadingSpinner, StatusBadge, Modal } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatPriceCompact } from '@/lib/constants'
+import { slugify } from '@/lib/format'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
@@ -335,7 +336,7 @@ export function CampaignsTab() {
                   ) : (
                     <table className="w-full">
                       <thead><tr className="bg-immo-bg-card-hover">
-                        {['Date', 'Categorie', 'Detail', 'Montant', ''].map(h => (
+                        {['Date', 'Catégorie', 'Detail', 'Montant', ''].map(h => (
                           <th key={h} className="px-5 py-2 text-left text-[9px] font-semibold uppercase text-immo-text-muted">{h}</th>
                         ))}
                       </tr></thead>
@@ -393,14 +394,8 @@ export function CampaignsTab() {
   )
 }
 
-function slugifyTrackingCode(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40)
-}
+// Tracking-code slug — uses the shared slugify helper.
+const slugifyTrackingCode = slugify
 
 function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState('')
@@ -571,7 +566,7 @@ function AddExpenseToCampaignModal({ tenantId, campaignId, onClose, onSaved }: {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs text-immo-text-muted">Categorie</label>
+            <label className="mb-1 block text-xs text-immo-text-muted">Catégorie</label>
             <select value={category} onChange={e => setCategory(e.target.value)} className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-xs text-immo-text-primary">
               {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>

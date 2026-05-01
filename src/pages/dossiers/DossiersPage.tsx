@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore'
 const PaymentSchedulePanel = lazy(() => import('./components/PaymentSchedulePanel').then(m => ({ default: m.PaymentSchedulePanel })))
 import { usePermissions } from '@/hooks/usePermissions'
 import {
-  KPICard, SearchInput, FilterDropdown, PageSkeleton,
+  KPICard, SearchInput, FilterDropdown, PageSkeleton, PageHeader,
   StatusBadge,
 } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,7 @@ interface DossierRow {
   client_id: string
   client_name: string
   client_phone: string
+  project_id: string | null
   project_name: string
   unit_codes: string[]
   agent_name: string
@@ -167,6 +168,7 @@ export function DossiersPage() {
         client_id: s.client_id as string,
         client_name: client?.full_name ?? '-',
         client_phone: client?.phone ?? '',
+        project_id: (s.project_id as string | null) ?? null,
         project_name: project?.name ?? '-',
         unit_codes: unit ? [unit.code] : [],
         agent_name: agent ? `${agent.first_name} ${agent.last_name}` : '-',
@@ -196,6 +198,7 @@ export function DossiersPage() {
         client_id: r.client_id as string,
         client_name: client?.full_name ?? '-',
         client_phone: client?.phone ?? '',
+        project_id: (r.project_id as string | null) ?? null,
         project_name: project?.name ?? '-',
         unit_codes: unit ? [unit.code] : [],
         agent_name: agent ? `${agent.first_name} ${agent.last_name}` : '-',
@@ -246,13 +249,15 @@ export function DossiersPage() {
       list = list.filter(d => d.client_name.toLowerCase().includes(q) || d.client_phone.includes(q))
     }
 
-    // Project
+    // Project — filter by ID, not name. Audit (HIGH): the previous
+    // version compared `d.project_name` to a project name resolved
+    // from id, which broke whenever two projects had the same name.
     if (projectFilter !== 'all') {
-      list = list.filter(d => d.project_name === projectsList.find(p => p.id === projectFilter)?.name)
+      list = list.filter(d => d.project_id === projectFilter)
     }
 
     return list
-  }, [dossiers, activeTab, search, projectFilter, projectsList])
+  }, [dossiers, activeTab, search, projectFilter])
 
   // Tab counts
   const tabCounts = useMemo(() => ({
@@ -272,6 +277,11 @@ export function DossiersPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title={t('nav.dossiers')}
+        subtitle={t('dossiers_extra.subtitle', { defaultValue: 'Suivi des ventes, encaissements et impayés' })}
+      />
+
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         <KPICard label={t('dossiers_extra.kpi_total_sales')} value={kpi.totalSales} accent="blue" icon={<FileText className="h-4 w-4 text-immo-accent-blue" />} />

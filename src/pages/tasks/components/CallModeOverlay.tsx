@@ -23,6 +23,7 @@ import { handleSupabaseError } from '@/lib/errors'
 import { appendClientNote } from '@/lib/clientNotes'
 import toast from 'react-hot-toast'
 import { CallScriptBody, type CallScript, type ClientQA } from '@/pages/pipeline/components/CallScriptBody'
+import { formatSecondsAsMmss } from '@/lib/format'
 import type { PipelineStage } from '@/types'
 
 interface Task {
@@ -196,7 +197,7 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
   const phone = task.client?.phone ?? null
   const phoneTel = phone ? phone.replace(/[\s()-]/g, '') : null
   const clientName = task.client?.full_name ?? 'Client'
-  const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`
+  const formatTime = formatSecondsAsMmss
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-white">

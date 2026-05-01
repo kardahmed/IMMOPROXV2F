@@ -136,6 +136,10 @@ export function PipelinePage() {
         const q = search.toLowerCase()
         if (!c.full_name.toLowerCase().includes(q) && !c.phone.toLowerCase().includes(q)) return false
       }
+      // Audit (HIGH): the project FilterDropdown was wired to setProjectFilter
+      // but never read in the filter chain. clients.interested_projects is a
+      // string[] of project ids — match if the selected project is in there.
+      if (projectFilter !== 'all' && !(c.interested_projects ?? []).includes(projectFilter)) return false
       // Advanced filters
       if (advFilters.agentId && c.agent_id !== advFilters.agentId) return false
       if (advFilters.source && c.source !== advFilters.source) return false
@@ -146,7 +150,7 @@ export function PipelinePage() {
       if (advFilters.budgetMax && (c.confirmed_budget ?? Infinity) > Number(advFilters.budgetMax)) return false
       return true
     })
-  }, [clients, search, alertFilter, advFilters])
+  }, [clients, search, alertFilter, advFilters, projectFilter])
 
   // Group by stage
   const clientsByStage = useMemo(() => {
@@ -373,7 +377,13 @@ export function PipelinePage() {
         />
         <FilterDropdown
           label="Projet"
-          options={[{ value: 'all', label: 'Tous les projets' }]}
+          options={[
+            { value: 'all', label: 'Tous les projets' },
+            ...Array.from((projectMap ?? new Map<string, string>()).entries()).map(([id, name]) => ({
+              value: id,
+              label: name,
+            })),
+          ]}
           value={projectFilter}
           onChange={setProjectFilter}
         />

@@ -17,6 +17,7 @@ import { PIPELINE_STAGES } from '@/types'
 import type { PipelineStage } from '@/types'
 import toast from 'react-hot-toast'
 import { CallScriptBody, type CallScript, type ClientQA } from '../CallScriptBody'
+import { formatSecondsAsMmss } from '@/lib/format'
 
 interface CallScriptModalProps {
   isOpen: boolean
@@ -148,7 +149,7 @@ export function CallScriptModal({
   if (!isOpen) return null
 
   const stage = PIPELINE_STAGES[clientStage]
-  const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`
+  const formatTime = formatSecondsAsMmss
 
   return (
     <div className="fixed inset-0 z-50 flex h-screen flex-col overflow-hidden bg-immo-bg-primary">
