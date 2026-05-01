@@ -287,7 +287,7 @@ export function AnalyticsTab() {
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--immo-text-muted, #8898AA)' }} />
             <YAxis tick={{ fontSize: 10, fill: 'var(--immo-text-muted, #8898AA)' }} width={50} tickFormatter={v => formatPriceCompact(v as number)} />
             <Tooltip contentStyle={{ background: 'var(--immo-bg-card, #fff)', border: '1px solid var(--immo-border-default, #E3E8EF)', borderRadius: 8, fontSize: 11 }} />
-            <Bar dataKey="cpl" fill="var(--immo-accent-green, #0579DA)" radius={[4, 4, 0, 0]} name="CPL (DA)" />
+            <Bar dataKey="cpl" fill="var(--immo-accent-green, #00D4A0)" radius={[4, 4, 0, 0]} name="CPL (DA)" />
           </BarChart>
         </ResponsiveContainer>
       </div>
