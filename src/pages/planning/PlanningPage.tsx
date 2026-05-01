@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -28,6 +29,7 @@ import { MonthView, WeekView, DayView } from './components/CalendarViews'
 type ViewMode = 'month' | 'week' | 'day'
 
 export function PlanningPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { tenantId, session } = useAuthStore()
   const userId = session?.user?.id
@@ -98,8 +100,8 @@ export function PlanningPage() {
   const visitsCount = events.filter(e => e.type === 'visit').length
   const dueCount = events.filter(e => e.type === 'payment_due' || e.type === 'reservation_expires').length
 
-  const agentOptions = [{ value: 'all', label: 'Tous les agents' }, ...agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` }))]
-  const projectOptions = [{ value: 'all', label: 'Tous les projets' }, ...projectsList.map(p => ({ value: p.id, label: p.name }))]
+  const agentOptions = [{ value: 'all', label: t('pipeline_page.all_agents') }, ...agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` }))]
+  const projectOptions = [{ value: 'all', label: t('pipeline_page.all_projects') }, ...projectsList.map(p => ({ value: p.id, label: p.name }))]
 
   function navigateDate(dir: number) {
     if (viewMode === 'month') setCurrentDate(d => addMonths(d, dir))
@@ -144,30 +146,30 @@ export function PlanningPage() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          title="Planning"
-          subtitle="Vue unifiée — visites, tâches, échéances paiement et expirations réservation"
+          title={t('planning_page.title')}
+          subtitle={t('planning_page.subtitle')}
         />
         <Button onClick={() => setShowTasks(true)} variant="ghost" className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <Bot className="mr-1.5 h-3.5 w-3.5 text-purple-400" /> Tâches AI ({aiTasks.length})
+          <Bot className="mr-1.5 h-3.5 w-3.5 text-purple-400" /> {t('planning_page.ai_tasks')} ({aiTasks.length})
         </Button>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KPICard label="Aujourd'hui" value={todayCount} accent="green" icon={<CalendarDays className="h-4 w-4 text-immo-accent-green" />} />
-        <KPICard label="À venir" value={upcoming} accent="blue" icon={<Clock className="h-4 w-4 text-immo-accent-blue" />} />
-        <KPICard label="Visites" value={visitsCount} accent="green" icon={<CheckCircle className="h-4 w-4 text-immo-accent-green" />} />
-        <KPICard label="Échéances" value={dueCount} accent="orange" icon={<AlertCircle className="h-4 w-4 text-immo-status-orange" />} />
+        <KPICard label={t('planning_page.today')} value={todayCount} accent="green" icon={<CalendarDays className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label={t('planning_page.upcoming')} value={upcoming} accent="blue" icon={<Clock className="h-4 w-4 text-immo-accent-blue" />} />
+        <KPICard label={t('planning_page.visits')} value={visitsCount} accent="green" icon={<CheckCircle className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label={t('planning_page.overdue')} value={dueCount} accent="orange" icon={<AlertCircle className="h-4 w-4 text-immo-status-orange" />} />
       </div>
 
       {/* Source chips */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-medium text-immo-text-muted">Sources :</span>
+        <span className="text-[11px] font-medium text-immo-text-muted">{t('planning_page.sources')}</span>
         {([
-          ['visits',       'Visites',       'visit'              as PlanEventType],
-          ['tasks',        'Tâches',        'task_call'          as PlanEventType],
-          ['payments',     'Paiements',     'payment_due'        as PlanEventType],
-          ['reservations', 'Réservations',  'reservation_expires' as PlanEventType],
+          ['visits',       t('planning_page.visits'),       'visit'              as PlanEventType],
+          ['tasks',        t('planning_page.tasks'),         'task_call'          as PlanEventType],
+          ['payments',     t('planning_page.payments'),      'payment_due'        as PlanEventType],
+          ['reservations', t('planning_page.reservations'),  'reservation_expires' as PlanEventType],
         ] as const).map(([key, label, sample]) => {
           const v = EVENT_VISUALS[sample]
           const on = include[key]
@@ -195,7 +197,7 @@ export function PlanningPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setCurrentDate(new Date())} className="text-xs text-immo-text-secondary hover:text-immo-text-primary">
-            Aujourd'hui
+            {t('planning_page.return_today')}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => navigateDate(1)} className="h-8 w-8 p-0 text-immo-text-muted hover:text-immo-text-primary">
             <ChevronRight className="h-4 w-4" />
@@ -212,7 +214,7 @@ export function PlanningPage() {
               onClick={() => setViewMode(m)}
               className={`rounded-md px-2.5 py-1 text-[11px] font-medium ${viewMode === m ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted'}`}
             >
-              {m === 'month' ? 'Mois' : m === 'week' ? 'Semaine' : 'Jour'}
+              {m === 'month' ? t('planning_page.view_month') : m === 'week' ? t('planning_page.view_week') : t('planning_page.view_day')}
             </button>
           ))}
         </div>
@@ -240,9 +242,9 @@ export function PlanningPage() {
       )}
 
       {/* AI Tasks side panel */}
-      <SidePanel isOpen={showTasks} onClose={() => setShowTasks(false)} title="Tâches AI" subtitle="Suggestions générées par l'IA">
+      <SidePanel isOpen={showTasks} onClose={() => setShowTasks(false)} title={t('planning_page.ai_tasks')} subtitle={t('planning_page.ai_tasks_subtitle')}>
         {aiTasks.length === 0 ? (
-          <EmptyState icon={<Bot className="h-10 w-10" />} title="Aucune tâche AI" description="Les suggestions apparaîtront ici" />
+          <EmptyState icon={<Bot className="h-10 w-10" />} title={t('planning_page.no_ai_task')} description={t('planning_page.ai_task_hint')} />
         ) : (
           <div className="space-y-2">
             {aiTasks.map((t) => (

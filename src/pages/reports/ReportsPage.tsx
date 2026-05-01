@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -43,23 +44,18 @@ interface HistoryEntry {
   description: string | null
 }
 
-const PERIODS: { key: PeriodKey; label: string }[] = [
-  { key: 'week', label: 'Cette semaine' },
-  { key: 'month', label: 'Ce mois' },
-  { key: 'quarter', label: 'Ce trimestre' },
-  { key: 'year', label: 'Cette année' },
-]
+const PERIOD_KEYS: PeriodKey[] = ['week', 'month', 'quarter', 'year']
 
-const ACTION_TYPES: { key: string; label: string }[] = [
-  { key: 'call', label: 'Appels' },
-  { key: 'whatsapp_call', label: 'Appels WA' },
-  { key: 'whatsapp_message', label: 'Messages WA' },
-  { key: 'sms', label: 'SMS' },
-  { key: 'email', label: 'Emails' },
-  { key: 'visit_planned', label: 'Visites plan.' },
-  { key: 'visit_completed', label: 'Visites eff.' },
-  { key: 'reservation', label: 'Réservations' },
-  { key: 'sale', label: 'Ventes' },
+const ACTION_KEYS = [
+  { key: 'call', i18nKey: 'reports_page.type_calls' },
+  { key: 'whatsapp_call', i18nKey: 'reports_page.type_whatsapp_calls' },
+  { key: 'whatsapp_message', i18nKey: 'reports_page.type_whatsapp_messages' },
+  { key: 'sms', i18nKey: 'reports_page.type_sms' },
+  { key: 'email', i18nKey: 'reports_page.type_emails' },
+  { key: 'visit_planned', i18nKey: 'reports_page.type_visits_planned' },
+  { key: 'visit_completed', i18nKey: 'reports_page.type_visits_completed' },
+  { key: 'reservation', i18nKey: 'reports_page.type_reservations' },
+  { key: 'sale', i18nKey: 'reports_page.type_sales' },
 ]
 
 function getPeriodRange(key: PeriodKey) {
@@ -77,6 +73,7 @@ const PAGE_SIZE = 25
 /* ═══ Component ═══ */
 
 export function ReportsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { tenantId } = useAuthStore()
   const userId = useAuthStore((s) => s.session?.user?.id)
@@ -230,38 +227,39 @@ export function ReportsPage() {
   const detailPaged = detailEntries.slice(detailPage * PAGE_SIZE, (detailPage + 1) * PAGE_SIZE)
 
   // Filter options
-  const agentOptions = [{ value: 'all', label: 'Tous les agents' }, ...agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` }))]
-  const periodOptions = PERIODS.map(p => ({ value: p.key, label: p.label }))
+  const agentOptions = [{ value: 'all', label: t('reports_page.all_agents') }, ...agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` }))]
+  const periodOptions = PERIOD_KEYS.map(p => ({ value: p, label: t(`reports_page.period_${p}`) }))
+  const ACTION_TYPES = ACTION_KEYS.map(a => ({ key: a.key, label: t(a.i18nKey) }))
 
   if (isLoading) return <PageSkeleton kpiCount={5} />
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Rapports d'activité"
-        subtitle="Vue par équipe ou par agent — appels, visites, ventes, conversion"
+        title={t('reports_page.title')}
+        subtitle={t('reports_page.subtitle')}
       />
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <FilterDropdown label="Période" options={periodOptions} value={period} onChange={(v) => setPeriod(v as PeriodKey)} />
-        {!isAgent && <FilterDropdown label="Agent" options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
+        <FilterDropdown label={t('reports_page.period')} options={periodOptions} value={period} onChange={(v) => setPeriod(v as PeriodKey)} />
+        {!isAgent && <FilterDropdown label={t('reports_page.agent')} options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
         <Button variant="ghost" size="sm" onClick={() => exportToCsv('rapports', allHistory, [
-          { header: 'Date', value: r => r.created_at },
-          { header: 'Type', value: r => HISTORY_TYPE_LABELS[r.type as HistoryType]?.label ?? r.type },
+          { header: t('reports_page.detail_date'), value: r => r.created_at },
+          { header: t('reports_page.detail_type'), value: r => HISTORY_TYPE_LABELS[r.type as HistoryType]?.label ?? r.type },
           { header: 'Titre', value: r => r.title },
-          { header: 'Client', value: r => r.client_name },
+          { header: t('reports_page.detail_client'), value: r => r.client_name },
           { header: 'Description', value: r => r.description },
         ])} className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <Download className="mr-1 h-3.5 w-3.5" /> Exporter
+          <Download className="mr-1 h-3.5 w-3.5" /> {t('reports_page.export')}
         </Button>
 
         <div className="ml-auto flex gap-1 rounded-lg border border-immo-border-default p-0.5">
           <button onClick={() => setView('team')} className={`rounded-md px-3 py-1 text-[11px] font-medium ${view === 'team' ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted'}`}>
-            Équipe
+            {t('reports_page.view_team')}
           </button>
           <button onClick={() => { setView('agent'); if (!selectedAgent && agents.length) setSelectedAgent(agents[0].id) }} className={`rounded-md px-3 py-1 text-[11px] font-medium ${view === 'agent' ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted'}`}>
-            Agent
+            {t('reports_page.view_agent')}
           </button>
         </div>
       </div>
@@ -273,12 +271,12 @@ export function ReportsPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-immo-bg-card-hover">
-                  <th className="sticky left-0 z-10 whitespace-nowrap bg-immo-bg-card-hover px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Agent</th>
-                  {ACTION_TYPES.map(t => (
-                    <th key={t.key} className="whitespace-nowrap px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{t.label}</th>
+                  <th className="sticky left-0 z-10 whitespace-nowrap bg-immo-bg-card-hover px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('reports_page.agent')}</th>
+                  {ACTION_TYPES.map(at => (
+                    <th key={at.key} className="whitespace-nowrap px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{at.label}</th>
                   ))}
-                  <th className="whitespace-nowrap px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Nvx clients</th>
-                  <th className="whitespace-nowrap px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Dern. act.</th>
+                  <th className="whitespace-nowrap px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('reports_page.new_clients')}</th>
+                  <th className="whitespace-nowrap px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('reports_page.last_activity')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-immo-border-default">
@@ -287,17 +285,17 @@ export function ReportsPage() {
                     <td className="sticky left-0 z-10 whitespace-nowrap bg-immo-bg-card px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-immo-text-primary">{a.name}</span>
-                        {a.inactive_long && <span className="h-2 w-2 rounded-full bg-immo-status-red" title="Inactif 7+ jours" />}
+                        {a.inactive_long && <span className="h-2 w-2 rounded-full bg-immo-status-red" title={t('reports_page.inactive_long')} />}
                       </div>
                     </td>
                     {/* Audit (HIGH): `|| '-'` masque les vrais 0 — un
                         agent à 0 actions affichait "-", indistinguable
                         d'une donnée manquante. Préciser la sémantique
                         en n'affichant '-' que si la valeur est nulle. */}
-                    {ACTION_TYPES.map(t => {
-                      const v = (a as unknown as Record<string, number | null | undefined>)[t.key]
+                    {ACTION_TYPES.map(at => {
+                      const v = (a as unknown as Record<string, number | null | undefined>)[at.key]
                       return (
-                        <td key={t.key} className="whitespace-nowrap px-3 py-2.5 text-center text-xs text-immo-text-primary">
+                        <td key={at.key} className="whitespace-nowrap px-3 py-2.5 text-center text-xs text-immo-text-primary">
                           {v == null ? <span className="text-immo-text-muted">-</span> : v}
                         </td>
                       )
@@ -314,9 +312,9 @@ export function ReportsPage() {
                 ))}
                 {/* Totals row */}
                 <tr className="bg-immo-bg-card-hover font-semibold">
-                  <td className="sticky left-0 z-10 bg-immo-bg-card-hover px-4 py-2.5 text-xs text-immo-accent-green">TOTAL</td>
-                  {ACTION_TYPES.map(t => (
-                    <td key={t.key} className="px-3 py-2.5 text-center text-xs text-immo-accent-green">{totals[t.key] || '-'}</td>
+                  <td className="sticky left-0 z-10 bg-immo-bg-card-hover px-4 py-2.5 text-xs text-immo-accent-green">{t('reports_page.total')}</td>
+                  {ACTION_TYPES.map(at => (
+                    <td key={at.key} className="px-3 py-2.5 text-center text-xs text-immo-accent-green">{totals[at.key] || '-'}</td>
                   ))}
                   <td className="px-3 py-2.5 text-center text-xs text-immo-accent-green">{totals.new_clients || '-'}</td>
                   <td />
@@ -332,7 +330,7 @@ export function ReportsPage() {
         <div className="space-y-5">
           {/* Agent selector */}
           <FilterDropdown
-            label="Agent"
+            label={t('reports_page.agent')}
             options={agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` }))}
             value={selectedAgent}
             onChange={(v) => { setSelectedAgent(v); setDetailPage(0) }}
@@ -342,17 +340,17 @@ export function ReportsPage() {
             <>
               {/* KPIs */}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
-                <KPICard label="Interactions" value={agentKPIs.total} accent="blue" icon={<Activity className="h-4 w-4 text-immo-accent-blue" />} />
-                <KPICard label="Visites eff." value={agentKPIs.visits} accent="blue" icon={<CheckCircle className="h-4 w-4 text-immo-accent-blue" />} />
-                <KPICard label="Taux visite" value={`${agentKPIs.visitRate}%`} accent={agentKPIs.visitRate > 30 ? 'green' : 'orange'} icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
-                <KPICard label="Réservations" value={agentKPIs.reservations} accent="orange" icon={<Bookmark className="h-4 w-4 text-immo-status-orange" />} />
-                <KPICard label="Ventes" value={agentKPIs.sales} accent="green" icon={<DollarSign className="h-4 w-4 text-immo-accent-green" />} />
-                <KPICard label="Taux conversion" value={`${agentKPIs.conversionRate}%`} accent={agentKPIs.conversionRate > 15 ? 'green' : 'red'} icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
+                <KPICard label={t('reports_page.interactions')} value={agentKPIs.total} accent="blue" icon={<Activity className="h-4 w-4 text-immo-accent-blue" />} />
+                <KPICard label={t('reports_page.visits_completed')} value={agentKPIs.visits} accent="blue" icon={<CheckCircle className="h-4 w-4 text-immo-accent-blue" />} />
+                <KPICard label={t('reports_page.visit_rate')} value={`${agentKPIs.visitRate}%`} accent={agentKPIs.visitRate > 30 ? 'green' : 'orange'} icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
+                <KPICard label={t('reports_page.reservations')} value={agentKPIs.reservations} accent="orange" icon={<Bookmark className="h-4 w-4 text-immo-status-orange" />} />
+                <KPICard label={t('reports_page.sales')} value={agentKPIs.sales} accent="green" icon={<DollarSign className="h-4 w-4 text-immo-accent-green" />} />
+                <KPICard label={t('reports_page.conversion_rate')} value={`${agentKPIs.conversionRate}%`} accent={agentKPIs.conversionRate > 15 ? 'green' : 'red'} icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
               </div>
 
               {/* Chart */}
               <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
-                <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Activité par jour</h3>
+                <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">{t('reports_page.activity_per_day')}</h3>
                 <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
@@ -361,9 +359,9 @@ export function ReportsPage() {
                       <YAxis tick={{ fontSize: 10, fill: '#7F96B7' }} stroke="#1E325A" />
                       <Tooltip contentStyle={{ background: '#0F1830', border: '1px solid #1E325A', borderRadius: 8, fontSize: 12 }} labelStyle={{ color: '#EDF4FC' }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Line type="monotone" dataKey="appels" stroke="#3782FF" strokeWidth={2} dot={false} name="Appels" />
-                      <Line type="monotone" dataKey="visites" stroke="#00D4A0" strokeWidth={2} dot={false} name="Visites" />
-                      <Line type="monotone" dataKey="messages" stroke="#FF9A1E" strokeWidth={2} dot={false} name="Messages" />
+                      <Line type="monotone" dataKey="appels" stroke="#3782FF" strokeWidth={2} dot={false} name={t('reports_page.chart_calls')} />
+                      <Line type="monotone" dataKey="visites" stroke="#00D4A0" strokeWidth={2} dot={false} name={t('reports_page.chart_visits')} />
+                      <Line type="monotone" dataKey="messages" stroke="#FF9A1E" strokeWidth={2} dot={false} name={t('reports_page.chart_messages')} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -375,7 +373,12 @@ export function ReportsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="bg-immo-bg-card-hover">
-                        {['Date', 'Type', 'Client', 'Note'].map(h => (
+                        {[
+                          t('reports_page.detail_date'),
+                          t('reports_page.detail_type'),
+                          t('reports_page.detail_client'),
+                          t('reports_page.detail_note'),
+                        ].map(h => (
                           <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                         ))}
                       </tr>
@@ -404,7 +407,7 @@ export function ReportsPage() {
                 {detailTotalPages > 1 && (
                   <div className="flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card-hover px-4 py-2.5">
                     <span className="text-xs text-immo-text-muted">
-                      {detailPage * PAGE_SIZE + 1}–{Math.min((detailPage + 1) * PAGE_SIZE, detailEntries.length)} sur {detailEntries.length}
+                      {detailPage * PAGE_SIZE + 1}–{Math.min((detailPage + 1) * PAGE_SIZE, detailEntries.length)} {t('reports_page.pagination_of')} {detailEntries.length}
                     </span>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" disabled={detailPage === 0} onClick={() => setDetailPage(p => p - 1)} className="h-7 w-7 p-0 text-immo-text-muted disabled:opacity-30">

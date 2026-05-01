@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Target, Plus, Download, TrendingUp,
@@ -48,12 +49,12 @@ interface AgentActuals {
   conversion_rate: number
 }
 
-const PERIOD_LABELS: Record<GoalPeriod, string> = { monthly: 'Mensuel', quarterly: 'Trimestriel', yearly: 'Annuel' }
-const STATUS_CONFIG: Record<GoalStatus, { label: string; type: 'blue' | 'green' | 'red' | 'orange' }> = {
-  in_progress: { label: 'En cours', type: 'blue' },
-  achieved: { label: 'Atteint', type: 'green' },
-  exceeded: { label: 'Dépassé', type: 'green' },
-  not_achieved: { label: 'Non atteint', type: 'red' },
+const PERIOD_KEYS: Record<GoalPeriod, string> = { monthly: 'goals_page.monthly', quarterly: 'goals_page.quarterly', yearly: 'goals_page.yearly' }
+const STATUS_CONFIG: Record<GoalStatus, { i18nKey: string; type: 'blue' | 'green' | 'red' | 'orange' }> = {
+  in_progress: { i18nKey: 'goals_page.in_progress', type: 'blue' },
+  achieved: { i18nKey: 'goals_page.achieved', type: 'green' },
+  exceeded: { i18nKey: 'goals_page.exceeded', type: 'green' },
+  not_achieved: { i18nKey: 'goals_page.not_achieved', type: 'red' },
 }
 
 const inputClass = 'border-immo-border-default bg-immo-bg-primary text-immo-text-primary placeholder:text-immo-text-muted'
@@ -62,6 +63,7 @@ const labelClass = 'text-[11px] font-medium text-immo-text-muted'
 /* ═══ Component ═══ */
 
 export function GoalsPage() {
+  const { t } = useTranslation()
   const { tenantId } = useAuthStore()
   const { canManageGoals, isAgent } = usePermissions()
   const userId = useAuthStore((s) => s.session?.user?.id)
@@ -240,14 +242,14 @@ export function GoalsPage() {
 
   // Filter options
   const statusOptions = [
-    { value: 'all', label: 'Tous les statuts' },
-    { value: 'in_progress', label: 'En cours' },
-    { value: 'achieved', label: 'Atteint' },
-    { value: 'exceeded', label: 'Dépassé' },
-    { value: 'not_achieved', label: 'Non atteint' },
+    { value: 'all', label: t('goals_page.all_status') },
+    { value: 'in_progress', label: t('goals_page.in_progress') },
+    { value: 'achieved', label: t('goals_page.achieved') },
+    { value: 'exceeded', label: t('goals_page.exceeded') },
+    { value: 'not_achieved', label: t('goals_page.not_achieved') },
   ]
   const agentOptions = [
-    { value: 'all', label: 'Tous les agents' },
+    { value: 'all', label: t('goals_page.all_agents') },
     ...agents.map(a => ({ value: a.id, label: `${a.first_name} ${a.last_name}` })),
   ]
 
@@ -265,44 +267,52 @@ export function GoalsPage() {
     <div className="space-y-5">
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KPICard label="Total objectifs" value={totalGoals} accent="blue" icon={<Target className="h-4 w-4 text-immo-accent-blue" />} />
-        <KPICard label="En cours" value={inProgress} accent="orange" icon={<Target className="h-4 w-4 text-immo-status-orange" />} />
-        <KPICard label="Atteints" value={achieved} accent="green" icon={<Target className="h-4 w-4 text-immo-accent-green" />} />
-        <KPICard label="Progression moyenne" value={`${avgProgress}%`} accent={avgProgress >= 80 ? 'green' : avgProgress >= 50 ? 'orange' : 'red'} icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label={t('goals_page.total_goals')} value={totalGoals} accent="blue" icon={<Target className="h-4 w-4 text-immo-accent-blue" />} />
+        <KPICard label={t('goals_page.in_progress')} value={inProgress} accent="orange" icon={<Target className="h-4 w-4 text-immo-status-orange" />} />
+        <KPICard label={t('goals_page.achieved_kpi')} value={achieved} accent="green" icon={<Target className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label={t('goals_page.avg_progress')} value={`${avgProgress}%`} accent={avgProgress >= 80 ? 'green' : avgProgress >= 50 ? 'orange' : 'red'} icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
       </div>
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
-        {!isAgent && <FilterDropdown label="Agent" options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
-        <FilterDropdown label="Statut" options={statusOptions} value={statusFilter} onChange={setStatusFilter} />
+        {!isAgent && <FilterDropdown label={t('goals_page.agent')} options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
+        <FilterDropdown label={t('goals_page.status')} options={statusOptions} value={statusFilter} onChange={setStatusFilter} />
         <Button variant="ghost" size="sm" onClick={() => exportToCsv('objectifs', filtered, [
-          { header: 'Agent', value: r => r.agent_name },
-          { header: 'Metrique', value: r => GOAL_METRIC_LABELS[r.metric] ?? r.metric },
-          { header: 'Periode', value: r => r.period },
-          { header: 'Objectif', value: r => r.target_value },
-          { header: 'Actuel', value: r => r.current_value },
-          { header: 'Progression', value: r => `${r.progress}%` },
-          { header: 'Statut', value: r => r.status },
+          { header: t('goals_page.agent'), value: r => r.agent_name },
+          { header: t('goals_page.metric'), value: r => GOAL_METRIC_LABELS[r.metric] ?? r.metric },
+          { header: t('goals_page.period'), value: r => r.period },
+          { header: t('goals_page.target'), value: r => r.target_value },
+          { header: t('goals_page.current'), value: r => r.current_value },
+          { header: t('goals_page.progress'), value: r => `${r.progress}%` },
+          { header: t('goals_page.status'), value: r => r.status },
         ])} className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <Download className="mr-1 h-3.5 w-3.5" /> Exporter
+          <Download className="mr-1 h-3.5 w-3.5" /> {t('goals_page.export')}
         </Button>
         {canManageGoals && (
           <Button onClick={() => setShowCreate(true)} className="ml-auto bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-            <Plus className="mr-1 h-4 w-4" /> Nouvel objectif
+            <Plus className="mr-1 h-4 w-4" /> {t('goals_page.new_goal')}
           </Button>
         )}
       </div>
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <div className="py-16 text-center text-sm text-immo-text-muted">Aucun objectif</div>
+        <div className="py-16 text-center text-sm text-immo-text-muted">{t('goals_page.no_goals')}</div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-immo-border-default">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-immo-bg-card-hover">
-                  {['Agent', 'Métrique', 'Période', 'Objectif', 'Actuel', 'Progression', 'Statut'].map(h => (
+                  {[
+                    t('goals_page.agent'),
+                    t('goals_page.metric'),
+                    t('goals_page.period'),
+                    t('goals_page.target'),
+                    t('goals_page.current'),
+                    t('goals_page.progress'),
+                    t('goals_page.status'),
+                  ].map(h => (
                     <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                   ))}
                 </tr>
@@ -317,7 +327,7 @@ export function GoalsPage() {
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-immo-text-secondary">{GOAL_METRIC_LABELS[g.metric]}</td>
                       <td className="whitespace-nowrap px-4 py-3">
                         <div>
-                          <span className="text-xs text-immo-text-primary">{PERIOD_LABELS[g.period]}</span>
+                          <span className="text-xs text-immo-text-primary">{t(PERIOD_KEYS[g.period])}</span>
                           <p className="text-[10px] text-immo-text-muted">{format(new Date(g.started_at), 'dd/MM')} — {format(new Date(g.ended_at), 'dd/MM/yyyy')}</p>
                         </div>
                       </td>
@@ -338,7 +348,7 @@ export function GoalsPage() {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
-                        <StatusBadge label={stCfg.label} type={stCfg.type} />
+                        <StatusBadge label={t(stCfg.i18nKey)} type={stCfg.type} />
                       </td>
                     </tr>
                   )
@@ -368,6 +378,7 @@ function CreateGoalModal({ isOpen, onClose, agents, tenantId }: {
   agents: Array<{ id: string; first_name: string; last_name: string }>
   tenantId: string
 }) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [agentId, setAgentId] = useState('')
   const [metric, setMetric] = useState<GoalMetric>('sales_count')
@@ -401,7 +412,7 @@ function CreateGoalModal({ isOpen, onClose, agents, tenantId }: {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['goals'] })
-      toast.success('Objectif créé avec succès')
+      toast.success(t('goals_page.created_success'))
       resetAndClose()
     },
   })
@@ -412,27 +423,27 @@ function CreateGoalModal({ isOpen, onClose, agents, tenantId }: {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Nouvel objectif" subtitle="Définir un objectif de vente pour un agent" size="sm">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title={t('goals_page.new_goal')} subtitle={t('goals_page.create_subtitle')} size="sm">
       <div className="space-y-4">
         <div>
-          <Label className={labelClass}>Agent *</Label>
+          <Label className={labelClass}>{t('goals_page.agent')} *</Label>
           <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className={`mt-1 h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
-            <option value="">Selectionner l'agent</option>
+            <option value="">{t('goals_page.select_agent')}</option>
             {agents.map(a => <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>)}
           </select>
         </div>
 
         <div>
-          <Label className={labelClass}>Métrique *</Label>
+          <Label className={labelClass}>{t('goals_page.metric')} *</Label>
           <select value={metric} onChange={(e) => setMetric(e.target.value as GoalMetric)} className={`mt-1 h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
             {Object.entries(GOAL_METRIC_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
           </select>
         </div>
 
         <div>
-          <Label className={labelClass}>Période *</Label>
+          <Label className={labelClass}>{t('goals_page.period')} *</Label>
           <select value={period} onChange={(e) => setPeriod(e.target.value as GoalPeriod)} className={`mt-1 h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
-            {Object.entries(PERIOD_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+            {Object.entries(PERIOD_KEYS).map(([val, key]) => <option key={val} value={val}>{t(key)}</option>)}
           </select>
           <p className="mt-1 text-[10px] text-immo-text-muted">
             {format(dates.start, 'dd/MM/yyyy')} → {format(dates.end, 'dd/MM/yyyy')}
@@ -440,7 +451,7 @@ function CreateGoalModal({ isOpen, onClose, agents, tenantId }: {
         </div>
 
         <div>
-          <Label className={labelClass}>Valeur cible *</Label>
+          <Label className={labelClass}>{t('goals_page.target_value')} *</Label>
           <Input
             type="number"
             value={targetValue}
@@ -452,14 +463,14 @@ function CreateGoalModal({ isOpen, onClose, agents, tenantId }: {
 
         <div className="flex justify-end gap-3 border-t border-immo-border-default pt-4">
           <Button variant="ghost" onClick={resetAndClose} className="text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
-            Annuler
+            {t('goals_page.cancel')}
           </Button>
           <Button
             onClick={() => createGoal.mutate()}
             disabled={!agentId || !targetValue || createGoal.isPending}
             className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90"
           >
-            {createGoal.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" /> : 'Créer l\'objectif'}
+            {createGoal.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" /> : t('goals_page.create_action')}
           </Button>
         </div>
       </div>

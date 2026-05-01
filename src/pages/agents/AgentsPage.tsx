@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -51,14 +52,15 @@ interface AgentRow {
 
 type StatusKey = 'active' | 'on_leave' | 'suspended' | 'inactive'
 
-const STATUS_DEF: Record<StatusKey, { label: string; type: 'green' | 'orange' | 'red' | 'muted' }> = {
-  active:    { label: 'Actif',     type: 'green' },
-  on_leave:  { label: 'En congé',  type: 'orange' },
-  suspended: { label: 'Suspendu',  type: 'red' },
-  inactive:  { label: 'Inactif',   type: 'muted' },
+const STATUS_DEF: Record<StatusKey, { type: 'green' | 'orange' | 'red' | 'muted' }> = {
+  active:    { type: 'green' },
+  on_leave:  { type: 'orange' },
+  suspended: { type: 'red' },
+  inactive:  { type: 'muted' },
 }
 
 export function AgentsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { tenantId } = useAuthStore()
   const { canManageAgents } = usePermissions()
@@ -192,11 +194,11 @@ export function AgentsPage() {
       <>
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <KPICard label="Total agents" value={total} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
-        <KPICard label="Actifs" value={active} accent="green" icon={<UserCheck className="h-4 w-4 text-immo-accent-green" />} />
-        <KPICard label="En congé" value={onLeave} accent="orange" icon={<CalendarDays className="h-4 w-4 text-immo-status-orange" />} />
-        <KPICard label="Inactifs / Suspendus" value={inactive} accent="red" icon={<UserX className="h-4 w-4 text-immo-status-red" />} />
-        <KPICard label="Clients assignés" value={totalClients} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
+        <KPICard label={t('agents_page.total_agents')} value={total} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
+        <KPICard label={t('agents_page.active_agents')} value={active} accent="green" icon={<UserCheck className="h-4 w-4 text-immo-accent-green" />} />
+        <KPICard label={t('agents_page.on_leave_agents')} value={onLeave} accent="orange" icon={<CalendarDays className="h-4 w-4 text-immo-status-orange" />} />
+        <KPICard label={t('agents_page.inactive_agents')} value={inactive} accent="red" icon={<UserX className="h-4 w-4 text-immo-status-red" />} />
+        <KPICard label={t('agents_page.assigned_clients')} value={totalClients} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
       </div>
 
       {/* Plan limit banner */}
@@ -206,7 +208,7 @@ export function AgentsPage() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-3">
-        <SearchInput placeholder="Rechercher un agent..." value={search} onChange={setSearch} className="w-[260px]" />
+        <SearchInput placeholder={t('agents_page.search_agent')} value={search} onChange={setSearch} className="w-[260px]" />
         {canManageAgents && (
           <Button
             onClick={() => setShowCreate(true)}
@@ -254,18 +256,18 @@ export function AgentsPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-xs font-medium text-immo-accent-green">{a.sales_count}</td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className={`text-xs ${inactiveLong ? 'font-medium text-immo-status-red' : 'text-immo-text-muted'}`}>
-                        {a.last_activity ? formatDistanceToNow(new Date(a.last_activity), { addSuffix: true, locale: fr }) : 'Jamais'}
+                        {a.last_activity ? formatDistanceToNow(new Date(a.last_activity), { addSuffix: true, locale: fr }) : t('common.never')}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex flex-col gap-0.5">
                         <StatusBadge
-                          label={STATUS_DEF[(a.status as StatusKey)]?.label ?? a.status}
+                          label={STATUS_DEF[(a.status as StatusKey)] ? t(`status.${a.status}`) : a.status}
                           type={STATUS_DEF[(a.status as StatusKey)]?.type ?? 'muted'}
                         />
                         {a.status === 'on_leave' && a.leave_ends_at && (
                           <span className="text-[10px] text-immo-text-muted">
-                            Retour {formatDistanceToNow(new Date(a.leave_ends_at), { addSuffix: true, locale: fr })}
+                            {t('common.return_in', { when: formatDistanceToNow(new Date(a.leave_ends_at), { addSuffix: true, locale: fr }) })}
                           </span>
                         )}
                       </div>

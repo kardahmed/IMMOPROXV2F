@@ -36,7 +36,7 @@ export function DashboardPage() {
         <KPICard label={t('status.reserved')} value={data.reservedUnits} accent="orange" icon={<Bookmark className="h-4 w-4 text-immo-status-orange" />} />
         <KPICard label={t('kpi.revenue')} value={formatPriceCompact(data.revenue)} accent="green" icon={<DollarSign className="h-4 w-4 text-immo-accent-green" />} />
         <KPICard label={t('kpi.total_clients')} value={data.totalClients} accent="blue" icon={<Users className="h-4 w-4 text-immo-accent-blue" />} />
-        <KPICard label="Paiements retard" value={data.overduePayments} accent={data.overduePayments > 0 ? 'red' : 'green'} icon={<AlertTriangle className="h-4 w-4 text-immo-status-red" />} />
+        <KPICard label={t('dashboard.overdue_payments')} value={data.overduePayments} accent={data.overduePayments > 0 ? 'red' : 'green'} icon={<AlertTriangle className="h-4 w-4 text-immo-status-red" />} />
         <KPICard label={t('kpi.conversion_rate')} value={`${data.saleRate.toFixed(1)}%`} accent={data.saleRate > 50 ? 'green' : 'orange'} icon={<TrendingUp className="h-4 w-4 text-immo-accent-green" />} />
       </div>
 
@@ -57,7 +57,7 @@ export function DashboardPage() {
 
         {/* Pipeline Funnel */}
         <Card>
-          <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">Entonnoir pipeline</h3>
+          <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">{t('dashboard.pipeline_funnel')}</h3>
           <div className="space-y-2">
             {data.pipelineFunnel.map(s => {
               const stage = PIPELINE_STAGES[s.stage as keyof typeof PIPELINE_STAGES]
@@ -88,7 +88,7 @@ export function DashboardPage() {
           </div>
           <div className="max-h-[240px] divide-y divide-immo-border-default overflow-y-auto">
             {data.todayVisits.length === 0 ? (
-              <div className="px-5 py-8 text-center text-xs text-immo-text-muted">Aucune visite prevue aujourd'hui</div>
+              <div className="px-5 py-8 text-center text-xs text-immo-text-muted">{t('dashboard.no_visit_today')}</div>
             ) : data.todayVisits.map(v => (
               <div key={v.id} className="px-5 py-3 hover:bg-immo-bg-card-hover transition-colors">
                 <div className="flex items-center justify-between">
@@ -115,7 +115,7 @@ export function DashboardPage() {
           </div>
           <div className="max-h-[240px] divide-y divide-immo-border-default overflow-y-auto">
             {data.atRiskClients.length === 0 ? (
-              <div className="px-5 py-8 text-center text-xs text-immo-text-muted">Tous les clients sont a jour</div>
+              <div className="px-5 py-8 text-center text-xs text-immo-text-muted">{t('dashboard.all_clients_up_to_date')}</div>
             ) : data.atRiskClients.map(c => (
               <div key={c.id} className="flex items-center gap-3 px-5 py-3 hover:bg-immo-bg-card-hover cursor-pointer transition-colors" onClick={() => navigate(`/pipeline/clients/${c.id}`)}>
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-immo-status-red/10 text-[10px] font-bold text-immo-status-red">
@@ -152,7 +152,7 @@ export function DashboardPage() {
               )
             })}
             {data.sourceBreakdown.length === 0 && (
-              <div className="py-6 text-center text-xs text-immo-text-muted">Aucune donnee</div>
+              <div className="py-6 text-center text-xs text-immo-text-muted">{t('common.no_data')}</div>
             )}
           </div>
         </Card>

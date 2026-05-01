@@ -44,7 +44,7 @@ export function LoginPage() {
       <div className="flex h-screen items-center justify-center bg-[#F6F9FC]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#0579DA] border-t-transparent" />
-          <p className="text-xs text-[#8898AA]">Connexion en cours...</p>
+          <p className="text-xs text-[#8898AA]">{t('login.loading')}</p>
         </div>
       </div>
     )
@@ -54,19 +54,19 @@ export function LoginPage() {
     setError('')
     setLoading(true)
     try { await signIn(data.email, data.password) }
-    catch (err) { setError(err instanceof Error ? err.message : 'Erreur de connexion') }
+    catch (err) { setError(err instanceof Error ? err.message : t('login.error_default')) }
     finally { setLoading(false) }
   }
 
   async function handleForgotPassword() {
     const email = (getValues('email') ?? '').trim()
     if (!email) {
-      toast.error('Entrez votre email en haut, puis cliquez sur "Mot de passe oublie ?"')
+      toast.error(t('login.forgot_password_no_email'))
       return
     }
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     if (!emailOk) {
-      toast.error('Email invalide')
+      toast.error(t('login.forgot_password_invalid'))
       return
     }
     setResetLoading(true)
@@ -78,7 +78,7 @@ export function LoginPage() {
       toast.error(resetError.message)
       return
     }
-    toast.success(`Email envoye a ${email}. Verifiez votre boite de reception.`)
+    toast.success(t('login.forgot_password_sent', { email }))
   }
 
   return (
@@ -106,7 +106,7 @@ export function LoginPage() {
           {/* Title */}
           <div className="mb-6">
             <h1 className="text-[20px]" style={{fontWeight:800,color:'#0A2540',letterSpacing:'-0.3px'}}>{t('login.connect_to')}</h1>
-            <p className="mt-1 text-[13px] text-[#8898AA]">Entrez vos identifiants pour acceder a votre espace.</p>
+            <p className="mt-1 text-[13px] text-[#8898AA]">{t('login.subtitle')}</p>
           </div>
 
           {/* Form */}
@@ -140,7 +140,7 @@ export function LoginPage() {
                   className="text-[11px] text-[#0579DA] hover:underline disabled:opacity-60"
                   style={{fontWeight:600}}
                 >
-                  {resetLoading ? 'Envoi...' : 'Mot de passe oublie ?'}
+                  {resetLoading ? t('login.forgot_password_sending') : t('login.forgot_password')}
                 </button>
               </div>
               <div className="relative">
@@ -164,7 +164,7 @@ export function LoginPage() {
                 className={`flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border-2 transition-all ${rememberMe ? 'border-[#0579DA] bg-[#0579DA]' : 'border-[#D0D5DD]'}`}>
                 {rememberMe && <Check className="h-3 w-3 text-white" />}
               </button>
-              <span className="text-[13px] text-[#8898AA]">Se souvenir de moi</span>
+              <span className="text-[13px] text-[#8898AA]">{t('login.remember_me')}</span>
             </div>
 
             {/* Submit */}
