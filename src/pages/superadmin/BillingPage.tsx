@@ -54,10 +54,10 @@ export function BillingPage() {
   if (isLoading) return <PageSkeleton kpiCount={4} hasTable />
 
   const STATUS_MAP: Record<string, { label: string; type: 'green' | 'orange' | 'red' | 'muted' }> = {
-    paid: { label: 'Paye', type: 'green' },
+    paid: { label: 'Payé', type: 'green' },
     pending: { label: 'En attente', type: 'orange' },
     overdue: { label: 'En retard', type: 'red' },
-    cancelled: { label: 'Annule', type: 'muted' },
+    cancelled: { label: 'Annulé', type: 'muted' },
   }
 
   const FILTER_OPTIONS = [
