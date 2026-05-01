@@ -104,6 +104,8 @@ export const fr = {
     rescheduled: 'Reportée',
     expired: 'Expirée',
     converted: 'Convertie',
+    on_leave: 'En congé',
+    suspended: 'Suspendu',
   },
 
   // Étapes pipeline
@@ -225,6 +227,8 @@ export const fr = {
     no: 'Non',
     or: 'ou',
     and: 'et',
+    never: 'Jamais',
+    return_in: 'Retour {{when}}',
     of: 'de',
     total: 'Total',
     version: 'v2.0',
@@ -279,6 +283,10 @@ export const fr = {
     reserved_count: '{{count}} réservés',
     available_count: '{{count}} dispos',
     blocked_count: '{{count}} bloqués',
+    overdue_payments: 'Paiements en retard',
+    pipeline_funnel: 'Entonnoir pipeline',
+    no_visit_today: 'Aucune visite prévue aujourd\'hui',
+    all_clients_up_to_date: 'Tous les clients sont à jour',
   },
 
   // Pipeline
@@ -374,6 +382,29 @@ export const fr = {
     loading: 'Connexion en cours...',
     first_login: 'Première connexion ? Contactez votre administrateur',
     connect_to: 'Connectez-vous à votre espace',
+    subtitle: 'Entrez vos identifiants pour accéder à votre espace.',
+    forgot_password: 'Mot de passe oublié ?',
+    forgot_password_sending: 'Envoi…',
+    forgot_password_no_email: 'Entrez votre email en haut, puis cliquez sur "Mot de passe oublié ?"',
+    forgot_password_invalid: 'Email invalide',
+    forgot_password_sent: 'Email envoyé à {{email}}. Vérifiez votre boîte de réception.',
+    remember_me: 'Se souvenir de moi',
+    error_default: 'Erreur de connexion',
+  },
+
+  // Reset password
+  reset_password: {
+    title: 'Nouveau mot de passe',
+    subtitle: 'Choisissez un mot de passe solide pour votre compte.',
+    new_label: 'Nouveau mot de passe',
+    confirm_label: 'Confirmer le mot de passe',
+    submit: 'Mettre à jour le mot de passe',
+    submitting: 'Mise à jour…',
+    success: 'Mot de passe mis à jour. Vous êtes connecté.',
+    invalid_link: 'Lien invalide ou expiré. Retournez sur la <0>page de connexion</0> et relancez la procédure.',
+    min_length: 'Minimum 8 caractères',
+    confirm_required: 'Confirmation requise',
+    mismatch: 'Les mots de passe ne correspondent pas',
   },
 
   // Client detail

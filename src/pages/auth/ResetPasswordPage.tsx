@@ -1,31 +1,37 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation, Trans } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
 import { Lock, Eye, EyeOff, Check, AlertCircle } from 'lucide-react'
 
-const schema = z
-  .object({
-    password: z.string().min(8, 'Minimum 8 caracteres'),
-    confirm: z.string().min(1, 'Confirmation requise'),
-  })
-  .refine(v => v.password === v.confirm, {
-    path: ['confirm'],
-    message: 'Les mots de passe ne correspondent pas',
-  })
+// Schema messages are looked up at form-init time, so we need a
+// factory closure over `t` rather than a top-level const.
+function buildSchema(t: (k: string) => string) {
+  return z
+    .object({
+      password: z.string().min(8, t('reset_password.min_length')),
+      confirm: z.string().min(1, t('reset_password.confirm_required')),
+    })
+    .refine(v => v.password === v.confirm, {
+      path: ['confirm'],
+      message: t('reset_password.mismatch'),
+    })
+}
 
-type FormData = z.infer<typeof schema>
+type FormData = { password: string; confirm: string }
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(null)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(buildSchema(t)) })
 
   // Supabase writes the recovery session from the #access_token hash the
   // moment the user lands on this page. If no session appears within a
@@ -49,7 +55,7 @@ export function ResetPasswordPage() {
       toast.error(error.message)
       return
     }
-    toast.success('Mot de passe mis a jour. Vous etes connecte.')
+    toast.success(t('reset_password.success'))
     navigate('/dashboard', { replace: true })
   }
 
@@ -66,15 +72,17 @@ export function ResetPasswordPage() {
 
         <div className="rounded-2xl border border-[#E3E8EF] bg-white p-8 shadow-xl shadow-black/[0.03] sm:p-10">
           <div className="mb-6">
-            <h1 className="text-[20px]" style={{fontWeight:800,color:'#0A2540',letterSpacing:'-0.3px'}}>Nouveau mot de passe</h1>
-            <p className="mt-1 text-[13px] text-[#8898AA]">Choisissez un mot de passe solide pour votre compte.</p>
+            <h1 className="text-[20px]" style={{fontWeight:800,color:'#0A2540',letterSpacing:'-0.3px'}}>{t('reset_password.title')}</h1>
+            <p className="mt-1 text-[13px] text-[#8898AA]">{t('reset_password.subtitle')}</p>
           </div>
 
           {hasRecoverySession === false && (
             <div className="mb-5 flex items-start gap-3 rounded-xl border border-[#CD3D64]/20 bg-[#FFF0F3] px-4 py-3">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#CD3D64]" />
               <p className="text-sm text-[#CD3D64]">
-                Lien invalide ou expire. Retournez sur <a href="/login" className="underline">la page de connexion</a> et relancez la procedure.
+                <Trans i18nKey="reset_password.invalid_link">
+                  Lien invalide ou expiré. Retournez sur la <a href="/login" className="underline">page de connexion</a> et relancez la procédure.
+                </Trans>
               </p>
             </div>
           )}
@@ -82,7 +90,7 @@ export function ResetPasswordPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label htmlFor="password" className="mb-1.5 block text-[12px] text-[#425466]" style={{fontWeight:600}}>
-                Nouveau mot de passe
+                {t('reset_password.new_label')}
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8898AA]" />
@@ -107,7 +115,7 @@ export function ResetPasswordPage() {
 
             <div>
               <label htmlFor="confirm" className="mb-1.5 block text-[12px] text-[#425466]" style={{fontWeight:600}}>
-                Confirmer le mot de passe
+                {t('reset_password.confirm_label')}
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8898AA]" />
@@ -133,9 +141,9 @@ export function ResetPasswordPage() {
               style={{background:'#0579DA',fontWeight:700,boxShadow:'0 4px 14px rgba(5,121,218,.25)'}}
             >
               {submitting ? (
-                <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /><span>Mise a jour...</span></>
+                <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /><span>{t('reset_password.submitting')}</span></>
               ) : (
-                <><span>Mettre a jour le mot de passe</span><Check className="h-4 w-4" /></>
+                <><span>{t('reset_password.submit')}</span><Check className="h-4 w-4" /></>
               )}
             </button>
           </form>

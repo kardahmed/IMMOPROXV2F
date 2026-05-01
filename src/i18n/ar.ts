@@ -104,6 +104,8 @@ export const ar = {
     rescheduled: 'مؤجل',
     expired: 'منتهي',
     converted: 'محوّل',
+    on_leave: 'في إجازة',
+    suspended: 'موقوف',
   },
 
   // Étapes pipeline
@@ -225,6 +227,8 @@ export const ar = {
     no: 'لا',
     or: 'أو',
     and: 'و',
+    never: 'أبداً',
+    return_in: 'العودة {{when}}',
     of: 'من',
     total: 'المجموع',
     version: 'v2.0',
@@ -279,6 +283,10 @@ export const ar = {
     reserved_count: '{{count}} محجوز',
     available_count: '{{count}} متاح',
     blocked_count: '{{count}} محظور',
+    overdue_payments: 'مدفوعات متأخرة',
+    pipeline_funnel: 'مسار خط الأنابيب',
+    no_visit_today: 'لا توجد زيارة اليوم',
+    all_clients_up_to_date: 'جميع العملاء محدثون',
   },
 
   // Pipeline
@@ -373,6 +381,28 @@ export const ar = {
     loading: 'جاري تسجيل الدخول...',
     first_login: 'أول تسجيل دخول؟ تواصل مع المدير',
     connect_to: 'تسجيل الدخول إلى حسابك',
+    subtitle: 'أدخل بيانات الدخول للوصول إلى حسابك.',
+    forgot_password: 'نسيت كلمة المرور ؟',
+    forgot_password_sending: 'جاري الإرسال…',
+    forgot_password_no_email: 'أدخل بريدك الإلكتروني في الأعلى ثم اضغط على "نسيت كلمة المرور ؟"',
+    forgot_password_invalid: 'البريد الإلكتروني غير صحيح',
+    forgot_password_sent: 'تم إرسال بريد إلى {{email}}. تحقق من علبة الوارد.',
+    remember_me: 'تذكرني',
+    error_default: 'خطأ أثناء الاتصال',
+  },
+
+  reset_password: {
+    title: 'كلمة مرور جديدة',
+    subtitle: 'اختر كلمة مرور قوية لحسابك.',
+    new_label: 'كلمة المرور الجديدة',
+    confirm_label: 'تأكيد كلمة المرور',
+    submit: 'تحديث كلمة المرور',
+    submitting: 'جاري التحديث…',
+    success: 'تم تحديث كلمة المرور. تم تسجيل الدخول.',
+    invalid_link: 'الرابط غير صحيح أو منتهي. عد إلى <0>صفحة تسجيل الدخول</0> وأعد المحاولة.',
+    min_length: '٨ أحرف على الأقل',
+    confirm_required: 'التأكيد مطلوب',
+    mismatch: 'كلمتا المرور غير متطابقتين',
   },
 
   client_detail: {
