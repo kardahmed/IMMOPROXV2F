@@ -1,4 +1,5 @@
 import { useState, useMemo, lazy, Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Users,
   Calendar,
@@ -55,6 +56,7 @@ import { PipelineAnalytics } from './components/PipelineAnalytics'
 type ViewMode = 'kanban' | 'cards' | 'table' | 'analytics'
 
 export function PipelinePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   // The Kanban renders every active client across 9 stage columns —
   // the default page size of 50 was capping the entire pipeline at
@@ -258,7 +260,7 @@ export function PipelinePage() {
     if (error) {
       handleSupabaseError(error)
     } else {
-      toast.success(`${ids.length} client(s) reassigne(s)`)
+      toast.success(t('pipeline_page.reassign_success', { count: ids.length }))
       setSelectedIds(new Set())
       setReassignAgent('')
     }
@@ -276,11 +278,11 @@ export function PipelinePage() {
       <div className="flex gap-1 border-b border-immo-border-default">
         <button onClick={() => setPipelineTab('pipeline')}
           className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${pipelineTab === 'pipeline' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
-          <Kanban className="h-3.5 w-3.5" /> Pipeline
+          <Kanban className="h-3.5 w-3.5" /> {t('pipeline_page.tab_pipeline')}
         </button>
         <button onClick={() => setPipelineTab('analytics')}
           className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${pipelineTab === 'analytics' ? 'border-immo-accent-green text-immo-accent-green' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
-          <BarChart3 className="h-3.5 w-3.5" /> Repartition par etape
+          <BarChart3 className="h-3.5 w-3.5" /> {t('pipeline_page.tab_analytics')}
         </button>
       </div>
 
@@ -297,13 +299,13 @@ export function PipelinePage() {
       {alertFilter && (
         <div className="flex items-center gap-2 rounded-lg border border-immo-status-orange/30 bg-immo-status-orange-bg px-3 py-2">
           <span className="text-xs text-immo-status-orange">
-            Filtre actif : {alertFilter.length} client(s)
+            {t('pipeline_page.filter_active', { count: alertFilter.length })}
           </span>
           <button
             onClick={clearAlertFilter}
             className="text-xs text-immo-status-orange underline hover:no-underline"
           >
-            Effacer
+            {t('pipeline_page.clear_filter')}
           </button>
         </div>
       )}
@@ -312,49 +314,49 @@ export function PipelinePage() {
       {stats && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-8">
           <KPICard
-            label="Clients"
+            label={t('pipeline_page.kpi_clients')}
             value={stats.kpis.totalClients}
             accent="blue"
             icon={<Users className="h-4 w-4 text-immo-accent-blue" />}
           />
           <KPICard
-            label="Visites en attente"
+            label={t('pipeline_page.kpi_pending_visits')}
             value={stats.kpis.pendingVisits}
             accent="orange"
             icon={<Calendar className="h-4 w-4 text-immo-status-orange" />}
           />
           <KPICard
-            label="En négociation"
+            label={t('pipeline_page.kpi_in_negotiation')}
             value={stats.kpis.inNegotiation}
             accent="blue"
             icon={<Handshake className="h-4 w-4 text-immo-accent-blue" />}
           />
           <KPICard
-            label="Convertis"
+            label={t('pipeline_page.kpi_converted')}
             value={stats.kpis.converted}
             accent="green"
             icon={<CheckCircle className="h-4 w-4 text-immo-accent-green" />}
           />
           <KPICard
-            label="Potentiel total"
+            label={t('pipeline_page.kpi_total_potential')}
             value={formatPriceCompact(stats.kpis.totalPotential)}
             accent="blue"
             icon={<DollarSign className="h-4 w-4 text-immo-accent-blue" />}
           />
           <KPICard
-            label="En négo DA"
+            label={t('pipeline_page.kpi_negotiation_value')}
             value={formatPriceCompact(stats.kpis.negotiationValue)}
             accent="orange"
             icon={<TrendingUp className="h-4 w-4 text-immo-status-orange" />}
           />
           <KPICard
-            label="Valeur convertie"
+            label={t('pipeline_page.kpi_converted_value')}
             value={formatPriceCompact(stats.kpis.convertedValue)}
             accent="green"
             icon={<DollarSign className="h-4 w-4 text-immo-accent-green" />}
           />
           <KPICard
-            label="Budget moyen"
+            label={t('pipeline_page.kpi_avg_budget')}
             value={formatPriceCompact(stats.kpis.avgBudget)}
             accent="blue"
             icon={<Wallet className="h-4 w-4 text-immo-accent-blue" />}
@@ -370,15 +372,15 @@ export function PipelinePage() {
       {/* 5. Filters toolbar */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <SearchInput
-          placeholder="Nom, téléphone..."
+          placeholder={t('pipeline_page.search_placeholder')}
           value={search}
           onChange={setSearch}
           className="w-full sm:w-[240px]"
         />
         <FilterDropdown
-          label="Projet"
+          label={t('pipeline_page.project')}
           options={[
-            { value: 'all', label: 'Tous les projets' },
+            { value: 'all', label: t('pipeline_page.all_projects') },
             ...Array.from((projectMap ?? new Map<string, string>()).entries()).map(([id, name]) => ({
               value: id,
               label: name,
@@ -400,11 +402,11 @@ export function PipelinePage() {
             { header: 'Source', value: c => c.source },
             { header: 'Budget', value: c => c.confirmed_budget },
             { header: 'Interet', value: c => c.interest_level },
-            { header: 'Priorite', value: c => c.is_priority ? 'Oui' : 'Non' },
+            { header: 'Priorite', value: c => c.is_priority ? t('pipeline_page.yes') : t('pipeline_page.no') },
             { header: 'Cree le', value: c => c.created_at?.split('T')[0] },
           ])}
         >
-          <Download className="mr-1.5 h-3.5 w-3.5" /> Export
+          <Download className="mr-1.5 h-3.5 w-3.5" /> {t('pipeline_page.export')}
         </Button>
 
         {/* Compact toggle */}
@@ -417,20 +419,21 @@ export function PipelinePage() {
                 : 'border-immo-border-default text-immo-text-muted hover:text-immo-text-secondary'
             }`}
           >
-            {compact ? 'Compact' : 'Detail'}
+            {compact ? t('pipeline_page.compact') : t('pipeline_page.detail')}
           </button>
         )}
 
         {/* View toggle */}
         <div className="ml-auto flex items-center gap-1 rounded-lg border border-immo-border-default">
           {([
-            { mode: 'kanban' as ViewMode, icon: Kanban, label: 'Kanban' },
-            { mode: 'cards' as ViewMode, icon: LayoutGrid, label: 'Cartes' },
-            { mode: 'table' as ViewMode, icon: List, label: 'Tableau' },
-          ]).map(({ mode, icon: Icon }) => (
+            { mode: 'kanban' as ViewMode, icon: Kanban, labelKey: 'pipeline_page.view_kanban' },
+            { mode: 'cards' as ViewMode, icon: LayoutGrid, labelKey: 'pipeline_page.view_cards' },
+            { mode: 'table' as ViewMode, icon: List, labelKey: 'pipeline_page.view_table' },
+          ]).map(({ mode, icon: Icon, labelKey }) => (
             <button
               key={mode}
               onClick={() => setView(mode)}
+              title={t(labelKey)}
               className={`rounded-md p-2 ${
                 view === mode
                   ? 'bg-immo-accent-green/10 text-immo-accent-green'
@@ -444,7 +447,7 @@ export function PipelinePage() {
 
         {canManageProjects && (
           <Button onClick={() => setShowClientForm(true)} className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-            <Plus className="mr-1.5 h-4 w-4" /> Client
+            <Plus className="mr-1.5 h-4 w-4" /> {t('pipeline_page.btn_client')}
           </Button>
         )}
       </div>
@@ -491,10 +494,10 @@ export function PipelinePage() {
         <div className="fixed bottom-0 left-0 md:left-[220px] right-0 z-30 flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card px-3 md:px-6 py-3 shadow-lg">
           <div className="flex items-center gap-3">
             <span className="rounded-full bg-immo-accent-green/10 px-3 py-1 text-sm font-semibold text-immo-accent-green">
-              {selectedIds.size} client(s)
+              {t('pipeline_page.selected_count', { count: selectedIds.size })}
             </span>
             <button onClick={() => setSelectedIds(new Set())} className="text-xs text-immo-text-muted hover:text-immo-text-primary">
-              Deselectionner tout
+              {t('pipeline_page.deselect_all')}
             </button>
           </div>
           <div className="flex items-center gap-3">
@@ -503,7 +506,7 @@ export function PipelinePage() {
               onChange={(e) => setReassignAgent(e.target.value)}
               className="h-9 rounded-md border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary"
             >
-              <option value="">Reassigner a...</option>
+              <option value="">{t('pipeline_page.reassign_to')}</option>
               {agentMap && Array.from(agentMap.entries()).map(([id, name]) => (
                 <option key={id} value={id}>{name}</option>
               ))}
@@ -513,7 +516,7 @@ export function PipelinePage() {
               disabled={!reassignAgent}
               className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90 disabled:opacity-50"
             >
-              Reassigner
+              {t('pipeline_page.reassign_action')}
             </Button>
           </div>
         </div>
