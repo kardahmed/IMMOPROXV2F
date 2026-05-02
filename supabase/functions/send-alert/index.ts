@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { requireServiceRole } from '../_shared/auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,12 +26,11 @@ serve(async (req: Request) => {
 
     // Service-role only — this endpoint triggers arbitrary outbound
     // webhooks (Slack, Telegram, custom HTTP) per the platform_alerts
-    // config. Pre-fix the check was `.includes('Bearer')` which any
-    // authenticated user JWT satisfies. Use strict equality.
-    const authHeader = req.headers.get('Authorization') ?? ''
-    if (authHeader !== `Bearer ${serviceKey}`) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    }
+    // config. Use the shared helper which decodes the JWT instead of
+    // string-comparing it to SUPABASE_SERVICE_ROLE_KEY (which can drift
+    // out of sync with the dashboard's current key after a rotation).
+    const denied = requireServiceRole(req)
+    if (denied) return denied
 
     // Fetch active alerts
     const { data: alerts } = await supabase.from('platform_alerts').select('*').eq('is_active', true)

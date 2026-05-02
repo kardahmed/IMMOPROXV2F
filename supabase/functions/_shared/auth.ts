@@ -26,21 +26,46 @@
 import type { SupabaseClient, User } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /**
- * Returns null if the request carries the correct service-role bearer
+ * Returns null if the request carries a valid service-role bearer
  * token, otherwise a 401 Response that the caller should return as-is.
+ *
+ * Strategy: don't compare the bearer token to SUPABASE_SERVICE_ROLE_KEY
+ * with strict equality (that broke in prod when the env var on a
+ * function got out of sync with the project's current service_role
+ * key after a JWT rotation — confirmed via Supabase Edge invocation
+ * 401s + matching net._http_response 401s in 2026-05).
+ *
+ * Instead: trust Supabase's gateway, which verifies the JWT signature
+ * before the function runs (default verify_jwt=true), and decode the
+ * payload to require `role === 'service_role'`. Equivalent guarantee,
+ * survives env-var drift.
  *
  * Usage:
  *   const denied = requireServiceRole(req)
  *   if (denied) return denied
  */
 export function requireServiceRole(req: Request): Response | null {
-  const expected = `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
   const got = req.headers.get('Authorization') ?? ''
+  const token = got.startsWith('Bearer ') ? got.slice(7) : ''
 
-  // Strict equality. NOT .includes() — the previous send-alert check
-  // accepted any header containing "Bearer", which is every
-  // authenticated user JWT.
-  if (got !== expected) {
+  let payload: Record<string, unknown> | null = null
+  if (token) {
+    try {
+      // Standard 3-segment JWT: header.payload.signature.
+      // We rely on the gateway for signature verification — here we
+      // just need the role claim, so base64url-decode the payload.
+      const segments = token.split('.')
+      if (segments.length === 3) {
+        const padded = segments[1].replace(/-/g, '+').replace(/_/g, '/')
+        const raw = atob(padded.padEnd(padded.length + ((4 - padded.length % 4) % 4), '='))
+        payload = JSON.parse(raw)
+      }
+    } catch {
+      payload = null
+    }
+  }
+
+  if (payload?.role !== 'service_role') {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } },
