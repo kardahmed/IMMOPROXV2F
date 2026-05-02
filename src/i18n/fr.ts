@@ -473,6 +473,38 @@ export const fr = {
     aria_unread: 'Notifications, {{count}} non lue(s)',
   },
 
+  // Create tenant modal (super admin)
+  tenant_form: {
+    title: 'Nouveau Tenant',
+    subtitle: 'Créer une agence et son premier administrateur',
+    section_company: 'Informations entreprise',
+    section_plan: 'Plan & période d\'essai',
+    section_admin: 'Administrateur du tenant',
+    agency_name: 'Nom de l\'agence',
+    agency_name_placeholder: 'Ex: ETOILE IMMO',
+    email: 'Email',
+    phone: 'Téléphone',
+    wilaya: 'Wilaya',
+    select: 'Sélectionner',
+    address: 'Adresse',
+    website: 'Site web',
+    plan: 'Plan',
+    trial_days: 'Période d\'essai (jours)',
+    trial_days_hint: '0 = pas de période d\'essai, 14 = par défaut',
+    admin_invite_note: 'Un email d\'invitation sera envoyé à cet administrateur',
+    first_name: 'Prénom',
+    last_name: 'Nom',
+    admin_email: 'Email Admin',
+    cancel: 'Annuler',
+    create: 'Créer le tenant',
+    invalid_email: 'Email invalide',
+    created_success: 'Tenant "{{name}}" créé. Invitation envoyée à {{email}}',
+    error_generic: 'Erreur lors de la création',
+    confirm_cancel_title: 'Abandonner la création ?',
+    confirm_cancel_desc: 'Toutes les informations saisies seront perdues. Cette action est irréversible.',
+    confirm_cancel_yes: 'Abandonner',
+  },
+
   // Error boundary fallback (when a page crashes)
   error_boundary: {
     title: 'Une erreur est survenue',
