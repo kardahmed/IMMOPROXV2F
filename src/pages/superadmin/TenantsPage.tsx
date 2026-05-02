@@ -8,6 +8,7 @@ import { DataTable, KPICard, PageHeader, PageSkeleton } from '@/components/commo
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { usePlans } from '@/hooks/usePlans'
 import { CreateTenantModal } from './components/CreateTenantModal'
 import { DeleteTenantModal } from './components/DeleteTenantModal'
 import { DeletedTenantsSection } from './components/DeletedTenantsSection'
@@ -30,29 +31,36 @@ interface TenantRow {
   units_count: number
 }
 
-const PLAN_FILTER_OPTIONS = ['all', 'free', 'starter', 'pro', 'enterprise'] as const
-type PlanFilter = typeof PLAN_FILTER_OPTIONS[number]
-
-const PLAN_FILTER_LABELS: Record<PlanFilter, string> = {
-  all: 'Tous',
-  free: 'Free',
-  starter: 'Starter',
-  pro: 'Pro',
-  enterprise: 'Enterprise',
-}
-
-const PLAN_FILTER_COLORS: Record<PlanFilter, string> = {
+// Per-plan colour map. Stays static — plans declare a slug, the UI
+// picks a colour from this palette by hash; falls back to purple if
+// a brand-new plan slug arrives that isn't here yet.
+const PLAN_COLOR_PALETTE: Record<string, string> = {
   all: '#7C3AED',
   free: '#8898AA',
   starter: '#0579DA',
   pro: '#7C3AED',
   enterprise: '#F5A623',
 }
+const FALLBACK_COLOR = '#7C3AED'
+
+type PlanFilter = string  // any slug present in plan_limits, plus 'all'
 
 export function TenantsPage() {
   const navigate = useNavigate()
+  const { data: allPlans = [] } = usePlans()
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState<PlanFilter>('all')
+
+  // Build the filter chips from the plans table — 'all' first, then
+  // every plan slug ordered by sort_order. New plans appear here
+  // automatically.
+  const planFilterOptions: PlanFilter[] = ['all', ...allPlans.map(p => p.plan)]
+  const planLabel = (slug: string) => {
+    if (slug === 'all') return 'Tous'
+    const p = allPlans.find(x => x.plan === slug)
+    return p?.label_fr || (slug.charAt(0).toUpperCase() + slug.slice(1))
+  }
+  const planColor = (slug: string) => PLAN_COLOR_PALETTE[slug] ?? FALLBACK_COLOR
   const [showCreate, setShowCreate] = useState(false)
   const [tenantToDelete, setTenantToDelete] = useState<{ id: string; name: string } | null>(null)
   const { enterTenant } = useSuperAdminStore()
@@ -213,10 +221,10 @@ export function TenantsPage() {
 
       {/* Plan filter chips */}
       <div className="flex flex-wrap items-center gap-2">
-        {PLAN_FILTER_OPTIONS.map(p => {
+        {planFilterOptions.map(p => {
           const isActive = planFilter === p
           const count = p === 'all' ? tenants.length : (countByPlan[p] ?? 0)
-          const color = PLAN_FILTER_COLORS[p]
+          const color = planColor(p)
           return (
             <button
               key={p}
@@ -228,7 +236,7 @@ export function TenantsPage() {
               }`}
               style={isActive ? { backgroundColor: color } : undefined}
             >
-              {PLAN_FILTER_LABELS[p]}
+              {planLabel(p)}
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                   isActive ? 'bg-white/20 text-white' : 'bg-immo-bg-primary text-immo-text-muted'

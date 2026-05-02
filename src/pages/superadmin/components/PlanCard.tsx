@@ -2,27 +2,18 @@ import { Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Check, X
 import { Card } from '@/components/common'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import type { CatalogFeature } from '@/hooks/useFeatureCatalog'
 
-const FEATURE_LABELS: Record<string, { label: string; icon: typeof Cpu }> = {
-  ai_suggestions: { label: 'Suggestions IA', icon: Zap },
-  ai_scripts: { label: 'Scripts appel IA', icon: Cpu },
-  ai_documents: { label: 'Documents IA', icon: Cpu },
-  ai_custom: { label: 'IA personnalisee', icon: Cpu },
-  export_csv: { label: 'Export CSV', icon: HardDrive },
-  pdf_generation: { label: 'Generation PDF', icon: HardDrive },
-  custom_branding: { label: 'Branding custom', icon: HardDrive },
-  api_access: { label: 'Acces API', icon: Zap },
-  landing_pages: { label: 'Pages de capture', icon: Building2 },
-  whatsapp: { label: 'WhatsApp Business', icon: Zap },
-  payment_tracking: { label: 'Suivi echeanciers', icon: DollarSign },
-  auto_tasks: { label: 'Taches automatiques', icon: Zap },
-  goals: { label: 'Objectifs de vente', icon: Briefcase },
-  charges: { label: 'Charges & frais', icon: DollarSign },
-  roi_marketing: { label: 'ROI marketing', icon: Briefcase },
+// Lucide icon name string → component. Used to render the icon coming
+// from feature_catalog.icon (a TEXT column with the lucide name, not a
+// component reference, so the catalog stays JSON-serializable).
+const ICONS: Record<string, typeof Cpu> = {
+  Users, Building2, Home, Briefcase, HardDrive, Cpu, DollarSign, Zap,
+  Bot, Mail, MessageCircle,
 }
-
-export const ALL_FEATURES = Object.keys(FEATURE_LABELS)
-export { FEATURE_LABELS }
+function iconFor(name: string | null | undefined) {
+  return (name && ICONS[name]) || Cpu
+}
 
 const PLAN_COLORS: Record<string, string> = {
   free: '#8898AA',
@@ -60,6 +51,13 @@ export interface PlanRow {
   quota_whatsapp_messages_monthly?: number
   quota_burst_per_hour?: number
   setup_fee_dzd?: number
+  // Added by migration 059 — computed by recompute_plan_costs() RPC.
+  estimated_cost_da_monthly?: number
+  gross_margin_pct?: number
+  is_trial_eligible?: boolean
+  sort_order?: number
+  label_fr?: string | null
+  label_ar?: string | null
 }
 
 interface Props {
@@ -67,13 +65,14 @@ interface Props {
   index: number
   count: number
   isProtected: boolean
+  catalog: CatalogFeature[]   // from useFeatureCatalog
   onUpdate: (index: number, field: keyof PlanRow, value: unknown) => void
   onToggleFeature: (index: number, feature: string) => void
   onDelete: (plan: string) => void
   isDeleting: boolean
 }
 
-export function PlanCard({ plan, index: idx, count, isProtected, onUpdate, onToggleFeature, onDelete, isDeleting }: Props) {
+export function PlanCard({ plan, index: idx, count, isProtected, catalog, onUpdate, onToggleFeature, onDelete, isDeleting }: Props) {
   const color = PLAN_COLORS[plan.plan] ?? '#0579DA'
 
   return (
@@ -193,13 +192,21 @@ export function PlanCard({ plan, index: idx, count, isProtected, onUpdate, onTog
 
         <div className="space-y-1.5">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">Fonctionnalites</p>
-          {ALL_FEATURES.map(f => {
-            const enabled = plan.features[f] === true
+          {catalog.map(f => {
+            const enabled = plan.features[f.slug] === true
+            const Icon = iconFor(f.icon)
             return (
-              <button key={f} onClick={() => onToggleFeature(idx, f)}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[11px] transition-colors ${enabled ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted hover:bg-immo-bg-card-hover'}`}>
+              <button key={f.slug} onClick={() => onToggleFeature(idx, f.slug)}
+                title={f.is_implemented ? f.description_fr ?? '' : 'Pas encore implemente'}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[11px] transition-colors ${
+                  enabled ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted hover:bg-immo-bg-card-hover'
+                } ${!f.is_implemented ? 'opacity-50' : ''}`}>
                 {enabled ? <Check className="h-3 w-3 shrink-0" /> : <X className="h-3 w-3 shrink-0" />}
-                {FEATURE_LABELS[f]?.label ?? f}
+                <Icon className="h-3 w-3 shrink-0" />
+                <span className="flex-1">{f.label_fr}</span>
+                {f.cost_da_monthly_estimated > 0 && (
+                  <span className="text-[9px] text-immo-text-muted">~{Math.round(f.cost_da_monthly_estimated)} DA</span>
+                )}
               </button>
             )
           })}

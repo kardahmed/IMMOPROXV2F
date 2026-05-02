@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Save, Plus } from 'lucide-react'
+import { Save, Plus, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
 import { PageHeader, PageSkeleton } from '@/components/common'
@@ -8,11 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import toast from 'react-hot-toast'
 import { EconomicsSimulator } from './components/EconomicsSimulator'
+import { MRRSimulator } from './components/MRRSimulator'
 import { PlanCard, type PlanRow } from './components/PlanCard'
 import { PlansComparisonGrid } from './components/PlansComparisonGrid'
+import { useFeatureCatalog } from '@/hooks/useFeatureCatalog'
 
 export function PlansConfigPage() {
   const qc = useQueryClient()
+  const { data: catalog = [] } = useFeatureCatalog()
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['plan-limits-config'],
@@ -27,6 +30,21 @@ export function PlansConfigPage() {
         quota_burst_per_hour: typeof r.quota_burst_per_hour === 'number' ? r.quota_burst_per_hour : 100,
         setup_fee_dzd: typeof r.setup_fee_dzd === 'number' ? r.setup_fee_dzd : 0,
       })) as unknown as PlanRow[]
+    },
+  })
+
+  // Recompute estimated_cost_da_monthly + gross_margin_pct after a save.
+  // Calls the SECURITY DEFINER RPC from migration 059 which iterates
+  // every plan and re-sums the cost from feature_catalog.
+  const recomputeMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc('recompute_plan_costs' as never)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['plan-limits-config'] })
+      qc.invalidateQueries({ queryKey: ['all-plans'] })
+      toast.success('Coûts + marges recalculés')
     },
   })
 
@@ -99,11 +117,19 @@ export function PlansConfigPage() {
       const { error } = await supabase.rpc('save_plan_features_atomic' as never, { p_plans: payload } as never)
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       qc.invalidateQueries({ queryKey: ['plan-limits'] })
       qc.invalidateQueries({ queryKey: ['plan-limits-config'] })
+      qc.invalidateQueries({ queryKey: ['all-plans'] })
       setDirty(false)
-      toast.success('Plans mis à jour')
+      // Auto-recompute cost/margin after saving feature toggles + prices.
+      // Best-effort — the explicit "Recalculer coûts" button covers the
+      // failure case if this RPC ever errors.
+      try {
+        await supabase.rpc('recompute_plan_costs' as never)
+      } catch { /* ignore */ }
+      qc.invalidateQueries({ queryKey: ['plan-limits-config'] })
+      toast.success('Plans mis à jour + coûts recalculés')
     },
   })
 
@@ -154,6 +180,9 @@ export function PlansConfigPage() {
         subtitle="Gerez les limites, tarifs et fonctionnalites de chaque plan"
         actions={
           <>
+            <Button onClick={() => recomputeMutation.mutate()} disabled={recomputeMutation.isPending} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
+              <RefreshCw className={`mr-1.5 h-4 w-4 ${recomputeMutation.isPending ? 'animate-spin' : ''}`} /> Recalculer coûts
+            </Button>
             <Button onClick={() => setShowAddPlan(true)} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
               <Plus className="mr-1.5 h-4 w-4" /> Nouveau plan
             </Button>
@@ -166,6 +195,7 @@ export function PlansConfigPage() {
       />
 
       <EconomicsSimulator editPlans={editPlans} tenantCounts={tenantCounts} />
+      <MRRSimulator editPlans={editPlans} tenantCounts={tenantCounts} />
 
       {showAddPlan && (
         <div className="rounded-xl border border-[#7C3AED]/30 bg-[#7C3AED]/5 p-4">
@@ -185,7 +215,12 @@ export function PlansConfigPage() {
             plan={plan}
             index={idx}
             count={tenantCounts.get(plan.plan) ?? 0}
-            isProtected={['free', 'starter', 'pro', 'enterprise'].includes(plan.plan)}
+            // Plan deletion is gated by tenant count in the RPC; no
+            // need to hardcode "protected" slugs anymore. Keep the
+            // delete button hidden only when tenants are using the
+            // plan to avoid an obvious data-loss footgun.
+            isProtected={(tenantCounts.get(plan.plan) ?? 0) > 0}
+            catalog={catalog}
             onUpdate={updatePlan}
             onToggleFeature={toggleFeature}
             onDelete={(p) => deletePlanMutation.mutate(p)}
@@ -194,7 +229,7 @@ export function PlansConfigPage() {
         ))}
       </div>
 
-      <PlansComparisonGrid editPlans={editPlans} tenantCounts={tenantCounts} />
+      <PlansComparisonGrid editPlans={editPlans} tenantCounts={tenantCounts} catalog={catalog} />
     </div>
   )
 }

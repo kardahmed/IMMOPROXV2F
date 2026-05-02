@@ -1,6 +1,7 @@
 import { Check, X } from 'lucide-react'
 import { Card } from '@/components/common'
-import { ALL_FEATURES, FEATURE_LABELS, type PlanRow } from './PlanCard'
+import { type PlanRow } from './PlanCard'
+import type { CatalogFeature } from '@/hooks/useFeatureCatalog'
 
 const PLAN_COLORS: Record<string, string> = {
   free: '#8898AA',
@@ -25,9 +26,10 @@ function formatPrice(da: number): string {
 interface Props {
   editPlans: PlanRow[]
   tenantCounts: Map<string, number>
+  catalog: CatalogFeature[]
 }
 
-export function PlansComparisonGrid({ editPlans, tenantCounts }: Props) {
+export function PlansComparisonGrid({ editPlans, tenantCounts, catalog }: Props) {
   return (
     <Card noPadding className="overflow-hidden">
       <div className="border-b border-immo-border-default px-5 py-3">
@@ -74,12 +76,15 @@ export function PlansComparisonGrid({ editPlans, tenantCounts }: Props) {
               <td className="px-4 py-2 font-medium text-[#7C3AED]">Tokens IA / mois</td>
               {editPlans.map(p => <td key={p.plan} className="px-4 py-2 text-center font-semibold text-[#7C3AED]">{formatTokens(p.max_ai_tokens_monthly)}</td>)}
             </tr>
-            {ALL_FEATURES.map(f => (
-              <tr key={f}>
-                <td className="px-4 py-2 text-immo-text-secondary">{FEATURE_LABELS[f]?.label ?? f}</td>
+            {catalog.map(f => (
+              <tr key={f.slug} className={!f.is_implemented ? 'opacity-40' : ''}>
+                <td className="px-4 py-2 text-immo-text-secondary">
+                  {f.label_fr}
+                  {!f.is_implemented && <span className="ml-2 text-[9px] uppercase text-immo-text-muted">À venir</span>}
+                </td>
                 {editPlans.map(p => (
                   <td key={p.plan} className="px-4 py-2 text-center">
-                    {p.features[f] ? <Check className="mx-auto h-4 w-4 text-immo-accent-green" /> : <X className="mx-auto h-4 w-4 text-immo-text-muted/40" />}
+                    {p.features[f.slug] ? <Check className="mx-auto h-4 w-4 text-immo-accent-green" /> : <X className="mx-auto h-4 w-4 text-immo-text-muted/40" />}
                   </td>
                 ))}
               </tr>

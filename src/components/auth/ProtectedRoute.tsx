@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useAuthStore } from '@/store/authStore'
 import { supabase } from '@/lib/supabase'
+import { useTrialEligiblePlans } from '@/hooks/usePlans'
 import { SuspendedPage } from '@/components/common/SuspendedPage'
 import { TrialExpiredPage } from '@/components/common/TrialExpiredPage'
 
@@ -11,10 +12,13 @@ export function ProtectedRoute() {
   const { isAuthenticated, isLoading, role } = useAuth()
   const { inspectedTenantId } = useSuperAdminStore()
   const tenantId = useAuthStore(s => s.tenantId)
+  // Trial-eligible plan slugs come from plan_limits.is_trial_eligible
+  // (migration 059), not from a hardcoded === 'free' check.
+  const trialEligiblePlans = useTrialEligiblePlans()
 
   // Check tenant suspension + trial status
   const { data: tenantStatus } = useQuery({
-    queryKey: ['tenant-status', tenantId],
+    queryKey: ['tenant-status', tenantId, trialEligiblePlans.join(',')],
     queryFn: async () => {
       if (!tenantId) return null
       const { data } = await supabase
@@ -26,7 +30,7 @@ export function ProtectedRoute() {
       const t = data as unknown as { suspended_at: string | null; trial_ends_at: string | null; plan: string }
       return {
         isSuspended: !!t.suspended_at,
-        isTrialExpired: t.plan === 'free' && !!t.trial_ends_at && new Date(t.trial_ends_at) < new Date(),
+        isTrialExpired: trialEligiblePlans.includes(t.plan) && !!t.trial_ends_at && new Date(t.trial_ends_at) < new Date(),
       }
     },
     enabled: !!tenantId && role !== 'super_admin',
