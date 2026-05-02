@@ -28,10 +28,23 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) return bad(401, 'Missing authorization')
 
+    // Two clients with deliberately different auth contexts:
+    //
+    //   supabaseAdmin: pure service_role. Used for auth.admin APIs
+    //     (inviteUserByEmail) which require the service-role JWT in
+    //     the Authorization header — overriding it with the caller's
+    //     user JWT triggers a `not_admin` 401 from /auth/v1/admin/...
+    //
+    //   supabaseAsCaller: service_role key for the apikey, but the
+    //     caller's user JWT in Authorization. Used for RPCs that
+    //     check auth.uid() to re-verify super_admin server-side
+    //     (defense in depth — even if this function leaks, the RPCs
+    //     still gate on the caller's role).
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
-      // Pass the caller's JWT through so the SECURITY DEFINER RPCs can
-      // re-verify auth.uid() = the super-admin who clicked the button.
+    })
+    const supabaseAsCaller = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
       global: { headers: { Authorization: authHeader } },
     })
 
@@ -92,7 +105,10 @@ Deno.serve(async (req) => {
     }
 
     // 4. Atomic create tenant + settings + templates via RPC (P1)
-    const { data: tenantId, error: rpcErr } = await supabaseAdmin.rpc('create_tenant_atomic', {
+    // Use supabaseAsCaller so auth.uid() inside the SECURITY DEFINER
+    // RPC resolves to the super-admin caller (the RPC re-verifies the
+    // role itself).
+    const { data: tenantId, error: rpcErr } = await supabaseAsCaller.rpc('create_tenant_atomic', {
       p_name:       tenant.name.trim(),
       p_email:      tenant.email.trim().toLowerCase(),
       p_phone:      tenant.phone?.trim() || null,
@@ -114,7 +130,7 @@ Deno.serve(async (req) => {
     )
     if (inviteErr || !authUser?.user) {
       console.error('Invite error:', inviteErr)
-      await supabaseAdmin.rpc('delete_tenant_atomic', { p_tenant_id: tenantId })
+      await supabaseAsCaller.rpc('delete_tenant_atomic', { p_tenant_id: tenantId })
       // Caller is already verified as super_admin (step 1), so it's safe
       // to surface the underlying Supabase Auth error message — they
       // need it to debug. We'd hide this if non-admin users could ever
@@ -139,7 +155,7 @@ Deno.serve(async (req) => {
     if (userErr) {
       console.error('User profile error:', userErr)
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id).catch(() => {})
-      await supabaseAdmin.rpc('delete_tenant_atomic', { p_tenant_id: tenantId })
+      await supabaseAsCaller.rpc('delete_tenant_atomic', { p_tenant_id: tenantId })
       return bad(500, `User profile creation failed: ${userErr.message}`)
     }
 
