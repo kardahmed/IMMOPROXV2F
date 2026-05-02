@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Phone, Building2, Users as UsersIcon, Star } from 'lucide-react'
 import { PIPELINE_STAGES, SOURCE_LABELS } from '@/types'
@@ -18,6 +19,7 @@ interface CardsViewProps {
 }
 
 export function CardsView({ clients, daysInStageMap, agentMap, projectMap, urgentDays }: CardsViewProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [stageFilter, setStageFilter] = useState<string>('all')
   const [sort, setSort] = useState<SortKey>('recent')
@@ -44,7 +46,7 @@ export function CardsView({ clients, daysInStageMap, agentMap, projectMap, urgen
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-1 overflow-x-auto">
-          <FilterPill active={stageFilter === 'all'} onClick={() => setStageFilter('all')} label={`Tous (${clients.length})`} />
+          <FilterPill active={stageFilter === 'all'} onClick={() => setStageFilter('all')} label={t('pipeline_table.all_count', { count: clients.length })} />
           {PIPELINE_ORDER.map((stage) => {
             const count = clients.filter((c) => c.pipeline_stage === stage).length
             if (count === 0) return null
@@ -63,9 +65,9 @@ export function CardsView({ clients, daysInStageMap, agentMap, projectMap, urgen
 
         <div className="ml-auto flex gap-1 rounded-lg border border-immo-border-default p-0.5">
           {([
-            { key: 'recent' as SortKey, label: 'Récent' },
-            { key: 'oldest' as SortKey, label: 'Ancien' },
-            { key: 'priority' as SortKey, label: 'Prioritaire' },
+            { key: 'recent' as SortKey, label: t('pipeline_table.sort_recent') },
+            { key: 'oldest' as SortKey, label: t('pipeline_table.sort_oldest') },
+            { key: 'priority' as SortKey, label: t('pipeline_table.sort_priority') },
           ]).map((s) => (
             <button
               key={s.key}
@@ -82,7 +84,7 @@ export function CardsView({ clients, daysInStageMap, agentMap, projectMap, urgen
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="py-16 text-center text-sm text-immo-text-muted">Aucun client</div>
+        <div className="py-16 text-center text-sm text-immo-text-muted">{t('pipeline_table.no_clients')}</div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((c) => {

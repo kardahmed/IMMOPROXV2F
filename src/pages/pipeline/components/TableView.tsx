@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Eye, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { PIPELINE_STAGES, SOURCE_LABELS } from '@/types'
@@ -22,6 +23,7 @@ interface TableViewProps {
 const PAGE_SIZE = 25
 
 export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgentDays }: TableViewProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [sortCol, setSortCol] = useState<SortCol>('created_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -81,22 +83,22 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
           <table className="w-full">
             <thead>
               <tr className="bg-immo-bg-card-hover">
-                <SortHeader col="full_name" label="Client" />
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Score</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Téléphone</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Source</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Projet</th>
-                <SortHeader col="confirmed_budget" label="Budget" />
-                <SortHeader col="pipeline_stage" label="Étape" />
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Agent</th>
-                <SortHeader col="days" label="Jours" />
-                <SortHeader col="created_at" label="Dernière action" />
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Actions</th>
+                <SortHeader col="full_name" label={t('pipeline_table.client')} />
+                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.score')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.phone')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.source')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.project')}</th>
+                <SortHeader col="confirmed_budget" label={t('pipeline_table.budget')} />
+                <SortHeader col="pipeline_stage" label={t('pipeline_table.stage')} />
+                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.agent')}</th>
+                <SortHeader col="days" label={t('pipeline_table.days')} />
+                <SortHeader col="created_at" label={t('pipeline_table.last_action')} />
+                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-immo-border-default">
               {paged.length === 0 ? (
-                <tr><td colSpan={11} className="py-16 text-center text-sm text-immo-text-muted">Aucun client</td></tr>
+                <tr><td colSpan={11} className="py-16 text-center text-sm text-immo-text-muted">{t('pipeline_table.no_clients')}</td></tr>
               ) : (
                 paged.map((c) => {
                   const stage = PIPELINE_STAGES[c.pipeline_stage]
@@ -142,7 +144,7 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
                                 : 'text-immo-text-muted'
                           }`}
                         >
-                          {days}j
+                          {t('pipeline_table.days_short', { count: days })}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-immo-text-muted">
@@ -152,7 +154,7 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
                         <button
                           onClick={() => navigate(`/pipeline/clients/${c.id}`)}
                           className="rounded-md p-1.5 text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-immo-accent-green"
-                          title="Voir fiche"
+                          title={t('pipeline_table.view_card')}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -169,7 +171,11 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-immo-border-default bg-immo-bg-card-hover px-4 py-2.5">
             <span className="text-xs text-immo-text-muted">
-              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, sorted.length)} sur {sorted.length}
+              {t('pipeline_table.page_range', {
+                from: page * PAGE_SIZE + 1,
+                to: Math.min((page + 1) * PAGE_SIZE, sorted.length),
+                total: sorted.length,
+              })}
             </span>
             <div className="flex items-center gap-1">
               <Button
