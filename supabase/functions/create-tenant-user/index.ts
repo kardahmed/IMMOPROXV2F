@@ -115,9 +115,13 @@ Deno.serve(async (req) => {
     if (inviteErr || !authUser?.user) {
       console.error('Invite error:', inviteErr)
       await supabaseAdmin.rpc('delete_tenant_atomic', { p_tenant_id: tenantId })
-      // Generic error, don't leak whether the address is already known to
-      // Supabase Auth (per Big-4 audit recommendation).
-      return bad(500, "Impossible d'inviter l'administrateur. Verifiez l'adresse email.")
+      // Caller is already verified as super_admin (step 1), so it's safe
+      // to surface the underlying Supabase Auth error message — they
+      // need it to debug. We'd hide this if non-admin users could ever
+      // reach this endpoint.
+      const detail = inviteErr?.message ?? 'unknown'
+      const code = (inviteErr as { code?: string })?.code ?? (inviteErr as { name?: string })?.name ?? ''
+      return bad(500, `Auth invite failed [${code}]: ${detail}`)
     }
 
     // 6. Insert the admin user profile. If this fails we rollback both
