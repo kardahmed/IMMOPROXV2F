@@ -385,6 +385,32 @@ export const fr = {
     no: 'Non',
   },
 
+  // Pipeline alert bar
+  pipeline_alerts: {
+    urgent: '{{count}} client(s) sans activité depuis {{days}}+ jours',
+    relaunch: '{{count}} client(s) à relancer ({{days}}+ jours sans contact)',
+    tasks: '{{count}} tâche(s) en attente',
+  },
+
+  // Pipeline advanced filters
+  pipeline_filters: {
+    button: 'Filtres',
+    title: 'Filtres avancés',
+    agent: 'Agent',
+    all: 'Tous',
+    source: 'Source',
+    all_sources: 'Toutes',
+    interest_level: 'Niveau intérêt',
+    priority: 'Priorité',
+    priority_high: 'Prioritaire',
+    priority_normal: 'Normal',
+    budget_min: 'Budget min (DA)',
+    budget_max: 'Budget max (DA)',
+    unlimited: 'Illimité',
+    reset: 'Réinitialiser',
+    apply: 'Appliquer',
+  },
+
   // Projects
   project_page: {
     info: 'Informations',

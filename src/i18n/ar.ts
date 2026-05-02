@@ -383,6 +383,30 @@ export const ar = {
     no: 'لا',
   },
 
+  pipeline_alerts: {
+    urgent: '{{count}} عميل بدون نشاط منذ {{days}}+ أيام',
+    relaunch: '{{count}} عميل للمتابعة ({{days}}+ أيام بدون اتصال)',
+    tasks: '{{count}} مهمة معلقة',
+  },
+
+  pipeline_filters: {
+    button: 'فلاتر',
+    title: 'فلاتر متقدمة',
+    agent: 'الوكيل',
+    all: 'الكل',
+    source: 'المصدر',
+    all_sources: 'الكل',
+    interest_level: 'مستوى الاهتمام',
+    priority: 'الأولوية',
+    priority_high: 'ذو أولوية',
+    priority_normal: 'عادي',
+    budget_min: 'الحد الأدنى للميزانية (دج)',
+    budget_max: 'الحد الأقصى للميزانية (دج)',
+    unlimited: 'غير محدود',
+    reset: 'إعادة تعيين',
+    apply: 'تطبيق',
+  },
+
   // Projects
   project_page: {
     info: 'المعلومات',

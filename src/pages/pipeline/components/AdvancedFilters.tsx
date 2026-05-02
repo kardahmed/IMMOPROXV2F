@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { SlidersHorizontal, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -27,6 +28,7 @@ interface AdvancedFiltersProps {
 }
 
 export function AdvancedFilters({ filters, onChange, onClear }: AdvancedFiltersProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const tenantId = useAuthStore(s => s.tenantId)
 
@@ -62,13 +64,13 @@ export function AdvancedFilters({ filters, onChange, onClear }: AdvancedFiltersP
         }`}
       >
         <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
-        Filtres{activeCount > 0 ? ` (${activeCount})` : ''}
+        {t('pipeline_filters.button')}{activeCount > 0 ? ` (${activeCount})` : ''}
       </Button>
 
       {open && (
         <div className="absolute left-0 top-full z-20 mt-2 w-[400px] rounded-xl border border-immo-border-default bg-immo-bg-card p-4 shadow-lg">
           <div className="mb-3 flex items-center justify-between">
-            <h4 className="text-xs font-semibold text-immo-text-primary">Filtres avances</h4>
+            <h4 className="text-xs font-semibold text-immo-text-primary">{t('pipeline_filters.title')}</h4>
             <button onClick={() => setOpen(false)} className="text-immo-text-muted hover:text-immo-text-primary">
               <X className="h-4 w-4" />
             </button>
@@ -77,58 +79,58 @@ export function AdvancedFilters({ filters, onChange, onClear }: AdvancedFiltersP
           <div className="grid grid-cols-2 gap-3">
             {/* Agent */}
             <div>
-              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">Agent</label>
+              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">{t('pipeline_filters.agent')}</label>
               <select value={filters.agentId} onChange={e => update('agentId', e.target.value)} className={selectClass}>
-                <option value="">Tous</option>
+                <option value="">{t('pipeline_filters.all')}</option>
                 {agents.map(a => <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>)}
               </select>
             </div>
 
             {/* Source */}
             <div>
-              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">Source</label>
+              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">{t('pipeline_filters.source')}</label>
               <select value={filters.source} onChange={e => update('source', e.target.value)} className={selectClass}>
-                <option value="">Toutes</option>
+                <option value="">{t('pipeline_filters.all_sources')}</option>
                 {Object.entries(SOURCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
 
             {/* Interest level */}
             <div>
-              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">Niveau interet</label>
+              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">{t('pipeline_filters.interest_level')}</label>
               <select value={filters.interestLevel} onChange={e => update('interestLevel', e.target.value)} className={selectClass}>
-                <option value="">Tous</option>
+                <option value="">{t('pipeline_filters.all')}</option>
                 {Object.entries(INTEREST_LEVEL_LABELS).map(([v, meta]) => <option key={v} value={v}>{(meta as { label: string }).label}</option>)}
               </select>
             </div>
 
             {/* Priority */}
             <div>
-              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">Priorite</label>
+              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">{t('pipeline_filters.priority')}</label>
               <select value={filters.isPriority} onChange={e => update('isPriority', e.target.value)} className={selectClass}>
-                <option value="">Tous</option>
-                <option value="true">Prioritaire</option>
-                <option value="false">Normal</option>
+                <option value="">{t('pipeline_filters.all')}</option>
+                <option value="true">{t('pipeline_filters.priority_high')}</option>
+                <option value="false">{t('pipeline_filters.priority_normal')}</option>
               </select>
             </div>
 
             {/* Budget range */}
             <div>
-              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">Budget min (DA)</label>
+              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">{t('pipeline_filters.budget_min')}</label>
               <Input type="number" value={filters.budgetMin} onChange={e => update('budgetMin', e.target.value)} placeholder="0" className={inputClass} />
             </div>
             <div>
-              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">Budget max (DA)</label>
-              <Input type="number" value={filters.budgetMax} onChange={e => update('budgetMax', e.target.value)} placeholder="Illimite" className={inputClass} />
+              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">{t('pipeline_filters.budget_max')}</label>
+              <Input type="number" value={filters.budgetMax} onChange={e => update('budgetMax', e.target.value)} placeholder={t('pipeline_filters.unlimited')} className={inputClass} />
             </div>
           </div>
 
           <div className="mt-3 flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => { onClear(); setOpen(false) }} className="text-xs text-immo-text-muted">
-              Reinitialiser
+              {t('pipeline_filters.reset')}
             </Button>
             <Button size="sm" onClick={() => setOpen(false)} className="bg-immo-accent-green text-xs font-semibold text-white hover:bg-immo-accent-green/90">
-              Appliquer
+              {t('pipeline_filters.apply')}
             </Button>
           </div>
         </div>
