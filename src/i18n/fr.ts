@@ -496,6 +496,16 @@ export const fr = {
     profession: 'Profession',
     change_stage: 'Changer l\'étape ?',
     move_to: 'Déplacer ce client vers "{{stage}}" ?',
+    creation_date: 'Date création',
+    notes: 'Notes',
+    source: 'Source',
+    address: 'Adresse',
+    send_to_trash: 'Mettre à la corbeille',
+    trash_confirm_title: 'Mettre ce client à la corbeille ?',
+    trash_confirm_desc: '{{name}} sera retiré des vues actives. Un admin peut le restaurer depuis /corbeille.',
+    agent_label: 'Agent : {{name}}',
+    project_label: 'Projet : {{name}}',
+    hot_label: 'HOT',
   },
 
   // Client form

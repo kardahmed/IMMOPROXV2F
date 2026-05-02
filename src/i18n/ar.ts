@@ -491,6 +491,16 @@ export const ar = {
     profession: 'المهنة',
     change_stage: 'تغيير المرحلة؟',
     move_to: 'نقل هذا العميل إلى "{{stage}}"؟',
+    creation_date: 'تاريخ الإنشاء',
+    notes: 'ملاحظات',
+    source: 'المصدر',
+    address: 'العنوان',
+    send_to_trash: 'نقل إلى سلة المهملات',
+    trash_confirm_title: 'نقل هذا العميل إلى سلة المهملات؟',
+    trash_confirm_desc: 'سيتم إزالة {{name}} من العروض النشطة. يمكن للمسؤول استعادته من /corbeille.',
+    agent_label: 'الوكيل : {{name}}',
+    project_label: 'المشروع : {{name}}',
+    hot_label: 'حار',
   },
 
   client_form: {
