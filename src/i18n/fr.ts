@@ -467,6 +467,43 @@ export const fr = {
     title: 'Envoyer un message',
   },
 
+  // Notifications bell button
+  notifications: {
+    aria_label: 'Notifications',
+    aria_unread: 'Notifications, {{count}} non lue(s)',
+  },
+
+  // Command palette (Cmd+K global search)
+  command_palette: {
+    title: 'Recherche globale',
+    placeholder: 'Rechercher un client, projet, unité…',
+    search_label: 'Rechercher',
+    hint: 'Tapez au moins 2 caractères pour rechercher',
+    searching: 'Recherche en cours…',
+    no_results: 'Aucun résultat pour "{{query}}"',
+    group_client: 'Clients',
+    group_project: 'Projets',
+    group_unit: 'Unités',
+    navigate: 'Naviguer',
+    open: 'Ouvrir',
+  },
+
+  // Keyboard shortcuts help modal
+  shortcuts: {
+    title: 'Raccourcis clavier',
+    note: 'Appuyez sur ? n\'importe où pour ouvrir cette aide',
+    cmd_k: 'Recherche globale',
+    help: 'Afficher cette aide',
+    escape: 'Fermer une fenêtre',
+    go_dashboard: 'Aller au tableau de bord',
+    go_pipeline: 'Aller au pipeline',
+    go_planning: 'Aller au planning',
+    go_tasks: 'Aller aux tâches',
+    go_dossiers: 'Aller aux dossiers',
+    go_projects: 'Aller aux projets',
+    go_settings: 'Aller aux paramètres',
+  },
+
   // Call script modal (in-call wizard)
   call_script_modal: {
     close_call: "Fermer l'appel",

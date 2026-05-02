@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, Building2, Users, UserPlus, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -14,6 +15,7 @@ interface OnboardingStep {
 }
 
 export function OnboardingWizard() {
+  const { t } = useTranslation()
   const tenantId = useAuthStore(s => s.tenantId)
   const navigate = useNavigate()
   const [dismissed, setDismissed] = useState(false)
@@ -72,7 +74,7 @@ export function OnboardingWizard() {
           <div className="h-2 w-24 rounded-full bg-immo-border-default">
             <div className="h-full rounded-full bg-immo-accent-green transition-all" style={{ width: `${pct}%` }} />
           </div>
-          <button onClick={() => setDismissed(true)} className="text-immo-text-muted hover:text-immo-text-primary">
+          <button onClick={() => setDismissed(true)} aria-label={t('action.close')} className="text-immo-text-muted hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40">
             <X className="h-4 w-4" />
           </button>
         </div>

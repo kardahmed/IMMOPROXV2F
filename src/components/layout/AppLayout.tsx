@@ -7,6 +7,8 @@ import { Topbar } from './Topbar'
 import { TrialBanner } from '@/components/common/TrialBanner'
 import { OnboardingWizard } from '@/components/common/OnboardingWizard'
 import { WelcomeModal } from '@/components/common/WelcomeModal'
+import { CommandPalette } from '@/components/common/CommandPalette'
+import { KeyboardShortcutsModal } from '@/components/common/KeyboardShortcutsModal'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -47,7 +49,7 @@ function AnnouncementBanner() {
 export function AppLayout() {
   const { title, subtitle } = usePageMeta()
   const { isMobile } = useMobile()
-  useKeyboardShortcuts()
+  const { paletteOpen, setPaletteOpen, helpOpen, setHelpOpen } = useKeyboardShortcuts()
   usePushNotifications()
 
   return (
@@ -69,6 +71,8 @@ export function AppLayout() {
         </main>
       </div>
       <WelcomeModal />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <KeyboardShortcutsModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   )
 }

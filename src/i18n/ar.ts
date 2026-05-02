@@ -459,6 +459,40 @@ export const ar = {
     title: 'إرسال رسالة',
   },
 
+  notifications: {
+    aria_label: 'الإشعارات',
+    aria_unread: 'الإشعارات، {{count}} غير مقروءة',
+  },
+
+  command_palette: {
+    title: 'البحث الشامل',
+    placeholder: 'البحث عن عميل، مشروع، وحدة…',
+    search_label: 'بحث',
+    hint: 'اكتب حرفين على الأقل للبحث',
+    searching: 'جاري البحث…',
+    no_results: 'لا نتائج لـ "{{query}}"',
+    group_client: 'العملاء',
+    group_project: 'المشاريع',
+    group_unit: 'الوحدات',
+    navigate: 'تنقل',
+    open: 'فتح',
+  },
+
+  shortcuts: {
+    title: 'اختصارات لوحة المفاتيح',
+    note: 'اضغط ؟ في أي مكان لفتح هذه المساعدة',
+    cmd_k: 'البحث الشامل',
+    help: 'عرض هذه المساعدة',
+    escape: 'إغلاق نافذة',
+    go_dashboard: 'الذهاب إلى لوحة التحكم',
+    go_pipeline: 'الذهاب إلى المسار',
+    go_planning: 'الذهاب إلى التقويم',
+    go_tasks: 'الذهاب إلى المهام',
+    go_dossiers: 'الذهاب إلى الملفات',
+    go_projects: 'الذهاب إلى المشاريع',
+    go_settings: 'الذهاب إلى الإعدادات',
+  },
+
   call_script_modal: {
     close_call: 'إغلاق المكالمة',
     summary: 'الملخص',
