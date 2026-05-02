@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Check, Search, LayoutGrid, List, Plus, X,
@@ -82,13 +83,13 @@ interface NewSaleModalProps {
 
 /* ═══ Constants ═══ */
 
-const STEPS = [
-  { label: 'Identification' },
-  { label: 'Biens' },
-  { label: 'Financier' },
-  { label: 'Documents' },
-  { label: 'Confirmation' },
-]
+const STEP_KEYS = [
+  'sale_modal.step_identification',
+  'sale_modal.step_units',
+  'sale_modal.step_financial',
+  'sale_modal.step_documents',
+  'sale_modal.step_confirmation',
+] as const
 
 const inputClass = 'border-immo-border-default bg-immo-bg-primary text-immo-text-primary placeholder:text-immo-text-muted'
 const labelClass = 'text-[11px] font-medium text-immo-text-muted'
@@ -96,6 +97,7 @@ const labelClass = 'text-[11px] font-medium text-immo-text-muted'
 /* ═══ Main Component ═══ */
 
 export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
+  const { t } = useTranslation()
   const [step, setStep] = useState(0)
   const [formData, setFormData] = useState<SaleFormData>({
     projectId: '',
@@ -190,7 +192,7 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
         : step === 3
           ? true
           : true
-  const isLastStep = step === STEPS.length - 1
+  const isLastStep = step === STEP_KEYS.length - 1
 
   // Recap badges
   const badges = [
@@ -292,7 +294,7 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
       qc.invalidateQueries({ queryKey: ['client-sales'] })
       qc.invalidateQueries({ queryKey: ['pipeline-stats'] })
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] })
-      toast.success('Vente créée avec succès')
+      toast.success(t('sale_modal.success'))
       handleClose()
     },
   })
@@ -310,14 +312,14 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
   if (!client) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Nouvelle vente" size="xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title={t('sale_modal.title')} size="xl">
       <div className="flex gap-6">
         {/* Left: step content */}
         <div className="min-w-0 flex-1">
           {/* Step bar */}
           <div className="mb-6 flex items-center">
-            {STEPS.map((s, i) => (
-              <div key={s.label} className="flex flex-1 items-center">
+            {STEP_KEYS.map((key, i) => (
+              <div key={key} className="flex flex-1 items-center">
                 {i > 0 && (
                   <div className={`h-0.5 flex-1 ${i <= step ? 'bg-immo-accent-green' : 'bg-immo-border-default'}`} />
                 )}
@@ -334,7 +336,7 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
                     {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
                   </div>
                   <span className={`mt-1 text-[9px] ${i === step ? 'font-medium text-immo-accent-green' : 'text-immo-text-muted'}`}>
-                    {s.label}
+                    {t(key)}
                   </span>
                 </div>
               </div>
@@ -448,7 +450,7 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
           {/* Progress */}
           <div>
             <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="text-immo-text-muted">Progression</span>
+              <span className="text-immo-text-muted">{t('sale_modal.progress')}</span>
               <span className="font-semibold text-immo-text-primary">{doneCount}/4</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-immo-bg-primary">
@@ -477,14 +479,14 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
 
           {/* Client */}
           <div>
-            <p className="text-[10px] text-immo-text-muted">Client</p>
+            <p className="text-[10px] text-immo-text-muted">{t('sale_modal.side_client')}</p>
             <p className="text-xs font-medium text-immo-text-primary">{client.full_name}</p>
           </div>
 
           {/* Project */}
           {projectName && (
             <div>
-              <p className="text-[10px] text-immo-text-muted">Projet</p>
+              <p className="text-[10px] text-immo-text-muted">{t('sale_modal.side_project')}</p>
               <p className="text-xs font-medium text-immo-text-primary">{projectName}</p>
             </div>
           )}
@@ -524,7 +526,7 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
           {/* Schedule info */}
           {schedule.length > 0 && (
             <div>
-              <p className="text-[10px] text-immo-text-muted">Versements</p>
+              <p className="text-[10px] text-immo-text-muted">{t('sale_modal.side_installments')}</p>
               <p className="text-xs text-immo-text-primary">{schedule.length} échéances</p>
             </div>
           )}

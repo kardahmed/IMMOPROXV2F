@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle, CalendarClock, XCircle, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -34,6 +35,7 @@ interface ManageVisitModalProps {
 }
 
 export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisitModalProps) {
+  const { t } = useTranslation()
   const userId = useAuthStore((s) => s.session?.user?.id)
   const qc = useQueryClient()
 
@@ -64,13 +66,13 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
         client_id: client.id,
         agent_id: userId,
         type: 'visit_confirmed',
-        title: `Visite confirmée pour le ${format(new Date(visit.scheduled_at), 'dd/MM/yyyy HH:mm')}`,
+        title: t('manage_visit_modal.history_confirmed', { when: format(new Date(visit.scheduled_at), 'dd/MM/yyyy HH:mm') }),
         metadata: { visit_id: visit.id },
       } as never)
     },
     onSuccess: () => {
       invalidateAll()
-      toast.success('Visite confirmée')
+      toast.success(t('manage_visit_modal.confirmed_success'))
       onClose()
     },
   })
@@ -97,13 +99,13 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
         client_id: client.id,
         agent_id: userId,
         type: 'stage_change',
-        title: `Visite annulée${moveToRelaunch ? ' — client passé en relancement' : ''}`,
+        title: moveToRelaunch ? t('manage_visit_modal.history_cancelled_relaunch') : t('manage_visit_modal.history_cancelled'),
         metadata: { visit_id: visit.id, moved_to_relaunch: moveToRelaunch },
       } as never)
     },
     onSuccess: () => {
       invalidateAll()
-      toast.success('Visite annulée')
+      toast.success(t('manage_visit_modal.cancelled_success'))
       setShowCancelConfirm(false)
       onClose()
     },
@@ -136,7 +138,7 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Gérer la visite" subtitle={`Choisissez une action pour ${client.full_name}`} size="sm">
+      <Modal isOpen={isOpen} onClose={onClose} title={t('manage_visit_modal.title')} subtitle={t('manage_visit_modal.subtitle', { name: client.full_name })} size="sm">
         <div className="space-y-3">
           {/* Visit info */}
           <div className="rounded-lg border border-immo-border-default bg-immo-bg-primary px-4 py-3">
@@ -144,7 +146,7 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
               {format(new Date(visit.scheduled_at), 'EEEE dd/MM/yyyy à HH:mm', { locale: undefined })}
             </p>
             <p className="mt-0.5 text-[11px] text-immo-text-muted">
-              {visit.visit_type === 'on_site' ? 'Sur site' : visit.visit_type === 'office' ? 'Bureau' : 'Virtuel'}
+              {visit.visit_type === 'on_site' ? t('manage_visit_modal.type_on_site') : visit.visit_type === 'office' ? t('manage_visit_modal.type_office') : t('manage_visit_modal.type_virtual')}
               {visit.notes && ` — ${visit.notes}`}
             </p>
           </div>
@@ -161,8 +163,8 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
                 <CheckCircle className="h-5 w-5 text-immo-accent-green" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-medium text-immo-text-primary">Confirmer la visite</p>
-                <p className="text-[11px] text-immo-text-muted">Le client a confirmé sa présence</p>
+                <p className="text-sm font-medium text-immo-text-primary">{t('manage_visit_modal.confirm_visit')}</p>
+                <p className="text-[11px] text-immo-text-muted">{t('manage_visit_modal.confirm_desc')}</p>
               </div>
               <ArrowRight className="ml-auto h-4 w-4 text-immo-text-muted" />
             </button>
@@ -176,8 +178,8 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
                 <CalendarClock className="h-5 w-5 text-immo-status-orange" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-medium text-immo-text-primary">Reprogrammer</p>
-                <p className="text-[11px] text-immo-text-muted">Choisir une nouvelle date et heure</p>
+                <p className="text-sm font-medium text-immo-text-primary">{t('manage_visit_modal.reschedule')}</p>
+                <p className="text-[11px] text-immo-text-muted">{t('manage_visit_modal.reschedule_desc')}</p>
               </div>
               <ArrowRight className="ml-auto h-4 w-4 text-immo-text-muted" />
             </button>
@@ -191,8 +193,8 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
                 <XCircle className="h-5 w-5 text-immo-status-red" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-medium text-immo-text-primary">Annuler la visite</p>
-                <p className="text-[11px] text-immo-text-muted">La visite ne sera pas effectuée</p>
+                <p className="text-sm font-medium text-immo-text-primary">{t('manage_visit_modal.cancel_visit')}</p>
+                <p className="text-[11px] text-immo-text-muted">{t('manage_visit_modal.cancel_desc')}</p>
               </div>
               <ArrowRight className="ml-auto h-4 w-4 text-immo-text-muted" />
             </button>
@@ -205,9 +207,9 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
         isOpen={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
         onConfirm={() => cancelVisit.mutate()}
-        title="Annuler cette visite ?"
-        description="La visite sera marquée comme annulée."
-        confirmLabel="Annuler la visite"
+        title={t('manage_visit_modal.cancel_confirm_title')}
+        description={t('manage_visit_modal.cancel_confirm_desc')}
+        confirmLabel={t('manage_visit_modal.cancel_visit')}
         confirmVariant="danger"
         loading={cancelVisit.isPending}
       >
@@ -221,7 +223,7 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
             className="h-4 w-4 rounded border-immo-border-default bg-immo-bg-primary accent-immo-accent-green"
           />
           <label htmlFor="relaunch" className="text-xs text-immo-text-secondary">
-            Passer le client en &quot;Relancement&quot;
+            {t('manage_visit_modal.move_to_relaunch')}
           </label>
         </div>
       </ConfirmDialog>

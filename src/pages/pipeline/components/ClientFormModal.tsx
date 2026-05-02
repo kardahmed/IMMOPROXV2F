@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -50,6 +51,7 @@ const inputClass = 'border-immo-border-default bg-immo-bg-primary text-immo-text
 const labelClass = 'text-[11px] font-medium text-immo-text-muted'
 
 export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProps) {
+  const { t } = useTranslation()
   const isEdit = !!client
   const { createClient, updateClient } = useClients()
   const { projects } = useProjects()
@@ -195,83 +197,83 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? `Modifier ${client?.full_name}` : 'Nouveau client'}
-      subtitle={isEdit ? 'Mettre à jour les informations' : 'Ajouter un client au pipeline'}
+      title={isEdit ? `${t('client_form.edit_client')} ${client?.full_name}` : t('client_form.new_client')}
+      subtitle={isEdit ? t('client_form.edit_subtitle') : t('client_form.add_subtitle')}
       size="lg"
     >
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-3">
           {/* ── Col 1: Identité ── */}
           <div className="space-y-3">
-            <SectionTitle>Identité</SectionTitle>
+            <SectionTitle>{t('client_form.section_identity')}</SectionTitle>
 
-            <Field label="Nom complet *" error={errors.full_name?.message}>
-              <Input {...register('full_name')} placeholder="Ahmed Kardjadja" className={inputClass} />
+            <Field label={t('client_form.full_name')} error={errors.full_name?.message}>
+              <Input {...register('full_name')} placeholder={t('client_form.full_name_placeholder')} className={inputClass} />
             </Field>
 
-            <Field label="Téléphone *" error={errors.phone?.message}>
-              <Input {...register('phone')} placeholder="0555 123 456" className={inputClass} />
+            <Field label={t('client_form.phone')} error={errors.phone?.message}>
+              <Input {...register('phone')} placeholder={t('client_form.phone_placeholder')} className={inputClass} />
             </Field>
 
-            <Field label="Email">
-              <Input {...register('email')} type="email" placeholder="ahmed@email.com" className={inputClass} />
+            <Field label={t('client_form.email')}>
+              <Input {...register('email')} type="email" placeholder={t('client_form.email_placeholder')} className={inputClass} />
               {errors.email && <ErrMsg>{errors.email.message}</ErrMsg>}
             </Field>
 
-            <Field label="NIN / CIN">
-              <Input {...register('nin_cin')} placeholder="Numéro identité" className={inputClass} />
+            <Field label={t('client_form.nin_cin')}>
+              <Input {...register('nin_cin')} placeholder={t('client_form.nin_cin_placeholder')} className={inputClass} />
             </Field>
 
-            <Field label="Type client">
+            <Field label={t('client_form.client_type')}>
               <Controller
                 control={control}
                 name="client_type"
                 render={({ field }) => (
                   <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
                     <option value="">—</option>
-                    <option value="individual">Particulier</option>
-                    <option value="company">Entreprise</option>
+                    <option value="individual">{t('client_form.individual')}</option>
+                    <option value="company">{t('client_form.company')}</option>
                   </select>
                 )}
               />
             </Field>
 
-            <Field label="Date de naissance">
+            <Field label={t('client_form.birth_date')}>
               <Input type="date" {...register('birth_date')} className={inputClass} />
             </Field>
 
-            <Field label="Nationalité">
-              <Input {...register('nationality')} placeholder="Algérienne" className={inputClass} />
+            <Field label={t('client_form.nationality')}>
+              <Input {...register('nationality')} placeholder={t('client_form.nationality_placeholder')} className={inputClass} />
             </Field>
           </div>
 
           {/* ── Col 2: Commercial ── */}
           <div className="space-y-3">
-            <SectionTitle>Commercial</SectionTitle>
+            <SectionTitle>{t('client_form.section_commercial')}</SectionTitle>
 
-            <Field label="Source *" error={errors.source?.message}>
+            <Field label={t('client_form.source')} error={errors.source?.message}>
               <Controller
                 control={control}
                 name="source"
                 render={({ field }) => (
                   <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass} ${errors.source ? 'border-immo-status-red' : ''}`}>
-                    <option value="">Selectionner la source</option>
+                    <option value="">{t('client_form.select_source')}</option>
                     {Object.entries(SOURCE_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
                   </select>
                 )}
               />
             </Field>
 
-            <Field label="Campagne marketing">
+            <Field label={t('client_form.marketing_campaign')}>
               <Controller
                 control={control}
                 name="marketing_campaign_id"
                 render={({ field }) => (
                   <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass}`}>
-                    <option value="">— Aucune —</option>
+                    <option value="">{t('client_form.no_campaign')}</option>
                     {marketingCampaigns.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name}{c.status === 'paused' ? ' (en pause)' : ''}
+                        {c.name}{c.status === 'paused' ? t('client_form.paused_suffix') : ''}
                       </option>
                     ))}
                   </select>
@@ -279,7 +281,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
               />
             </Field>
 
-            <Field label="Projets d'intérêt">
+            <Field label={t('client_form.interested_projects')}>
               <div className="flex flex-wrap gap-1.5">
                 {projects.map((p) => (
                   <button
@@ -295,11 +297,11 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
                     {p.name}
                   </button>
                 ))}
-                {projects.length === 0 && <span className="text-[11px] text-immo-text-muted">Aucun projet</span>}
+                {projects.length === 0 && <span className="text-[11px] text-immo-text-muted">{t('client_form.no_projects')}</span>}
               </div>
             </Field>
 
-            <Field label="Types d'unités souhaitées">
+            <Field label={t('client_form.desired_unit_types')}>
               <div className="flex flex-wrap gap-1.5">
                 {Object.entries(UNIT_TYPE_LABELS).map(([val, label]) => (
                   <button
@@ -318,11 +320,11 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
               </div>
             </Field>
 
-            <Field label="Budget confirmé (DA)">
-              <Input type="number" {...register('confirmed_budget')} placeholder="12000000" className={inputClass} />
+            <Field label={t('client_form.confirmed_budget')}>
+              <Input type="number" {...register('confirmed_budget')} placeholder={t('client_form.confirmed_budget_placeholder')} className={inputClass} />
             </Field>
 
-            <Field label="Niveau d'intérêt">
+            <Field label={t('client_form.interest_level')}>
               <Controller
                 control={control}
                 name="interest_level"
@@ -335,7 +337,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
               />
             </Field>
 
-            <Field label="Modalités de paiement">
+            <Field label={t('client_form.payment_method')}>
               <Controller
                 control={control}
                 name="payment_method"
@@ -351,33 +353,33 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
 
           {/* ── Col 3: Admin ── */}
           <div className="space-y-3">
-            <SectionTitle>Assignation</SectionTitle>
+            <SectionTitle>{t('client_form.section_assignment')}</SectionTitle>
 
-            <Field label="Agent assigné *" error={errors.agent_id?.message}>
+            <Field label={t('client_form.assigned_agent')} error={errors.agent_id?.message}>
               <Controller
                 control={control}
                 name="agent_id"
                 render={({ field }) => (
                   <select value={field.value ?? ''} onChange={(e) => field.onChange(e.target.value)} className={`h-9 w-full rounded-md border px-3 text-sm ${inputClass} ${errors.agent_id ? 'border-immo-status-red' : ''}`}>
-                    <option value="">Selectionner l'agent</option>
+                    <option value="">{t('client_form.select_agent')}</option>
                     {agents.map(a => <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>)}
                   </select>
                 )}
               />
             </Field>
 
-            <Field label="Profession">
-              <Input {...register('profession')} placeholder="Ingénieur, Commerçant..." className={inputClass} />
+            <Field label={t('client_form.profession')}>
+              <Input {...register('profession')} placeholder={t('client_form.profession_placeholder')} className={inputClass} />
             </Field>
 
-            <Field label="Adresse">
-              <Input {...register('address')} placeholder="Alger, Hydra" className={inputClass} />
+            <Field label={t('client_form.address')}>
+              <Input {...register('address')} placeholder={t('client_form.address_placeholder')} className={inputClass} />
             </Field>
 
-            <Field label="Notes">
+            <Field label={t('client_form.notes')}>
               <textarea
                 {...register('notes')}
-                placeholder="Notes libres sur ce client..."
+                placeholder={t('client_form.notes_placeholder')}
                 rows={4}
                 className={`w-full resize-none rounded-md border p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-immo-accent-green ${inputClass}`}
               />
@@ -393,7 +395,7 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
             onClick={onClose}
             className="text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
           >
-            Annuler
+            {t('client_form.cancel')}
           </Button>
           <Button
             type="submit"
@@ -403,9 +405,9 @@ export function ClientFormModal({ isOpen, onClose, client }: ClientFormModalProp
             {isPending ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" />
             ) : isEdit ? (
-              'Enregistrer'
+              t('client_form.save')
             ) : (
-              'Ajouter le client'
+              t('client_form.add_client')
             )}
           </Button>
         </div>

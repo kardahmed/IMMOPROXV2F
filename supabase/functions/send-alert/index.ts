@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { requireServiceRole } from '../_shared/auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,12 +26,11 @@ serve(async (req: Request) => {
 
     // Service-role only — this endpoint triggers arbitrary outbound
     // webhooks (Slack, Telegram, custom HTTP) per the platform_alerts
-    // config. Pre-fix the check was `.includes('Bearer')` which any
-    // authenticated user JWT satisfies. Use strict equality.
-    const authHeader = req.headers.get('Authorization') ?? ''
-    if (authHeader !== `Bearer ${serviceKey}`) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    }
+    // config. Use the shared helper which decodes the JWT instead of
+    // string-comparing it to SUPABASE_SERVICE_ROLE_KEY (which can drift
+    // out of sync with the dashboard's current key after a rotation).
+    const denied = requireServiceRole(req)
+    if (denied) return denied
 
     // Fetch active alerts
     const { data: alerts } = await supabase.from('platform_alerts').select('*').eq('is_active', true)
@@ -73,6 +73,35 @@ serve(async (req: Request) => {
           if ((count ?? 0) >= alert.threshold) {
             triggered = true
             message = `${count} erreurs dans les dernieres 24h (seuil: ${alert.threshold})`
+          }
+          break
+        }
+        case 'error_logs_spike': {
+          // React crashes captured by ErrorBoundary (migration 054).
+          // High volume usually means a bad deploy or a regression.
+          const oneDayAgo = new Date(Date.now() - 86400000).toISOString()
+          const { count } = await supabase.from('error_logs').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo)
+          if ((count ?? 0) >= alert.threshold) {
+            triggered = true
+            message = `${count} crashs front-end dans les 24h (seuil: ${alert.threshold}). Voir /admin/error-logs.`
+          }
+          break
+        }
+        case 'tenant_rate_pressure': {
+          // Tenants currently hammering the write rate limit
+          // (migration 053). Threshold = number of writes in the
+          // current minute window. A normal tenant tops out around
+          // 50; >250 is suspicious; >500 is hitting the wall.
+          const { data: pressure } = await supabase
+            .from('tenant_rate_pressure_view')
+            .select('tenant_id, table_name, writes_in_window')
+            .gte('writes_in_window', alert.threshold)
+            .limit(5)
+          const rows = (pressure ?? []) as Array<{ tenant_id: string; table_name: string; writes_in_window: number }>
+          if (rows.length > 0) {
+            triggered = true
+            const summary = rows.map(r => `${r.table_name}=${r.writes_in_window}`).join(', ')
+            message = `${rows.length} tenant(s) sous pression (${summary}). Possible bot/loop.`
           }
           break
         }

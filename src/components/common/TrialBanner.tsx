@@ -2,23 +2,28 @@ import { useQuery } from '@tanstack/react-query'
 import { Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { useTrialEligiblePlans } from '@/hooks/usePlans'
 
 export function TrialBanner() {
   const tenantId = useAuthStore(s => s.tenantId)
+  // Replaces the old hardcoded `t.plan === 'free'` check. Plans are
+  // tagged is_trial_eligible in plan_limits (see migration 059) so we
+  // can introduce new trial-style plans without code changes.
+  const trialEligiblePlans = useTrialEligiblePlans()
 
   const { data: trialInfo } = useQuery({
-    queryKey: ['trial-info', tenantId],
+    queryKey: ['trial-info', tenantId, trialEligiblePlans.join(',')],
     queryFn: async () => {
       if (!tenantId) return null
       const { data } = await supabase.from('tenants').select('trial_ends_at, plan').eq('id', tenantId).single()
       if (!data) return null
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const t = data as any as { trial_ends_at: string | null; plan: string }
-      if (!t.trial_ends_at || t.plan !== 'free') return null
+      if (!t.trial_ends_at || !trialEligiblePlans.includes(t.plan)) return null
       const daysLeft = Math.ceil((new Date(t.trial_ends_at).getTime() - Date.now()) / 86400000)
       return { daysLeft, expired: daysLeft <= 0 }
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId && trialEligiblePlans.length > 0,
     staleTime: 300_000,
   })
 

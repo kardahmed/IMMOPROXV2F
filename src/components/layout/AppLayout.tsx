@@ -7,6 +7,10 @@ import { Topbar } from './Topbar'
 import { TrialBanner } from '@/components/common/TrialBanner'
 import { OnboardingWizard } from '@/components/common/OnboardingWizard'
 import { WelcomeModal } from '@/components/common/WelcomeModal'
+import { CommandPalette } from '@/components/common/CommandPalette'
+import { KeyboardShortcutsModal } from '@/components/common/KeyboardShortcutsModal'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { XAssistant } from '@/components/common/XAssistant'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -47,7 +51,7 @@ function AnnouncementBanner() {
 export function AppLayout() {
   const { title, subtitle } = usePageMeta()
   const { isMobile } = useMobile()
-  useKeyboardShortcuts()
+  const { paletteOpen, setPaletteOpen, helpOpen, setHelpOpen } = useKeyboardShortcuts()
   usePushNotifications()
 
   return (
@@ -63,12 +67,17 @@ export function AppLayout() {
         <Topbar title={title} subtitle={subtitle} />
         <main className="flex-1 overflow-y-auto p-3 md:p-6">
           <OnboardingWizard />
-          <div className="animate-in fade-in duration-200">
-            <Outlet />
-          </div>
+          <ErrorBoundary>
+            <div className="animate-in fade-in duration-200">
+              <Outlet />
+            </div>
+          </ErrorBoundary>
         </main>
       </div>
       <WelcomeModal />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <KeyboardShortcutsModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <XAssistant />
     </div>
   )
 }

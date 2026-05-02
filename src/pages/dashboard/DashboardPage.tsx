@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -14,7 +15,7 @@ import { formatDistanceToNow, format } from 'date-fns'
 import { fr as frLocale } from 'date-fns/locale'
 import { ar as arLocale } from 'date-fns/locale'
 import { AgentDashboard } from './AgentDashboard'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+const RevenueChart = lazy(() => import('./RevenueChart'))
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation()
@@ -45,14 +46,9 @@ export function DashboardPage() {
         {/* CA Mensuel */}
         <Card>
           <h3 className="mb-4 text-sm font-semibold text-immo-text-primary">CA mensuel — 6 derniers mois</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.monthlyRevenue}>
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--immo-text-muted, #8898AA)' }} />
-              <YAxis tick={{ fontSize: 10, fill: 'var(--immo-text-muted, #8898AA)' }} width={50} tickFormatter={v => formatPriceCompact(v)} />
-              <Tooltip contentStyle={{ background: 'var(--immo-bg-card, #fff)', border: '1px solid var(--immo-border-default, #E3E8EF)', borderRadius: 8, fontSize: 12 }} formatter={(v) => [formatPriceCompact(v as number) + ' DA', 'CA']} />
-              <Bar dataKey="revenue" fill="var(--immo-accent-green, #0579DA)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<div className="h-[200px] animate-pulse rounded bg-immo-bg-primary" />}>
+            <RevenueChart data={data.monthlyRevenue} />
+          </Suspense>
         </Card>
 
         {/* Pipeline Funnel */}

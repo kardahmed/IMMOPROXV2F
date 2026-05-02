@@ -4,24 +4,28 @@
 // the super admin /admin/costs page can compute profit directly
 // against plan_limits.price_monthly.
 //
-// Rates below are conservative estimates at ~140 DA/USD. Tune when
-// real invoices come in.
+// Rates below are at 250 DA/USD — the parallel/black market rate the
+// founder actually pays when changing DA to fund USD billing accounts.
+// The bank/official rate (~140 DA/USD) is irrelevant here because the
+// founder doesn't have an Algerian-USD bank account that lets them
+// settle Anthropic/Resend/Meta invoices at that rate.
+// Tune when real invoices come in.
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Anthropic Claude Haiku 4.5: $1/M input, $5/M output (Jan 2026)
-//   → 0.00014 DA/input-token, 0.00070 DA/output-token at 140 DA/USD
-const ANTHROPIC_INPUT_DA_PER_TOKEN = 0.00014
-const ANTHROPIC_OUTPUT_DA_PER_TOKEN = 0.00070
+//   → 0.00025 DA/input-token, 0.00125 DA/output-token at 250 DA/USD
+const ANTHROPIC_INPUT_DA_PER_TOKEN = 0.00025
+const ANTHROPIC_OUTPUT_DA_PER_TOKEN = 0.00125
 
 // Resend: $20/mo for 50k emails after free tier → ~$0.0004/email
-//   → 0.056 DA/email at 140 DA/USD
-const RESEND_DA_PER_EMAIL = 0.06
+//   → 0.10 DA/email at 250 DA/USD
+const RESEND_DA_PER_EMAIL = 0.10
 
 // Meta WhatsApp Cloud API — DZ market authentication/utility template:
 // ~$0.005/msg, marketing ~$0.024/msg, free-form within 24h window = $0.
-// Conservative blended estimate: 1 DA per outbound message.
-const WHATSAPP_DA_PER_MESSAGE = 1
+// Conservative blended estimate: 1.5 DA per outbound message at 250 DA/USD.
+const WHATSAPP_DA_PER_MESSAGE = 1.5
 
 export interface TrackOpts {
   tenantId: string | null

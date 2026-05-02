@@ -7,7 +7,10 @@ import type { PipelineStage } from '@/types'
 export interface PipelineAlert {
   type: 'urgent' | 'relaunch' | 'tasks'
   count: number
-  label: string
+  // Translation key for the label rendered in AlertBar. Concrete
+  // text comes from src/i18n via t(); the params are passed inline.
+  i18nKey: 'pipeline_alerts.urgent' | 'pipeline_alerts.relaunch' | 'pipeline_alerts.tasks'
+  i18nParams?: { count: number; days?: number }
   clientIds?: string[]
 }
 
@@ -78,13 +81,13 @@ export function usePipelineStats() {
 
       const alerts: PipelineAlert[] = []
       if (urgentClients.length > 0) {
-        alerts.push({ type: 'urgent', count: urgentClients.length, label: `${urgentClients.length} client(s) sans activité depuis ${urgentDays}+ jours`, clientIds: urgentClients.map(c => c.id) })
+        alerts.push({ type: 'urgent', count: urgentClients.length, i18nKey: 'pipeline_alerts.urgent', i18nParams: { count: urgentClients.length, days: urgentDays }, clientIds: urgentClients.map(c => c.id) })
       }
       if (relaunchClients.length > 0) {
-        alerts.push({ type: 'relaunch', count: relaunchClients.length, label: `${relaunchClients.length} client(s) à relancer (${relaunchDays}+ jours sans contact)`, clientIds: relaunchClients.map(c => c.id) })
+        alerts.push({ type: 'relaunch', count: relaunchClients.length, i18nKey: 'pipeline_alerts.relaunch', i18nParams: { count: relaunchClients.length, days: relaunchDays }, clientIds: relaunchClients.map(c => c.id) })
       }
       if (pendingTasks > 0) {
-        alerts.push({ type: 'tasks', count: pendingTasks, label: `${pendingTasks} tâche(s) en attente` })
+        alerts.push({ type: 'tasks', count: pendingTasks, i18nKey: 'pipeline_alerts.tasks', i18nParams: { count: pendingTasks } })
       }
 
       // KPIs

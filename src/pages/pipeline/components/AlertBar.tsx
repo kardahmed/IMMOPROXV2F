@@ -1,4 +1,5 @@
 import { AlertTriangle, Clock, ListTodo } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { PipelineAlert } from '@/hooks/usePipelineStats'
 
 const ICONS = {
@@ -19,6 +20,7 @@ interface AlertBarProps {
 }
 
 export function AlertBar({ alerts, onAlertClick }: AlertBarProps) {
+  const { t } = useTranslation()
   if (alerts.length === 0) return null
 
   return (
@@ -32,7 +34,7 @@ export function AlertBar({ alerts, onAlertClick }: AlertBarProps) {
             className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-opacity hover:opacity-80 ${STYLES[alert.type]}`}
           >
             <Icon className="h-3.5 w-3.5" />
-            {alert.label}
+            {t(alert.i18nKey, alert.i18nParams)}
           </button>
         )
       })}

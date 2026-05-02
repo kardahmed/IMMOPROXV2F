@@ -35,6 +35,7 @@ const TenantDetailPage = lazy(() => import('@/pages/superadmin/TenantDetailPage'
 const GlobalStatsPage = lazy(() => import('@/pages/superadmin/GlobalStatsPage').then(m => ({ default: m.GlobalStatsPage })))
 const PlatformSettingsPage = lazy(() => import('@/pages/superadmin/PlatformSettingsPage').then(m => ({ default: m.PlatformSettingsPage })))
 const AuditLogsPage = lazy(() => import('@/pages/superadmin/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })))
+const ErrorLogsPage = lazy(() => import('@/pages/superadmin/ErrorLogsPage').then(m => ({ default: m.ErrorLogsPage })))
 const BillingPage = lazy(() => import('@/pages/superadmin/BillingPage').then(m => ({ default: m.BillingPage })))
 const MessagesPage = lazy(() => import('@/pages/superadmin/MessagesPage').then(m => ({ default: m.MessagesPage })))
 const SupportPage = lazy(() => import('@/pages/superadmin/SupportPage').then(m => ({ default: m.SupportPage })))
@@ -87,6 +88,7 @@ function App() {
             <Route path="leads" element={<LeadsPage />} />
             <Route path="security" element={<SecurityAuditPage />} />
             <Route path="logs" element={<AuditLogsPage />} />
+            <Route path="error-logs" element={<ErrorLogsPage />} />
             <Route path="plans" element={<PlansConfigPage />} />
             <Route path="playbook" element={<PlaybookAdminPage />} />
             <Route path="emails" element={<EmailsPage />} />

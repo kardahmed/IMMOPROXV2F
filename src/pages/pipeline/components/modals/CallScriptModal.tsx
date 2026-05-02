@@ -6,6 +6,7 @@
 // writes call_responses + history + maps answers back to the client.
 
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Phone, Clock, Sparkles, CheckCircle, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -33,6 +34,7 @@ interface CallScriptModalProps {
 export function CallScriptModal({
   isOpen, onClose, clientId, clientName, clientPhone, clientStage, tenantId, agentId,
 }: CallScriptModalProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
   const [clientQA, setClientQA] = useState<ClientQA[]>([])
@@ -73,7 +75,7 @@ export function CallScriptModal({
       }
     },
     onSuccess: () => {
-      toast.success('Visite planifiée !')
+      toast.success(t('call_script_modal.visit_planned_success'))
       setShowVisitForm(false)
       qc.invalidateQueries({ queryKey: ['client-visits'] })
       qc.invalidateQueries({ queryKey: ['clients'] })
@@ -133,14 +135,14 @@ export function CallScriptModal({
         metadata: { duration: timer, result, answers_count: answeredCount, mode: script?.mode },
       } as never)
 
-      toast.success('Appel enregistré et fiche client mise à jour')
+      toast.success(t('call_script_modal.save_success'))
       qc.invalidateQueries({ queryKey: ['client-detail'] })
       qc.invalidateQueries({ queryKey: ['client-history'] })
       qc.invalidateQueries({ queryKey: ['clients'] })
       onClose()
     } catch (err) {
       console.error(err)
-      toast.error('Erreur lors de la sauvegarde')
+      toast.error(t('call_script_modal.save_error'))
     } finally {
       setSaving(false)
     }
@@ -171,7 +173,7 @@ export function CallScriptModal({
             <Clock className="h-4 w-4 text-immo-accent-green" />
             <span className="font-mono text-sm font-bold text-immo-accent-green">{formatTime(timer)}</span>
           </div>
-          <button onClick={onClose} aria-label="Fermer l'appel" className="rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40">
+          <button onClick={onClose} aria-label={t('call_script_modal.close_call')} className="rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -201,7 +203,7 @@ export function CallScriptModal({
         {/* Right: outcome sidebar */}
         <div className="flex w-full shrink-0 flex-col overflow-hidden bg-immo-bg-card md:w-[380px]">
           <div className="min-h-0 flex-1 overflow-y-auto p-6">
-            <h3 className="mb-4 text-sm font-bold text-immo-text-primary">Récapitulatif</h3>
+            <h3 className="mb-4 text-sm font-bold text-immo-text-primary">{t('call_script_modal.summary')}</h3>
 
             {/* Answers summary */}
             <div className="mb-4 space-y-2">
@@ -214,29 +216,29 @@ export function CallScriptModal({
                 </div>
               )) ?? null}
               {Object.keys(answers).length === 0 && (
-                <p className="py-4 text-center text-xs text-immo-text-muted">Les réponses apparaîtront ici</p>
+                <p className="py-4 text-center text-xs text-immo-text-muted">{t('call_script_modal.answers_will_appear')}</p>
               )}
             </div>
 
             {/* Notes (right-side variant) */}
             <div className="mb-4">
-              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">Notes supplémentaires</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={4} placeholder="Impressions, remarques…"
+              <label className="mb-1 block text-[10px] font-medium text-immo-text-muted">{t('call_script_modal.extra_notes')}</label>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={4} placeholder={t('call_script_modal.extra_notes_placeholder')}
                 className="w-full resize-none rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 text-xs text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:outline-none" />
             </div>
 
             {/* Outcome */}
             <div className="mb-4">
-              <label className="mb-2 block text-[10px] font-medium text-immo-text-muted">Résultat de l'appel</label>
+              <label className="mb-2 block text-[10px] font-medium text-immo-text-muted">{t('call_script_modal.call_outcome')}</label>
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { value: 'qualified' as const, label: 'Qualifié', color: 'text-immo-accent-green border-immo-accent-green/30 bg-immo-accent-green/5' },
-                  { value: 'callback' as const, label: 'À rappeler', color: 'text-immo-status-orange border-immo-status-orange/30 bg-immo-status-orange/5' },
-                  { value: 'not_interested' as const, label: 'Pas intéressé', color: 'text-immo-status-red border-immo-status-red/30 bg-immo-status-red/5' },
+                  { value: 'qualified' as const, i18nKey: 'call_script_modal.outcome_qualified', color: 'text-immo-accent-green border-immo-accent-green/30 bg-immo-accent-green/5' },
+                  { value: 'callback' as const, i18nKey: 'call_script_modal.outcome_callback', color: 'text-immo-status-orange border-immo-status-orange/30 bg-immo-status-orange/5' },
+                  { value: 'not_interested' as const, i18nKey: 'call_script_modal.outcome_not_interested', color: 'text-immo-status-red border-immo-status-red/30 bg-immo-status-red/5' },
                 ]).map(r => (
                   <button key={r.value} onClick={() => setResult(r.value)}
                     className={`rounded-lg border px-2 py-2 text-[11px] font-medium transition-all ${result === r.value ? r.color : 'border-immo-border-default text-immo-text-muted'}`}>
-                    {r.label}
+                    {t(r.i18nKey)}
                   </button>
                 ))}
               </div>
@@ -247,21 +249,21 @@ export function CallScriptModal({
             <div className="mb-4">
               {!showVisitForm ? (
                 <Button onClick={() => setShowVisitForm(true)} className="w-full border border-immo-accent-blue/30 bg-immo-accent-blue/5 text-xs font-semibold text-immo-accent-blue hover:bg-immo-accent-blue/10">
-                  <Calendar className="mr-1.5 h-3.5 w-3.5" /> Proposer une visite
+                  <Calendar className="mr-1.5 h-3.5 w-3.5" /> {t('call_script_modal.propose_visit')}
                 </Button>
               ) : (
                 <div className="space-y-2 rounded-lg border border-immo-accent-blue/30 bg-immo-accent-blue/5 p-3">
-                  <p className="text-[10px] font-semibold text-immo-accent-blue">Planifier une visite</p>
+                  <p className="text-[10px] font-semibold text-immo-accent-blue">{t('call_script_modal.plan_visit')}</p>
                   <Input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} className="h-8 border-immo-border-default text-xs" />
                   <select value={visitTime} onChange={e => setVisitTime(e.target.value)} className="h-8 w-full rounded-md border border-immo-border-default bg-immo-bg-primary px-2 text-xs text-immo-text-primary">
-                    <option value="">Heure</option>
-                    {['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'].map(t => <option key={t} value={t}>{t}</option>)}
+                    <option value="">{t('call_script_modal.visit_time_placeholder')}</option>
+                    {['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'].map(slot => <option key={slot} value={slot}>{slot}</option>)}
                   </select>
                   <div className="flex gap-2">
                     <Button onClick={() => createVisit.mutate()} disabled={!visitDate || !visitTime || createVisit.isPending} className="h-7 flex-1 bg-immo-accent-blue text-[10px] text-white">
-                      {createVisit.isPending ? '...' : 'Confirmer visite'}
+                      {createVisit.isPending ? '...' : t('call_script_modal.confirm_visit')}
                     </Button>
-                    <Button onClick={() => setShowVisitForm(false)} className="h-7 border border-immo-border-default bg-transparent text-[10px] text-immo-text-muted">Annuler</Button>
+                    <Button onClick={() => setShowVisitForm(false)} className="h-7 border border-immo-border-default bg-transparent text-[10px] text-immo-text-muted">{t('call_script_modal.cancel')}</Button>
                   </div>
                 </div>
               )}
@@ -269,7 +271,7 @@ export function CallScriptModal({
 
             {script?.suggested_action && (
               <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
-                <p className="text-[10px] font-medium text-purple-500">Suggestion IA</p>
+                <p className="text-[10px] font-medium text-purple-500">{t('call_script_modal.ai_suggestion')}</p>
                 <p className="text-xs font-medium text-purple-700">{script.suggested_action}</p>
               </div>
             )}
@@ -279,7 +281,7 @@ export function CallScriptModal({
           <div className="shrink-0 border-t border-immo-border-default bg-immo-bg-card p-4">
             <Button onClick={handleSave} disabled={saving} className="w-full bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
               {saving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> :
-                <><CheckCircle className="mr-1.5 h-4 w-4" /> Sauvegarder et fermer</>
+                <><CheckCircle className="mr-1.5 h-4 w-4" /> {t('call_script_modal.save_and_close')}</>
               }
             </Button>
           </div>
@@ -291,6 +293,7 @@ export function CallScriptModal({
 
 // Mini availability calendar — reads tenant visit settings.
 function AvailabilityMini({ agentId, tenantId }: { agentId: string; tenantId: string }) {
+  const { t } = useTranslation()
   const { data: visitSettings } = useQuery({
     queryKey: ['tenant-visit-settings', tenantId],
     queryFn: async () => {
@@ -348,7 +351,7 @@ function AvailabilityMini({ agentId, tenantId }: { agentId: string; tenantId: st
   return (
     <div className="mb-4 rounded-lg border border-immo-accent-blue/20 bg-immo-accent-blue/5 p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[10px] font-semibold text-immo-accent-blue">Disponibilités</p>
+        <p className="text-[10px] font-semibold text-immo-accent-blue">{t('call_script_modal.availability')}</p>
         <span className="text-[8px] text-immo-text-muted">Visite : {duration} min</span>
       </div>
       <div className="flex gap-1">

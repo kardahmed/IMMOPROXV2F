@@ -1,15 +1,11 @@
-import { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, Moon, Sun, Menu } from 'lucide-react'
+import { Search, Moon, Sun, Menu, Command } from 'lucide-react'
 import { useMobile, useSidebarStore } from '@/hooks/useMobile'
 import { useAuthStore } from '@/store/authStore'
 import { useBranding } from '@/hooks/useBranding'
 import { useDarkMode } from '@/hooks/useDarkMode'
-import { Input } from '@/components/ui/input'
 import { LanguageSwitch } from '@/components/common/LanguageSwitch'
 import { NotificationBell } from '@/components/common/NotificationBell'
-import { supabase } from '@/lib/supabase'
 
 interface TopbarProps {
   title: string
@@ -18,24 +14,17 @@ interface TopbarProps {
 
 export function Topbar({ title, subtitle }: TopbarProps) {
   const { t } = useTranslation()
-  const { userProfile, tenantId } = useAuthStore()
+  const { userProfile } = useAuthStore()
   useBranding()
   const { isDark, setTheme } = useDarkMode()
   const { isMobile } = useMobile()
   const { toggle: toggleSidebar } = useSidebarStore()
-  const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; type: string }>>([])
-  const [showResults, setShowResults] = useState(false)
 
-  const handleSearch = useCallback(async (q: string) => {
-    setSearchQuery(q)
-    if (q.length < 2) { setSearchResults([]); setShowResults(false); return }
-    const { data } = await supabase.from('clients').select('id, full_name').eq('tenant_id', tenantId!).ilike('full_name', `%${q}%`).limit(5)
-    const results = (data ?? []).map(c => ({ id: c.id, name: (c as { full_name: string }).full_name, type: 'client' }))
-    setSearchResults(results)
-    setShowResults(results.length > 0)
-  }, [tenantId])
+  function openPalette() {
+    // Lightweight pubsub between the topbar trigger and the
+    // useKeyboardShortcuts hook that owns the palette state.
+    window.dispatchEvent(new CustomEvent('immo:open-palette'))
+  }
 
   return (
     <header className="flex h-14 md:h-16 shrink-0 items-center justify-between border-b border-immo-border-default bg-immo-bg-sidebar px-3 md:px-6">
@@ -56,31 +45,18 @@ export function Topbar({ title, subtitle }: TopbarProps) {
 
       {/* Right: search + lang + notifs + avatar */}
       <div className="flex items-center gap-2 md:gap-4">
-        {/* Search — hidden on mobile, icon only on tablet */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-immo-text-muted rtl:left-auto rtl:right-3" />
-          <Input
-            type="text"
-            value={searchQuery}
-            onChange={e => handleSearch(e.target.value)}
-            onBlur={() => setTimeout(() => setShowResults(false), 200)}
-            onFocus={() => searchResults.length > 0 && setShowResults(true)}
-            placeholder={t('common.search_placeholder')}
-            className="h-9 w-[180px] lg:w-[240px] border-immo-border-default bg-immo-bg-primary pl-9 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:ring-immo-accent-green rtl:pl-3 rtl:pr-9"
-          />
-          {showResults && (
-            <div className="absolute top-full left-0 z-50 mt-1 w-[300px] rounded-lg border border-immo-border-default bg-immo-bg-card shadow-lg">
-              {searchResults.map(r => (
-                <button key={r.id} onClick={() => { navigate(`/pipeline/clients/${r.id}`); setShowResults(false); setSearchQuery('') }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-immo-text-primary hover:bg-immo-bg-card-hover">
-                  <Search className="h-3 w-3 text-immo-text-muted" />
-                  {r.name}
-                  <span className="ml-auto text-[10px] text-immo-text-muted">Client</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Search trigger button — opens the Cmd+K palette */}
+        <button
+          onClick={openPalette}
+          aria-label={t('command_palette.title')}
+          className="hidden h-9 items-center gap-2 rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-muted transition-colors hover:border-immo-accent-green/40 hover:text-immo-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40 md:flex md:w-[180px] lg:w-[240px]"
+        >
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 truncate text-left">{t('common.search_placeholder')}</span>
+          <span className="hidden items-center gap-0.5 rounded border border-immo-border-default bg-immo-bg-card px-1.5 py-0.5 text-[10px] lg:flex">
+            <Command className="h-2.5 w-2.5" />K
+          </span>
+        </button>
 
         {/* Dark mode toggle */}
         <button

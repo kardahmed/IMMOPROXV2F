@@ -20,6 +20,7 @@
 // The pixel pathway is unchanged.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { rateLimitDb, rateLimitDbResponse } from '../_shared/rateLimit.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -64,6 +65,19 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
+
+  // Rate limit by IP — pixel/click endpoint is unauthenticated and
+  // accessible from anywhere on the internet. Without this an attacker
+  // could spam millions of fake opens to inflate a competitor's stats
+  // (or just to slow down our DB). 60 hits/minute per IP is well above
+  // anything a human or normal mail client would generate.
+  const ip = req.headers.get('cf-connecting-ip')
+    || req.headers.get('x-real-ip')
+    || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || 'unknown'
+  const rl = await rateLimitDb(supabase, `track-email:${ip}`, 60, 60_000)
+  const rlResponse = rateLimitDbResponse(rl)
+  if (rlResponse) return rlResponse
 
   try {
     const now = new Date().toISOString()

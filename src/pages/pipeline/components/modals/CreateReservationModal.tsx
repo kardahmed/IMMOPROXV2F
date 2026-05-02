@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Info, Upload, CheckSquare, Square, X, FileText, Image as ImageIcon,
@@ -44,16 +45,16 @@ interface AvailableUnit {
   price: number | null
 }
 
-const DURATIONS = [
-  { value: '15', label: '15 jours' },
-  { value: '30', label: '30 jours' },
-  { value: '60', label: '60 jours' },
+const DURATION_KEYS = [
+  { value: '15', i18nKey: 'reservation_modal.duration_15' },
+  { value: '30', i18nKey: 'reservation_modal.duration_30' },
+  { value: '60', i18nKey: 'reservation_modal.duration_60' },
 ]
 
-const DEPOSIT_METHODS = [
-  { value: 'cash', label: 'Espèces' },
-  { value: 'bank_transfer', label: 'Virement bancaire' },
-  { value: 'cheque', label: 'Chèque' },
+const DEPOSIT_METHOD_KEYS = [
+  { value: 'cash', i18nKey: 'reservation_modal.method_cash' },
+  { value: 'bank_transfer', i18nKey: 'reservation_modal.method_bank_transfer' },
+  { value: 'cheque', i18nKey: 'reservation_modal.method_cheque' },
 ]
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -63,6 +64,7 @@ const inputClass = 'border-immo-border-default bg-immo-bg-primary text-immo-text
 const labelClass = 'text-[11px] font-medium text-immo-text-muted'
 
 export function CreateReservationModal({ isOpen, onClose, client }: CreateReservationModalProps) {
+  const { t } = useTranslation()
   const userId = useAuthStore((s) => s.session?.user?.id)
   const { projects } = useProjects()
   const qc = useQueryClient()
@@ -224,7 +226,7 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
       qc.invalidateQueries({ queryKey: ['client-reservations'] })
       qc.invalidateQueries({ queryKey: ['units'] })
       qc.invalidateQueries({ queryKey: ['pipeline-stats'] })
-      toast.success('Réservation créée avec succès')
+      toast.success(t('reservation_modal.success'))
       resetAndClose()
     },
   })
@@ -239,14 +241,13 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
   if (!client) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Créer une réservation" size="lg">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title={t('reservation_modal.title')} size="lg">
       <div className="space-y-5">
         {/* Info banner */}
         <div className="flex gap-3 rounded-lg border border-immo-accent-blue/30 bg-immo-accent-blue-bg px-4 py-3">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-immo-accent-blue" />
           <p className="text-xs text-immo-accent-blue">
-            Sélectionnez les unités à réserver, renseignez le NIN et téléchargez la carte d'identité.
-            Les unités seront marquées comme réservées.
+            {t('reservation_modal.info_banner')}
           </p>
         </div>
 
@@ -266,9 +267,9 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
           <div className="space-y-4">
             {/* Project */}
             <div>
-              <Label className={labelClass}>Projet *</Label>
+              <Label className={labelClass}>{t('reservation_modal.project')}</Label>
               <Select value={projectId} onValueChange={(v) => { if (v) handleProjectChange(v) }}>
-                <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue placeholder="Sélectionner le projet" /></SelectTrigger>
+                <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue placeholder={t('reservation_modal.select_project')} /></SelectTrigger>
                 <SelectContent className="border-immo-border-default bg-immo-bg-card">
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
@@ -282,18 +283,18 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
             {/* Units selection */}
             <div>
               <div className="flex items-center justify-between">
-                <Label className={labelClass}>Unités disponibles *</Label>
+                <Label className={labelClass}>{t('reservation_modal.available_units')}</Label>
                 {selectedUnits.length > 0 && (
                   <span className="text-[11px] font-medium text-immo-accent-green">
-                    {selectedUnits.length} unité(s) sélectionnée(s)
+                    {t('reservation_modal.units_selected', { count: selectedUnits.length })}
                   </span>
                 )}
               </div>
               <div className="mt-1 max-h-[200px] space-y-1 overflow-y-auto rounded-lg border border-immo-border-default bg-immo-bg-primary p-2">
                 {!projectId ? (
-                  <p className="py-4 text-center text-[11px] text-immo-text-muted">Sélectionnez un projet</p>
+                  <p className="py-4 text-center text-[11px] text-immo-text-muted">{t('reservation_modal.select_project_first')}</p>
                 ) : availableUnits.length === 0 ? (
-                  <p className="py-4 text-center text-[11px] text-immo-text-muted">Aucune unité disponible</p>
+                  <p className="py-4 text-center text-[11px] text-immo-text-muted">{t('reservation_modal.no_units_available')}</p>
                 ) : (
                   availableUnits.map((u) => {
                     const selected = selectedUnits.includes(u.id)
@@ -330,8 +331,8 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
 
             {/* NIN */}
             <div>
-              <Label className={labelClass}>NIN / CIN *</Label>
-              <Input value={ninCin} onChange={(e) => setNinCin(e.target.value)} placeholder="Numéro d'identité nationale" className={`mt-1 ${inputClass}`} />
+              <Label className={labelClass}>{t('reservation_modal.nin_cin')}</Label>
+              <Input value={ninCin} onChange={(e) => setNinCin(e.target.value)} placeholder={t('reservation_modal.nin_cin_placeholder')} className={`mt-1 ${inputClass}`} />
             </div>
           </div>
 
@@ -339,25 +340,25 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
           <div className="space-y-4">
             {/* Duration */}
             <div>
-              <Label className={labelClass}>Durée de réservation</Label>
+              <Label className={labelClass}>{t('reservation_modal.duration')}</Label>
               <Select value={duration} onValueChange={(v) => { if (v) setDuration(v) }}>
                 <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue /></SelectTrigger>
                 <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                  {DURATIONS.map((d) => (
+                  {DURATION_KEYS.map((d) => (
                     <SelectItem key={d.value} value={d.value} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                      {d.label}
+                      {t(d.i18nKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="mt-1 text-[10px] text-immo-text-muted">
-                La réservation expirera automatiquement après cette période
+                {t('reservation_modal.duration_hint')}
               </p>
             </div>
 
             {/* CIN Upload */}
             <div>
-              <Label className={labelClass}>Carte Nationale d'Identité *</Label>
+              <Label className={labelClass}>{t('reservation_modal.cin_card')}</Label>
               <div className="mt-1">
                 {cinFile ? (
                   <div className="flex items-center gap-3 rounded-lg border border-immo-accent-green/30 bg-immo-accent-green-bg px-3 py-2.5">
@@ -377,7 +378,7 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
                 ) : (
                   <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-immo-border-default px-4 py-5 transition-colors hover:border-immo-accent-green/40 hover:bg-immo-accent-green/5">
                     <Upload className="h-6 w-6 text-immo-text-muted" />
-                    <span className="text-xs text-immo-text-muted">JPG, PNG, WebP ou PDF — max 5 Mo</span>
+                    <span className="text-xs text-immo-text-muted">{t('reservation_modal.file_size_hint')}</span>
                     <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" onChange={handleFileChange} className="hidden" />
                   </label>
                 )}
@@ -395,7 +396,7 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
                 <div className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${showDeposit ? 'bg-immo-accent-green' : 'bg-immo-border-default'}`}>
                   <div className={`h-4 w-4 rounded-full bg-white transition-transform ${showDeposit ? 'translate-x-4' : 'translate-x-0'}`} />
                 </div>
-                Ajouter un acompte
+                {t('reservation_modal.add_deposit')}
               </button>
             </div>
 
@@ -411,7 +412,7 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
                       depositMode === 'amount' ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted'
                     }`}
                   >
-                    Montant DZD
+                    {t('reservation_modal.amount_dzd')}
                   </button>
                   <button
                     type="button"
@@ -420,13 +421,13 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
                       depositMode === 'percentage' ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted'
                     }`}
                   >
-                    Pourcentage (%)
+                    {t('reservation_modal.percentage')}
                   </button>
                 </div>
 
                 <div>
                   <Label className={labelClass}>
-                    {depositMode === 'amount' ? 'Montant (DA) *' : 'Pourcentage *'}
+                    {depositMode === 'amount' ? t('reservation_modal.amount_label') : t('reservation_modal.percentage_label')}
                   </Label>
                   <Input
                     type="number"
@@ -443,13 +444,13 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
                 </div>
 
                 <div>
-                  <Label className={labelClass}>Méthode de paiement *</Label>
+                  <Label className={labelClass}>{t('reservation_modal.payment_method')}</Label>
                   <Select value={depositMethod} onValueChange={(v) => { if (v) setDepositMethod(v) }}>
-                    <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <SelectTrigger className={`mt-1 ${inputClass}`}><SelectValue placeholder={t('reservation_modal.select')} /></SelectTrigger>
                     <SelectContent className="border-immo-border-default bg-immo-bg-card">
-                      {DEPOSIT_METHODS.map((m) => (
+                      {DEPOSIT_METHOD_KEYS.map((m) => (
                         <SelectItem key={m.value} value={m.value} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                          {m.label}
+                          {t(m.i18nKey)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -458,11 +459,11 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
 
                 {needsReference && (
                   <div>
-                    <Label className={labelClass}>Référence paiement *</Label>
+                    <Label className={labelClass}>{t('reservation_modal.payment_reference')}</Label>
                     <Input
                       value={depositReference}
                       onChange={(e) => setDepositReference(e.target.value)}
-                      placeholder="N° virement ou chèque"
+                      placeholder={t('reservation_modal.payment_reference_placeholder')}
                       className={`mt-1 ${inputClass}`}
                     />
                   </div>
@@ -476,12 +477,12 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
         {selectedUnits.length > 0 && (
           <div className="flex items-center justify-between rounded-lg border border-immo-border-default bg-immo-bg-card-hover px-4 py-3">
             <div>
-              <p className="text-xs text-immo-text-muted">{selectedUnits.length} unité(s) · {duration} jours</p>
-              <p className="text-sm font-semibold text-immo-text-primary">Total : {formatPrice(totalPrice)}</p>
+              <p className="text-xs text-immo-text-muted">{t('reservation_modal.summary_units_days', { count: selectedUnits.length, days: duration })}</p>
+              <p className="text-sm font-semibold text-immo-text-primary">{t('reservation_modal.total', { amount: formatPrice(totalPrice) })}</p>
             </div>
             {showDeposit && depositAmount > 0 && (
               <div className="text-right">
-                <p className="text-xs text-immo-text-muted">Acompte</p>
+                <p className="text-xs text-immo-text-muted">{t('reservation_modal.deposit')}</p>
                 <p className="text-sm font-semibold text-immo-accent-green">{formatPrice(depositAmount)}</p>
               </div>
             )}
@@ -495,7 +496,7 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
             onClick={resetAndClose}
             className="text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
           >
-            Annuler
+            {t('reservation_modal.cancel')}
           </Button>
           <Button
             onClick={() => mutation.mutate()}
@@ -505,7 +506,7 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
             {mutation.isPending ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" />
             ) : (
-              'Créer la réservation'
+              t('reservation_modal.create')
             )}
           </Button>
         </div>

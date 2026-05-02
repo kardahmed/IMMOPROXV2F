@@ -45,24 +45,6 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
 
 const SECTION_KEYS: Section[] = ['company', 'pipeline', 'automations', 'tasks', 'visits', 'features', 'quotas', 'whatsapp', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
-const SECTION_LABELS: Record<Section, string> = {
-  company: 'Agence',
-  pipeline: 'Pipeline',
-  automations: 'Automations',
-  tasks: 'Taches auto',
-  visits: 'Visites',
-  profiles: 'Permissions',
-  features: 'Fonctionnalites',
-  quotas: 'Quotas',
-  whatsapp: 'WhatsApp',
-  branding: 'Personnalisation',
-  reservations: 'Reservations',
-  templates: 'Documents',
-  notifications: 'Notifications',
-  language: 'Langue',
-  security: 'Securite',
-}
-
 export function SettingsPage() {
   const { t } = useTranslation()
   // Audit (MED): the active section was held in local state, so F5
@@ -90,7 +72,7 @@ export function SettingsPage() {
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {t(SECTION_LABELS[key])}
+              {t(`settings_page.section_${key}`)}
             </button>
           )
         })}

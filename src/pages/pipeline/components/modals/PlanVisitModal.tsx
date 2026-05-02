@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarDays, MapPin, Building2, Video } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -16,9 +17,9 @@ import toast from 'react-hot-toast'
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
 
 const VISIT_TYPES = [
-  { value: 'on_site', label: 'Sur site', icon: MapPin },
-  { value: 'office', label: 'Bureau', icon: Building2 },
-  { value: 'virtual', label: 'Virtuel', icon: Video },
+  { value: 'on_site', i18nKey: 'plan_visit.type_on_site', icon: MapPin },
+  { value: 'office', i18nKey: 'plan_visit.type_office', icon: Building2 },
+  { value: 'virtual', i18nKey: 'plan_visit.type_virtual', icon: Video },
 ] as const
 
 interface ClientInfo {
@@ -48,6 +49,7 @@ export function PlanVisitModal({
   prefillType = 'on_site',
   prefillNotes = '',
 }: PlanVisitModalProps) {
+  const { t } = useTranslation()
   const [date, setDate] = useState(prefillDate)
   const [selectedSlot, setSelectedSlot] = useState(prefillTime)
   const [customTime, setCustomTime] = useState('')
@@ -102,7 +104,7 @@ export function PlanVisitModal({
         client_id: effectiveClient.id,
         agent_id: userId,
         type: 'visit_planned',
-        title: `Visite planifiée le ${date} à ${effectiveTime}`,
+        title: t('plan_visit.history_title', { date, time: effectiveTime }),
         metadata: { visit_type: visitType, scheduled_at: scheduledAt },
       } as never)
       if (histErr) { handleSupabaseError(histErr); throw histErr }
@@ -111,7 +113,7 @@ export function PlanVisitModal({
       // chronological context even when agents rotate.
       await appendClientNote(
         effectiveClient.id,
-        `📅 Visite planifiée le ${date} à ${effectiveTime} (${visitType})`,
+        t('plan_visit.note_marker', { date, time: effectiveTime, type: visitType }),
         notes,
       )
     },
@@ -120,7 +122,7 @@ export function PlanVisitModal({
       qc.invalidateQueries({ queryKey: ['clients'] })
       qc.invalidateQueries({ queryKey: ['client-history'] })
       qc.invalidateQueries({ queryKey: ['client-detail'] })
-      toast.success('Visite planifiée avec succès')
+      toast.success(t('plan_visit.success'))
       resetAndClose()
     },
   })
@@ -136,15 +138,15 @@ export function PlanVisitModal({
   const nextStage = displayClient?.pipeline_stage === 'accueil' ? PIPELINE_STAGES.visite_a_gerer : null
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Planifier une nouvelle visite" size="md">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title={t('plan_visit.title')} size="md">
       <div className="space-y-5">
         {/* Client selector (when no client provided) */}
         {!client && (
           <div>
-            <Label className="mb-1 text-[11px] font-medium text-immo-text-secondary">Client</Label>
+            <Label className="mb-1 text-[11px] font-medium text-immo-text-secondary">{t('plan_visit.client')}</Label>
             <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
               className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary">
-              <option value="">Selectionnez un client</option>
+              <option value="">{t('plan_visit.select_client')}</option>
               {clientsList.map(c => <option key={c.id} value={c.id}>{c.full_name} — {c.phone}</option>)}
             </select>
           </div>
@@ -186,7 +188,7 @@ export function PlanVisitModal({
 
         {/* Date */}
         <div>
-          <Label className="text-[11px] font-medium text-immo-text-muted">Date souhaitée *</Label>
+          <Label className="text-[11px] font-medium text-immo-text-muted">{t('plan_visit.desired_date')}</Label>
           <div className="mt-1 flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-immo-text-muted" />
             <Input
@@ -201,7 +203,7 @@ export function PlanVisitModal({
 
         {/* Time slots */}
         <div>
-          <Label className="text-[11px] font-medium text-immo-text-muted">Heure souhaitée *</Label>
+          <Label className="text-[11px] font-medium text-immo-text-muted">{t('plan_visit.desired_time')}</Label>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {TIME_SLOTS.map((slot) => (
               <button
@@ -219,7 +221,7 @@ export function PlanVisitModal({
             ))}
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-[11px] text-immo-text-muted">ou personnalisée :</span>
+            <span className="text-[11px] text-immo-text-muted">{t('plan_visit.or_custom')}</span>
             <Input
               type="time"
               value={customTime}
@@ -231,9 +233,9 @@ export function PlanVisitModal({
 
         {/* Visit type */}
         <div>
-          <Label className="text-[11px] font-medium text-immo-text-muted">Type de visite</Label>
+          <Label className="text-[11px] font-medium text-immo-text-muted">{t('plan_visit.visit_type')}</Label>
           <div className="mt-2 flex gap-3">
-            {VISIT_TYPES.map(({ value, label, icon: Icon }) => (
+            {VISIT_TYPES.map(({ value, i18nKey, icon: Icon }) => (
               <button
                 key={value}
                 type="button"
@@ -245,7 +247,7 @@ export function PlanVisitModal({
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium">{t(i18nKey)}</span>
               </button>
             ))}
           </div>
@@ -253,11 +255,11 @@ export function PlanVisitModal({
 
         {/* Notes */}
         <div>
-          <Label className="text-[11px] font-medium text-immo-text-muted">Notes (optionnel)</Label>
+          <Label className="text-[11px] font-medium text-immo-text-muted">{t('plan_visit.notes_optional')}</Label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Instructions ou remarques pour la visite..."
+            placeholder={t('plan_visit.notes_placeholder')}
             rows={2}
             className="mt-1 w-full resize-none rounded-md border border-immo-border-default bg-immo-bg-primary p-2.5 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:outline-none focus:ring-1 focus:ring-immo-accent-green"
           />
@@ -270,7 +272,7 @@ export function PlanVisitModal({
             onClick={resetAndClose}
             className="text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
           >
-            Annuler
+            {t('plan_visit.cancel')}
           </Button>
           <Button
             onClick={() => mutation.mutate()}
@@ -282,7 +284,7 @@ export function PlanVisitModal({
             ) : (
               <>
                 <CalendarDays className="mr-1.5 h-4 w-4" />
-                Planifier la visite
+                {t('plan_visit.plan_visit')}
               </>
             )}
           </Button>

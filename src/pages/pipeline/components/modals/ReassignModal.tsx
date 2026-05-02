@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { UserCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function ReassignModal({ isOpen, onClose, clientId, currentAgentId, tenantId }: Props) {
+  const { t } = useTranslation()
   const userId = useAuthStore(s => s.session?.user?.id)
   const qc = useQueryClient()
   const [selectedAgent, setSelectedAgent] = useState(currentAgentId ?? '')
@@ -39,31 +41,32 @@ export function ReassignModal({ isOpen, onClose, clientId, currentAgentId, tenan
       if (error) { handleSupabaseError(error); throw error }
 
       const newAgent = agents.find(a => a.id === selectedAgent)
+      const fullName = `${newAgent?.first_name ?? ''} ${newAgent?.last_name ?? ''}`.trim()
       await supabase.from('history').insert({
         tenant_id: tenantId, client_id: clientId, agent_id: userId,
         type: 'note',
-        title: `Client reassigne a ${newAgent?.first_name ?? ''} ${newAgent?.last_name ?? ''}`,
+        title: t('reassign_modal.history_title', { name: fullName }),
       } as never)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['client-detail'] })
       qc.invalidateQueries({ queryKey: ['clients'] })
-      toast.success('Client réassigné')
+      toast.success(t('reassign_modal.success'))
       onClose()
     },
   })
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reassigner le client" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('reassign_modal.title')} size="sm">
       <div className="space-y-4">
         <div>
-          <Label className="text-xs text-immo-text-muted mb-1">Nouvel agent</Label>
+          <Label className="text-xs text-immo-text-muted mb-1">{t('reassign_modal.new_agent')}</Label>
           <select value={selectedAgent} onChange={e => setSelectedAgent(e.target.value)}
             className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-primary">
-            <option value="">Selectionnez un agent</option>
+            <option value="">{t('reassign_modal.select_agent')}</option>
             {agents.map(a => (
               <option key={a.id} value={a.id}>
-                {a.first_name} {a.last_name} {a.id === currentAgentId ? '(actuel)' : ''}
+                {a.first_name} {a.last_name} {a.id === currentAgentId ? t('reassign_modal.current_suffix') : ''}
               </option>
             ))}
           </select>
@@ -71,7 +74,7 @@ export function ReassignModal({ isOpen, onClose, clientId, currentAgentId, tenan
 
         <Button onClick={() => reassign.mutate()} disabled={!selectedAgent || selectedAgent === currentAgentId || reassign.isPending}
           className="w-full bg-immo-accent-green text-white">
-          <UserCheck className="mr-1.5 h-4 w-4" /> Reassigner
+          <UserCheck className="mr-1.5 h-4 w-4" /> {t('reassign_modal.reassign')}
         </Button>
       </div>
     </Modal>

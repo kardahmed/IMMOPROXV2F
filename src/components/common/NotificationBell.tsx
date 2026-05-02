@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell, CheckCheck, CreditCard, Clock, Users, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -28,6 +29,7 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 export function NotificationBell() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const tenantId = useAuthStore(s => s.tenantId)
@@ -69,7 +71,12 @@ export function NotificationBell() {
 
   return (
     <div ref={panelRef} className="relative">
-      <button onClick={() => setOpen(!open)} className="relative rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
+      <button
+        onClick={() => setOpen(!open)}
+        aria-label={unread > 0 ? t('notifications.aria_unread', { count: unread }) : t('notifications.aria_label')}
+        aria-expanded={open}
+        className="relative rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40"
+      >
         <Bell className="h-5 w-5" />
         {unread > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-immo-status-red text-[9px] font-bold text-white">
