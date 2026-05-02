@@ -462,6 +462,69 @@ export const fr = {
     note_marker: '📅 Visite planifiée le {{date}} à {{time}} ({{type}})',
   },
 
+  // Send message modal (template-based)
+  message_modal: {
+    title: 'Envoyer un message',
+  },
+
+  // Call script modal (in-call wizard)
+  call_script_modal: {
+    close_call: "Fermer l'appel",
+    summary: 'Récapitulatif',
+    answers_will_appear: 'Les réponses apparaîtront ici',
+    extra_notes: 'Notes supplémentaires',
+    extra_notes_placeholder: 'Impressions, remarques…',
+    call_outcome: "Résultat de l'appel",
+    outcome_qualified: 'Qualifié',
+    outcome_callback: 'À rappeler',
+    outcome_not_interested: 'Pas intéressé',
+    propose_visit: 'Proposer une visite',
+    plan_visit: 'Planifier une visite',
+    visit_time_placeholder: 'Heure',
+    confirm_visit: 'Confirmer visite',
+    cancel: 'Annuler',
+    ai_suggestion: 'Suggestion IA',
+    save_and_close: 'Sauvegarder et fermer',
+    visit_planned_success: 'Visite planifiée !',
+    save_success: 'Appel enregistré et fiche client mise à jour',
+    save_error: 'Erreur lors de la sauvegarde',
+    availability: 'Disponibilités',
+  },
+
+  // Reassign client modal
+  reassign_modal: {
+    title: 'Réassigner le client',
+    new_agent: 'Nouvel agent',
+    select_agent: 'Sélectionnez un agent',
+    current_suffix: '(actuel)',
+    reassign: 'Réassigner',
+    history_title: 'Client réassigné à {{name}}',
+    success: 'Client réassigné',
+  },
+
+  // Manage visit (planned visits)
+  manage_visit_modal: {
+    title: 'Gérer la visite',
+    subtitle: 'Choisissez une action pour {{name}}',
+    type_on_site: 'Sur site',
+    type_office: 'Bureau',
+    type_virtual: 'Virtuel',
+    confirm_visit: 'Confirmer la visite',
+    confirm_desc: 'Le client a confirmé sa présence',
+    reschedule: 'Reprogrammer',
+    reschedule_desc: 'Choisir une nouvelle date et heure',
+    cancel_visit: 'Annuler la visite',
+    cancel_desc: 'La visite ne sera pas effectuée',
+    cancel_confirm_title: 'Annuler cette visite ?',
+    cancel_confirm_desc: 'La visite sera marquée comme annulée.',
+    move_to_relaunch: 'Passer le client en "Relancement"',
+    history_confirmed: 'Visite confirmée pour le {{when}}',
+    history_cancelled: 'Visite annulée',
+    history_cancelled_relaunch: 'Visite annulée — client passé en relancement',
+    confirmed_success: 'Visite confirmée',
+    cancelled_success: 'Visite annulée',
+  },
+
   // New sale modal — wizard with 5 steps
   sale_modal: {
     title: 'Nouvelle vente',

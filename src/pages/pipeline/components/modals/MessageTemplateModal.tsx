@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Modal, MessageComposer } from '@/components/common'
 
 interface MessageTemplateModalProps {
@@ -14,8 +15,9 @@ export function MessageTemplateModal({
   isOpen, onClose, clientName, clientPhone,
   agentName, agencyName, projectName,
 }: MessageTemplateModalProps) {
+  const { t } = useTranslation()
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Envoyer un message" subtitle={clientName} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('message_modal.title')} subtitle={clientName} size="md">
       <MessageComposer
         vars={{ clientName, clientPhone, agentName, agencyName, projectName }}
         defaultTemplateId="relance"
