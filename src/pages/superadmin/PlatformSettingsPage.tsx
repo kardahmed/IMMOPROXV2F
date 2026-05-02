@@ -186,7 +186,9 @@ interface PlatformAlert {
 const ALERT_TYPES = [
   { value: 'payment_overdue', label: 'Paiements en retard' },
   { value: 'tenant_inactive', label: 'Tenant inactif (jours)' },
-  { value: 'error_spike', label: 'Pic d\'erreurs' },
+  { value: 'error_spike', label: 'Pic d\'erreurs (super_admin_logs)' },
+  { value: 'error_logs_spike', label: 'Crashs front-end (24h)' },
+  { value: 'tenant_rate_pressure', label: 'Tenant sous pression rate-limit' },
   { value: 'new_signup', label: 'Nouvelle inscription' },
   { value: 'storage_limit', label: 'Limite stockage (%)' },
 ]

@@ -76,6 +76,35 @@ serve(async (req: Request) => {
           }
           break
         }
+        case 'error_logs_spike': {
+          // React crashes captured by ErrorBoundary (migration 054).
+          // High volume usually means a bad deploy or a regression.
+          const oneDayAgo = new Date(Date.now() - 86400000).toISOString()
+          const { count } = await supabase.from('error_logs').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo)
+          if ((count ?? 0) >= alert.threshold) {
+            triggered = true
+            message = `${count} crashs front-end dans les 24h (seuil: ${alert.threshold}). Voir /admin/error-logs.`
+          }
+          break
+        }
+        case 'tenant_rate_pressure': {
+          // Tenants currently hammering the write rate limit
+          // (migration 053). Threshold = number of writes in the
+          // current minute window. A normal tenant tops out around
+          // 50; >250 is suspicious; >500 is hitting the wall.
+          const { data: pressure } = await supabase
+            .from('tenant_rate_pressure_view')
+            .select('tenant_id, table_name, writes_in_window')
+            .gte('writes_in_window', alert.threshold)
+            .limit(5)
+          const rows = (pressure ?? []) as Array<{ tenant_id: string; table_name: string; writes_in_window: number }>
+          if (rows.length > 0) {
+            triggered = true
+            const summary = rows.map(r => `${r.table_name}=${r.writes_in_window}`).join(', ')
+            message = `${rows.length} tenant(s) sous pression (${summary}). Possible bot/loop.`
+          }
+          break
+        }
         case 'new_signup': {
           const oneDayAgo = new Date(Date.now() - 86400000).toISOString()
           const { count } = await supabase.from('tenants').select('id', { count: 'exact', head: true }).gte('created_at', oneDayAgo)
