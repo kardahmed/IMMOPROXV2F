@@ -464,6 +464,15 @@ export const ar = {
     aria_unread: 'الإشعارات، {{count}} غير مقروءة',
   },
 
+  error_boundary: {
+    title: 'حدث خطأ',
+    subtitle: 'تعطلت هذه الصفحة. يمكنك إعادة المحاولة أو العودة إلى الرئيسية. تم الإبلاغ عن الحادث تلقائياً.',
+    show_details: 'عرض التفاصيل التقنية',
+    retry: 'إعادة المحاولة',
+    go_home: 'الرئيسية',
+    copy_details: 'نسخ التفاصيل',
+  },
+
   command_palette: {
     title: 'البحث الشامل',
     placeholder: 'البحث عن عميل، مشروع، وحدة…',

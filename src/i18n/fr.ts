@@ -473,6 +473,16 @@ export const fr = {
     aria_unread: 'Notifications, {{count}} non lue(s)',
   },
 
+  // Error boundary fallback (when a page crashes)
+  error_boundary: {
+    title: 'Une erreur est survenue',
+    subtitle: "Cette page a planté. Tu peux réessayer ou revenir à l'accueil. L'incident a été remonté automatiquement.",
+    show_details: 'Voir le détail technique',
+    retry: 'Réessayer',
+    go_home: 'Accueil',
+    copy_details: 'Copier les détails',
+  },
+
   // Command palette (Cmd+K global search)
   command_palette: {
     title: 'Recherche globale',
