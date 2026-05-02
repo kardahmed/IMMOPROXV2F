@@ -10,6 +10,7 @@ import { WelcomeModal } from '@/components/common/WelcomeModal'
 import { CommandPalette } from '@/components/common/CommandPalette'
 import { KeyboardShortcutsModal } from '@/components/common/KeyboardShortcutsModal'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { XAssistant } from '@/components/common/XAssistant'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -76,6 +77,7 @@ export function AppLayout() {
       <WelcomeModal />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <KeyboardShortcutsModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <XAssistant />
     </div>
   )
 }

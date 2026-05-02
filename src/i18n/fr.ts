@@ -473,6 +473,27 @@ export const fr = {
     aria_unread: 'Notifications, {{count}} non lue(s)',
   },
 
+  // X Assistant — voice + text AI sidekick (Phase 1: Q&A only)
+  x_assistant: {
+    open: 'Ouvrir X Assistant',
+    close: 'Fermer',
+    beta: 'BÊTA',
+    voice_on: 'Activer la voix',
+    voice_off: 'Couper la voix',
+    welcome_title: 'Bonjour, je suis X.',
+    welcome_subtitle: 'Pose-moi une question sur tes clients, visites, tâches…',
+    example_1: 'Combien de visites cette semaine ?',
+    example_2: 'Quels clients sont en négociation ?',
+    example_3: 'Qui n\'a pas été contacté depuis 7 jours ?',
+    thinking: 'X réfléchit…',
+    mic_start: 'Parler à X',
+    mic_stop: 'Arrêter l\'enregistrement',
+    send: 'Envoyer',
+    input_placeholder: 'Tape ta question ou clique sur le micro…',
+    no_mic_support: 'Ton navigateur ne supporte pas la reconnaissance vocale. Utilise Chrome ou Safari récent.',
+    disclaimer: 'X peut faire des erreurs. Vérifie les infos importantes.',
+  },
+
   // Create tenant modal (super admin)
   tenant_form: {
     title: 'Nouveau Tenant',

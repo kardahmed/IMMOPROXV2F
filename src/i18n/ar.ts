@@ -464,6 +464,26 @@ export const ar = {
     aria_unread: 'الإشعارات، {{count}} غير مقروءة',
   },
 
+  x_assistant: {
+    open: 'فتح المساعد X',
+    close: 'إغلاق',
+    beta: 'تجريبي',
+    voice_on: 'تفعيل الصوت',
+    voice_off: 'كتم الصوت',
+    welcome_title: 'مرحباً، أنا X.',
+    welcome_subtitle: 'اسألني سؤالاً عن عملائك، زياراتك، مهامك…',
+    example_1: 'كم زيارة هذا الأسبوع؟',
+    example_2: 'أي عملاء في مرحلة التفاوض؟',
+    example_3: 'من لم يتم التواصل معه منذ 7 أيام؟',
+    thinking: 'X يفكر…',
+    mic_start: 'تحدث إلى X',
+    mic_stop: 'إيقاف التسجيل',
+    send: 'إرسال',
+    input_placeholder: 'اكتب سؤالك أو انقر على الميكروفون…',
+    no_mic_support: 'متصفحك لا يدعم التعرف على الصوت. استخدم Chrome أو Safari الحديث.',
+    disclaimer: 'يمكن أن يخطئ X. تحقق من المعلومات المهمة.',
+  },
+
   tenant_form: {
     title: 'مستأجر جديد',
     subtitle: 'إنشاء وكالة ومسؤولها الأول',
