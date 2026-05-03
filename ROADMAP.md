@@ -353,6 +353,38 @@ leave a half-built feature without a note here.
     not yet calling `dispatchAutomation()`. Blocked on the 10 Utility
     templates being approved by Meta.
 
+### Meta CAPI / Pixel tracking côté marketing (`immoprox.io`)
+- **What exists** : Edge Function `meta-capi` déployée, table
+  `marketing_integrations` (pixel_id + access_token + toggle), UI
+  `/admin/integrations` onglet **Publicité (Ads)** pour saisir les
+  credentials. Pixel client-side embarqué sur `immoprox.io` avec
+  `fbp`/`fbc` capture + relay au backend.
+- **What's missing** :
+  - Le token CAPI n'a JAMAIS pu être validé end-to-end. Les logs
+    Supabase `meta-capi` retournent systématiquement `error 100/33`
+    (Meta — "Object does not exist or insufficient permissions").
+  - Hypothèse confirmée par debug du 03-May-2026 : le founder a collé
+    par erreur le **token WhatsApp** (`EAAWZBfas26c…`, 202 chars,
+    scopes `whatsapp_business_*` uniquement) dans le champ Meta CAPI
+    Token. Aucun scope `ads_management` → CAPI rejette.
+  - Tentative de génération d'un nouveau token via Graph API Explorer
+    avec l'app `IMMO PRO-X CRM` : permissions `ads_management` /
+    `business_management` activées en "Standard Access — Prête pour
+    le test" sur le use case Marketing API, mais le token généré
+    refuse toujours d'être accepté côté CAPI (pas re-vérifié à fond
+    avant arrêt du chantier).
+  - System User permanent token jamais créé → aucune solution prod
+    viable même si un user token finissait par marcher.
+  - Pas de Test Events Meta validé (EVTEST code jamais wiré).
+  - Pas de dedup `event_id` côté server confirmé (le code l'envoie,
+    pas vérifié dans Events Manager).
+- **Status** : 🛑 **CHANTIER MIS EN PAUSE le 03-May-2026**. À reprendre
+  plus tard avec un System User token permanent + validation via
+  l'outil Meta Test Events. Voir aussi le risque que le token
+  WhatsApp `EAAWZBfas26c…` ait été exposé en clair pendant le debug
+  → à révoquer côté Meta Business Suite avant toute reprise (la
+  branche `claude/revoke-whatsapp-token-*` existe pour tracer ça).
+
 ### CI on GitHub Actions (`.github/workflows/ci.yml`)
 - **What exists**: a `build` job that runs on every PR — should run
   `tsc -b --noEmit` + `npm run build`.

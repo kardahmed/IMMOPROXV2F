@@ -785,6 +785,10 @@ export const ar = {
   reset_password: {
     title: 'كلمة مرور جديدة',
     subtitle: 'اختر كلمة مرور قوية لحسابك.',
+    invite_title: 'مرحباً بك في IMMO PRO-X',
+    invite_subtitle: 'حدّد كلمة المرور لتفعيل حسابك.',
+    invite_submit: 'تفعيل الحساب',
+    invite_success: 'تم تفعيل الحساب. مرحباً بك!',
     new_label: 'كلمة المرور الجديدة',
     confirm_label: 'تأكيد كلمة المرور',
     submit: 'تحديث كلمة المرور',
