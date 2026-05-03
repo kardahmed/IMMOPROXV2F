@@ -376,35 +376,35 @@ function CreateAgentModal({ isOpen, onClose, tenantId }: { isOpen: boolean; onCl
 
   const create = useMutation({
     mutationFn: async () => {
-      // Generate temp password
-      const tempPassword = `Immo${Date.now().toString(36).slice(-6)}!`
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Session expiree, reconnectez-vous')
 
-      // Create auth user via Supabase
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email,
-        password: tempPassword,
-        options: { data: { first_name: firstName, last_name: lastName } },
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const response = await fetch(`${supabaseUrl}/functions/v1/invite-tenant-agent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          phone: phone || undefined,
+          role,
+        }),
       })
-      if (authErr) { handleSupabaseError(authErr); throw authErr }
-      if (!authData.user) throw new Error('User creation failed')
-
-      // Insert in users table
-      const { error: userErr } = await supabase.from('users').insert({
-        id: authData.user.id,
-        tenant_id: tenantId,
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        phone: phone || null,
-        role,
-        status: 'active',
-      } as never)
-      if (userErr) { handleSupabaseError(userErr); throw userErr }
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error ?? 'Invitation echouee')
+      return result
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['agents-list'] })
-      toast.success('Agent créé — un email de bienvenue a été envoyé')
+      toast.success(`Invitation envoyée à ${email}`)
       resetAndClose()
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
     },
   })
 
