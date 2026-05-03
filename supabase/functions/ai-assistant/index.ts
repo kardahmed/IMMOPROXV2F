@@ -600,141 +600,236 @@ Deno.serve(async (req) => {
       content: sanitizeForPrompt(String(m.content)).slice(0, 1500),
     }))
 
-    let messages: Array<{ role: 'user' | 'assistant'; content: unknown }> = [
+    const initialMessages: Array<{ role: 'user' | 'assistant'; content: unknown }> = [
       ...trimmedHistory,
       { role: 'user', content: question },
     ]
 
-    // ───── Tool-use loop ────────────────────────────────────────
-    let totalInputTokens = 0
-    let totalOutputTokens = 0
-    const actionsLog: Array<{ tool: string; input: unknown; result: string; is_error: boolean }> = []
-    let finalText = ''
-    const MAX_ITERATIONS = 5
+    // ───── Streaming response ──────────────────────────────────
+    // The Edge Function returns a Server-Sent Events stream so the
+    // frontend can render Claude's tokens as they arrive (~1s perceived
+    // first-word latency vs ~5s buffered). We also stream tool_start /
+    // tool_done markers so the UI can show "Recherche client…" indicators.
+    //
+    // Wire format (each line is `data: <json>\n\n`):
+    //   { type: 'text',      delta: string }
+    //   { type: 'tool_start', name: string }
+    //   { type: 'tool_done',  name: string, ok: boolean }
+    //   { type: 'final',      cost_da, duration_ms, tokens, actions }
+    //   { type: 'error',      message: string }
 
-    for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
-      const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 400,
-          // Prompt caching on the system block. The system prompt + tenant
-          // context are stable across the whole conversation; each follow-up
-          // turn pays ~10% of the input cost on the cached prefix once the
-          // entry warms up (Haiku 4.5 needs >=4096 tokens cached to hit).
-          system: [
-            { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } },
-          ],
-          tools: TOOLS,
-          messages,
-        }),
-      })
+    const enc = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (event: object) => {
+          try {
+            controller.enqueue(enc.encode(`data: ${JSON.stringify(event)}\n\n`))
+          } catch {
+            // Controller was already closed (client aborted) — ignore.
+          }
+        }
 
-      if (!apiResp.ok) {
-        const txt = await apiResp.text().catch(() => 'unknown')
-        console.error('Anthropic error:', apiResp.status, txt)
+        let messages = initialMessages
+        let totalInputTokens = 0
+        let totalOutputTokens = 0
+        let cacheReadTokens = 0
+        const actionsLog: Array<{ tool: string; input: unknown; result: string; is_error: boolean }> = []
+        let finalText = ''
+        const MAX_ITERATIONS = 5
+
         try {
-          await supabase.from('x_interactions' as never).insert({
-            tenant_id: profile.tenant_id,
-            user_id: user.id,
-            type: 'question',
-            input_text: question,
-            success: false,
-            error_msg: `Anthropic ${apiResp.status}: ${txt.slice(0, 200)}`,
-            duration_ms: Date.now() - startedAt,
-          } as never)
-        } catch { /* best-effort log */ }
-        return json({ error: 'Erreur du modèle IA. Réessayez dans un instant.' }, 502)
-      }
+          for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
+            const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': anthropicKey,
+                'anthropic-version': '2023-06-01',
+              },
+              body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 400,
+                system: [
+                  { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } },
+                ],
+                tools: TOOLS,
+                messages,
+                stream: true,
+              }),
+            })
 
-      const data = await apiResp.json() as {
-        content?: Array<{ type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> }>
-        stop_reason?: string
-        usage?: { input_tokens: number; output_tokens: number }
-      }
+            if (!apiResp.ok || !apiResp.body) {
+              const txt = await apiResp.text().catch(() => 'unknown')
+              console.error('Anthropic error:', apiResp.status, txt)
+              send({ type: 'error', message: `Erreur IA ${apiResp.status}` })
+              try {
+                await supabase.from('x_interactions' as never).insert({
+                  tenant_id: profile.tenant_id,
+                  user_id: user.id,
+                  type: 'question',
+                  input_text: question,
+                  success: false,
+                  error_msg: `Anthropic ${apiResp.status}: ${txt.slice(0, 200)}`,
+                  duration_ms: Date.now() - startedAt,
+                } as never)
+              } catch { /* ignore */ }
+              controller.close()
+              return
+            }
 
-      totalInputTokens += data.usage?.input_tokens ?? 0
-      totalOutputTokens += data.usage?.output_tokens ?? 0
-      const stopReason = data.stop_reason ?? 'end_turn'
-      const contentBlocks = data.content ?? []
+            // Parse Anthropic's SSE stream and forward text deltas to the
+            // client in real time. Tool-use blocks are accumulated locally
+            // (their input JSON streams in piece by piece) and executed
+            // after the message_stop event for this iteration.
+            const reader = apiResp.body.getReader()
+            const dec = new TextDecoder()
+            let buffer = ''
+            const blocks: Array<{ type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown>; _inputJson?: string }> = []
+            let currentBlock: typeof blocks[number] | null = null
+            let stopReason = 'end_turn'
 
-      // Append the assistant turn EXACTLY as Claude returned it.
-      // Tool-use blocks must be preserved so the next turn can reference them.
-      messages.push({ role: 'assistant', content: contentBlocks })
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+              buffer += dec.decode(value, { stream: true })
+              const lines = buffer.split('\n')
+              buffer = lines.pop() ?? ''
 
-      if (stopReason === 'end_turn' || stopReason === 'stop_sequence') {
-        finalText = contentBlocks.find(b => b.type === 'text')?.text?.trim() ?? ''
-        break
-      }
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue
+                let event: { type: string; index?: number; content_block?: { type: string; id?: string; name?: string; text?: string }; delta?: { type?: string; text?: string; partial_json?: string; stop_reason?: string }; message?: { usage?: { input_tokens?: number; cache_read_input_tokens?: number } }; usage?: { output_tokens?: number } }
+                try { event = JSON.parse(line.slice(6)) } catch { continue }
 
-      if (stopReason === 'tool_use') {
-        const toolUseBlocks = contentBlocks.filter(b => b.type === 'tool_use' && b.id && b.name)
-        if (toolUseBlocks.length === 0) {
-          finalText = contentBlocks.find(b => b.type === 'text')?.text?.trim() ?? ''
-          break
-        }
-        const toolResults = []
-        for (const tu of toolUseBlocks) {
-          const exec = await executeTool(supabase, profile.tenant_id, user.id, tu.name!, tu.input ?? {})
-          actionsLog.push({ tool: tu.name!, input: tu.input ?? {}, result: exec.result, is_error: exec.is_error })
-          toolResults.push({
-            type: 'tool_result',
-            tool_use_id: tu.id!,
-            content: exec.result,
-            is_error: exec.is_error,
+                const t = event.type
+                if (t === 'message_start') {
+                  totalInputTokens += event.message?.usage?.input_tokens ?? 0
+                  cacheReadTokens += event.message?.usage?.cache_read_input_tokens ?? 0
+                } else if (t === 'content_block_start') {
+                  const cb = event.content_block ?? { type: 'text' }
+                  currentBlock = { type: cb.type, id: cb.id, name: cb.name, text: cb.text ?? '' }
+                  if (cb.type === 'tool_use') {
+                    currentBlock._inputJson = ''
+                    send({ type: 'tool_start', name: cb.name ?? '?' })
+                  }
+                } else if (t === 'content_block_delta' && currentBlock) {
+                  if (event.delta?.type === 'text_delta') {
+                    const txt = event.delta.text ?? ''
+                    currentBlock.text = (currentBlock.text ?? '') + txt
+                    send({ type: 'text', delta: txt })
+                  } else if (event.delta?.type === 'input_json_delta') {
+                    currentBlock._inputJson = (currentBlock._inputJson ?? '') + (event.delta.partial_json ?? '')
+                  }
+                } else if (t === 'content_block_stop' && currentBlock) {
+                  if (currentBlock.type === 'tool_use') {
+                    try { currentBlock.input = JSON.parse(currentBlock._inputJson || '{}') } catch { currentBlock.input = {} }
+                    delete currentBlock._inputJson
+                  }
+                  blocks.push(currentBlock)
+                  currentBlock = null
+                } else if (t === 'message_delta') {
+                  if (event.delta?.stop_reason) stopReason = event.delta.stop_reason
+                  totalOutputTokens += event.usage?.output_tokens ?? 0
+                }
+              }
+            }
+
+            // Reassemble the assistant turn for the next iteration.
+            const assistantContent = blocks.map(b => {
+              if (b.type === 'text') return { type: 'text', text: b.text ?? '' }
+              if (b.type === 'tool_use') return { type: 'tool_use', id: b.id, name: b.name, input: b.input ?? {} }
+              return b
+            })
+            messages = [...messages, { role: 'assistant', content: assistantContent }]
+
+            if (stopReason === 'end_turn' || stopReason === 'stop_sequence') {
+              finalText = blocks.find(b => b.type === 'text')?.text?.trim() ?? ''
+              break
+            }
+
+            if (stopReason === 'tool_use') {
+              const toolUseBlocks = blocks.filter(b => b.type === 'tool_use' && b.id && b.name)
+              if (toolUseBlocks.length === 0) {
+                finalText = blocks.find(b => b.type === 'text')?.text?.trim() ?? ''
+                break
+              }
+              const toolResults: Array<{ type: 'tool_result'; tool_use_id: string; content: string; is_error: boolean }> = []
+              for (const tu of toolUseBlocks) {
+                const exec = await executeTool(supabase, profile.tenant_id, user.id, tu.name!, tu.input ?? {})
+                actionsLog.push({ tool: tu.name!, input: tu.input ?? {}, result: exec.result, is_error: exec.is_error })
+                send({ type: 'tool_done', name: tu.name!, ok: !exec.is_error })
+                toolResults.push({
+                  type: 'tool_result',
+                  tool_use_id: tu.id!,
+                  content: exec.result,
+                  is_error: exec.is_error,
+                })
+              }
+              messages = [...messages, { role: 'user', content: toolResults }]
+              continue
+            }
+
+            // Unexpected stop_reason (max_tokens, refusal) — bail out with whatever text we have
+            finalText = blocks.find(b => b.type === 'text')?.text?.trim()
+              ?? `Réponse incomplète (stop: ${stopReason}).`
+            break
+          }
+
+          if (!finalText) finalText = 'Demande trop complexe. Reformule plus simplement.'
+
+          const costDa = totalInputTokens * 0.00025 + totalOutputTokens * 0.00125
+          const durationMs = Date.now() - startedAt
+
+          send({
+            type: 'final',
+            cost_da: costDa,
+            duration_ms: durationMs,
+            tokens: totalInputTokens + totalOutputTokens,
+            cache_read_tokens: cacheReadTokens,
+            actions: actionsLog.map(a => ({ tool: a.tool, ok: !a.is_error })),
           })
+
+          // Best-effort cost + audit log — never block stream close
+          try {
+            await trackAnthropicCost(
+              supabase,
+              { input_tokens: totalInputTokens, output_tokens: totalOutputTokens },
+              { tenantId: profile.tenant_id, operation: 'x_assistant_qa' },
+            )
+          } catch { /* ignore */ }
+
+          try {
+            await supabase.from('x_interactions' as never).insert({
+              tenant_id: profile.tenant_id,
+              user_id: user.id,
+              type: actionsLog.length > 0 ? 'action' : 'question',
+              input_text: question,
+              response_text: finalText,
+              input_tokens: totalInputTokens,
+              output_tokens: totalOutputTokens,
+              cost_da: costDa,
+              duration_ms: durationMs,
+              success: true,
+              metadata: actionsLog.length > 0 ? { actions: actionsLog } : null,
+            } as never)
+          } catch { /* ignore */ }
+
+          controller.close()
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          console.error('Fatal in stream:', msg)
+          send({ type: 'error', message: 'Erreur interne' })
+          try { controller.close() } catch { /* already closed */ }
         }
-        messages.push({ role: 'user', content: toolResults })
-        continue
-      }
+      },
+    })
 
-      // Other stop reasons (max_tokens, refusal) — bail with whatever text we have
-      finalText = contentBlocks.find(b => b.type === 'text')?.text?.trim()
-        ?? `Réponse incomplète (stop: ${stopReason}).`
-      break
-    }
-
-    if (!finalText) finalText = 'Demande trop complexe. Reformule plus simplement.'
-
-    const costDa = totalInputTokens * 0.00025 + totalOutputTokens * 0.00125
-    const durationMs = Date.now() - startedAt
-
-    // Cost tracking + interaction log (best-effort, never block the response)
-    try {
-      await trackAnthropicCost(
-        supabase,
-        { input_tokens: totalInputTokens, output_tokens: totalOutputTokens },
-        { tenantId: profile.tenant_id, operation: 'x_assistant_qa' },
-      )
-    } catch { /* ignore */ }
-
-    try {
-      await supabase.from('x_interactions' as never).insert({
-        tenant_id: profile.tenant_id,
-        user_id: user.id,
-        type: actionsLog.length > 0 ? 'action' : 'question',
-        input_text: question,
-        response_text: finalText,
-        input_tokens: totalInputTokens,
-        output_tokens: totalOutputTokens,
-        cost_da: costDa,
-        duration_ms: durationMs,
-        success: true,
-        metadata: actionsLog.length > 0 ? { actions: actionsLog } : null,
-      } as never)
-    } catch { /* ignore */ }
-
-    return json({
-      response: finalText,
-      tokens_used: totalInputTokens + totalOutputTokens,
-      cost_da: costDa,
-      duration_ms: durationMs,
-      actions: actionsLog.map(a => ({ tool: a.tool, ok: !a.is_error })),
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no',
+      },
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)

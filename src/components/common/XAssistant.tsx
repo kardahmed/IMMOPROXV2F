@@ -60,12 +60,17 @@ export function XAssistant() {
   const [loading, setLoading] = useState(false)
   const [recording, setRecording] = useState(false)
   const [voiceOn, setVoiceOn] = useState(true)
+  // What X is currently doing (Recherche client…, Création visite…) —
+  // populated from SSE tool_start events and cleared on tool_done.
+  const [pendingAction, setPendingAction] = useState<string | null>(null)
   const recognitionRef = useRef<SR | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   // Cumulative final transcript across the recording session.
   // Recognition emits per-utterance — we stitch them so a pause
   // doesn't truncate the user's full sentence.
   const finalTranscriptRef = useRef('')
+  // Lets the user cancel the in-flight request mid-stream.
+  const abortRef = useRef<AbortController | null>(null)
 
   const lang = i18n.language === 'ar' ? 'ar' : 'fr'
 
@@ -150,13 +155,41 @@ export function XAssistant() {
     if (captured) setTimeout(() => sendMessage(captured), 100)
   }
 
+  function cancelRequest() {
+    abortRef.current?.abort()
+    abortRef.current = null
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+    setLoading(false)
+    setPendingAction(null)
+  }
+
+  // Map tool names to user-facing labels for the "Recherche client…" indicator.
+  const TOOL_LABELS: Record<string, string> = {
+    search_clients: 'Recherche client…',
+    create_client: 'Création client…',
+    create_visit: 'Création visite…',
+    create_task: 'Création tâche…',
+    update_client_stage: 'Changement étape…',
+    update_client_info: 'Mise à jour client…',
+    mark_visit_completed: 'Clôture visite…',
+    send_whatsapp: 'Envoi WhatsApp…',
+  }
+
   async function sendMessage(text: string) {
     const trimmed = text.trim()
     if (!trimmed || loading) return
 
+    // Snapshot conversation for the request body BEFORE adding the user turn,
+    // so we don't double-count the message we're about to send.
+    const conversationToSend = messages.slice(-10)
+
     setMessages(prev => [...prev, { role: 'user', content: trimmed }])
     setInput('')
     setLoading(true)
+    setPendingAction(null)
+    abortRef.current = new AbortController()
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -168,27 +201,100 @@ export function XAssistant() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
+          'Accept': 'text/event-stream',
         },
         body: JSON.stringify({
           question: trimmed,
           language: lang,
-          conversation: messages.slice(-10),  // last 10 turns for context
+          conversation: conversationToSend,
         }),
+        signal: abortRef.current.signal,
       })
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: 'Erreur réseau' }))
         throw new Error(err.error || 'Erreur')
       }
+      if (!resp.body) throw new Error('No response body')
 
-      const data = await resp.json() as { response: string; cost_da: number }
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response, cost_da: data.cost_da }])
-      speak(data.response)
+      // Add an empty assistant message we'll fill in via streaming.
+      setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
+      const reader = resp.body.getReader()
+      const dec = new TextDecoder()
+      let buffer = ''
+      let assistantText = ''
+      // Buffer text until a sentence boundary (.!?) before speaking it,
+      // so the TTS plays whole sentences instead of choppy fragments.
+      let speakBuffer = ''
+      // Cancel any in-flight TTS so the new response doesn't overlap.
+      if (voiceOn && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += dec.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          let event: { type: string; delta?: string; name?: string; ok?: boolean; cost_da?: number; message?: string }
+          try { event = JSON.parse(line.slice(6)) } catch { continue }
+
+          if (event.type === 'text' && typeof event.delta === 'string') {
+            assistantText += event.delta
+            speakBuffer += event.delta
+            setMessages(prev => {
+              const last = prev[prev.length - 1]
+              if (last?.role === 'assistant') {
+                return [...prev.slice(0, -1), { ...last, content: assistantText }]
+              }
+              return prev
+            })
+            // Speak completed sentences as they arrive.
+            const m = speakBuffer.match(/^([\s\S]+?[.!?؟])(?:\s|$)/)
+            if (m) {
+              speak(m[1].trim())
+              speakBuffer = speakBuffer.slice(m[0].length)
+            }
+          } else if (event.type === 'tool_start' && event.name) {
+            setPendingAction(TOOL_LABELS[event.name] ?? `${event.name}…`)
+          } else if (event.type === 'tool_done') {
+            setPendingAction(null)
+          } else if (event.type === 'final') {
+            setMessages(prev => {
+              const last = prev[prev.length - 1]
+              if (last?.role === 'assistant') {
+                return [...prev.slice(0, -1), { ...last, cost_da: event.cost_da }]
+              }
+              return prev
+            })
+            // Speak any remaining text that didn't end with punctuation.
+            if (speakBuffer.trim()) speak(speakBuffer.trim())
+            speakBuffer = ''
+          } else if (event.type === 'error') {
+            throw new Error(event.message ?? 'Erreur')
+          }
+        }
+      }
     } catch (err) {
+      // Silent on user cancel — we already cleared state in cancelRequest.
+      if ((err as { name?: string })?.name === 'AbortError') return
       const msg = err instanceof Error ? err.message : 'Erreur inconnue'
-      setMessages(prev => [...prev, { role: 'assistant', content: `❌ ${msg}` }])
+      setMessages(prev => {
+        const last = prev[prev.length - 1]
+        if (last?.role === 'assistant' && last.content === '') {
+          return [...prev.slice(0, -1), { role: 'assistant', content: `❌ ${msg}` }]
+        }
+        return [...prev, { role: 'assistant', content: `❌ ${msg}` }]
+      })
     } finally {
       setLoading(false)
+      setPendingAction(null)
+      abortRef.current = null
     }
   }
 
@@ -288,11 +394,29 @@ export function XAssistant() {
               </div>
             ))}
 
-            {loading && (
+            {/* Pending action pill — visible while a tool is executing */}
+            {pendingAction && (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-2 rounded-2xl border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-3 py-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#7C3AED]" />
+                  <span className="text-xs font-medium text-[#7C3AED]">{pendingAction}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Generic loading indicator + cancel button */}
+            {loading && !pendingAction && (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 rounded-2xl bg-immo-bg-primary px-3 py-2">
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-[#7C3AED]" />
                   <span className="text-xs text-immo-text-muted">{t('x_assistant.thinking')}</span>
+                  <button
+                    type="button"
+                    onClick={cancelRequest}
+                    className="ml-2 text-[10px] font-medium text-immo-status-red hover:underline"
+                  >
+                    Annuler
+                  </button>
                 </div>
               </div>
             )}
