@@ -401,8 +401,8 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
             disabled={isAiLoading || filtered.length === 0}
             className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
               aiScoreMap.size > 0
-                ? 'border-purple-500/50 bg-purple-500/10 text-purple-600'
-                : 'border-purple-500/30 text-purple-600 hover:bg-purple-500/10'
+                ? 'border-blue-500/50 bg-blue-500/10 text-blue-600'
+                : 'border-blue-500/30 text-blue-600 hover:bg-blue-500/10'
             }`}
             title={`Classer les ${Math.min(filtered.length, AI_UNITS_LIMIT)} 1ères unités via Claude`}
           >
@@ -428,7 +428,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
             <span className="font-semibold text-immo-text-muted">Criteres:</span>
             {client.confirmed_budget && <span className="rounded-full bg-immo-accent-green/10 px-2 py-0.5 text-immo-accent-green">Budget: {formatPriceCompact(client.confirmed_budget)}</span>}
             {client.desired_unit_types?.map(t => <span key={t} className="rounded-full bg-immo-accent-blue/10 px-2 py-0.5 text-immo-accent-blue">{UNIT_TYPE_LABELS[t as UnitType] ?? t}</span>)}
-            {client.interested_projects?.length ? <span className="rounded-full bg-purple-100 px-2 py-0.5 text-purple-600">{client.interested_projects.length} projet(s)</span> : null}
+            {client.interested_projects?.length ? <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-600">{client.interested_projects.length} projet(s)</span> : null}
           </div>
         )}
 
@@ -489,7 +489,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                     <span className="text-sm font-semibold text-immo-text-primary">{u.code}</span>
                     {u.subtype && <span className="text-[11px] text-immo-text-muted">{UNIT_SUBTYPE_LABELS[u.subtype] ?? u.subtype}</span>}
                     {aiScoreMap.has(u.id) && (
-                      <span className="ml-auto flex items-center gap-0.5 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-purple-600">
+                      <span className="ml-auto flex items-center gap-0.5 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600">
                         <Sparkles className="h-2.5 w-2.5" /> IA
                       </span>
                     )}
@@ -508,7 +508,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                       </span>
                     )}
                     {winners.surfaceId === u.id && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
                         <Maximize2 className="h-3 w-3" /> + Grande
                       </span>
                     )}

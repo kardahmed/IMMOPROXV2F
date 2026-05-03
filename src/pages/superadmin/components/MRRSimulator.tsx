@@ -68,9 +68,9 @@ export function MRRSimulator({ editPlans, tenantCounts }: Props) {
 
   return (
     <Card noPadding className="overflow-hidden">
-      <div className="border-b border-immo-border-default bg-[#7C3AED]/5 px-5 py-3">
+      <div className="border-b border-immo-border-default bg-[#0579DA]/5 px-5 py-3">
         <div className="flex items-center gap-2">
-          <Calculator className="h-4 w-4 text-[#7C3AED]" />
+          <Calculator className="h-4 w-4 text-[#0579DA]" />
           <h3 className="text-sm font-semibold text-immo-text-primary">Simulateur MRR — projection de signatures</h3>
         </div>
         <p className="mt-1 text-[11px] text-immo-text-muted">

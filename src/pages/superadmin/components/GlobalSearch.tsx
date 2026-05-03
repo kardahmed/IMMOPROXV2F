@@ -114,13 +114,13 @@ export function GlobalSearch() {
           onFocus={() => setOpen(true)}
           aria-label="Recherche globale"
           placeholder="Recherche globale... (Ctrl+K)"
-          className="h-9 w-[320px] rounded-lg border border-immo-border-default bg-immo-bg-primary pl-9 pr-8 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20"
+          className="h-9 w-[320px] rounded-lg border border-immo-border-default bg-immo-bg-primary pl-9 pr-8 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/20"
         />
         {query && (
           <button
             onClick={() => { setQuery(''); setOpen(false) }}
             aria-label="Effacer la recherche"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded text-immo-text-muted transition-colors hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded text-immo-text-muted transition-colors hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -146,8 +146,8 @@ export function GlobalSearch() {
                     onClick={() => handleSelect(r)}
                     className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-immo-bg-card-hover"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#7C3AED]/10">
-                      <Icon className="h-4 w-4 text-[#7C3AED]" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0579DA]/10">
+                      <Icon className="h-4 w-4 text-[#0579DA]" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-immo-text-primary">{r.title}</p>

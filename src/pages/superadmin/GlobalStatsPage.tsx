@@ -6,7 +6,7 @@ import { Card, KPICard, PageHeader, PageSkeleton } from '@/components/common'
 import { formatPriceCompact } from '@/lib/constants'
 import { format, subMonths, startOfMonth, endOfMonth, differenceInDays } from 'date-fns'
 
-const PLAN_COLORS: Record<string, string> = { free: '#8898AA', starter: '#0579DA', pro: '#7C3AED', enterprise: '#F5A623' }
+const PLAN_COLORS: Record<string, string> = { free: '#8898AA', starter: '#0579DA', pro: '#0579DA', enterprise: '#F5A623' }
 const CHART_STYLE = { fontSize: 11, fill: '#7F96B7' }
 
 export function GlobalStatsPage() {
@@ -143,7 +143,7 @@ export function GlobalStatsPage() {
               <XAxis dataKey="month" tick={CHART_STYLE} />
               <YAxis tick={CHART_STYLE} tickFormatter={v => `${Math.round(v / 1000)}K`} />
               <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E3E8EF', borderRadius: 8, fontSize: 12 }} formatter={(v: unknown) => [`${Number(v).toLocaleString('fr')} DA`, '']} />
-              <Area type="monotone" dataKey="mrr" name="MRR" stroke="#7C3AED" fill="#7C3AED" fillOpacity={0.1} strokeWidth={2} />
+              <Area type="monotone" dataKey="mrr" name="MRR" stroke="#0579DA" fill="#0579DA" fillOpacity={0.1} strokeWidth={2} />
               <Area type="monotone" dataKey="invoiced" name="Facture" stroke="#0579DA" fill="#0579DA" fillOpacity={0.08} strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
@@ -186,7 +186,7 @@ export function GlobalStatsPage() {
               <XAxis dataKey="month" tick={CHART_STYLE} />
               <YAxis tick={CHART_STYLE} />
               <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E3E8EF', borderRadius: 8 }} />
-              <Bar dataKey="clients" name="Clients" fill="#7C3AED" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="clients" name="Clients" fill="#0579DA" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -213,7 +213,7 @@ export function GlobalStatsPage() {
         <div className="divide-y divide-immo-border-default">
           {data.topRevenue.map((t, i) => (
             <div key={t.name} className="flex items-center gap-3 px-5 py-3">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7C3AED]/15 text-xs font-bold text-[#7C3AED]">{i + 1}</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0579DA]/15 text-xs font-bold text-[#0579DA]">{i + 1}</span>
               <span className="flex-1 text-sm text-immo-text-primary">{t.name}</span>
               <span className="text-sm font-semibold text-immo-accent-green">{formatPriceCompact(t.revenue)}</span>
             </div>

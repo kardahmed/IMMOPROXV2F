@@ -195,7 +195,7 @@ export function TaskConfigSection() {
                               </select>
 
                               {/* Mode */}
-                              <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${task.message_mode === 'ai' ? 'bg-purple-100 text-purple-600' : 'bg-immo-bg-primary text-immo-text-muted'}`}>
+                              <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${task.message_mode === 'ai' ? 'bg-blue-100 text-blue-600' : 'bg-immo-bg-primary text-immo-text-muted'}`}>
                                 {task.message_mode === 'ai' ? <><Sparkles className="h-2.5 w-2.5" /> IA</> : <><FileText className="h-2.5 w-2.5" /> Tpl</>}
                               </div>
 
@@ -226,7 +226,7 @@ export function TaskConfigSection() {
             <div className="flex gap-2">
               <span className="rounded-full bg-immo-bg-primary px-2 py-0.5 text-[10px] font-medium text-immo-text-muted">{editMsg.stage}</span>
               <span className="rounded-full bg-immo-bg-primary px-2 py-0.5 text-[10px] font-medium text-immo-text-muted">{CHANNEL_LABELS[editMsg.channel]}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${editMsg.mode === 'ai' ? 'bg-purple-100 text-purple-600' : 'bg-immo-bg-primary text-immo-text-muted'}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${editMsg.mode === 'ai' ? 'bg-blue-100 text-blue-600' : 'bg-immo-bg-primary text-immo-text-muted'}`}>
                 {editMsg.mode === 'ai' ? 'Generation IA' : 'Template'}
               </span>
             </div>

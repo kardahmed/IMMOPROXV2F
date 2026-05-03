@@ -122,7 +122,7 @@ export function TenantDetailPage() {
           <button
             onClick={() => navigate('/admin')}
             aria-label="Retour a la liste des tenants"
-            className="shrink-0 rounded-lg p-2 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+            className="shrink-0 rounded-lg p-2 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -143,7 +143,7 @@ export function TenantDetailPage() {
           </Button>
           <Button
             onClick={() => setShowChangePlan(true)}
-            variant="purple-outline"
+            variant="blue-outline"
           >
             Changer le plan
           </Button>
@@ -158,7 +158,7 @@ export function TenantDetailPage() {
             <Power className="mr-1.5 h-4 w-4" />
             {isMaintenance ? 'Desactiver maintenance' : 'Maintenance'}
           </Button>
-          <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }} variant="purple">
+          <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }} variant="blue">
             Acceder au tenant
           </Button>
         </div>
@@ -180,7 +180,7 @@ export function TenantDetailPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
           <KPICard label="Agents" value={kpis.agents} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
           <KPICard label="Clients" value={kpis.clients} accent="orange" icon={<Briefcase className="h-5 w-5 text-immo-status-orange" />} />
-          <KPICard label="Projets" value={kpis.projects} accent="blue" icon={<Building2 className="h-5 w-5 text-[#7C3AED]" />} />
+          <KPICard label="Projets" value={kpis.projects} accent="blue" icon={<Building2 className="h-5 w-5 text-[#0579DA]" />} />
           <KPICard label="Biens" value={kpis.units} accent="blue" icon={<Home className="h-5 w-5 text-immo-accent-blue" />} />
           <KPICard label="CA" value={formatPriceCompact(kpis.revenue)} accent="green" icon={<DollarSign className="h-5 w-5 text-immo-accent-green" />} />
           <KPICard label="Reservations" value={kpis.reservations} accent="orange" icon={<Bookmark className="h-5 w-5 text-immo-status-orange" />} />
@@ -231,7 +231,7 @@ export function TenantDetailPage() {
             const agent = h.users as { first_name: string; last_name: string } | null
             return (
               <div key={h.id as string} className="flex items-center gap-3 px-5 py-3">
-                <div className="h-2 w-2 shrink-0 rounded-full bg-[#7C3AED]" />
+                <div className="h-2 w-2 shrink-0 rounded-full bg-[#0579DA]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-immo-text-primary">{h.title as string}</p>
                   {agent && <p className="text-[11px] text-immo-text-secondary">{agent.first_name} {agent.last_name}</p>}
@@ -301,7 +301,7 @@ function ExportPanel({ tenantId, tenantName }: { tenantId: string; tenantName: s
   return (
     <Card>
       <div className="mb-3 flex items-center gap-2">
-        <Download className="h-5 w-5 text-[#7C3AED]" />
+        <Download className="h-5 w-5 text-[#0579DA]" />
         <h3 className="text-sm font-semibold text-immo-text-primary">Export donnees</h3>
       </div>
       <p className="mb-3 text-[11px] text-immo-text-muted">
@@ -310,9 +310,9 @@ function ExportPanel({ tenantId, tenantName }: { tenantId: string; tenantName: s
       <Button
         onClick={handleExport}
         disabled={exporting}
-        variant="purple-outline"
+        variant="blue-outline"
       >
-        {exporting ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#7C3AED] border-t-transparent" /> : <Download className="mr-1.5 h-4 w-4" />}
+        {exporting ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#0579DA] border-t-transparent" /> : <Download className="mr-1.5 h-4 w-4" />}
         {exporting ? 'Export en cours...' : 'Exporter'}
       </Button>
       {downloadUrl && (

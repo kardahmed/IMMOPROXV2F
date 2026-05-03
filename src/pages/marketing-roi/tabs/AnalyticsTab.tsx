@@ -191,7 +191,7 @@ export function AnalyticsTab() {
             { label: 'Depenses', value: formatPriceCompact(data.totalSpent) + ' DA', color: 'text-immo-accent-blue' },
             { label: 'Leads', value: data.totalLeads, color: 'text-immo-accent-blue' },
             { label: 'Visites', value: data.totalVisits, color: 'text-immo-status-orange' },
-            { label: 'Reservations', value: data.totalReservations, color: 'text-purple-500' },
+            { label: 'Reservations', value: data.totalReservations, color: 'text-blue-500' },
             { label: 'Ventes', value: data.totalSales, color: 'text-immo-accent-green' },
             { label: 'CA genere', value: formatPriceCompact(data.totalRevenue) + ' DA', color: 'text-immo-accent-green' },
           ].map((step, i, arr) => (

@@ -32,16 +32,16 @@ interface TenantRow {
 }
 
 // Per-plan colour map. Stays static — plans declare a slug, the UI
-// picks a colour from this palette by hash; falls back to purple if
+// picks a colour from this palette by hash; falls back to blue if
 // a brand-new plan slug arrives that isn't here yet.
 const PLAN_COLOR_PALETTE: Record<string, string> = {
-  all: '#7C3AED',
+  all: '#0579DA',
   free: '#8898AA',
   starter: '#0579DA',
-  pro: '#7C3AED',
+  pro: '#0579DA',
   enterprise: '#F5A623',
 }
-const FALLBACK_COLOR = '#7C3AED'
+const FALLBACK_COLOR = '#0579DA'
 
 type PlanFilter = string  // any slug present in plan_limits, plus 'all'
 
@@ -167,7 +167,7 @@ export function TenantsPage() {
             onClick={(e) => { e.stopPropagation(); navigate(`/admin/tenants/${t.id}`) }}
             aria-label={`Voir ${t.name}`}
             title="Voir"
-            className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+            className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"
           >
             <Eye className="h-3.5 w-3.5" />
           </button>
@@ -175,7 +175,7 @@ export function TenantsPage() {
             onClick={(e) => { e.stopPropagation(); handleAccessTenant(t) }}
             aria-label={`Acceder au tenant ${t.name}`}
             title="Acceder"
-            className="rounded-md p-1.5 text-[#7C3AED] transition-colors hover:bg-[#7C3AED]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+            className="rounded-md p-1.5 text-[#0579DA] transition-colors hover:bg-[#0579DA]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"
           >
             <LogIn className="h-3.5 w-3.5" />
           </button>
@@ -203,7 +203,7 @@ export function TenantsPage() {
         actions={
           <Button
             onClick={() => setShowCreate(true)}
-            variant="purple"
+            variant="blue"
           >
             <Plus className="mr-1.5 h-4 w-4" /> Nouveau Tenant
           </Button>
@@ -212,7 +212,7 @@ export function TenantsPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
-        <KPICard label="Total Tenants" value={totalTenants} accent="blue" icon={<Building2 className="h-5 w-5 text-[#7C3AED]" />} />
+        <KPICard label="Total Tenants" value={totalTenants} accent="blue" icon={<Building2 className="h-5 w-5 text-[#0579DA]" />} />
         <KPICard label="Tenants actifs" value={activeTenants} accent="green" icon={<UserCheck className="h-5 w-5 text-immo-accent-green" />} />
         <KPICard label="Total Utilisateurs" value={totalUsers} accent="blue" icon={<Users className="h-5 w-5 text-immo-accent-blue" />} />
         <KPICard label="Total Clients" value={totalClients} accent="orange" icon={<Briefcase className="h-5 w-5 text-immo-status-orange" />} />
@@ -257,7 +257,7 @@ export function TenantsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un tenant..."
-            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#7C3AED]"
+            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA]"
           />
         </div>
         <span className="shrink-0 text-xs text-immo-text-muted">{filtered.length} tenant(s)</span>

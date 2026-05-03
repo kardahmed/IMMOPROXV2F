@@ -122,7 +122,7 @@ export function SegmentBuilder({ rules, onChange }: Props) {
                   onClick={() => toggleValue('project_ids', project.id)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                     active
-                      ? 'bg-[#7C3AED]/15 text-[#7C3AED] ring-1 ring-[#7C3AED]/30'
+                      ? 'bg-[#0579DA]/15 text-[#0579DA] ring-1 ring-[#0579DA]/30'
                       : 'bg-immo-bg-primary text-immo-text-muted hover:bg-immo-bg-card-hover'
                   }`}
                 >

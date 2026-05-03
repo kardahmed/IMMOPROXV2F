@@ -92,7 +92,7 @@ export function SuperAdminLayout() {
           <img src="/logo-180.png" alt="IMMO PRO-X" className="h-9 w-9" />
           <div>
             <h1 className="text-sm font-bold text-immo-text-primary">IMMO PRO-X</h1>
-            <span className="rounded-sm bg-[#7C3AED]/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#7C3AED]">
+            <span className="rounded-sm bg-[#0579DA]/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#0579DA]">
               Super Admin
             </span>
           </div>
@@ -116,7 +116,7 @@ export function SuperAdminLayout() {
                     className={({ isActive }) =>
                       `group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
                         isActive
-                          ? 'bg-[#7C3AED]/15 font-semibold text-[#7C3AED]'
+                          ? 'bg-[#0579DA]/15 font-semibold text-[#0579DA]'
                           : 'text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
                       }`
                     }
@@ -124,7 +124,7 @@ export function SuperAdminLayout() {
                     {({ isActive }) => (
                       <>
                         {isActive && (
-                          <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#7C3AED]" />
+                          <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#0579DA]" />
                         )}
                         <Icon className={`h-4 w-4 transition-transform ${isActive ? '' : 'group-hover:scale-110'}`} />
                         {labelKey}
@@ -141,7 +141,7 @@ export function SuperAdminLayout() {
         {inspectedTenantId && (
           <button
             onClick={() => navigate('/dashboard')}
-            className="mx-3 mb-2 flex items-center gap-2 rounded-lg border border-[#7C3AED]/30 px-3 py-2 text-xs text-[#7C3AED] hover:bg-[#7C3AED]/10"
+            className="mx-3 mb-2 flex items-center gap-2 rounded-lg border border-[#0579DA]/30 px-3 py-2 text-xs text-[#0579DA] hover:bg-[#0579DA]/10"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Retour app ({inspectedTenantName})
@@ -171,7 +171,7 @@ export function SuperAdminLayout() {
               <>
                 <ChevronRight className="h-3 w-3 shrink-0 text-immo-text-muted" />
                 <span className="flex items-center gap-1.5 truncate font-medium text-immo-text-primary">
-                  <currentPage.icon className="h-3.5 w-3.5 shrink-0 text-[#7C3AED]" />
+                  <currentPage.icon className="h-3.5 w-3.5 shrink-0 text-[#0579DA]" />
                   {currentPage.labelKey}
                 </span>
               </>
@@ -189,7 +189,7 @@ export function SuperAdminLayout() {
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             aria-label={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
             title={isDark ? 'Mode clair' : 'Mode sombre'}
-            className="rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+            className="rounded-lg p-2 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"
           >
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>

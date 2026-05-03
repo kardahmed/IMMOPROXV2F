@@ -54,7 +54,7 @@ const STATUS_LABELS: Record<LeadRow['status'], string> = {
 const STATUS_COLORS: Record<LeadRow['status'], string> = {
   new: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   contacted: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  demo_booked: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  demo_booked: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   demo_done: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
   won: 'bg-green-500/10 text-green-400 border-green-500/20',
   lost: 'bg-red-500/10 text-red-400 border-red-500/20',
@@ -256,7 +256,7 @@ export function LeadsPage() {
       render: l => (
         <Button
           size="sm"
-          variant="purple"
+          variant="blue"
           onClick={e => {
             e.stopPropagation()
             setCreateTenantFor(l)
@@ -313,7 +313,7 @@ export function LeadsPage() {
               onClick={() => setStatusFilter(s)}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 active
-                  ? 'border-[#7C3AED] bg-[#7C3AED]/10 text-[#7C3AED]'
+                  ? 'border-[#0579DA] bg-[#0579DA]/10 text-[#0579DA]'
                   : 'border-immo-border-default text-immo-text-secondary hover:bg-immo-bg-card-hover'
               }`}
             >

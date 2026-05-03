@@ -167,7 +167,7 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess, defaults, subtit
             <Button variant="ghost" onClick={handleClose} disabled={loading} className="text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
               {t('tenant_form.cancel')}
             </Button>
-            <Button onClick={handleCreate} disabled={!isValid || loading} variant="purple">
+            <Button onClick={handleCreate} disabled={!isValid || loading} variant="blue">
               {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : t('tenant_form.create')}
             </Button>
           </>
@@ -176,7 +176,7 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess, defaults, subtit
         <div className="space-y-5">
           {/* Tenant info */}
           <div>
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">{t('tenant_form.section_company')}</h4>
+            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">{t('tenant_form.section_company')}</h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className={labelClass}>{t('tenant_form.agency_name')} *</Label>
@@ -213,7 +213,7 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess, defaults, subtit
 
           {/* Plan + trial — P3 */}
           <div>
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">{t('tenant_form.section_plan')}</h4>
+            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">{t('tenant_form.section_plan')}</h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className={labelClass}>{t('tenant_form.plan')} *</Label>
@@ -236,7 +236,7 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess, defaults, subtit
 
           {/* Admin info */}
           <div>
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">{t('tenant_form.section_admin')}</h4>
+            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">{t('tenant_form.section_admin')}</h4>
             <p className="mb-3 text-[11px] text-immo-text-secondary">{t('tenant_form.admin_invite_note')}</p>
             <div className="grid grid-cols-2 gap-3">
               <div>

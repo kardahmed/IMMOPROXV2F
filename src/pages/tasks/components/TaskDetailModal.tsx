@@ -222,7 +222,7 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
               </span>
             </div>
           </div>
-          <button onClick={onClose} aria-label="Fermer" className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} aria-label="Fermer" className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="max-h-[70vh] overflow-y-auto px-6 py-4 space-y-4">

@@ -26,7 +26,7 @@ const SERVICES: Array<{
   icon: typeof Bot
   accent: string
 }> = [
-  { key: 'anthropic', label: 'Suggestions IA',         desc: 'Anthropic — scripts d\'appel + classement d\'unités', icon: Bot,           accent: '#7C3AED' },
+  { key: 'anthropic', label: 'Suggestions IA',         desc: 'Anthropic — scripts d\'appel + classement d\'unités', icon: Bot,           accent: '#0579DA' },
   { key: 'resend',    label: 'Emails',                 desc: 'Resend — campagnes + notifications transactionnelles', icon: Mail,          accent: '#0579DA' },
   { key: 'whatsapp',  label: 'Messages WhatsApp',      desc: 'Meta Cloud — envois sortants vers les clients',        icon: MessageCircle, accent: '#22C55E' },
   { key: 'burst',     label: 'Limite anti-burst (1h)', desc: 'Tous services confondus — empêche les boucles infinies',         icon: Zap,           accent: '#F5A623' },

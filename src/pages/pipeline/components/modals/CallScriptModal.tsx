@@ -164,7 +164,7 @@ export function CallScriptModal({
             <div className="flex items-center gap-2 text-xs text-immo-text-muted">
               <span>{clientPhone}</span>
               <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: stage.color + '15', color: stage.color }}>{stage.label}</span>
-              {script?.mode === 'ai' && <span className="flex items-center gap-1 text-purple-500"><Sparkles className="h-3 w-3" /> IA</span>}
+              {script?.mode === 'ai' && <span className="flex items-center gap-1 text-blue-500"><Sparkles className="h-3 w-3" /> IA</span>}
             </div>
           </div>
         </div>
@@ -270,9 +270,9 @@ export function CallScriptModal({
             </div>
 
             {script?.suggested_action && (
-              <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
-                <p className="text-[10px] font-medium text-purple-500">{t('call_script_modal.ai_suggestion')}</p>
-                <p className="text-xs font-medium text-purple-700">{script.suggested_action}</p>
+              <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                <p className="text-[10px] font-medium text-blue-500">{t('call_script_modal.ai_suggestion')}</p>
+                <p className="text-xs font-medium text-blue-700">{script.suggested_action}</p>
               </div>
             )}
           </div>

@@ -406,7 +406,7 @@ export function TasksTab({ clientId, tenantId, clientPhone }: { clientId: string
                   <p className={`text-sm ${task.status === 'done' ? 'text-immo-text-muted line-through' : 'text-immo-text-primary'}`}>{task.title as string}</p>
                   <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-immo-text-muted">
                     <AutomationBadge automationType={task.automation_type as string | null} />
-                    {task.type === 'ai_generated' && <span className="flex items-center gap-0.5 text-purple-400"><Bot className="h-3 w-3" /> IA</span>}
+                    {task.type === 'ai_generated' && <span className="flex items-center gap-0.5 text-blue-400"><Bot className="h-3 w-3" /> IA</span>}
                     {typeof task.due_at === 'string' && <span>{format(new Date(task.due_at), 'dd/MM/yyyy')}</span>}
                   </div>
                 </div>

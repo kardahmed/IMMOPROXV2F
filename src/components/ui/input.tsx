@@ -12,7 +12,7 @@ const inputVariants = cva(
         default:
           "border-input bg-transparent text-base placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 disabled:bg-input/50 dark:bg-input/30 dark:disabled:bg-input/80",
         immo:
-          "border-immo-border-default bg-immo-bg-primary text-sm text-immo-text-primary placeholder:text-immo-text-muted focus-visible:border-[#7C3AED] focus-visible:ring-[#7C3AED]/20",
+          "border-immo-border-default bg-immo-bg-primary text-sm text-immo-text-primary placeholder:text-immo-text-muted focus-visible:border-[#0579DA] focus-visible:ring-[#0579DA]/20",
       },
     },
     defaultVariants: {

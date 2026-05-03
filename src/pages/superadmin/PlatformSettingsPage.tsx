@@ -102,7 +102,7 @@ export function PlatformSettingsPage() {
                 role="switch"
                 aria-checked={maintenance}
                 aria-label="Mode maintenance"
-                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40 ${maintenance ? 'bg-immo-status-red' : 'bg-immo-border-default'}`}
+                className={`flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40 ${maintenance ? 'bg-immo-status-red' : 'bg-immo-border-default'}`}
               >
                 <div className={`h-5 w-5 rounded-full bg-white transition-transform ${maintenance ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
@@ -111,11 +111,11 @@ export function PlatformSettingsPage() {
         </Card>
 
         {/* AI configuration — keys live in Edge Function secrets */}
-        <div className="space-y-4 rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-6">
+        <div className="space-y-4 rounded-xl border border-[#0579DA]/20 bg-[#0579DA]/5 p-6">
           <div className="flex items-start gap-3">
-            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[#7C3AED]" />
+            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[#0579DA]" />
             <div>
-              <h3 className="text-sm font-semibold text-[#7C3AED]">Configuration IA</h3>
+              <h3 className="text-sm font-semibold text-[#0579DA]">Configuration IA</h3>
               <p className="mt-1 text-[11px] text-immo-text-muted">
                 Les clés API <strong>ANTHROPIC_API_KEY</strong> et <strong>OPENAI_API_KEY</strong> sont stockées
                 dans les <strong>Edge Functions Secrets</strong> de Supabase (jamais exposées au client).
@@ -126,7 +126,7 @@ export function PlatformSettingsPage() {
                   href="https://supabase.com/dashboard/project/lbnqccsebwiifxcucflg/settings/functions"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-1 font-semibold text-[#7C3AED] hover:underline"
+                  className="ml-1 font-semibold text-[#0579DA] hover:underline"
                 >
                   Dashboard → Edge Functions → Secrets
                 </a>
@@ -143,7 +143,7 @@ export function PlatformSettingsPage() {
         <Button
           onClick={() => save.mutate()}
           disabled={save.isPending}
-          variant="purple"
+          variant="blue"
         >
           {save.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
         </Button>
@@ -241,7 +241,7 @@ function AlertsSection() {
           <h2 className="text-lg font-bold text-immo-text-primary">Alertes plateforme</h2>
           <p className="text-sm text-immo-text-secondary">Configurez des alertes automatiques par email ou webhook</p>
         </div>
-        <Button onClick={() => addAlert.mutate()} disabled={addAlert.isPending} variant="purple">
+        <Button onClick={() => addAlert.mutate()} disabled={addAlert.isPending} variant="blue">
           <Plus className="mr-1.5 h-4 w-4" /> Ajouter
         </Button>
       </div>
@@ -263,7 +263,7 @@ function AlertsSection() {
                 role="switch"
                 aria-checked={alert.is_active}
                 aria-label={alert.is_active ? "Desactiver l'alerte" : "Activer l'alerte"}
-                className={`mt-1 flex h-5 w-9 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40 ${alert.is_active ? 'bg-immo-accent-green' : 'bg-immo-border-default'}`}
+                className={`mt-1 flex h-5 w-9 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40 ${alert.is_active ? 'bg-immo-accent-green' : 'bg-immo-border-default'}`}
               >
                 <div className={`h-4 w-4 rounded-full bg-white transition-transform ${alert.is_active ? 'translate-x-4' : 'translate-x-0'}`} />
               </button>

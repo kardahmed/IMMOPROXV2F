@@ -314,14 +314,14 @@ export function CallScriptBody({
 
       {/* AI talking points */}
       {script.talking_points.length > 0 && (
-        <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
           <div className="mb-2 flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-purple-500" />
-            <span className="text-xs font-semibold text-purple-700">Arguments de vente IA</span>
+            <Lightbulb className="h-4 w-4 text-blue-500" />
+            <span className="text-xs font-semibold text-blue-700">Arguments de vente IA</span>
           </div>
           <ul className="space-y-1">
             {script.talking_points.map((tp, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-purple-600">
+              <li key={i} className="flex items-start gap-2 text-xs text-blue-600">
                 <ArrowRight className="mt-0.5 h-3 w-3 shrink-0" /> {tp}
               </li>
             ))}
@@ -334,7 +334,7 @@ export function CallScriptBody({
         <div className="mb-2 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-immo-status-orange" />
           <span className="text-xs font-semibold text-immo-status-orange">Questions du client</span>
-          <Sparkles className="h-3 w-3 text-purple-400" />
+          <Sparkles className="h-3 w-3 text-blue-400" />
         </div>
         {clientQA.length > 0 && (
           <div className="mb-3 space-y-2">
@@ -351,13 +351,13 @@ export function CallScriptBody({
                 </div>
                 {qa.loading ? (
                   <div className="mt-2 flex items-center gap-2">
-                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-                    <span className="text-[10px] text-purple-400">Réponse en cours de génération…</span>
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
+                    <span className="text-[10px] text-blue-400">Réponse en cours de génération…</span>
                   </div>
                 ) : (
-                  <div className="mt-2 flex items-start gap-1.5 rounded-md bg-purple-50 p-2">
-                    <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-purple-500" />
-                    <p className="text-xs leading-relaxed text-purple-700">{qa.answer}</p>
+                  <div className="mt-2 flex items-start gap-1.5 rounded-md bg-blue-50 p-2">
+                    <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-blue-500" />
+                    <p className="text-xs leading-relaxed text-blue-700">{qa.answer}</p>
                   </div>
                 )}
               </div>

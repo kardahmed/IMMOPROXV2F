@@ -106,9 +106,9 @@
   --immo-status-orange-bg: #FFF8EB;
   --immo-status-red: #CD3D64;
   --immo-status-red-bg: #FFF0F3;
-  /* Super Admin brand accent (purple) */
-  --immo-brand-purple: #7C3AED;
-  --immo-brand-purple-dim: #6D28D9;
+  /* Super Admin brand accent (blue) */
+  --immo-brand-blue: #0579DA;
+  --immo-brand-blue-dim: #0461B3;
 }
 
 /* ─── IMMO Dark Theme Values ─── */
@@ -133,8 +133,8 @@
   --immo-status-red: #f85149;
   --immo-status-red-bg: rgba(248,81,73,0.1);
   /* Super Admin brand accent adapted for dark mode */
-  --immo-brand-purple: #A78BFA;
-  --immo-brand-purple-dim: #8B5CF6;
+  --immo-brand-blue: #58a6ff;
+  --immo-brand-blue-dim: #388bfd;
 }
 
 /* ─── Shadcn CSS variables → Light Theme ─── */

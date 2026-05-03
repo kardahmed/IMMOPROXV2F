@@ -126,14 +126,14 @@ export function MonitoringPage() {
         <KPICard label="Actions (7j)" value={data.totalActions} accent="blue" icon={<Activity className="h-5 w-5 text-immo-accent-blue" />} />
         <KPICard label="Erreurs (total)" value={data.errorCount} accent={data.errorCount > 0 ? 'red' : 'green'} icon={<AlertTriangle className="h-5 w-5 text-immo-status-red" />} />
         <KPICard label="Erreurs (24h)" value={data.errors24h.length} accent={data.errors24h.length > 0 ? 'red' : 'green'} icon={<Zap className="h-5 w-5 text-immo-status-orange" />} />
-        <KPICard label="Taux erreur" value={`${data.errorRate.toFixed(1)}%`} accent={healthColor} icon={<Cpu className="h-5 w-5 text-[#7C3AED]" />} />
+        <KPICard label="Taux erreur" value={`${data.errorRate.toFixed(1)}%`} accent={healthColor} icon={<Cpu className="h-5 w-5 text-[#0579DA]" />} />
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-immo-border-default">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${tab === t.key ? 'border-[#7C3AED] text-[#7C3AED]' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${tab === t.key ? 'border-[#0579DA] text-[#0579DA]' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
             <t.icon className="h-3.5 w-3.5" /> {t.label}
           </button>
         ))}
@@ -167,7 +167,7 @@ export function MonitoringPage() {
                   <XAxis dataKey="day" tick={CHART_STYLE} />
                   <YAxis tick={CHART_STYLE} />
                   <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E3E8EF', borderRadius: 8, fontSize: 11 }} />
-                  <Line type="monotone" dataKey="actions" stroke="#7C3AED" strokeWidth={2} dot={{ fill: '#7C3AED', r: 3 }} />
+                  <Line type="monotone" dataKey="actions" stroke="#0579DA" strokeWidth={2} dot={{ fill: '#0579DA', r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </Card>

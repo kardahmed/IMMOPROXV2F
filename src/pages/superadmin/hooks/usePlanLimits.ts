@@ -18,7 +18,7 @@ export interface PlanLimit {
 export const PLAN_LABELS: Record<PlanKey, { label: string; color: string; bg: string }> = {
   free:       { label: 'Free',       color: 'text-immo-text-secondary', bg: 'bg-immo-text-secondary/10' },
   starter:    { label: 'Starter',    color: 'text-immo-accent-blue', bg: 'bg-immo-accent-blue/10' },
-  pro:        { label: 'Pro',        color: 'text-[#7C3AED]', bg: 'bg-[#7C3AED]/10' },
+  pro:        { label: 'Pro',        color: 'text-[#0579DA]', bg: 'bg-[#0579DA]/10' },
   enterprise: { label: 'Enterprise', color: 'text-immo-status-orange', bg: 'bg-immo-status-orange/10' },
 }
 

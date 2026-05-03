@@ -113,7 +113,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
     <Card noPadding>
       <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-4">
         <h3 className="text-sm font-semibold text-immo-text-primary">Utilisateurs ({users.length})</h3>
-        <Button onClick={() => setShowCreate(true)} size="sm" variant="purple" className="text-xs">
+        <Button onClick={() => setShowCreate(true)} size="sm" variant="blue" className="text-xs">
           <Plus className="mr-1 h-3.5 w-3.5" /> Ajouter
         </Button>
       </div>
@@ -122,7 +122,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
         {users.map(u => (
           <div key={u.id} className="flex items-center gap-3 px-5 py-3 hover:bg-immo-bg-card-hover">
             {/* Avatar */}
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#7C3AED]/15 text-xs font-semibold text-[#7C3AED]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0579DA]/15 text-xs font-semibold text-[#0579DA]">
               {u.first_name?.[0] ?? '?'}{u.last_name?.[0] ?? '?'}
             </div>
 
@@ -140,7 +140,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
 
             {/* Actions dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger aria-label="Actions utilisateur" className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
+              <DropdownMenuTrigger aria-label="Actions utilisateur" className="rounded-md p-1.5 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40">
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="border-immo-border-default bg-immo-bg-card">
@@ -275,7 +275,7 @@ function CreateUserModal({ isOpen, tenantId, onClose, onSuccess }: {
       footer={
         <>
           <Button variant="ghost" onClick={onClose} className="text-immo-text-secondary">Annuler</Button>
-          <Button onClick={handleCreate} disabled={!firstName || !lastName || !email || loading} variant="purple">
+          <Button onClick={handleCreate} disabled={!firstName || !lastName || !email || loading} variant="blue">
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Inviter'}
           </Button>
         </>

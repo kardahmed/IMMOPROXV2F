@@ -131,7 +131,7 @@ export function NotificationCenter() {
         aria-label={unreadCount > 0 ? `Notifications (${unreadCount} non lues)` : 'Notifications'}
         aria-expanded={open}
         aria-haspopup="true"
-        className="relative rounded-lg p-2 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"
+        className="relative rounded-lg p-2 text-immo-text-secondary transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
@@ -148,7 +148,7 @@ export function NotificationCenter() {
           <div className="flex items-center justify-between border-b border-immo-border-default px-4 py-3">
             <h3 className="text-sm font-semibold text-immo-text-primary">Notifications</h3>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="flex items-center gap-1 text-[11px] text-[#7C3AED] hover:text-[#9F67FF]">
+              <button onClick={markAllRead} className="flex items-center gap-1 text-[11px] text-[#0579DA] hover:text-[#9F67FF]">
                 <CheckCheck className="h-3.5 w-3.5" /> Tout marquer lu
               </button>
             )}
@@ -166,12 +166,12 @@ export function NotificationCenter() {
                     key={n.id}
                     onClick={() => handleClick(n)}
                     className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-immo-bg-card-hover ${
-                      !isRead ? 'bg-[#7C3AED]/5' : ''
+                      !isRead ? 'bg-[#0579DA]/5' : ''
                     }`}
                   >
                     {/* Dot */}
                     <div className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                      n.type === 'alert' ? 'bg-immo-status-red' : !isRead ? 'bg-[#7C3AED]' : 'bg-immo-border-default'
+                      n.type === 'alert' ? 'bg-immo-status-red' : !isRead ? 'bg-[#0579DA]' : 'bg-immo-border-default'
                     }`} />
 
                     <div className="min-w-0 flex-1">

@@ -106,7 +106,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
           <Button
             onClick={onCreateTenant}
             disabled={lead.status === 'won'}
-            variant="purple"
+            variant="blue"
             className="gap-1.5"
           >
             <UserPlus className="h-4 w-4" />
@@ -140,7 +140,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
 
         {/* Contact — always present */}
         <div>
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Contact</h4>
+          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">Contact</h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2 text-sm text-immo-text-primary">
               <Mail className="h-4 w-4 shrink-0 text-immo-text-secondary" />
@@ -169,7 +169,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
         {qualified ? (
           <>
             <div>
-              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Entreprise</h4>
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">Entreprise</h4>
               <div className="grid grid-cols-2 gap-3">
                 <Field
                   label="Societe"
@@ -182,7 +182,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
             </div>
 
             <div>
-              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Business</h4>
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">Business</h4>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Leads / mois" value={lead.leads_per_month} />
                 <Field label="Budget marketing / mois" value={lead.marketing_budget_monthly} />
@@ -192,7 +192,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
             </div>
 
             <div>
-              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Decision</h4>
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">Decision</h4>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Decideur" value={lead.decision_maker ? DECISION_MAKER_LABELS[lead.decision_maker] ?? lead.decision_maker : null} />
                 <Field label="Si autre, noms" value={lead.decision_maker_names} />
@@ -209,7 +209,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
 
             {lead.message && (
               <div>
-                <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Message</h4>
+                <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">Message</h4>
                 <p className="whitespace-pre-wrap rounded-md border border-immo-border-default bg-immo-bg-primary p-3 text-sm text-immo-text-primary">
                   {lead.message}
                 </p>
@@ -227,7 +227,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose, onStatusChange, onCrea
         {/* Provenance — UTM + referrer */}
         {(lead.source || lead.medium || lead.campaign || lead.referrer) && (
           <div>
-            <h4 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
+            <h4 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#0579DA]">
               <Compass className="h-3 w-3" />
               Provenance
             </h4>

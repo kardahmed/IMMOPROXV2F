@@ -90,7 +90,7 @@ const TEMPLATES: Template[] = [
     name: 'Multi-Projet',
     description: 'Presentation de plusieurs projets. Ideal pour promoteurs multi-sites',
     preview: '🏗️',
-    accent: '#7C3AED',
+    accent: '#0579DA',
     sections: [
       { type: 'hero', title: 'Nos programmes immobiliers', content: { subtitle: 'Decouvrez nos projets en cours' } },
       { type: 'stats', title: '', content: { items: [{ value: 500, label: 'Unites' }, { value: 5, label: 'Projets' }, { value: 200, label: 'Familles logees' }] } },

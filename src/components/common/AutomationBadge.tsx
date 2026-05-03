@@ -21,7 +21,7 @@ export function AutomationBadge({ automationType, className }: Props) {
   const label = getTemplateLabel(automationType)
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-2 py-0.5 text-[10px] font-semibold text-[#7C3AED] ${className ?? ''}`}
+      className={`inline-flex items-center gap-1 rounded-full border border-[#0579DA]/30 bg-[#0579DA]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0579DA] ${className ?? ''}`}
       title={`Tache generee automatiquement — ${label}`}
     >
       <Bot className="h-3 w-3" />

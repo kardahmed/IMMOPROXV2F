@@ -119,12 +119,12 @@ export function WelcomeModal() {
             </Button>
           )}
           {isLast ? (
-            <Button onClick={handleClose} variant="purple" className="gap-1.5">
+            <Button onClick={handleClose} variant="blue" className="gap-1.5">
               <Sparkles className="h-4 w-4" />
               Commencer
             </Button>
           ) : (
-            <Button onClick={() => setStep(step + 1)} variant="purple" className="gap-1.5">
+            <Button onClick={() => setStep(step + 1)} variant="blue" className="gap-1.5">
               Suivant
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -134,7 +134,7 @@ export function WelcomeModal() {
     >
       <div className="space-y-5">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#7C3AED]/10 text-[#7C3AED]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0579DA]/10 text-[#0579DA]">
             <Icon className="h-6 w-6" />
           </div>
           <div className="flex-1">
@@ -146,7 +146,7 @@ export function WelcomeModal() {
         {s.cta && (
           <button
             onClick={handleCta}
-            className="group flex w-full items-center justify-between rounded-lg border border-[#7C3AED]/30 bg-[#7C3AED]/5 px-4 py-3 text-sm font-medium text-[#7C3AED] transition-colors hover:bg-[#7C3AED]/10"
+            className="group flex w-full items-center justify-between rounded-lg border border-[#0579DA]/30 bg-[#0579DA]/5 px-4 py-3 text-sm font-medium text-[#0579DA] transition-colors hover:bg-[#0579DA]/10"
           >
             <span>{s.cta.label}</span>
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -161,9 +161,9 @@ export function WelcomeModal() {
               aria-label={`Étape ${i + 1}`}
               className={`h-1.5 rounded-full transition-all ${
                 i === step
-                  ? 'w-8 bg-[#7C3AED]'
+                  ? 'w-8 bg-[#0579DA]'
                   : i < step
-                    ? 'w-1.5 bg-[#7C3AED]/60'
+                    ? 'w-1.5 bg-[#0579DA]/60'
                     : 'w-1.5 bg-immo-border-default'
               }`}
             />

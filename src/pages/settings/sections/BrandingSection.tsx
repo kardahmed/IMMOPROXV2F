@@ -10,7 +10,7 @@ import toast from 'react-hot-toast'
 
 const PRESET_COLORS = [
   { color: '#0579DA', label: 'Bleu (defaut)' },
-  { color: '#7C3AED', label: 'Violet' },
+  { color: '#0579DA', label: 'Violet' },
   { color: '#00D4A0', label: 'Vert' },
   { color: '#F5A623', label: 'Orange' },
   { color: '#CD3D64', label: 'Rouge' },
@@ -112,7 +112,7 @@ export function BrandingSection() {
           {/* Logo */}
           <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
             <div className="mb-3 flex items-center gap-2">
-              <Image className="h-4 w-4 text-[#7C3AED]" />
+              <Image className="h-4 w-4 text-[#0579DA]" />
               <h3 className="text-sm font-semibold text-immo-text-primary">Logo</h3>
             </div>
 

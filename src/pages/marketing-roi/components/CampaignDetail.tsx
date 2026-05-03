@@ -64,10 +64,10 @@ export function CampaignDetail({ campaign, onBack }: Props) {
         <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-immo-text-secondary">Taux de clics</span>
-            <span className="text-sm font-bold text-[#7C3AED]">{clickRate}%</span>
+            <span className="text-sm font-bold text-[#0579DA]">{clickRate}%</span>
           </div>
           <div className="h-2 rounded-full bg-immo-bg-primary">
-            <div className="h-2 rounded-full bg-[#7C3AED] transition-all" style={{ width: `${Math.min(Number(clickRate), 100)}%` }} />
+            <div className="h-2 rounded-full bg-[#0579DA] transition-all" style={{ width: `${Math.min(Number(clickRate), 100)}%` }} />
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@ export function CampaignDetail({ campaign, onBack }: Props) {
                         {r.opened_at ? <CheckCircle className="h-4 w-4 text-[#0579DA]" /> : <Clock className="h-4 w-4 text-immo-text-muted" />}
                       </td>
                       <td className="px-4 py-2.5">
-                        {r.clicked_at ? <CheckCircle className="h-4 w-4 text-[#7C3AED]" /> : <XCircle className="h-4 w-4 text-immo-text-muted/30" />}
+                        {r.clicked_at ? <CheckCircle className="h-4 w-4 text-[#0579DA]" /> : <XCircle className="h-4 w-4 text-immo-text-muted/30" />}
                       </td>
                     </tr>
                   )

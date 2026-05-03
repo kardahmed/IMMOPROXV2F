@@ -77,7 +77,7 @@ export function DuplicateConfigModal({ isOpen, onClose, sourceTenantId, sourceTe
           <Button
             onClick={() => duplicate.mutate()}
             disabled={!targetId || (!copySettings && !copyTemplates && !copyPipeline) || duplicate.isPending}
-            variant="purple"
+            variant="blue"
           >
             {duplicate.isPending
               ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -127,7 +127,7 @@ function CheckboxRow({ label, checked, onChange }: { label: string; checked: boo
       <div
         onClick={() => onChange(!checked)}
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
-          checked ? 'border-[#7C3AED] bg-[#7C3AED]' : 'border-immo-border-default'
+          checked ? 'border-[#0579DA] bg-[#0579DA]' : 'border-immo-border-default'
         }`}
       >
         {checked && <span className="text-[10px] text-white">&#10003;</span>}

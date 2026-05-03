@@ -46,7 +46,7 @@ export function UnitComparator({ units, onRemove, onClose }: Props) {
       <div className="w-full max-w-3xl rounded-t-2xl bg-immo-bg-card shadow-2xl sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-3">
           <h3 className="text-sm font-semibold text-immo-text-primary">Comparatif ({units.length} unites)</h3>
-          <button onClick={onClose} aria-label="Fermer le comparateur" className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"><X className="h-4 w-4" /></button>
+          <button onClick={onClose} aria-label="Fermer le comparateur" className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"><X className="h-4 w-4" /></button>
         </div>
 
         <div className="overflow-x-auto p-5">

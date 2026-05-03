@@ -140,7 +140,7 @@ export function EmailCampaignsTab() {
                     <p className="text-[10px] text-immo-text-muted">Ouvertures</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold text-[#7C3AED]">{clickRate}%</p>
+                    <p className="text-lg font-bold text-[#0579DA]">{clickRate}%</p>
                     <p className="text-[10px] text-immo-text-muted">Clics</p>
                   </div>
                 </div>

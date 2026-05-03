@@ -111,7 +111,7 @@ export function QuickActions({
       key: 'ai_task',
       icon: Bot,
       label: 'Suggestions AI',
-      color: 'text-purple-400',
+      color: 'text-blue-400',
       disabled: !aiAccess.allowed && !aiAccess.isLoading,
       title: aiLockedReason ?? undefined,
       locked: !aiAccess.allowed && !aiAccess.isLoading,
