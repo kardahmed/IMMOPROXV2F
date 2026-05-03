@@ -27,7 +27,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
   }
 
   return (
-    <header className="flex h-14 md:h-16 shrink-0 items-center justify-between border-b border-immo-border-default bg-immo-bg-sidebar px-3 md:px-6">
+    <header className="flex min-h-[3.5rem] md:min-h-[4rem] shrink-0 items-center justify-between border-b border-immo-border-default bg-immo-bg-sidebar px-3 md:px-6 pt-[env(safe-area-inset-top)]">
       {/* Left: hamburger (mobile) + page title */}
       <div className="flex items-center gap-3">
         {isMobile && (
