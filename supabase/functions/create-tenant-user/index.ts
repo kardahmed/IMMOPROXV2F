@@ -153,24 +153,37 @@ Deno.serve(async (req) => {
       status:     'active',
     })
     if (userErr) {
-      console.error('User profile error:', userErr)
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id).catch(() => {})
-      await supabaseAsCaller.rpc('delete_tenant_atomic', { p_tenant_id: tenantId })
+      console.error('[create-tenant-user] User profile insert failed:', userErr)
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id).catch((e) => {
+        console.error('[create-tenant-user] auth user rollback failed:', e)
+      })
+      await supabaseAsCaller.rpc('delete_tenant_atomic', { p_tenant_id: tenantId }).catch((e) => {
+        console.error('[create-tenant-user] tenant rollback failed:', e)
+      })
       return bad(500, `User profile creation failed: ${userErr.message}`)
     }
 
-    // 7. Audit log (best-effort — failure here doesn't justify a rollback)
-    await supabaseAdmin.from('super_admin_logs').insert({
-      super_admin_id: caller.id,
-      action: 'create_tenant',
-      tenant_id: tenantId,
-      details: {
-        tenant_name: tenant.name,
-        admin_email: admin.email,
-        plan,
-        trial_days,
-      },
-    }).catch(() => {})
+    // 7. Audit log (best-effort — failure here doesn't justify a rollback).
+    // Wrapped in try/catch on top of the supabase-js error handling because
+    // earlier traces showed stray rejections from this insert escaping to
+    // the global catch and surfacing as "Internal server error" — which
+    // hid the real bug behind a useless message.
+    try {
+      const { error: logErr } = await supabaseAdmin.from('super_admin_logs').insert({
+        super_admin_id: caller.id,
+        action: 'create_tenant',
+        tenant_id: tenantId,
+        details: {
+          tenant_name: tenant.name,
+          admin_email: admin.email,
+          plan,
+          trial_days,
+        },
+      })
+      if (logErr) console.warn('[create-tenant-user] audit log insert failed:', logErr)
+    } catch (logEx) {
+      console.warn('[create-tenant-user] audit log threw:', logEx)
+    }
 
     return new Response(JSON.stringify({
       tenant: { id: tenantId, name: tenant.name, plan, trial_days },
@@ -182,7 +195,10 @@ Deno.serve(async (req) => {
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    console.error('Fatal error:', msg)
-    return bad(500, 'Internal server error')
+    const stack = err instanceof Error ? err.stack : undefined
+    console.error('[create-tenant-user] fatal:', msg, stack)
+    // Surface the actual failure to the super-admin UI so we can debug
+    // without having to grep edge-function logs for every 500.
+    return bad(500, `Internal error: ${msg}`)
   }
 })
