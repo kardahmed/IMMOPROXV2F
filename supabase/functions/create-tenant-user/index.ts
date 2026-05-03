@@ -3,30 +3,40 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = new Set([
+  'https://app.immoprox.io',
+  'http://localhost:5173',
+])
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://app.immoprox.io'
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const VALID_PLANS = new Set(['free', 'starter', 'pro', 'enterprise'])
 
-function bad(status: number, error: string) {
+function bad(req: Request, status: number, error: string) {
   return new Response(JSON.stringify({ error }), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' },
   })
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeadersFor(req) })
   }
 
   try {
     // 1. Auth: super_admin only
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return bad(401, 'Missing authorization')
+    if (!authHeader) return bad(req, 401, 'Missing authorization')
 
     // Two clients with deliberately different auth contexts:
     //
@@ -51,7 +61,7 @@ Deno.serve(async (req) => {
     const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(
       authHeader.replace('Bearer ', '')
     )
-    if (authErr || !caller) return bad(401, 'Invalid token')
+    if (authErr || !caller) return bad(req, 401, 'Invalid token')
 
     const { data: callerProfile } = await supabaseAdmin
       .from('users')
@@ -59,7 +69,7 @@ Deno.serve(async (req) => {
       .eq('id', caller.id)
       .single()
     if (callerProfile?.role !== 'super_admin') {
-      return bad(403, 'Forbidden: super_admin only')
+      return bad(req, 403, 'Forbidden: super_admin only')
     }
 
     // 2. Parse + validate input
@@ -71,13 +81,13 @@ Deno.serve(async (req) => {
       trial_days?: number
     }
 
-    if (!tenant?.name?.trim()) return bad(400, 'Tenant name required')
-    if (!tenant?.email || !EMAIL_RE.test(tenant.email)) return bad(400, 'Tenant email invalid')
-    if (!admin?.first_name?.trim() || !admin?.last_name?.trim()) return bad(400, 'Admin first/last name required')
-    if (!admin?.email || !EMAIL_RE.test(admin.email)) return bad(400, 'Admin email invalid')
-    if (!VALID_PLANS.has(plan)) return bad(400, `Plan must be one of ${[...VALID_PLANS].join(', ')}`)
+    if (!tenant?.name?.trim()) return bad(req, 400, 'Tenant name required')
+    if (!tenant?.email || !EMAIL_RE.test(tenant.email)) return bad(req, 400, 'Tenant email invalid')
+    if (!admin?.first_name?.trim() || !admin?.last_name?.trim()) return bad(req, 400, 'Admin first/last name required')
+    if (!admin?.email || !EMAIL_RE.test(admin.email)) return bad(req, 400, 'Admin email invalid')
+    if (!VALID_PLANS.has(plan)) return bad(req, 400, `Plan must be one of ${[...VALID_PLANS].join(', ')}`)
     if (typeof trial_days !== 'number' || trial_days < 0 || trial_days > 365) {
-      return bad(400, 'trial_days must be between 0 and 365')
+      return bad(req, 400, 'trial_days must be between 0 and 365')
     }
 
     // 3. Pre-flight uniqueness checks (P2)
@@ -88,7 +98,7 @@ Deno.serve(async (req) => {
       .eq('email', admin.email)
       .limit(1)
     if ((existingUsers ?? []).length > 0) {
-      return bad(409, `Cet email admin (${admin.email}) est deja utilise par un autre utilisateur`)
+      return bad(req, 409, `Cet email admin (${admin.email}) est deja utilise par un autre utilisateur`)
     }
 
     // b) Tenant name duplicate? Warning, not fatal — we let the
@@ -120,7 +130,7 @@ Deno.serve(async (req) => {
     })
     if (rpcErr || !tenantId) {
       console.error('create_tenant_atomic RPC error:', rpcErr)
-      return bad(500, `Tenant creation failed: ${rpcErr?.message ?? 'unknown'}`)
+      return bad(req, 500, `Tenant creation failed: ${rpcErr?.message ?? 'unknown'}`)
     }
 
     // 5. Invite the admin user. If this fails we rollback the tenant.
@@ -137,7 +147,7 @@ Deno.serve(async (req) => {
       // reach this endpoint.
       const detail = inviteErr?.message ?? 'unknown'
       const code = (inviteErr as { code?: string })?.code ?? (inviteErr as { name?: string })?.name ?? ''
-      return bad(500, `Auth invite failed [${code}]: ${detail}`)
+      return bad(req, 500, `Auth invite failed [${code}]: ${detail}`)
     }
 
     // 6. Insert the admin user profile. If this fails we rollback both
@@ -160,7 +170,7 @@ Deno.serve(async (req) => {
       await supabaseAsCaller.rpc('delete_tenant_atomic', { p_tenant_id: tenantId }).catch((e) => {
         console.error('[create-tenant-user] tenant rollback failed:', e)
       })
-      return bad(500, `User profile creation failed: ${userErr.message}`)
+      return bad(req, 500, `User profile creation failed: ${userErr.message}`)
     }
 
     // 7. Audit log (best-effort — failure here doesn't justify a rollback).
@@ -191,7 +201,7 @@ Deno.serve(async (req) => {
       invite_sent: true,
       warnings,
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' },
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
@@ -199,6 +209,6 @@ Deno.serve(async (req) => {
     console.error('[create-tenant-user] fatal:', msg, stack)
     // Surface the actual failure to the super-admin UI so we can debug
     // without having to grep edge-function logs for every 500.
-    return bad(500, `Internal error: ${msg}`)
+    return bad(req, 500, `Internal error: ${msg}`)
   }
 })

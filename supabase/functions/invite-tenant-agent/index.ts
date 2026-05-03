@@ -3,29 +3,39 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = new Set([
+  'https://app.immoprox.io',
+  'http://localhost:5173',
+])
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://app.immoprox.io'
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const VALID_ROLES = new Set(['admin', 'agent'])
 
-function bad(status: number, error: string) {
+function bad(req: Request, status: number, error: string) {
   return new Response(JSON.stringify({ error }), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' },
   })
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeadersFor(req) })
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return bad(401, 'Missing authorization')
+    if (!authHeader) return bad(req, 401, 'Missing authorization')
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -34,7 +44,7 @@ Deno.serve(async (req) => {
     const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(
       authHeader.replace('Bearer ', '')
     )
-    if (authErr || !caller) return bad(401, 'Invalid token')
+    if (authErr || !caller) return bad(req, 401, 'Invalid token')
 
     // Caller must be an admin (or super_admin) of an existing tenant.
     // tenant_id is read from the DB, NEVER from the request body — that's
@@ -45,12 +55,12 @@ Deno.serve(async (req) => {
       .select('tenant_id, role, status')
       .eq('id', caller.id)
       .single()
-    if (profileErr || !callerProfile) return bad(403, 'Caller profile not found')
-    if (callerProfile.status !== 'active') return bad(403, 'Caller account is not active')
+    if (profileErr || !callerProfile) return bad(req, 403, 'Caller profile not found')
+    if (callerProfile.status !== 'active') return bad(req, 403, 'Caller account is not active')
     if (!['admin', 'super_admin'].includes(callerProfile.role)) {
-      return bad(403, 'Forbidden: tenant admin only')
+      return bad(req, 403, 'Forbidden: tenant admin only')
     }
-    if (!callerProfile.tenant_id) return bad(403, 'Caller has no tenant')
+    if (!callerProfile.tenant_id) return bad(req, 403, 'Caller has no tenant')
 
     const tenantId = callerProfile.tenant_id
 
@@ -63,9 +73,9 @@ Deno.serve(async (req) => {
     }
     const { first_name, last_name, email, phone, role = 'agent' } = body
 
-    if (!first_name?.trim() || !last_name?.trim()) return bad(400, 'Prenom et nom requis')
-    if (!email || !EMAIL_RE.test(email)) return bad(400, 'Email invalide')
-    if (!VALID_ROLES.has(role)) return bad(400, 'Role doit etre admin ou agent')
+    if (!first_name?.trim() || !last_name?.trim()) return bad(req, 400, 'Prenom et nom requis')
+    if (!email || !EMAIL_RE.test(email)) return bad(req, 400, 'Email invalide')
+    if (!VALID_ROLES.has(role)) return bad(req, 400, 'Role doit etre admin ou agent')
 
     const cleanEmail = email.trim().toLowerCase()
 
@@ -78,7 +88,7 @@ Deno.serve(async (req) => {
       .eq('email', cleanEmail)
       .limit(1)
     if ((existing ?? []).length > 0) {
-      return bad(409, 'Cet email est deja utilise par un autre utilisateur')
+      return bad(req, 409, 'Cet email est deja utilise par un autre utilisateur')
     }
 
     const { data: authUser, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
@@ -87,7 +97,7 @@ Deno.serve(async (req) => {
     )
     if (inviteErr || !authUser?.user) {
       console.error('[invite-tenant-agent] invite failed:', inviteErr)
-      return bad(500, "L'invitation n'a pas pu etre envoyee. Reessayez dans un instant.")
+      return bad(req, 500, "L'invitation n'a pas pu etre envoyee. Reessayez dans un instant.")
     }
 
     // Insert profile. Roll back the auth user if this fails — otherwise
@@ -106,7 +116,7 @@ Deno.serve(async (req) => {
     if (userErr) {
       console.error('[invite-tenant-agent] profile insert failed:', userErr)
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id).catch(() => {})
-      return bad(500, `Creation du profil echouee: ${userErr.message}`)
+      return bad(req, 500, `Creation du profil echouee: ${userErr.message}`)
     }
 
     return new Response(JSON.stringify({
@@ -115,11 +125,11 @@ Deno.serve(async (req) => {
       role,
       invite_sent: true,
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' },
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[invite-tenant-agent] fatal:', msg)
-    return bad(500, 'Internal server error')
+    return bad(req, 500, 'Internal server error')
   }
 })

@@ -1,5 +1,6 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RoleRoute } from '@/components/auth/RoleRoute'
 import { SuperAdminRoute } from '@/components/auth/SuperAdminRoute'
@@ -80,6 +81,18 @@ function HomeRedirect() {
 }
 
 function App() {
+  // Belt-and-suspenders for the RTL toggle: i18n/index.ts already wires
+  // a languageChanged listener at module load, but if the listener is
+  // ever lost (HMR, re-init) the dashboard stayed visually LTR even
+  // when i18n.language was 'ar'. This effect re-asserts dir on every
+  // route render so the AR experience is never broken silently.
+  const { i18n } = useTranslation()
+  useEffect(() => {
+    const dir = i18n.language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.setAttribute('dir', dir)
+    document.documentElement.setAttribute('lang', i18n.language)
+  }, [i18n.language])
+
   return (
     <ErrorBoundary>
     <Suspense fallback={<PageLoader />}>
