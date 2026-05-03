@@ -273,6 +273,26 @@ export const fr = {
     boundary_back: 'Retour au tableau de bord',
   },
 
+  // Toasts (transient feedback) — short, action-oriented strings
+  toast: {
+    date_time_required: 'Date et heure requises',
+    new_slot_required: 'Nouveau créneau requis',
+    visit_note_required: 'Donnez une note à la visite',
+    reason_required: 'Sélectionnez une raison',
+    bucket_not_configured: 'Bucket "client-documents" non configuré. Contactez l\'admin.',
+    upload_error: "Erreur lors de l'upload",
+    document_uploaded: 'Document uploadé',
+    document_deleted: 'Document supprimé',
+    no_active_template_stage: 'Aucun template actif pour cette étape',
+    tasks_generated: 'Tâches générées',
+    task_completed: 'Tâche terminée',
+    whatsapp_opened_logged: 'WhatsApp ouvert — message enregistré',
+    no_answer_relance: 'Marqué "pas de réponse" — relance auto dans 48h',
+    fill_all_fields: 'Remplissez tous les champs',
+    message_copied: 'Message copié',
+    client_phone_missing: 'Numéro client manquant',
+  },
+
   // Commun
   common: {
     loading: 'Chargement...',

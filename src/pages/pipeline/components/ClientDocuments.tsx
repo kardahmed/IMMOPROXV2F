@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Upload, FileText, Trash2, Download, Eye, CheckCircle, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export function ClientDocuments({ clientId, cinVerified }: Props) {
+  const { t } = useTranslation()
   const { tenantId } = useAuthStore()
   const qc = useQueryClient()
   const [uploading, setUploading] = useState(false)
@@ -71,12 +73,12 @@ export function ClientDocuments({ clientId, cinVerified }: Props) {
       handleSupabaseError(error)
       // If bucket doesn't exist, try creating it
       if (error.message?.includes('not found')) {
-        toast.error('Bucket "client-documents" non configure. Contactez l\'admin.')
+        toast.error(t('toast.bucket_not_configured'))
       } else {
-        toast.error('Erreur lors de l\'upload')
+        toast.error(t('toast.upload_error'))
       }
     } else {
-      toast.success('Document uploadé')
+      toast.success(t('toast.document_uploaded'))
       qc.invalidateQueries({ queryKey: ['client-documents', clientId] })
 
       // If CIN uploaded, mark cin_verified
@@ -96,7 +98,7 @@ export function ClientDocuments({ clientId, cinVerified }: Props) {
       const { error } = await supabase.storage.from('client-documents').remove([path])
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['client-documents', clientId] }); toast.success('Document supprimé') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['client-documents', clientId] }); toast.success(t('toast.document_deleted')) },
   })
 
   function formatSize(bytes: number) {

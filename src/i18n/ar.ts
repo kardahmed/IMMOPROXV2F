@@ -271,6 +271,26 @@ export const ar = {
     boundary_back: 'العودة إلى لوحة التحكم',
   },
 
+  // Toasts
+  toast: {
+    date_time_required: 'التاريخ والوقت مطلوبان',
+    new_slot_required: 'موعد جديد مطلوب',
+    visit_note_required: 'أعط ملاحظة للزيارة',
+    reason_required: 'اختر السبب',
+    bucket_not_configured: 'المجلد "client-documents" غير مكوّن. اتصل بالمسؤول.',
+    upload_error: 'حدث خطأ أثناء التحميل',
+    document_uploaded: 'تم تحميل المستند',
+    document_deleted: 'تم حذف المستند',
+    no_active_template_stage: 'لا يوجد قالب نشط لهذه المرحلة',
+    tasks_generated: 'تم إنشاء المهام',
+    task_completed: 'تمت المهمة',
+    whatsapp_opened_logged: 'تم فتح واتساب — تم تسجيل الرسالة',
+    no_answer_relance: 'تم وضع علامة "لا رد" — متابعة تلقائية خلال 48 ساعة',
+    fill_all_fields: 'املأ جميع الحقول',
+    message_copied: 'تم نسخ الرسالة',
+    client_phone_missing: 'رقم العميل مفقود',
+  },
+
   // Commun
   common: {
     loading: 'جاري التحميل...',
@@ -929,6 +949,13 @@ export const ar = {
     priority_yes: 'ذو أولوية',
     priority_no: 'عادي',
     apply: 'تطبيق',
+    agent: 'وكيل',
+    all: 'الكل',
+    filters: 'تصفية',
+    interest: 'مستوى الاهتمام',
+    priority: 'الأولوية',
+    reset: 'إعادة تعيين',
+    source: 'المصدر',
   },
 
   pipeline_extra: {
@@ -954,6 +981,14 @@ export const ar = {
     assigned_clients: 'العملاء المسندون',
     search_agent: 'البحث عن وكيل…',
     no_agents: 'لا يوجد وكلاء',
+    activate: 'تفعيل',
+    clients_count: 'العملاء',
+    deactivate: 'تعطيل',
+    invite: 'دعوة وكيل',
+    joined: 'تاريخ الانضمام',
+    revenue: 'رقم الأعمال',
+    role: 'الدور',
+    sales_count: 'المبيعات',
   },
 
   goals_page: {
@@ -985,6 +1020,11 @@ export const ar = {
     cancel: 'إلغاء',
     create_action: 'إنشاء الهدف',
     created_success: 'تم إنشاء الهدف بنجاح',
+    clients_count: 'عدد العملاء',
+    reservations_count: 'عدد الحجوزات',
+    revenue: 'رقم الأعمال',
+    sales_count: 'عدد المبيعات',
+    visits_count: 'عدد الزيارات',
   },
 
   dossiers_page: {
@@ -993,6 +1033,10 @@ export const ar = {
     schedules: 'جداول الدفع',
     receipts: 'إيصالات الحجز',
     no_documents: 'لا توجد مستندات',
+    client: 'العميل',
+    date: 'التاريخ',
+    document_name: 'اسم المستند',
+    type: 'النوع',
   },
 
   performance_page: {
@@ -1031,6 +1075,7 @@ export const ar = {
     chart_funnel: 'قمع المسار',
     chart_sources: 'مصادر العملاء',
     no_data: 'لا توجد بيانات',
+    evolution: 'التطور',
   },
 
   reports_page: {
@@ -1078,6 +1123,11 @@ export const ar = {
     detail_client: 'العميل',
     detail_note: 'ملاحظة',
     pagination_of: 'من',
+    agents_report: 'تقرير الوكلاء',
+    clients_report: 'تقرير العملاء',
+    financial_report: 'التقرير المالي',
+    report_type: 'نوع التقرير',
+    sales_report: 'تقرير المبيعات',
   },
 
   landing_page: {
@@ -1108,6 +1158,12 @@ export const ar = {
     per_agent: 'رابط لكل وكيل',
     choose_template: 'اختر قالبًا',
     template_subtitle: 'ابدأ بنموذج جاهز',
+    content: 'المحتوى',
+    copy_link: 'نسخ الرابط',
+    lang_ab: 'اللغة واختبار A/B',
+    mode: 'الوضع',
+    sections_count: '{{count}} أقسام',
+    source_default: 'المصدر الافتراضي',
   },
 
   not_found: {
@@ -1127,6 +1183,7 @@ export const ar = {
     all_caught_up: 'جميع العملاء محدثون',
     never_contacted: 'لم يتم التواصل أبدًا',
     last_contact_on: 'آخر اتصال: {{date}}',
+    goal_target: 'الهدف: {{count}}',
   },
 
   project_detail: {
@@ -1135,6 +1192,12 @@ export const ar = {
     reserved: 'محجوزة',
     available: 'متاحة',
     code: 'الرمز',
+    activity: 'النشاط الأخير',
+    delivery: 'التسليم',
+    info: 'المعلومات',
+    no_units: 'لا توجد وحدات في هذا المشروع',
+    status: 'الحالة',
+    units: 'وحدات المشروع',
   },
 
   units_tab: {
@@ -1146,17 +1209,41 @@ export const ar = {
     reserved: 'محجوز',
     available: 'متاح',
     blocked: 'محظور',
+    actions: 'الإجراءات',
+    all_statuses: 'جميع الحالات',
+    all_types: 'جميع الأنواع',
+    building: 'العمارة',
+    code: 'الرمز',
+    floor: 'الطابق',
+    price: 'السعر',
+    status: 'الحالة',
+    subtype: 'نوع فرعي',
+    surface: 'المساحة',
+    type: 'النوع',
   },
 
   create_project: {
     title: 'مشروع جديد',
     name_required: 'الاسم مطلوب',
     code_required: 'الرمز مطلوب',
+    code: 'رمز المشروع',
+    description: 'الوصف',
+    location: 'الموقع',
+    name: 'اسم المشروع',
   },
 
   create_unit: {
     title: 'وحدة جديدة',
     select_project: 'اختر',
+    building: 'العمارة',
+    code: 'رمز الوحدة',
+    delivery_date: 'تاريخ التسليم',
+    floor: 'الطابق',
+    price: 'السعر (دج)',
+    project: 'المشروع',
+    subtype: 'نوع فرعي',
+    surface: 'المساحة (م²)',
+    type: 'النوع',
   },
 
   tasks_page: {
@@ -1355,5 +1442,11 @@ export const ar = {
     status_sending: 'جاري الإرسال',
     status_sent: 'مرسلة',
     status_cancelled: 'ملغاة',
+  },
+  agent_detail: {
+    clients_list: 'قائمة العملاء',
+    no_activity: 'لا يوجد نشاط',
+    performance: 'الأداء',
+    recent_activity: 'النشاط الأخير',
   },
 } as const

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { ArrowRight, Calendar, MapPin, Building2, Star, DollarSign, RotateCcw, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 // import { handleSupabaseError } from '@/lib/errors'
@@ -25,6 +26,7 @@ interface Props {
 const TIME_SLOTS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00']
 
 export function SmartStageDialog({ isOpen, onClose, onConfirm, clientId, clientName, fromStage, toStage, loading }: Props) {
+  const { t } = useTranslation()
   const userId = useAuthStore(s => s.session?.user?.id)
   const tenantId = useAuthStore(s => s.tenantId)
   const qc = useQueryClient()
@@ -86,7 +88,7 @@ export function SmartStageDialog({ isOpen, onClose, onConfirm, clientId, clientN
 
     switch (dialogType) {
       case 'plan_visit':
-        if (!visitDate || !visitTime) { toast.error('Date et heure requises'); return }
+        if (!visitDate || !visitTime) { toast.error(t('toast.date_time_required')); return }
         createVisit.mutate()
         finalNote = `Visite planifiee: ${visitDate} a ${visitTime} (${visitType === 'on_site' ? 'Sur site' : visitType === 'office' ? 'Bureau' : 'Virtuelle'})`
         break
@@ -96,7 +98,7 @@ export function SmartStageDialog({ isOpen, onClose, onConfirm, clientId, clientN
           // Go back to accueil instead
           finalNote = 'Visite annulee par le client'
         } else if (confirmAction === 'report') {
-          if (!visitDate || !visitTime) { toast.error('Nouveau créneau requis'); return }
+          if (!visitDate || !visitTime) { toast.error(t('toast.new_slot_required')); return }
           createVisit.mutate()
           finalNote = `Visite reportee au ${visitDate} a ${visitTime}`
         } else {
@@ -105,7 +107,7 @@ export function SmartStageDialog({ isOpen, onClose, onConfirm, clientId, clientN
         break
 
       case 'feedback_visit':
-        if (!visitNote) { toast.error('Donnez une note a la visite'); return }
+        if (!visitNote) { toast.error(t('toast.visit_note_required')); return }
         // Update client with visit feedback
         supabase.from('clients').update({
           visit_note: visitNote,
@@ -122,7 +124,7 @@ export function SmartStageDialog({ isOpen, onClose, onConfirm, clientId, clientN
         break
 
       case 'reason':
-        if (!reason) { toast.error('Sélectionnez une raison'); return }
+        if (!reason) { toast.error(t('toast.reason_required')); return }
         finalNote = `${toStage === 'perdue' ? 'Client perdu' : 'Relancement'}: ${reason}${reminderDays ? '. Rappel dans ' + reminderDays + 'j' : ''}`
         if (reminderDays && tenantId) {
           supabase.from('tasks').insert({
