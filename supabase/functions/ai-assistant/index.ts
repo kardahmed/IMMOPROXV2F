@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
 
     // ───── Compose Claude messages ──────────────────────────────
     const systemPrompt = (language === 'ar' ? SYSTEM_PROMPT_AR : SYSTEM_PROMPT_FR) +
-      '\n\n=== CONTEXTE TENANT ===\n' + wrapUntrusted(tenantContext) + '\n=== FIN CONTEXTE ==='
+      '\n\n' + wrapUntrusted('CONTEXTE TENANT', tenantContext, 50000)
 
     // Trim conversation history to last 10 turns to keep tokens bounded
     const trimmedHistory = conversation.slice(-10).map(m => ({
@@ -207,15 +207,17 @@ Deno.serve(async (req) => {
       const txt = await apiResp.text().catch(() => 'unknown')
       console.error('Anthropic error:', apiResp.status, txt)
       // Log failure to interactions for super-admin visibility
-      await supabase.from('x_interactions' as never).insert({
-        tenant_id: profile.tenant_id,
-        user_id: user.id,
-        type: 'question',
-        input_text: question,
-        success: false,
-        error_msg: `Anthropic ${apiResp.status}: ${txt.slice(0, 200)}`,
-        duration_ms: Date.now() - startedAt,
-      } as never).catch(() => {})
+      try {
+        await supabase.from('x_interactions' as never).insert({
+          tenant_id: profile.tenant_id,
+          user_id: user.id,
+          type: 'question',
+          input_text: question,
+          success: false,
+          error_msg: `Anthropic ${apiResp.status}: ${txt.slice(0, 200)}`,
+          duration_ms: Date.now() - startedAt,
+        } as never)
+      } catch { /* best-effort log, never block */ }
       return json({ error: 'Erreur du modèle IA. Réessayez dans un instant.' }, 502)
     }
 
