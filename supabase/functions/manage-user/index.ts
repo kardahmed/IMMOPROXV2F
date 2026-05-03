@@ -3,9 +3,19 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = new Set([
+  'https://app.immoprox.io',
+  'http://localhost:5173',
+])
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://app.immoprox.io'
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 type Action = 'create_user' | 'update_role' | 'toggle_status' | 'reset_password' | 'delete_user'
@@ -27,13 +37,13 @@ interface RequestBody {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeadersFor(req) })
   }
 
   const json = (data: unknown, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' },
     })
 
   try {
@@ -231,18 +241,29 @@ Deno.serve(async (req) => {
 
         if (!userProfile) return json({ error: 'User not found' }, 404)
 
-        // Delete from users table first (FK constraints)
+        // Delete from Supabase Auth FIRST. The public.users row has
+        // ON DELETE CASCADE on auth.users(id), so a successful auth
+        // delete also cleans up the profile in one shot. If we deleted
+        // the profile first and the auth delete then failed, we'd be
+        // stuck with an orphan auth user that blocks future invites
+        // for the same email and leaks credentials.
+        const { error: authErr2 } = await supabase.auth.admin.deleteUser(user_id)
+        if (authErr2) {
+          console.error('[manage-user] auth delete failed:', authErr2)
+          return json({ error: `Auth delete failed: ${authErr2.message}` }, 500)
+        }
+
+        // Defensive: if the FK cascade somehow didn't run (e.g. a
+        // future migration changes the constraint), explicitly remove
+        // the profile row.
         const { error: profileErr } = await supabase
           .from('users')
           .delete()
           .eq('id', user_id)
           .eq('tenant_id', tenant_id)
-
-        if (profileErr) return json({ error: `Delete profile failed: ${profileErr.message}` }, 500)
-
-        // Delete from Supabase Auth
-        const { error: authErr2 } = await supabase.auth.admin.deleteUser(user_id)
-        if (authErr2) console.error('Auth delete warning:', authErr2)
+        if (profileErr) {
+          console.error('[manage-user] profile cleanup after auth delete failed:', profileErr)
+        }
 
         await log('delete_user', { user_id, email: userProfile.email, role: userProfile.role })
         return json({ success: true, user_id })

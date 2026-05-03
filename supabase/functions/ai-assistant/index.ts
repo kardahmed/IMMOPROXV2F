@@ -115,13 +115,39 @@ Deno.serve(async (req) => {
     // ───── Build tenant context ─────────────────────────────────
     // Pull a curated snapshot of the tenant's data. Capped to keep
     // input tokens bounded (~3-5K tokens for a busy tenant).
+    // Agents only see context tied to clients they own; admins see the
+    // whole tenant. Without this filter, an agent could ask the AI
+    // "list all our hot leads" and get clients assigned to coworkers.
+    const isAgent = profile.role === 'agent'
+
+    const clientsQuery = supabase.from('clients')
+      .select('id, full_name, phone, pipeline_stage, confirmed_budget, source, agent_id, last_contact_at, is_priority')
+      .eq('tenant_id', profile.tenant_id)
+      .order('updated_at', { ascending: false })
+      .limit(50)
+    if (isAgent) clientsQuery.eq('agent_id', profile.id)
+
+    const visitsQuery = supabase.from('visits')
+      .select('id, client_id, scheduled_at, visit_type, status, agent_id')
+      .eq('tenant_id', profile.tenant_id)
+      .gte('scheduled_at', new Date(Date.now() - 7 * 86400000).toISOString())
+      .limit(50)
+    if (isAgent) visitsQuery.eq('agent_id', profile.id)
+
+    const tasksQuery = supabase.from('tasks')
+      .select('id, client_id, title, due_date, status, priority, agent_id')
+      .eq('tenant_id', profile.tenant_id)
+      .eq('status', 'pending')
+      .limit(30)
+    if (isAgent) tasksQuery.eq('agent_id', profile.id)
+
     const [tenantRes, agentsRes, projectsRes, clientsRes, visitsRes, tasksRes] = await Promise.all([
       supabase.from('tenants').select('name, wilaya').eq('id', profile.tenant_id).single(),
       supabase.from('users').select('id, first_name, last_name, role, status').eq('tenant_id', profile.tenant_id).eq('status', 'active').limit(50),
       supabase.from('projects').select('id, name, code, status').eq('tenant_id', profile.tenant_id).eq('status', 'active').limit(20),
-      supabase.from('clients').select('id, full_name, phone, pipeline_stage, confirmed_budget, source, agent_id, last_contact_at, is_priority').eq('tenant_id', profile.tenant_id).order('updated_at', { ascending: false }).limit(50),
-      supabase.from('visits').select('id, client_id, scheduled_at, visit_type, status').eq('tenant_id', profile.tenant_id).gte('scheduled_at', new Date(Date.now() - 7 * 86400000).toISOString()).limit(50),
-      supabase.from('tasks').select('id, client_id, title, due_date, status, priority').eq('tenant_id', profile.tenant_id).eq('status', 'pending').limit(30),
+      clientsQuery,
+      visitsQuery,
+      tasksQuery,
     ])
 
     const tenantInfo = tenantRes.data as { name: string; wilaya: string | null } | null
