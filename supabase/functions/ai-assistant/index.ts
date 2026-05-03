@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
 
     // ───── Compose Claude messages ──────────────────────────────
     const systemPrompt = (language === 'ar' ? SYSTEM_PROMPT_AR : SYSTEM_PROMPT_FR) +
-      '\n\n=== CONTEXTE TENANT ===\n' + wrapUntrusted(tenantContext) + '\n=== FIN CONTEXTE ==='
+      '\n\n' + wrapUntrusted('CONTEXTE TENANT', tenantContext, 50000)
 
     // Trim conversation history to last 10 turns to keep tokens bounded
     const trimmedHistory = conversation.slice(-10).map(m => ({
