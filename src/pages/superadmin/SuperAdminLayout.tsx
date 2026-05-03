@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight, Moon, Sun, Inbox, ShieldAlert, Receipt, AlertTriangle } from 'lucide-react'
+import { Building2, BarChart3, Settings, LogOut, ArrowLeft, ScrollText, CreditCard, MessageSquare, Headphones, Megaphone, Activity, Layers, Sparkles, MessageCircle, Mail, ChevronRight, Moon, Sun, Inbox, ShieldAlert, Receipt, AlertTriangle, Plug } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -61,6 +61,7 @@ const NAV_SECTIONS: readonly NavSection[] = [
     title: 'Configuration',
     items: [
       { to: '/admin/playbook', icon: Sparkles, labelKey: 'Playbook IA' },
+      { to: '/admin/integrations', icon: Plug, labelKey: 'Intégrations' },
       { to: '/admin/changelog', icon: Megaphone, labelKey: 'Changelog' },
       { to: '/admin/settings', icon: Settings, labelKey: 'Plateforme' },
     ],
