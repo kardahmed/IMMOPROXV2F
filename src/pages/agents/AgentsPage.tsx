@@ -322,7 +322,7 @@ export function AgentsPage() {
       </div>
 
       {/* Create modal */}
-      <CreateAgentModal isOpen={showCreate} onClose={() => setShowCreate(false)} tenantId={tenantId!} />
+      <CreateAgentModal isOpen={showCreate} onClose={() => setShowCreate(false)} />
 
       {/* Put on leave — temporary absence with optional backup */}
       <PutOnLeaveModal
@@ -366,7 +366,7 @@ export function AgentsPage() {
 
 /* ═══ Create Agent Modal ═══ */
 
-function CreateAgentModal({ isOpen, onClose, tenantId }: { isOpen: boolean; onClose: () => void; tenantId: string }) {
+function CreateAgentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const qc = useQueryClient()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
