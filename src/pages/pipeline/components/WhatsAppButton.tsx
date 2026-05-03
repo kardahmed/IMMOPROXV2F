@@ -1,5 +1,6 @@
 import { MessageCircle } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { appendClientNote } from '@/lib/clientNotes'
@@ -22,6 +23,7 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 }
 
 export function WhatsAppButton({ clientId, clientName, phone, tenantId, message, size = 'sm' }: Props) {
+  const { t } = useTranslation()
   const userId = useAuthStore(s => s.session?.user?.id)
   const { userProfile } = useAuthStore()
   const qc = useQueryClient()
@@ -57,7 +59,7 @@ export function WhatsAppButton({ clientId, clientName, phone, tenantId, message,
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank')
     logMessage.mutate()
-    toast.success('WhatsApp ouvert — message enregistré')
+    toast.success(t('toast.whatsapp_opened_logged'))
   }
 
   if (size === 'md') {

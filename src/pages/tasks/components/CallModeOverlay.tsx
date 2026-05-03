@@ -15,6 +15,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import {
   X, Phone, CheckCircle, Clock, CalendarClock, Loader2, User, Sparkles,
 } from 'lucide-react'
@@ -44,6 +45,7 @@ interface Props {
 }
 
 export function CallModeOverlay({ isOpen, onClose, task }: Props) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [notes, setNotes] = useState('')
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
@@ -152,7 +154,7 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
       await appendClientNote(task.client_id, `⏰ Appel sans réponse — ${task.title}`, fullNotes)
     },
     onSuccess: () => {
-      toast.success('Marqué "pas de réponse" — relance auto dans 48h')
+      toast.success(t('toast.no_answer_relance'))
       refreshTasks()
       onClose()
     },

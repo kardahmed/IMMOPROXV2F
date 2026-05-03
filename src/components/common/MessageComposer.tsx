@@ -13,6 +13,7 @@
 // {agence}, {projet}, {phone}).
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Copy, Send, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -47,6 +48,7 @@ export function MessageComposer({
   showCopy = true,
   toolbarRight,
 }: Props) {
+  const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string>(defaultTemplateId)
   const [message, setMessage] = useState<string>('')
   const [edited, setEdited] = useState(false)
@@ -79,14 +81,14 @@ export function MessageComposer({
   function handleCopy() {
     navigator.clipboard.writeText(message)
     setCopied(true)
-    toast.success('Message copié')
+    toast.success(t('toast.message_copied'))
     setTimeout(() => setCopied(false), 2000)
   }
 
   function handleWhatsApp() {
     const phone = (vars.clientPhone ?? '').replace(/[\s\-()]/g, '').replace(/^0/, '213')
     if (!phone) {
-      toast.error('Numéro client manquant')
+      toast.error(t('toast.client_phone_missing'))
       return
     }
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')

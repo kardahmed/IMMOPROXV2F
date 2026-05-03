@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, Clock, Send, AlertTriangle, Zap, SkipForward } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage, tenantId }: Props) {
+  const { t } = useTranslation()
   const userId = useAuthStore(s => s.session?.user?.id)
   const qc = useQueryClient()
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending')
@@ -56,7 +58,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
       const { data: templates } = await supabase.from('task_templates').select('*')
         .eq('tenant_id', tenantId).eq('stage', clientStage).eq('is_active', true).order('sort_order')
 
-      if (!templates || templates.length === 0) { toast.error('Aucun template actif pour cette étape'); return }
+      if (!templates || templates.length === 0) { toast.error(t('toast.no_active_template_stage')); return }
 
       // Status is always 'pending' (enum); UI derives "Programmé" from
       // scheduled_at > now() when delay_minutes > 0.
@@ -77,7 +79,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
       const { error } = await supabase.from('tasks').insert(newTasks)
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', clientId] }); toast.success('Tâches générées') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', clientId] }); toast.success(t('toast.tasks_generated')) },
   })
 
   const completeTask = useMutation({
@@ -85,7 +87,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
       const { error } = await supabase.from('tasks').update(buildStatusPayload('completed')).eq('id', taskId)
       if (error) { handleSupabaseError(error); throw error }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', clientId] }); toast.success('Tâche terminée') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['tasks', clientId] }); toast.success(t('toast.task_completed')) },
   })
 
   const skipTask = useMutation({

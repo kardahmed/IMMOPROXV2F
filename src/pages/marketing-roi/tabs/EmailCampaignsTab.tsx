@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Send, Calendar, Mail, ChevronRight } from 'lucide-react'
 import { useEmailCampaigns, useEmailTemplates, useSaveCampaign, useSendCampaign } from '@/hooks/useEmailMarketing'
 import { LoadingSpinner, StatusBadge } from '@/components/common'
@@ -20,6 +21,7 @@ const CAMPAIGN_STATUS: Record<string, { label: string; type: 'green' | 'orange' 
 }
 
 export function EmailCampaignsTab() {
+  const { t } = useTranslation()
   const { data: campaigns = [], isLoading } = useEmailCampaigns()
   const { data: templates = [] } = useEmailTemplates()
   const saveCampaign = useSaveCampaign()
@@ -200,7 +202,7 @@ export function EmailCampaignsTab() {
                 </div>
               </div>
               <div className="flex justify-end">
-                <Button onClick={() => { if (!name || !subject || !templateId) { toast.error('Remplissez tous les champs'); return } setStep(2) }} className="gap-1 text-xs bg-immo-accent-green text-white">
+                <Button onClick={() => { if (!name || !subject || !templateId) { toast.error(t('toast.fill_all_fields')); return } setStep(2) }} className="gap-1 text-xs bg-immo-accent-green text-white">
                   Suivant <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
               </div>
