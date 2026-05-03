@@ -14,7 +14,17 @@ type SR = {
   lang: string
   continuous: boolean
   interimResults: boolean
-  onresult: ((e: { results: { [k: number]: { [k: number]: { transcript: string } } }; resultIndex: number }) => void) | null
+  onresult: ((e: {
+    results: {
+      length: number
+      [k: number]: {
+        length: number
+        isFinal: boolean
+        [k: number]: { transcript: string }
+      }
+    }
+    resultIndex: number
+  }) => void) | null
   onerror: ((e: { error?: string }) => void) | null
   onend: (() => void) | null
 }
@@ -52,6 +62,10 @@ export function XAssistant() {
   const [voiceOn, setVoiceOn] = useState(true)
   const recognitionRef = useRef<SR | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  // Cumulative final transcript across the recording session.
+  // Recognition emits per-utterance — we stitch them so a pause
+  // doesn't truncate the user's full sentence.
+  const finalTranscriptRef = useRef('')
 
   const lang = i18n.language === 'ar' ? 'ar' : 'fr'
 
@@ -67,15 +81,20 @@ export function XAssistant() {
     if (!Ctor) return
     const r = new Ctor()
     r.lang = lang === 'ar' ? 'ar-DZ' : 'fr-FR'
-    r.continuous = false
-    r.interimResults = false
+    // Continuous + interim results so the mic stays open across natural
+    // pauses ("hmm…") and the user sees the live transcript building up
+    // in the input. The user explicitly stops by re-clicking the mic.
+    r.continuous = true
+    r.interimResults = true
     r.onresult = (e) => {
-      const transcript = e.results[0]?.[0]?.transcript ?? ''
-      if (transcript) {
-        setInput(transcript)
-        // Auto-send after voice capture
-        setTimeout(() => sendMessage(transcript), 50)
+      let interim = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const seg = e.results[i]
+        const t = seg[0]?.transcript ?? ''
+        if (seg.isFinal) finalTranscriptRef.current += t + ' '
+        else interim += t
       }
+      setInput((finalTranscriptRef.current + interim).trim())
     }
     r.onerror = (e) => {
       setRecording(false)
@@ -114,6 +133,8 @@ export function XAssistant() {
       alert(t('x_assistant.no_mic_support'))
       return
     }
+    finalTranscriptRef.current = ''
+    setInput('')
     try {
       recognitionRef.current.start()
       setRecording(true)
@@ -123,6 +144,10 @@ export function XAssistant() {
   function stopMic() {
     try { recognitionRef.current?.stop() } catch { /* noop */ }
     setRecording(false)
+    // Send whatever we captured. Tiny delay so the last onresult finalizes.
+    const captured = finalTranscriptRef.current.trim()
+    finalTranscriptRef.current = ''
+    if (captured) setTimeout(() => sendMessage(captured), 100)
   }
 
   async function sendMessage(text: string) {
