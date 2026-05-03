@@ -207,15 +207,17 @@ Deno.serve(async (req) => {
       const txt = await apiResp.text().catch(() => 'unknown')
       console.error('Anthropic error:', apiResp.status, txt)
       // Log failure to interactions for super-admin visibility
-      await supabase.from('x_interactions' as never).insert({
-        tenant_id: profile.tenant_id,
-        user_id: user.id,
-        type: 'question',
-        input_text: question,
-        success: false,
-        error_msg: `Anthropic ${apiResp.status}: ${txt.slice(0, 200)}`,
-        duration_ms: Date.now() - startedAt,
-      } as never).catch(() => {})
+      try {
+        await supabase.from('x_interactions' as never).insert({
+          tenant_id: profile.tenant_id,
+          user_id: user.id,
+          type: 'question',
+          input_text: question,
+          success: false,
+          error_msg: `Anthropic ${apiResp.status}: ${txt.slice(0, 200)}`,
+          duration_ms: Date.now() - startedAt,
+        } as never)
+      } catch { /* best-effort log, never block */ }
       return json({ error: 'Erreur du modèle IA. Réessayez dans un instant.' }, 502)
     }
 
