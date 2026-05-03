@@ -120,6 +120,49 @@ const TOOLS = [
       required: ['client_id', 'new_stage'],
     },
   },
+  {
+    name: 'update_client_info',
+    description: "Met à jour les infos d'un client existant : budget confirmé, agent assigné, priorité. Tous les champs sont optionnels — ne passe que ceux que l'utilisateur veut changer.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        client_id: { type: 'string', description: 'UUID du client' },
+        confirmed_budget: { type: 'number', description: 'Nouveau budget en DA (optionnel)' },
+        agent_id: { type: 'string', description: "UUID du nouvel agent (depuis le contexte AGENTS) (optionnel)" },
+        is_priority: { type: 'boolean', description: 'Marquer/démarquer prioritaire (optionnel)' },
+      },
+      required: ['client_id'],
+    },
+  },
+  {
+    name: 'mark_visit_completed',
+    description: "Marque une visite comme terminée. À utiliser après une visite réelle pour enregistrer le résultat.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        visit_id: { type: 'string', description: 'UUID de la visite (depuis le contexte VISITES)' },
+        outcome: {
+          type: 'string',
+          enum: ['interested', 'not_interested', 'rescheduled', 'no_show'],
+          description: "'interested' = intéressé, 'not_interested' = pas intéressé, 'rescheduled' = à reprogrammer, 'no_show' = ne s'est pas présenté",
+        },
+        notes: { type: 'string', description: 'Résumé court de la visite (optionnel mais recommandé)' },
+      },
+      required: ['visit_id', 'outcome'],
+    },
+  },
+  {
+    name: 'send_whatsapp',
+    description: "Envoie un message WhatsApp au client via l'API Meta. Le message libre n'est possible que si le client a écrit dans les 24h dernières — sinon utilise un template.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        client_id: { type: 'string', description: 'UUID du client' },
+        message: { type: 'string', description: "Texte du message (le système ajoutera le contexte agence)" },
+      },
+      required: ['client_id', 'message'],
+    },
+  },
 ] as const
 
 const SYSTEM_PROMPT_FR = `Tu es X, l'assistant IA d'IMMO PRO-X (CRM immobilier algérien). Tu réponds aux questions de l'agent immobilier ET tu peux exécuter des actions via les outils fournis.
@@ -130,6 +173,9 @@ OUTILS DISPONIBLES :
 - create_visit : programmer une visite pour un client (nécessite client_id)
 - create_task : créer une tâche/rappel pour un client (nécessite client_id)
 - update_client_stage : changer l'étape pipeline d'un client
+- update_client_info : changer budget / agent / priorité d'un client
+- mark_visit_completed : marquer une visite comme terminée avec son issue
+- send_whatsapp : envoyer un message WhatsApp à un client
 
 QUAND UTILISER LES OUTILS :
 - L'utilisateur dit "crée", "ajoute", "programme", "passe en", "marque comme" → utilise un outil
@@ -192,18 +238,25 @@ RECHERCHE vs CRÉATION (heuristique) :
 Si après un search_clients infructueux, l'utilisateur fournit un NOM + TÉLÉPHONE neuf, c'est une CRÉATION → demande la source manquante puis appelle create_client.
 Si l'utilisateur fournit juste un NOM différent sans téléphone, c'est une CORRECTION → re-cherche avec ce nouveau nom.
 
-RÈGLES DE RÉPONSE :
-- Réponds en 1 à 3 phrases courtes, prêtes pour la voix
-- Pas de listes à puces, pas de markdown, pas d'emojis
+RÈGLES DE RÉPONSE (CRITIQUE — RESPECTE STRICTEMENT) :
+- 1 PHRASE MAX par réponse (max 20 mots). Pour la voix, plus court = mieux.
+- Pas de listes, pas de markdown, pas d'emojis, pas de "Bien sûr"/"D'accord"/"Voici"
 - Tutoie l'agent
-- Pas de formules de politesse — droit au but
-- Après une action réussie, CONFIRME ce que tu as fait avec les détails (nom client, date, type de visite)
-- Si une action échoue, explique pourquoi en 1 phrase
-- Pour les questions read-only : appuie-toi UNIQUEMENT sur les données du contexte ; si l'info n'y est pas, dis-le
+- Après une action réussie : nomme l'action + les détails essentiels en 1 phrase ("Client Mohamed créé." / "Visite Hasna 22 juin programmée." / "Étape passée en négo.")
+- Si une action échoue : 1 phrase qui dit pourquoi, sans excuses
+- Pour les questions read-only : réponds avec les chiffres/faits, sans périphrase
+- Si l'info manque, demande UNIQUEMENT ce qui manque (ex: "Source ?"), pas un menu
+
+ACTIONS DESTRUCTIVES — DEMANDE TOUJOURS CONFIRMATION :
+Pour delete_*, update_client_stage='perdue', mark_visit_completed='no_show' → demande confirmation explicite AVANT d'appeler l'outil :
+- Tour 1 (user): "Supprime Hasna"
+- Tour 1 (toi): "Confirmer la suppression de Hasna Bouzid ?"  ← PAS d'outil ici
+- Tour 2 (user): "oui" / "ok" / "confirme"
+- Tour 2 (toi): [appelle l'outil] "Hasna supprimée."
 
 FORMATS :
 - Montants en DA avec espaces (12 500 000 DA)
-- Dates en français à l'oral (15 juin), mais ISO 8601 dans les paramètres d'outils (2026-06-15T10:00:00)
+- Dates en français à l'oral (15 juin), ISO 8601 dans les outils (2026-06-15T10:00:00)
 - Réponds dans la langue de la question (français ou arabe)`
 
 const SYSTEM_PROMPT_AR = `أنت X، المساعد الذكي لـ IMMO PRO-X. تجيب على الأسئلة وتنفذ الإجراءات عبر الأدوات المتوفرة.
@@ -337,6 +390,77 @@ async function executeTool(
         .eq('id', clientId)
       if (error) return { result: `Erreur SQL: ${error.message}`, is_error: true }
       return { result: `Étape changée vers '${newStage}'`, is_error: false }
+    }
+
+    if (toolName === 'update_client_info') {
+      const clientId = String(input.client_id ?? '')
+      if (!clientId) return { result: 'Erreur: client_id obligatoire', is_error: true }
+      const patch: Record<string, unknown> = {}
+      if (typeof input.confirmed_budget === 'number') patch.confirmed_budget = input.confirmed_budget
+      if (typeof input.agent_id === 'string' && input.agent_id) patch.agent_id = input.agent_id
+      if (typeof input.is_priority === 'boolean') patch.is_priority = input.is_priority
+      if (Object.keys(patch).length === 0) return { result: 'Erreur: rien à modifier', is_error: true }
+      const { error } = await supabase
+        .from('clients')
+        .update(patch)
+        .eq('tenant_id', tenantId)
+        .eq('id', clientId)
+      if (error) return { result: `Erreur SQL: ${error.message}`, is_error: true }
+      return { result: `Client mis à jour: ${Object.keys(patch).join(', ')}`, is_error: false }
+    }
+
+    if (toolName === 'mark_visit_completed') {
+      const visitId = String(input.visit_id ?? '')
+      const outcome = String(input.outcome ?? '')
+      if (!visitId || !outcome) return { result: 'Erreur: visit_id et outcome obligatoires', is_error: true }
+      // Map our internal "outcome" to the visits.status enum + visits.outcome notes.
+      // visits.status accepts: planned, confirmed, completed, cancelled, rescheduled.
+      const statusMap: Record<string, string> = {
+        interested: 'completed',
+        not_interested: 'completed',
+        rescheduled: 'rescheduled',
+        no_show: 'cancelled',
+      }
+      const newStatus = statusMap[outcome] ?? 'completed'
+      const patch: Record<string, unknown> = { status: newStatus }
+      if (input.notes) patch.notes = String(input.notes)
+      // Tag the outcome in notes too so the UI shows it without a schema migration.
+      const outcomeNote = `[${outcome}]`
+      patch.notes = (patch.notes ? `${outcomeNote} ${patch.notes}` : outcomeNote)
+      const { error } = await supabase
+        .from('visits')
+        .update(patch)
+        .eq('tenant_id', tenantId)
+        .eq('id', visitId)
+      if (error) return { result: `Erreur SQL: ${error.message}`, is_error: true }
+      return { result: `Visite marquée '${newStatus}' (${outcome})`, is_error: false }
+    }
+
+    if (toolName === 'send_whatsapp') {
+      const clientId = String(input.client_id ?? '')
+      const message = String(input.message ?? '').trim()
+      if (!clientId || !message) return { result: 'Erreur: client_id et message obligatoires', is_error: true }
+      // Delegate to the existing send-whatsapp Edge Function (handles
+      // template fallback, 24h window, Meta API auth, etc.).
+      try {
+        const resp = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'X-Tenant-Id': tenantId,
+            'X-User-Id': agentId,
+          },
+          body: JSON.stringify({ client_id: clientId, message, tenant_id: tenantId, sender_id: agentId }),
+        })
+        if (!resp.ok) {
+          const txt = await resp.text().catch(() => 'unknown')
+          return { result: `Erreur WhatsApp ${resp.status}: ${txt.slice(0, 150)}`, is_error: true }
+        }
+        return { result: `Message WhatsApp envoyé`, is_error: false }
+      } catch (err) {
+        return { result: `Erreur réseau WhatsApp: ${err instanceof Error ? err.message : String(err)}`, is_error: true }
+      }
     }
 
     return { result: `Outil inconnu: ${toolName}`, is_error: true }
@@ -498,8 +622,14 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 600,
-          system: systemPrompt,
+          max_tokens: 400,
+          // Prompt caching on the system block. The system prompt + tenant
+          // context are stable across the whole conversation; each follow-up
+          // turn pays ~10% of the input cost on the cached prefix once the
+          // entry warms up (Haiku 4.5 needs >=4096 tokens cached to hit).
+          system: [
+            { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } },
+          ],
           tools: TOOLS,
           messages,
         }),
