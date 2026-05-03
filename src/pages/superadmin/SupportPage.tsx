@@ -91,7 +91,7 @@ export function SupportPage() {
             onClick={() => setStatusFilter(opt.value)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               statusFilter === opt.value
-                ? 'bg-[#7C3AED]/15 text-[#7C3AED]'
+                ? 'bg-[#0579DA]/15 text-[#0579DA]'
                 : 'text-immo-text-secondary hover:bg-immo-bg-card-hover'
             }`}
           >
@@ -109,7 +109,7 @@ export function SupportPage() {
             const tenant = t.tenants as { name: string } | null
             return (
               <button key={t.id as string} onClick={() => setSelectedTicket(t.id as string)}
-                className={`w-full rounded-lg border p-3 text-left transition-all ${selectedTicket === t.id ? 'border-[#7C3AED] bg-[#7C3AED]/5' : 'border-immo-border-default bg-immo-bg-card hover:bg-immo-bg-card-hover'}`}>
+                className={`w-full rounded-lg border p-3 text-left transition-all ${selectedTicket === t.id ? 'border-[#0579DA] bg-[#0579DA]/5' : 'border-immo-border-default bg-immo-bg-card hover:bg-immo-bg-card-hover'}`}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium text-immo-text-primary">{t.subject as string}</p>
                   <StatusBadge label={st.label} type={st.type} />
@@ -132,7 +132,7 @@ export function SupportPage() {
             <Card noPadding>
               <div className="border-b border-immo-border-default px-5 py-3">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-[#7C3AED]" />
+                  <MessageSquare className="h-4 w-4 text-[#0579DA]" />
                   <span className="text-sm font-semibold text-immo-text-primary">{(tickets.find(t => t.id === selectedTicket) as Record<string, unknown>)?.subject as string}</span>
                 </div>
                 <div className="mt-1 flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ export function SupportPage() {
 
               <div className="flex gap-2 border-t border-immo-border-default p-4">
                 <Input value={reply} onChange={e => setReply(e.target.value)} placeholder="Votre reponse..." variant="immo" />
-                <Button onClick={() => sendReply.mutate()} disabled={!reply || sendReply.isPending} variant="purple">
+                <Button onClick={() => sendReply.mutate()} disabled={!reply || sendReply.isPending} variant="blue">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

@@ -11,7 +11,7 @@ import { formatPriceCompact, formatPrice } from '@/lib/constants'
 const CHART_STYLE = { fontSize: 11, fill: '#7F96B7' }
 
 const SERVICE_META: Record<string, { label: string; icon: typeof Bot; accent: string }> = {
-  anthropic: { label: 'Anthropic (IA)', icon: Bot, accent: '#7C3AED' },
+  anthropic: { label: 'Anthropic (IA)', icon: Bot, accent: '#0579DA' },
   resend: { label: 'Resend (Email)', icon: Mail, accent: '#0579DA' },
   whatsapp: { label: 'WhatsApp (Meta)', icon: MessageCircle, accent: '#22C55E' },
   supabase: { label: 'Supabase (fixe)', icon: Database, accent: '#F5A623' },
@@ -99,7 +99,7 @@ export function CostsPage() {
             onClick={() => setRangeDays(r.value)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               rangeDays === r.value
-                ? 'bg-[#7C3AED] text-white'
+                ? 'bg-[#0579DA] text-white'
                 : 'bg-immo-bg-card text-immo-text-secondary hover:bg-immo-bg-card-hover'
             }`}
           >

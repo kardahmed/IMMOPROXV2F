@@ -14,7 +14,7 @@ import toast from 'react-hot-toast'
 
 const CATEGORIES = [
   { value: 'ads_digital', label: 'Publicite digitale', color: '#0579DA' },
-  { value: 'content_production', label: 'Production contenu', color: '#7C3AED' },
+  { value: 'content_production', label: 'Production contenu', color: '#0579DA' },
   { value: 'social_media', label: 'Reseaux sociaux', color: '#00D4A0' },
   { value: 'print_events', label: 'Print & evenements', color: '#F5A623' },
   { value: 'seo_website', label: 'SEO & site web', color: '#06B6D4' },
@@ -38,7 +38,7 @@ interface Expense {
 
 const SCOPE_LABELS: Record<Expense['scope'], { label: string; hint: string; color: string }> = {
   campaign:         { label: 'Campagne',         hint: 'Liée à une campagne précise',            color: '#0579DA' },
-  project_overhead: { label: 'Projet (général)', hint: 'Liée à un projet, hors campagne',         color: '#7C3AED' },
+  project_overhead: { label: 'Projet (général)', hint: 'Liée à un projet, hors campagne',         color: '#0579DA' },
   agency_overhead:  { label: 'Agence',            hint: 'Frais généraux, ne dépend pas d\'un projet', color: '#8898AA' },
 }
 

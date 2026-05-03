@@ -134,7 +134,7 @@ export function MessagesPage() {
       <div className="flex gap-1 border-b border-immo-border-default">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${tab === t.key ? 'border-[#7C3AED] text-[#7C3AED]' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
+            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${tab === t.key ? 'border-[#0579DA] text-[#0579DA]' : 'border-transparent text-immo-text-muted hover:text-immo-text-primary'}`}>
             <t.icon className="h-3.5 w-3.5" /> {t.label}
           </button>
         ))}
@@ -172,7 +172,7 @@ export function MessagesPage() {
                     else sendMessage.mutate()
                   }}
                   disabled={!subject || !body || sendMessage.isPending}
-                  variant="purple"
+                  variant="blue"
                 >
                   {sendMessage.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="mr-1.5 h-4 w-4" />}
                   Envoyer
@@ -188,8 +188,8 @@ export function MessagesPage() {
             <div className="space-y-2">
               {MESSAGE_TEMPLATES.map(tpl => (
                 <button key={tpl.id} onClick={() => applyTemplate(tpl.id)}
-                  className="flex w-full items-center gap-2.5 rounded-lg border border-immo-border-default px-3 py-2.5 text-left transition-colors hover:bg-[#7C3AED]/5 hover:border-[#7C3AED]/30">
-                  <FileText className="h-4 w-4 shrink-0 text-[#7C3AED]" />
+                  className="flex w-full items-center gap-2.5 rounded-lg border border-immo-border-default px-3 py-2.5 text-left transition-colors hover:bg-[#0579DA]/5 hover:border-[#0579DA]/30">
+                  <FileText className="h-4 w-4 shrink-0 text-[#0579DA]" />
                   <div>
                     <p className="text-xs font-medium text-immo-text-primary">{tpl.label}</p>
                     <p className="text-[10px] text-immo-text-muted">{tpl.subject}</p>
@@ -234,7 +234,7 @@ export function MessagesPage() {
         <div className="max-w-3xl space-y-5">
           <Card>
             <div className="mb-3 flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-[#7C3AED]" />
+              <Megaphone className="h-5 w-5 text-[#0579DA]" />
               <h3 className="text-sm font-semibold text-immo-text-primary">Banniere d'annonce globale</h3>
             </div>
             <p className="mb-4 text-[11px] text-immo-text-muted">
@@ -273,7 +273,7 @@ export function MessagesPage() {
               )}
 
               <div className="flex gap-2">
-                <Button onClick={() => saveBanner.mutate()} disabled={saveBanner.isPending} variant="purple">
+                <Button onClick={() => saveBanner.mutate()} disabled={saveBanner.isPending} variant="blue">
                   {bannerText ? 'Activer la banniere' : 'Desactiver la banniere'}
                 </Button>
                 {bannerText && (

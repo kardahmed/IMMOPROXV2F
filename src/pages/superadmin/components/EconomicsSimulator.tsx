@@ -10,7 +10,7 @@ const SUPABASE_FIXED_DA_MONTHLY = 3500
 const PLAN_COLORS: Record<string, string> = {
   free: '#8898AA',
   starter: '#0579DA',
-  pro: '#7C3AED',
+  pro: '#0579DA',
   enterprise: '#F5A623',
 }
 
@@ -93,9 +93,9 @@ export function EconomicsSimulator({ editPlans, tenantCounts }: Props) {
 
   return (
     <Card noPadding className="overflow-hidden">
-      <div className="border-b border-immo-border-default bg-[#7C3AED]/5 px-5 py-3">
+      <div className="border-b border-immo-border-default bg-[#0579DA]/5 px-5 py-3">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-[#7C3AED]" />
+          <TrendingUp className="h-4 w-4 text-[#0579DA]" />
           <h3 className="text-sm font-semibold text-immo-text-primary">Simulateur économique — coût d'1 tenant à 100% des quotas</h3>
         </div>
         <p className="mt-1 text-[11px] text-immo-text-muted">

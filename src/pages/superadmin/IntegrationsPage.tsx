@@ -145,14 +145,14 @@ export function IntegrationsPage() {
                 onClick={() => setActiveCategory(cat.id)}
                 className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-[#7C3AED]/15 text-[#7C3AED]'
+                    ? 'bg-[#0579DA]/15 text-[#0579DA]'
                     : 'text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
                 }`}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                  isActive ? 'bg-[#7C3AED]/20 text-[#7C3AED]' : 'bg-immo-bg-primary text-immo-text-muted'
+                  isActive ? 'bg-[#0579DA]/20 text-[#0579DA]' : 'bg-immo-bg-primary text-immo-text-muted'
                 }`}>
                   {active}/{total}
                 </span>
@@ -237,7 +237,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate text-sm font-semibold text-immo-text-primary">{integration.label}</h3>
             {integration.is_secret && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#7C3AED]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#7C3AED]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#0579DA]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#0579DA]">
                 <Lock className="h-2.5 w-2.5" /> Secret
               </span>
             )}
@@ -285,7 +285,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         <Button
           onClick={() => save.mutate()}
           disabled={!dirty || save.isPending || isMasked}
-          variant="purple"
+          variant="blue"
           size="sm"
           title={isMasked ? 'Collez la nouvelle valeur pour la modifier' : undefined}
         >
@@ -296,7 +296,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
         <Button
           onClick={() => test.mutate()}
           disabled={!integration.has_value || test.isPending || dirty}
-          variant="purple-outline"
+          variant="blue-outline"
           size="sm"
           title={dirty ? 'Enregistrez avant de tester' : undefined}
         >
@@ -311,7 +311,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           aria-checked={integration.enabled}
           aria-label={integration.enabled ? `Désactiver ${integration.label}` : `Activer ${integration.label}`}
           title={!integration.has_value ? 'Renseignez une valeur avant d\'activer' : undefined}
-          className={`ml-auto flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40 disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`ml-auto flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40 disabled:cursor-not-allowed disabled:opacity-50 ${
             integration.enabled ? 'bg-immo-accent-green' : 'bg-immo-border-default'
           }`}
         >
@@ -325,7 +325,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           href={integration.doc_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] text-immo-text-muted hover:text-[#7C3AED] hover:underline"
+          className="inline-flex items-center gap-1 text-[11px] text-immo-text-muted hover:text-[#0579DA] hover:underline"
         >
           <ExternalLink className="h-3 w-3" /> Documentation
         </a>

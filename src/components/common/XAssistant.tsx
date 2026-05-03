@@ -182,7 +182,7 @@ export function XAssistant() {
         <button
           onClick={() => setOpen(true)}
           aria-label={t('x_assistant.open')}
-          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#3B82F6] text-white shadow-2xl shadow-purple-500/30 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-300/40"
+          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#0579DA] to-[#3B82F6] text-white shadow-2xl shadow-blue-500/30 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300/40"
         >
           <Sparkles className="h-6 w-6" />
         </button>
@@ -192,7 +192,7 @@ export function XAssistant() {
       {open && (
         <div className="fixed bottom-6 right-6 z-40 flex h-[560px] w-[400px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-immo-border-default bg-immo-bg-card shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-immo-border-default bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] px-4 py-3">
+          <div className="flex items-center justify-between border-b border-immo-border-default bg-gradient-to-r from-[#0579DA] to-[#3B82F6] px-4 py-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-white" />
               <h3 className="text-sm font-semibold text-white">X Assistant</h3>
@@ -221,8 +221,8 @@ export function XAssistant() {
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.length === 0 && (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED]/20 to-[#3B82F6]/20">
-                  <Sparkles className="h-6 w-6 text-[#7C3AED]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#0579DA]/20 to-[#3B82F6]/20">
+                  <Sparkles className="h-6 w-6 text-[#0579DA]" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-immo-text-primary">{t('x_assistant.welcome_title')}</p>
@@ -237,7 +237,7 @@ export function XAssistant() {
                     <button
                       key={i}
                       onClick={() => sendMessage(ex)}
-                      className="rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-left text-xs text-immo-text-secondary transition-colors hover:border-[#7C3AED]/40 hover:text-immo-text-primary"
+                      className="rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-left text-xs text-immo-text-secondary transition-colors hover:border-[#0579DA]/40 hover:text-immo-text-primary"
                     >
                       {ex}
                     </button>
@@ -251,7 +251,7 @@ export function XAssistant() {
                 <div
                   className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
                     m.role === 'user'
-                      ? 'bg-[#7C3AED] text-white'
+                      ? 'bg-[#0579DA] text-white'
                       : 'bg-immo-bg-primary text-immo-text-primary'
                   }`}
                 >
@@ -266,7 +266,7 @@ export function XAssistant() {
             {loading && (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 rounded-2xl bg-immo-bg-primary px-3 py-2">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#7C3AED]" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#0579DA]" />
                   <span className="text-xs text-immo-text-muted">{t('x_assistant.thinking')}</span>
                 </div>
               </div>
@@ -284,7 +284,7 @@ export function XAssistant() {
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
                   recording
                     ? 'bg-immo-status-red text-white animate-pulse'
-                    : 'bg-immo-bg-primary text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-[#7C3AED]'
+                    : 'bg-immo-bg-primary text-immo-text-muted hover:bg-immo-bg-card-hover hover:text-[#0579DA]'
                 }`}
               >
                 {recording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -296,13 +296,13 @@ export function XAssistant() {
                 placeholder={t('x_assistant.input_placeholder')}
                 disabled={loading || recording}
                 maxLength={1500}
-                className="h-9 flex-1 rounded-full border border-immo-border-default bg-immo-bg-primary px-4 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#7C3AED] focus:outline-none focus:ring-1 focus:ring-[#7C3AED]/20 disabled:opacity-50"
+                className="h-9 flex-1 rounded-full border border-immo-border-default bg-immo-bg-primary px-4 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#0579DA] focus:outline-none focus:ring-1 focus:ring-[#0579DA]/20 disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
                 aria-label={t('x_assistant.send')}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#7C3AED] text-white transition-colors hover:bg-[#7C3AED]/90 disabled:opacity-50"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0579DA] text-white transition-colors hover:bg-[#0579DA]/90 disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
               </button>

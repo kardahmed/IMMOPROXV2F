@@ -62,7 +62,7 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
           <Button
             onClick={() => changePlan.mutate()}
             disabled={selected === currentPlan || changePlan.isPending}
-            variant="purple"
+            variant="blue"
           >
             {changePlan.isPending
               ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -84,12 +84,12 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
                 onClick={() => setSelected(p.plan)}
                 className={`relative rounded-xl border p-4 text-left transition-all ${
                   isSelected
-                    ? 'border-[#7C3AED] bg-[#7C3AED]/5 ring-1 ring-[#7C3AED]/30'
+                    ? 'border-[#0579DA] bg-[#0579DA]/5 ring-1 ring-[#0579DA]/30'
                     : 'border-immo-border-default hover:border-immo-text-secondary'
                 }`}
               >
                 {isCurrent && (
-                  <span className="absolute -top-2 right-3 rounded-full bg-[#7C3AED] px-2 py-0.5 text-[9px] font-bold text-white">ACTUEL</span>
+                  <span className="absolute -top-2 right-3 rounded-full bg-[#0579DA] px-2 py-0.5 text-[9px] font-bold text-white">ACTUEL</span>
                 )}
                 <p className={`text-sm font-bold ${meta.color}`}>{meta.label}</p>
                 <p className="mt-1 text-lg font-bold text-immo-text-primary">{formatPlanPrice(p.price_monthly)}</p>

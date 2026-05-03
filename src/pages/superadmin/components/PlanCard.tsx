@@ -18,7 +18,7 @@ function iconFor(name: string | null | undefined) {
 const PLAN_COLORS: Record<string, string> = {
   free: '#8898AA',
   starter: '#0579DA',
-  pro: '#7C3AED',
+  pro: '#0579DA',
   enterprise: '#F5A623',
 }
 
@@ -151,8 +151,8 @@ export function PlanCard({ plan, index: idx, count, isProtected, catalog, onUpda
           </div>
         </div>
 
-        <div className="space-y-2 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#7C3AED]">Quotas API mensuels</p>
+        <div className="space-y-2 rounded-lg border border-[#0579DA]/20 bg-[#0579DA]/5 p-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#0579DA]">Quotas API mensuels</p>
 
           <div>
             <Label className="text-[10px] text-immo-text-muted flex items-center gap-1"><Bot className="h-3 w-3" /> Appels IA / mois</Label>

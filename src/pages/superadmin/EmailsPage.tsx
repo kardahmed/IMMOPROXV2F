@@ -157,7 +157,7 @@ export function EmailsPage() {
             onClick={() => setTab(id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               tab === id
-                ? 'border-[#7C3AED] text-[#7C3AED]'
+                ? 'border-[#0579DA] text-[#0579DA]'
                 : 'border-transparent text-immo-text-secondary hover:text-immo-text-primary'
             }`}
           >
@@ -234,13 +234,13 @@ function LogsTab({
             placeholder="Rechercher par email, sujet..."
             value={search}
             onChange={e => onSearchChange(e.target.value)}
-            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-card py-2 pl-10 pr-4 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#7C3AED] focus:outline-none"
+            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-card py-2 pl-10 pr-4 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#0579DA] focus:outline-none"
           />
         </div>
         <select
           value={templateFilter}
           onChange={e => onTemplateFilterChange(e.target.value)}
-          className="rounded-lg border border-immo-border-default bg-immo-bg-card px-3 py-2 text-sm text-immo-text-primary focus:border-[#7C3AED] focus:outline-none"
+          className="rounded-lg border border-immo-border-default bg-immo-bg-card px-3 py-2 text-sm text-immo-text-primary focus:border-[#0579DA] focus:outline-none"
         >
           <option value="all">Tous les templates</option>
           {TEMPLATE_META.map(t => (
@@ -250,7 +250,7 @@ function LogsTab({
         <select
           value={statusFilter}
           onChange={e => onStatusFilterChange(e.target.value)}
-          className="rounded-lg border border-immo-border-default bg-immo-bg-card px-3 py-2 text-sm text-immo-text-primary focus:border-[#7C3AED] focus:outline-none"
+          className="rounded-lg border border-immo-border-default bg-immo-bg-card px-3 py-2 text-sm text-immo-text-primary focus:border-[#0579DA] focus:outline-none"
         >
           <option value="all">Tous les statuts</option>
           <option value="sent">Envoye</option>
@@ -337,7 +337,7 @@ function TemplatesTab({
           return (
             <Card
               key={tmpl.id}
-              className="space-y-3 transition-colors hover:border-[#7C3AED]/30"
+              className="space-y-3 transition-colors hover:border-[#0579DA]/30"
             >
               <div className="flex items-start justify-between">
                 <div className={`rounded-lg p-2 ${tmpl.color}`}>
@@ -429,7 +429,7 @@ function TestTab({
     <div className="grid gap-6 lg:grid-cols-2">
       <Card className="space-y-5 p-6">
         <h3 className="font-semibold text-immo-text-primary flex items-center gap-2">
-          <TestTube className="h-4 w-4 text-[#7C3AED]" />
+          <TestTube className="h-4 w-4 text-[#0579DA]" />
           Envoyer un email de test
         </h3>
 
@@ -439,7 +439,7 @@ function TestTab({
           <select
             value={template}
             onChange={e => onTemplateChange(e.target.value)}
-            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2.5 text-sm text-immo-text-primary focus:border-[#7C3AED] focus:outline-none"
+            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2.5 text-sm text-immo-text-primary focus:border-[#0579DA] focus:outline-none"
           >
             {TEMPLATE_META.map(t => (
               <option key={t.id} value={t.id}>{t.label}</option>
@@ -458,7 +458,7 @@ function TestTab({
             value={email}
             onChange={e => onEmailChange(e.target.value)}
             placeholder="test@example.com"
-            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2.5 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#7C3AED] focus:outline-none"
+            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2.5 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#0579DA] focus:outline-none"
           />
         </div>
 
@@ -466,7 +466,7 @@ function TestTab({
         <Button
           onClick={onSend}
           disabled={isSending || !email}
-          variant="purple"
+          variant="blue"
           className="w-full gap-2"
         >
           {isSending ? (

@@ -21,7 +21,7 @@ const EXPENSE_CATEGORIES = [
   { value: 'other', label: 'Autre' },
 ]
 const CAT_COLORS: Record<string, string> = {
-  ads_digital: '#0579DA', content_production: '#7C3AED', social_media: '#00D4A0',
+  ads_digital: '#0579DA', content_production: '#0579DA', social_media: '#00D4A0',
   print_events: '#F5A623', seo_website: '#06B6D4', other: '#8898AA',
 }
 
@@ -234,7 +234,7 @@ export function CampaignsTab() {
                       <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'active' })} aria-label="Reprendre" title="Reprendre" className="rounded-md p-1 text-immo-accent-green transition-colors hover:bg-immo-accent-green/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40"><Play className="h-3.5 w-3.5" /></button>
                     )}
                     {c.status !== 'completed' && (
-                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'completed' })} aria-label="Terminer la campagne" title="Terminer" className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40"><Check className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => toggleStatus.mutate({ id: c.id, status: 'completed' })} aria-label="Terminer la campagne" title="Terminer" className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40"><Check className="h-3.5 w-3.5" /></button>
                     )}
                     <button onClick={() => deleteCampaign.mutate(c.id)} aria-label="Supprimer la campagne" title="Supprimer" className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-status-red/5 hover:text-immo-status-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-status-red/40"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>

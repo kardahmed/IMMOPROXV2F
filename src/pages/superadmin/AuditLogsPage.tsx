@@ -171,7 +171,7 @@ export function AuditLogsPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher dans les logs..."
-            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#7C3AED]"
+            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA]"
           />
         </div>
 
@@ -183,7 +183,7 @@ export function AuditLogsPage() {
               onClick={() => setActionFilter(key)}
               className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
                 actionFilter === key
-                  ? 'bg-[#7C3AED]/15 font-medium text-[#7C3AED]'
+                  ? 'bg-[#0579DA]/15 font-medium text-[#0579DA]'
                   : 'text-immo-text-secondary hover:bg-immo-bg-card-hover'
               }`}
             >

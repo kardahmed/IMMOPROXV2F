@@ -6,7 +6,7 @@ import type { CatalogFeature } from '@/hooks/useFeatureCatalog'
 const PLAN_COLORS: Record<string, string> = {
   free: '#8898AA',
   starter: '#0579DA',
-  pro: '#7C3AED',
+  pro: '#0579DA',
   enterprise: '#F5A623',
 }
 
@@ -72,9 +72,9 @@ export function PlansComparisonGrid({ editPlans, tenantCounts, catalog }: Props)
               <td className="px-4 py-2 text-immo-text-secondary">Stockage</td>
               {editPlans.map(p => <td key={p.plan} className="px-4 py-2 text-center text-immo-text-primary">{p.max_storage_mb >= 10000 ? '∞' : `${p.max_storage_mb} MB`}</td>)}
             </tr>
-            <tr className="bg-[#7C3AED]/5">
-              <td className="px-4 py-2 font-medium text-[#7C3AED]">Tokens IA / mois</td>
-              {editPlans.map(p => <td key={p.plan} className="px-4 py-2 text-center font-semibold text-[#7C3AED]">{formatTokens(p.max_ai_tokens_monthly)}</td>)}
+            <tr className="bg-[#0579DA]/5">
+              <td className="px-4 py-2 font-medium text-[#0579DA]">Tokens IA / mois</td>
+              {editPlans.map(p => <td key={p.plan} className="px-4 py-2 text-center font-semibold text-[#0579DA]">{formatTokens(p.max_ai_tokens_monthly)}</td>)}
             </tr>
             {catalog.map(f => (
               <tr key={f.slug} className={!f.is_implemented ? 'opacity-40' : ''}>

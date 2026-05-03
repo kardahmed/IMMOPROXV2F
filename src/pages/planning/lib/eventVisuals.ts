@@ -67,9 +67,9 @@ export const EVENT_VISUALS: Record<PlanEventType, EventVisual> = {
   task_email: {
     label: 'Email',
     icon: Mail,
-    text: 'text-purple-400',
-    border: 'border-l-purple-400',
-    bg: 'bg-purple-400/10',
+    text: 'text-blue-400',
+    border: 'border-l-blue-400',
+    bg: 'bg-blue-400/10',
     hex: '#A855F7',
   },
   task_in_person: {

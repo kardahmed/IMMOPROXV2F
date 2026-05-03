@@ -244,7 +244,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
                       </button>
                     )}
                     <button onClick={() => skipTask.mutate(task.id)} aria-label="Ignorer la tache" title="Ignorer"
-                      className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/40">
+                      className="rounded-md p-1 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40">
                       <SkipForward className="h-3 w-3" />
                     </button>
                   </div>

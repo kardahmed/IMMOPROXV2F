@@ -186,7 +186,7 @@ export function PlansConfigPage() {
             <Button onClick={() => setShowAddPlan(true)} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
               <Plus className="mr-1.5 h-4 w-4" /> Nouveau plan
             </Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending} variant="purple">
+            <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending} variant="blue">
               {saveMutation.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
               Enregistrer
             </Button>
@@ -198,11 +198,11 @@ export function PlansConfigPage() {
       <MRRSimulator editPlans={editPlans} tenantCounts={tenantCounts} />
 
       {showAddPlan && (
-        <div className="rounded-xl border border-[#7C3AED]/30 bg-[#7C3AED]/5 p-4">
-          <p className="mb-2 text-sm font-semibold text-[#7C3AED]">Nouveau plan</p>
+        <div className="rounded-xl border border-[#0579DA]/30 bg-[#0579DA]/5 p-4">
+          <p className="mb-2 text-sm font-semibold text-[#0579DA]">Nouveau plan</p>
           <div className="flex gap-2">
             <Input value={newPlanName} onChange={e => setNewPlanName(e.target.value)} placeholder="Nom du plan (ex: premium)" className="w-[200px] border-immo-border-default bg-immo-bg-card text-sm" />
-            <Button onClick={() => addPlanMutation.mutate()} disabled={!newPlanName || addPlanMutation.isPending} variant="purple">Ajouter</Button>
+            <Button onClick={() => addPlanMutation.mutate()} disabled={!newPlanName || addPlanMutation.isPending} variant="blue">Ajouter</Button>
             <Button onClick={() => setShowAddPlan(false)} className="border border-immo-border-default bg-transparent text-immo-text-secondary">Annuler</Button>
           </div>
         </div>

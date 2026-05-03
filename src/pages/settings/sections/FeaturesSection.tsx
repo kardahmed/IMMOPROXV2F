@@ -15,17 +15,17 @@ const FEATURES = [
   { key: 'feature_payment_tracking', label: 'Suivi des echeanciers', desc: 'Gestion des paiements, echeanciers, relances de retard', icon: DollarSign, color: 'text-immo-accent-green', planFeature: 'payment_tracking' },
   { key: 'feature_charges', label: 'Charges & frais', desc: 'Frais notaire, agence, enregistrement par dossier', icon: Receipt, color: 'text-immo-status-orange', planFeature: 'charges' },
   { key: 'feature_documents', label: 'Generation de documents', desc: 'Contrats, echeanciers, bons de reservation en PDF', icon: FileText, color: 'text-immo-accent-blue', planFeature: 'pdf_generation' },
-  { key: 'feature_goals', label: 'Objectifs de vente', desc: 'Objectifs mensuels/trimestriels par agent', icon: Target, color: 'text-purple-500', planFeature: 'goals' },
+  { key: 'feature_goals', label: 'Objectifs de vente', desc: 'Objectifs mensuels/trimestriels par agent', icon: Target, color: 'text-blue-500', planFeature: 'goals' },
   { key: 'feature_landing_pages', label: 'Pages de capture', desc: 'Landing pages pour vos campagnes publicitaires', icon: Globe, color: 'text-immo-accent-blue', planFeature: 'landing_pages' },
   { key: 'feature_whatsapp', label: 'WhatsApp Business', desc: 'Envoi automatique de messages WhatsApp aux clients', icon: MessageCircle, color: 'text-green-500', planFeature: 'whatsapp' },
   { key: 'feature_auto_tasks', label: 'Taches automatiques', desc: 'Generation et suivi automatique des taches par etape', icon: Zap, color: 'text-immo-status-orange', planFeature: 'auto_tasks' },
   { key: 'feature_roi_marketing', label: 'ROI Marketing', desc: 'Analyse du ROI des campagnes et budgets publicitaires', icon: BarChart3, color: 'text-immo-accent-green', planFeature: 'roi_marketing' },
 
   // IA (intelligence artificielle)
-  { key: 'feature_ai_scripts', label: 'Scripts d\'appel IA', desc: 'Generation de scripts personnalises par intelligence artificielle', icon: Sparkles, color: 'text-purple-500', planFeature: 'ai_scripts' },
-  { key: 'feature_ai_suggestions', label: 'Suggestions IA', desc: 'Recommandation d\'unites pertinentes pour chaque client', icon: Sparkles, color: 'text-purple-500', planFeature: 'ai_suggestions' },
-  { key: 'feature_ai_documents', label: 'Documents IA', desc: 'Generation de documents personnalises par IA', icon: FileText, color: 'text-purple-500', planFeature: 'ai_documents' },
-  { key: 'feature_ai_custom', label: 'IA personnalisee', desc: 'Prompts IA sur mesure pour votre agence', icon: Cpu, color: 'text-purple-500', planFeature: 'ai_custom' },
+  { key: 'feature_ai_scripts', label: 'Scripts d\'appel IA', desc: 'Generation de scripts personnalises par intelligence artificielle', icon: Sparkles, color: 'text-blue-500', planFeature: 'ai_scripts' },
+  { key: 'feature_ai_suggestions', label: 'Suggestions IA', desc: 'Recommandation d\'unites pertinentes pour chaque client', icon: Sparkles, color: 'text-blue-500', planFeature: 'ai_suggestions' },
+  { key: 'feature_ai_documents', label: 'Documents IA', desc: 'Generation de documents personnalises par IA', icon: FileText, color: 'text-blue-500', planFeature: 'ai_documents' },
+  { key: 'feature_ai_custom', label: 'IA personnalisee', desc: 'Prompts IA sur mesure pour votre agence', icon: Cpu, color: 'text-blue-500', planFeature: 'ai_custom' },
 
   // Outils (transverse)
   { key: 'feature_export_csv', label: 'Export CSV', desc: 'Export des donnees (pipeline, clients, paiements) en CSV', icon: Download, color: 'text-immo-text-muted', planFeature: 'export_csv' },

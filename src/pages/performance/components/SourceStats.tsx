@@ -9,7 +9,7 @@ interface Client {
   pipeline_stage: string
 }
 
-const COLORS = ['#0579DA', '#7C3AED', '#F5A623', '#00D4A0', '#CD3D64', '#06B6D4', '#8B5CF6', '#EAB308', '#EC4899', '#8898AA']
+const COLORS = ['#0579DA', '#0579DA', '#F5A623', '#00D4A0', '#CD3D64', '#06B6D4', '#388bfd', '#EAB308', '#EC4899', '#8898AA']
 const SALE_STAGES = ['vente']
 const CONVERSION_STAGES = ['reservation', 'vente']
 

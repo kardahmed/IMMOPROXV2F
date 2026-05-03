@@ -52,7 +52,7 @@ export function PlaybookAdminPage() {
   })
 
   if (isLoading) {
-    return <div className="flex justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#7C3AED] border-t-transparent" /></div>
+    return <div className="flex justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#0579DA] border-t-transparent" /></div>
   }
 
   return (
@@ -87,7 +87,7 @@ Phrases de closing :
 - "Mardi 14h ou jeudi 17h, quel créneau vous arrange ?"
 - "On bloque la visite ce soir avant que l'unité ne parte ?"`}
           rows={24}
-          className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-4 font-mono text-sm leading-relaxed text-immo-text-primary outline-none transition-colors focus:border-[#7C3AED]"
+          className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-4 font-mono text-sm leading-relaxed text-immo-text-primary outline-none transition-colors focus:border-[#0579DA]"
         />
 
         <div className="mt-3 flex items-center justify-between gap-3">
@@ -101,7 +101,7 @@ Phrases de closing :
           <Button
             onClick={() => save.mutate()}
             disabled={!dirty || save.isPending}
-            variant="purple"
+            variant="blue"
           >
             {save.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
             {save.isPending ? 'Sauvegarde…' : 'Sauvegarder pour toute la plateforme'}

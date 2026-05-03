@@ -190,7 +190,7 @@ export function SecurityAuditPage() {
               key={r}
               onClick={() => setRange(r)}
               className={`rounded-md px-3 py-1 text-[11px] font-medium transition-colors ${
-                range === r ? 'bg-[#7C3AED]/15 text-[#7C3AED]' : 'text-immo-text-muted hover:text-immo-text-primary'
+                range === r ? 'bg-[#0579DA]/15 text-[#0579DA]' : 'text-immo-text-muted hover:text-immo-text-primary'
               }`}
             >
               {r === 'all' ? 'Tout' : r === '7d' ? '7 jours' : r === '30d' ? '30 jours' : '90 jours'}
@@ -204,7 +204,7 @@ export function SecurityAuditPage() {
               key={a}
               onClick={() => setActionFilter(a)}
               className={`rounded-md px-3 py-1 text-[11px] font-medium transition-colors ${
-                actionFilter === a ? 'bg-[#7C3AED]/15 text-[#7C3AED]' : 'text-immo-text-muted hover:text-immo-text-primary'
+                actionFilter === a ? 'bg-[#0579DA]/15 text-[#0579DA]' : 'text-immo-text-muted hover:text-immo-text-primary'
               }`}
             >
               {a === 'all' ? 'Toutes actions' : ACTION_LABEL[a].label}

@@ -76,10 +76,10 @@ export function WhatsAppSection() {
 
       {/* Plan entitlement card */}
       {planInfo && (
-        <div className="rounded-xl border border-immo-border-default bg-gradient-to-br from-purple-500/5 to-green-500/5 p-5">
+        <div className="rounded-xl border border-immo-border-default bg-gradient-to-br from-blue-500/5 to-green-500/5 p-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
-              <Sparkles className="h-5 w-5 text-purple-500" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
+              <Sparkles className="h-5 w-5 text-blue-500" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-immo-text-primary">

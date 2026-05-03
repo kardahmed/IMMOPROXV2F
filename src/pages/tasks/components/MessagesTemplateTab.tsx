@@ -146,14 +146,14 @@ export function MessagesTemplateTab({ tenantId }: { tenantId: string }) {
                             <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={6}
                               className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary p-3 font-mono text-sm text-immo-text-primary" />
                           ) : (
-                            <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
+                            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                               <div className="mb-2 flex items-center gap-1.5">
-                                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                                <span className="text-[11px] font-semibold text-purple-600">Mode IA</span>
+                                <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                                <span className="text-[11px] font-semibold text-blue-600">Mode IA</span>
                               </div>
-                              <p className="text-xs text-purple-600">Le message sera généré automatiquement par l'IA en fonction du profil client et du playbook.</p>
+                              <p className="text-xs text-blue-600">Le message sera généré automatiquement par l'IA en fonction du profil client et du playbook.</p>
                               <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={3} placeholder="Instructions supplémentaires pour l'IA (optionnel)…"
-                                className="mt-2 w-full rounded-md border border-purple-200 bg-white p-2 text-xs text-purple-700 placeholder:text-purple-300" />
+                                className="mt-2 w-full rounded-md border border-blue-200 bg-white p-2 text-xs text-blue-700 placeholder:text-blue-300" />
                             </div>
                           )}
                         </div>
@@ -196,7 +196,7 @@ export function MessagesTemplateTab({ tenantId }: { tenantId: string }) {
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex items-center gap-2">
                           <span className="text-xs font-semibold text-immo-text-primary">{TRIGGER_LABELS[msg.trigger_type] ?? msg.trigger_type}</span>
-                          {msg.mode === 'ai' && <span className="flex items-center gap-0.5 rounded-full bg-purple-100 px-1.5 py-0.5 text-[8px] font-semibold text-purple-600"><Sparkles className="h-2 w-2" /> IA</span>}
+                          {msg.mode === 'ai' && <span className="flex items-center gap-0.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[8px] font-semibold text-blue-600"><Sparkles className="h-2 w-2" /> IA</span>}
                         </div>
                         <p className="line-clamp-2 whitespace-pre-line font-mono text-[11px] text-immo-text-muted">
                           {(msg.body || (msg.mode === 'ai' ? 'Généré automatiquement par l\'IA' : 'Message vide')).replace(/\\n/g, '\n')}
