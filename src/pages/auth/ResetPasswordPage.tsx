@@ -30,6 +30,12 @@ export function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(null)
+  // Read the hash once, before Supabase clears it, so we can show the
+  // right copy for first-time invite vs. forgotten-password reset.
+  const [isInvite] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.location.hash.includes('type=invite')
+  })
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(buildSchema(t)) })
 
@@ -55,7 +61,7 @@ export function ResetPasswordPage() {
       toast.error(error.message)
       return
     }
-    toast.success(t('reset_password.success'))
+    toast.success(t(isInvite ? 'reset_password.invite_success' : 'reset_password.success'))
     navigate('/dashboard', { replace: true })
   }
 
@@ -72,8 +78,8 @@ export function ResetPasswordPage() {
 
         <div className="rounded-2xl border border-[#E3E8EF] bg-white p-8 shadow-xl shadow-black/[0.03] sm:p-10">
           <div className="mb-6">
-            <h1 className="text-[20px]" style={{fontWeight:800,color:'#0A2540',letterSpacing:'-0.3px'}}>{t('reset_password.title')}</h1>
-            <p className="mt-1 text-[13px] text-[#8898AA]">{t('reset_password.subtitle')}</p>
+            <h1 className="text-[20px]" style={{fontWeight:800,color:'#0A2540',letterSpacing:'-0.3px'}}>{t(isInvite ? 'reset_password.invite_title' : 'reset_password.title')}</h1>
+            <p className="mt-1 text-[13px] text-[#8898AA]">{t(isInvite ? 'reset_password.invite_subtitle' : 'reset_password.subtitle')}</p>
           </div>
 
           {hasRecoverySession === false && (
@@ -143,7 +149,7 @@ export function ResetPasswordPage() {
               {submitting ? (
                 <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /><span>{t('reset_password.submitting')}</span></>
               ) : (
-                <><span>{t('reset_password.submit')}</span><Check className="h-4 w-4" /></>
+                <><span>{t(isInvite ? 'reset_password.invite_submit' : 'reset_password.submit')}</span><Check className="h-4 w-4" /></>
               )}
             </button>
           </form>

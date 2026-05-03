@@ -806,6 +806,10 @@ export const fr = {
   reset_password: {
     title: 'Nouveau mot de passe',
     subtitle: 'Choisissez un mot de passe solide pour votre compte.',
+    invite_title: 'Bienvenue sur IMMO PRO-X',
+    invite_subtitle: 'Définissez votre mot de passe pour activer votre compte.',
+    invite_submit: 'Activer mon compte',
+    invite_success: 'Compte activé. Bienvenue !',
     new_label: 'Nouveau mot de passe',
     confirm_label: 'Confirmer le mot de passe',
     submit: 'Mettre à jour le mot de passe',

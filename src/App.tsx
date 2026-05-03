@@ -67,6 +67,14 @@ function PageLoader() {
 }
 
 function HomeRedirect() {
+  // Supabase appends invite/recovery tokens as a URL hash on the Site URL.
+  // We must forward them to /reset-password before any session-based redirect
+  // happens, otherwise the SDK auto-creates a session and HomeRedirect sends
+  // the user to /dashboard without ever letting them set a password.
+  const hash = typeof window !== 'undefined' ? window.location.hash : ''
+  if (hash.includes('type=invite') || hash.includes('type=recovery')) {
+    return <Navigate to={`/reset-password${hash}`} replace />
+  }
   const hasSession = Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
   return <Navigate to={hasSession ? '/dashboard' : '/login'} replace />
 }
