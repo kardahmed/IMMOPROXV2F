@@ -48,6 +48,7 @@ const EmailsPage = lazy(() => import('@/pages/superadmin/EmailsPage').then(m => 
 const LeadsPage = lazy(() => import('@/pages/superadmin/LeadsPage').then(m => ({ default: m.LeadsPage })))
 const SecurityAuditPage = lazy(() => import('@/pages/superadmin/SecurityAuditPage').then(m => ({ default: m.SecurityAuditPage })))
 const CostsPage = lazy(() => import('@/pages/superadmin/CostsPage').then(m => ({ default: m.CostsPage })))
+const IntegrationsPage = lazy(() => import('@/pages/superadmin/IntegrationsPage').then(m => ({ default: m.IntegrationsPage })))
 
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage').then(m => ({ default: m.TasksPage })))
 const InboxPage = lazy(() => import('@/pages/inbox/InboxPage').then(m => ({ default: m.InboxPage })))
@@ -100,6 +101,7 @@ function App() {
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="stats" element={<GlobalStatsPage />} />
             <Route path="costs" element={<CostsPage />} />
+            <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="settings" element={<PlatformSettingsPage />} />
           </Route>
         </Route>
