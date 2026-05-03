@@ -297,10 +297,115 @@ const SYSTEM_PROMPT_AR = `أنت X، المساعد الذكي لـ IMMO PRO-X. 
 // to the calling tenant + agent — RLS doesn't help us here because we
 // authenticated with the service role bypass. tenant_id is appended on
 // every INSERT and matched on every UPDATE/SELECT.
+//
+// Tools mirror the side-effects the React UI fires alongside its raw
+// INSERTs/UPDATEs. The helpers below replicate (not rebuild) the
+// exact behavior of the corresponding frontend code path so X's
+// actions land identically to a hand-typed UI action — same history
+// rows, same client.notes mirror, same last_contact_at bump, same
+// auto-task generation when stage moves. Otherwise X creates "ghost"
+// records that bypass the audit trail and leave the platform in an
+// inconsistent state.
 
 interface ToolResult {
   result: string
   is_error: boolean
+}
+
+// Mirrors src/lib/clientNotes.ts — prepend a timestamped block to
+// clients.notes so the Notes tab shows what X did.
+async function _appendClientNote(
+  supabase: SupabaseClient,
+  clientId: string | null | undefined,
+  header: string,
+  body: string | null | undefined,
+): Promise<void> {
+  if (!clientId) return
+  const { data: row } = await supabase.from('clients').select('notes').eq('id', clientId).single()
+  const existing = (row as { notes?: string | null } | null)?.notes ?? ''
+  const stamp = new Date().toLocaleString('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+  const cleaned = (body ?? '').trim()
+  const block = `─── ${stamp} — ${header} ───\n${cleaned || '(aucune note)'}\n`
+  const next = existing ? `${block}\n${existing}` : block
+  await supabase.from('clients').update({ notes: next }).eq('id', clientId)
+}
+
+// Inserts an audit row in `history` so the client detail timeline
+// reflects the action. Matches the shape used by PlanVisitModal,
+// TaskDetailModal, etc.
+async function _insertHistory(
+  supabase: SupabaseClient,
+  tenantId: string,
+  clientId: string,
+  agentId: string,
+  type: string,
+  title: string,
+  metadata?: Record<string, unknown>,
+): Promise<void> {
+  await supabase.from('history').insert({
+    tenant_id: tenantId,
+    client_id: clientId,
+    agent_id: agentId,
+    type,
+    title,
+    metadata: metadata ?? null,
+  })
+}
+
+// Mirrors useAutoTasks.generateForStage from src/hooks/useAutoTasks.ts.
+// When a client's pipeline_stage changes, we cancel pending tasks from
+// the old stage (status=ignored, auto_cancelled=true) and spawn fresh
+// tasks from the templates configured for the new stage.
+async function _generateTasksForStage(
+  supabase: SupabaseClient,
+  tenantId: string,
+  clientId: string,
+  agentId: string,
+  newStage: string,
+  oldStage: string | null,
+): Promise<void> {
+  if (oldStage && oldStage !== newStage) {
+    await supabase.from('tasks')
+      .update({ status: 'ignored', auto_cancelled: true })
+      .eq('client_id', clientId)
+      .eq('stage', oldStage)
+      .eq('status', 'pending')
+  }
+  const { count } = await supabase.from('tasks')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', clientId)
+    .eq('stage', newStage)
+    .or('status.neq.ignored,auto_cancelled.eq.false')
+  if ((count ?? 0) > 0) return
+  const { data: templates } = await supabase.from('task_templates')
+    .select('id, title, stage, channel, delay_minutes, priority, bundle_id')
+    .eq('tenant_id', tenantId)
+    .eq('stage', newStage)
+    .eq('is_active', true)
+    .order('sort_order')
+  if (!templates || templates.length === 0) return
+  type Tmpl = { id: string; title: string; stage: string; channel: string; delay_minutes: number; priority: string; bundle_id: string | null }
+  const newTasks = (templates as Tmpl[]).map(t => ({
+    tenant_id: tenantId,
+    client_id: clientId,
+    template_id: t.id,
+    bundle_id: t.bundle_id,
+    title: t.title,
+    stage: t.stage,
+    type: 'manual',
+    status: 'pending',
+    priority: t.priority,
+    channel: t.channel,
+    agent_id: agentId,
+    scheduled_at: t.delay_minutes > 0 ? new Date(Date.now() + t.delay_minutes * 60000).toISOString() : null,
+  }))
+  await supabase.from('tasks').insert(newTasks)
+}
+
+async function _updateLastContact(supabase: SupabaseClient, clientId: string): Promise<void> {
+  await supabase.from('clients').update({ last_contact_at: new Date().toISOString() }).eq('id', clientId)
 }
 
 async function executeTool(
@@ -341,24 +446,68 @@ async function executeTool(
       }
       const { data, error } = await supabase.from('clients').insert(payload).select('id').single()
       if (error) return { result: `Erreur création client: ${error.message}`, is_error: true }
-      return { result: `Client créé. id=${(data as { id: string }).id}`, is_error: false }
+
+      const newClientId = (data as { id: string }).id
+
+      // Initial note so the Notes tab has a creation marker (the
+      // history trigger logs the row separately).
+      await _appendClientNote(supabase, newClientId,
+        `🆕 Lead créé (X)`,
+        `Source: ${payload.source}${payload.confirmed_budget ? ` | Budget: ${payload.confirmed_budget.toLocaleString('fr-FR')} DA` : ''}`,
+      )
+
+      // Spawn the templated tasks for the 'accueil' stage so the agent
+      // gets the same auto-tasks they'd get from a UI-created lead.
+      await _generateTasksForStage(supabase, tenantId, newClientId, agentId, 'accueil', null)
+
+      return { result: `Client créé. id=${newClientId}`, is_error: false }
     }
 
     if (toolName === 'create_visit') {
-      const payload = {
-        tenant_id: tenantId,
-        client_id: String(input.client_id ?? ''),
-        agent_id: agentId,
-        scheduled_at: String(input.scheduled_at ?? ''),
-        visit_type: String(input.visit_type ?? 'on_site'),
-        status: 'planned',
-      }
-      if (!payload.client_id || !payload.scheduled_at) {
+      // Mirrors PlanVisitModal.handleSubmit (src/pages/pipeline/components/modals/PlanVisitModal.tsx).
+      // 4 side-effects: insert visit → advance client stage if 'accueil' →
+      // history entry → mirror in clients.notes.
+      const clientId = String(input.client_id ?? '')
+      const scheduledAt = String(input.scheduled_at ?? '')
+      const visitType = String(input.visit_type ?? 'on_site')
+      if (!clientId || !scheduledAt) {
         return { result: 'Erreur: client_id et scheduled_at obligatoires', is_error: true }
       }
-      const { data, error } = await supabase.from('visits').insert(payload).select('id').single()
+
+      // 1. Insert visit
+      const { data: visit, error } = await supabase.from('visits').insert({
+        tenant_id: tenantId,
+        client_id: clientId,
+        agent_id: agentId,
+        scheduled_at: scheduledAt,
+        visit_type: visitType,
+        status: 'planned',
+      }).select('id').single()
       if (error) return { result: `Erreur création visite: ${error.message}`, is_error: true }
-      return { result: `Visite créée. id=${(data as { id: string }).id}`, is_error: false }
+
+      // 2. Advance client stage from 'accueil' to 'visite_a_gerer' if applicable
+      const { data: clientRow } = await supabase.from('clients').select('pipeline_stage').eq('id', clientId).single()
+      const currentStage = (clientRow as { pipeline_stage: string } | null)?.pipeline_stage
+      if (currentStage === 'accueil') {
+        await supabase.from('clients').update({ pipeline_stage: 'visite_a_gerer' }).eq('id', clientId)
+        await _generateTasksForStage(supabase, tenantId, clientId, agentId, 'visite_a_gerer', 'accueil')
+      }
+
+      // 3. History entry
+      const dateStr = new Date(scheduledAt).toLocaleDateString('fr-FR')
+      const timeStr = new Date(scheduledAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      await _insertHistory(supabase, tenantId, clientId, agentId, 'visit_planned',
+        `Visite programmée le ${dateStr} à ${timeStr}`,
+        { visit_type: visitType, scheduled_at: scheduledAt },
+      )
+
+      // 4. Mirror in clients.notes
+      await _appendClientNote(supabase, clientId,
+        `📅 Visite ${visitType} programmée — ${dateStr} ${timeStr}`,
+        `Programmée par X (assistant IA)`,
+      )
+
+      return { result: `Visite créée. id=${(visit as { id: string }).id}`, is_error: false }
     }
 
     if (toolName === 'create_task') {
@@ -380,15 +529,36 @@ async function executeTool(
     }
 
     if (toolName === 'update_client_stage') {
+      // Mirrors PipelinePage / SmartStageDialog stage-move flow + the
+      // useAutoTasks.generateForStage hook (src/hooks/useAutoTasks.ts).
+      // The Postgres triggers (log_stage_change, clients_stage_changed_at_trg)
+      // fire automatically on the UPDATE — but template-driven task
+      // creation lives in JS, so we replicate it here.
       const clientId = String(input.client_id ?? '')
       const newStage = String(input.new_stage ?? '')
       if (!clientId || !newStage) return { result: 'Erreur: client_id et new_stage obligatoires', is_error: true }
+
+      // 1. Capture old stage for the auto-task delta
+      const { data: before } = await supabase.from('clients').select('pipeline_stage').eq('tenant_id', tenantId).eq('id', clientId).single()
+      const oldStage = (before as { pipeline_stage: string } | null)?.pipeline_stage ?? null
+
+      // 2. Update — triggers log to history + bump pipeline_stage_changed_at
       const { error } = await supabase
         .from('clients')
         .update({ pipeline_stage: newStage })
         .eq('tenant_id', tenantId)
         .eq('id', clientId)
       if (error) return { result: `Erreur SQL: ${error.message}`, is_error: true }
+
+      // 3. Generate templated tasks for the new stage (and cancel old-stage pending ones)
+      await _generateTasksForStage(supabase, tenantId, clientId, agentId, newStage, oldStage)
+
+      // 4. Mirror in clients.notes so the change is visible in the Notes tab
+      await _appendClientNote(supabase, clientId,
+        `🎯 Étape changée → ${newStage}`,
+        oldStage ? `De '${oldStage}' vers '${newStage}' par X` : `Vers '${newStage}' par X`,
+      )
+
       return { result: `Étape changée vers '${newStage}'`, is_error: false }
     }
 
@@ -396,25 +566,38 @@ async function executeTool(
       const clientId = String(input.client_id ?? '')
       if (!clientId) return { result: 'Erreur: client_id obligatoire', is_error: true }
       const patch: Record<string, unknown> = {}
-      if (typeof input.confirmed_budget === 'number') patch.confirmed_budget = input.confirmed_budget
-      if (typeof input.agent_id === 'string' && input.agent_id) patch.agent_id = input.agent_id
-      if (typeof input.is_priority === 'boolean') patch.is_priority = input.is_priority
+      const changes: string[] = []
+      if (typeof input.confirmed_budget === 'number') {
+        patch.confirmed_budget = input.confirmed_budget
+        changes.push(`budget → ${input.confirmed_budget.toLocaleString('fr-FR')} DA`)
+      }
+      if (typeof input.agent_id === 'string' && input.agent_id) {
+        patch.agent_id = input.agent_id
+        changes.push(`agent → ${input.agent_id}`)
+      }
+      if (typeof input.is_priority === 'boolean') {
+        patch.is_priority = input.is_priority
+        changes.push(input.is_priority ? 'marqué prioritaire' : 'priorité retirée')
+      }
       if (Object.keys(patch).length === 0) return { result: 'Erreur: rien à modifier', is_error: true }
-      const { error } = await supabase
-        .from('clients')
-        .update(patch)
-        .eq('tenant_id', tenantId)
-        .eq('id', clientId)
+      const { error } = await supabase.from('clients').update(patch).eq('tenant_id', tenantId).eq('id', clientId)
       if (error) return { result: `Erreur SQL: ${error.message}`, is_error: true }
+
+      // Mirror change in clients.notes for audit visibility
+      await _appendClientNote(supabase, clientId, `✏️ Mise à jour client (X)`, changes.join(', '))
+
       return { result: `Client mis à jour: ${Object.keys(patch).join(', ')}`, is_error: false }
     }
 
     if (toolName === 'mark_visit_completed') {
+      // Mirrors completeTask in TaskDetailModal (src/pages/tasks/components/TaskDetailModal.tsx).
+      // Side-effects: update visit status → history → bump
+      // clients.last_contact_at → mirror in clients.notes.
       const visitId = String(input.visit_id ?? '')
       const outcome = String(input.outcome ?? '')
       if (!visitId || !outcome) return { result: 'Erreur: visit_id et outcome obligatoires', is_error: true }
-      // Map our internal "outcome" to the visits.status enum + visits.outcome notes.
-      // visits.status accepts: planned, confirmed, completed, cancelled, rescheduled.
+
+      // visits.status accepts: planned, confirmed, completed, cancelled, rescheduled
       const statusMap: Record<string, string> = {
         interested: 'completed',
         not_interested: 'completed',
@@ -422,17 +605,44 @@ async function executeTool(
         no_show: 'cancelled',
       }
       const newStatus = statusMap[outcome] ?? 'completed'
-      const patch: Record<string, unknown> = { status: newStatus }
-      if (input.notes) patch.notes = String(input.notes)
-      // Tag the outcome in notes too so the UI shows it without a schema migration.
-      const outcomeNote = `[${outcome}]`
-      patch.notes = (patch.notes ? `${outcomeNote} ${patch.notes}` : outcomeNote)
-      const { error } = await supabase
+
+      // 1. Look up the visit for client_id + scheduled_at (needed for history + note)
+      const { data: visitRow } = await supabase
         .from('visits')
-        .update(patch)
+        .select('client_id, scheduled_at, visit_type')
         .eq('tenant_id', tenantId)
         .eq('id', visitId)
+        .single()
+      const visit = visitRow as { client_id: string; scheduled_at: string; visit_type: string } | null
+      if (!visit) return { result: 'Erreur: visite introuvable', is_error: true }
+
+      // 2. Update visit status + outcome tag in notes
+      const outcomeTag = `[${outcome}]`
+      const patch: Record<string, unknown> = { status: newStatus }
+      if (input.notes) patch.notes = `${outcomeTag} ${String(input.notes)}`
+      else patch.notes = outcomeTag
+      const { error } = await supabase.from('visits').update(patch).eq('tenant_id', tenantId).eq('id', visitId)
       if (error) return { result: `Erreur SQL: ${error.message}`, is_error: true }
+
+      // 3. History
+      const dateStr = new Date(visit.scheduled_at).toLocaleDateString('fr-FR')
+      await _insertHistory(supabase, tenantId, visit.client_id, agentId, 'visit_completed',
+        `Visite ${dateStr} clôturée (${outcome})`,
+        { visit_id: visitId, outcome, status: newStatus },
+      )
+
+      // 4. Bump last_contact_at on the client
+      await _updateLastContact(supabase, visit.client_id)
+
+      // 5. Mirror in clients.notes
+      const outcomeLabel = ({
+        interested: '✅ Visite intéressée',
+        not_interested: '❌ Visite pas intéressée',
+        rescheduled: '🔄 Visite à reprogrammer',
+        no_show: '⏸️ Client absent (no-show)',
+      } as Record<string, string>)[outcome] ?? `Visite clôturée: ${outcome}`
+      await _appendClientNote(supabase, visit.client_id, outcomeLabel, input.notes ? String(input.notes) : null)
+
       return { result: `Visite marquée '${newStatus}' (${outcome})`, is_error: false }
     }
 
