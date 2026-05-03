@@ -22,6 +22,7 @@ interface PaymentRow {
   id: string
   tenant_id: string
   amount: number
+  plan: string | null
   payment_method: string | null
   received_at: string | null
   period_start: string | null
@@ -29,6 +30,13 @@ interface PaymentRow {
   notes: string | null
   created_at: string
   tenants: { name: string } | null
+}
+
+const PLAN_BADGE: Record<string, { label: string; type: 'green' | 'orange' | 'red' | 'muted' | 'blue' }> = {
+  free:       { label: 'Free',       type: 'muted' },
+  starter:    { label: 'Starter',    type: 'blue' },
+  pro:        { label: 'Pro',        type: 'green' },
+  enterprise: { label: 'Enterprise', type: 'orange' },
 }
 
 interface SubStatus {
@@ -42,13 +50,14 @@ interface SubStatus {
 export function BillingPage() {
   const [methodFilter, setMethodFilter] = useState<string>('all')
   const [addOpen, setAddOpen] = useState(false)
+  const [renewTenantId, setRenewTenantId] = useState<string | undefined>(undefined)
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ['super-admin-payments'],
     queryFn: async () => {
       const { data } = await supabase
         .from('invoices')
-        .select('id, tenant_id, amount, payment_method, received_at, period_start, period_end, notes, created_at, tenants(name)')
+        .select('id, tenant_id, amount, plan, payment_method, received_at, period_start, period_end, notes, created_at, tenants(name)')
         .order('received_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
       return (data ?? []) as unknown as PaymentRow[]
@@ -100,6 +109,14 @@ export function BillingPage() {
       key: 'tenant',
       header: 'Tenant',
       render: (p) => <span className="text-sm font-medium text-immo-text-primary">{p.tenants?.name ?? '-'}</span>,
+    },
+    {
+      key: 'plan',
+      header: 'Plan',
+      render: (p) => {
+        const meta = PLAN_BADGE[p.plan ?? 'starter'] ?? PLAN_BADGE.starter
+        return <StatusBadge label={meta.label} type={meta.type} />
+      },
     },
     {
       key: 'amount',
@@ -195,10 +212,20 @@ export function BillingPage() {
                           : s.expires_on ? `Expire dans ${days}j (${format(new Date(s.expires_on), 'dd/MM/yyyy')})` : ''}
                     </div>
                   </div>
-                  <StatusBadge
-                    label={isExpired ? 'Expiré' : noPayment ? 'Jamais payé' : s.status === 'expiring_soon' ? 'Bientôt' : 'Renouv.'}
-                    type={isExpired || noPayment ? 'red' : s.status === 'expiring_soon' ? 'orange' : 'muted'}
-                  />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge
+                      label={isExpired ? 'Expiré' : noPayment ? 'Jamais payé' : s.status === 'expiring_soon' ? 'Bientôt' : 'Renouv.'}
+                      type={isExpired || noPayment ? 'red' : s.status === 'expiring_soon' ? 'orange' : 'muted'}
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setRenewTenantId(s.tenant_id); setAddOpen(true) }}
+                      className="h-7 border border-immo-accent-blue/30 text-[11px] text-immo-accent-blue hover:bg-immo-accent-blue/10"
+                    >
+                      Renouveler
+                    </Button>
+                  </div>
                 </div>
               )
             })}
@@ -233,7 +260,11 @@ export function BillingPage() {
         emptyDescription={methodFilter === 'all' ? 'Commencez par enregistrer votre premier paiement avec le bouton ci-dessus.' : 'Changez de filtre pour voir d\'autres paiements.'}
       />
 
-      <AddPaymentModal isOpen={addOpen} onClose={() => setAddOpen(false)} />
+      <AddPaymentModal
+        isOpen={addOpen}
+        onClose={() => { setAddOpen(false); setRenewTenantId(undefined) }}
+        defaultTenantId={renewTenantId}
+      />
     </div>
   )
 }
