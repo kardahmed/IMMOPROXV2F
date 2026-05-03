@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
 
 type PaymentMethod = 'cash' | 'ccp' | 'ctt' | 'virement' | 'cheque' | 'other'
+type PlanKey = 'free' | 'starter' | 'pro' | 'enterprise'
 
 const METHOD_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
   { value: 'cash',     label: 'Cash' },
@@ -18,6 +19,13 @@ const METHOD_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
   { value: 'cheque',   label: 'Chèque' },
   { value: 'other',    label: 'Autre' },
 ]
+
+const PLAN_LABELS: Record<PlanKey, string> = {
+  free:       'Free (gratuit)',
+  starter:    'Starter',
+  pro:        'Pro',
+  enterprise: 'Enterprise',
+}
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -54,13 +62,30 @@ export function AddPaymentModal({ isOpen, onClose, defaultTenantId }: AddPayment
         .select('id, name, plan')
         .is('deleted_at', null)
         .order('name')
-      return (data ?? []) as Array<{ id: string; name: string; plan: string }>
+      return (data ?? []) as Array<{ id: string; name: string; plan: PlanKey }>
+    },
+    enabled: isOpen,
+  })
+
+  // Plan pricing — used to auto-suggest the amount once tenant + duration
+  // are picked. Founder can still override (extras, discounts, top-ups).
+  const { data: planPricing = new Map<string, number>() } = useQuery({
+    queryKey: ['plan-pricing-for-payment'],
+    queryFn: async () => {
+      const { data } = await supabase.from('plan_limits').select('plan, price_monthly')
+      const m = new Map<string, number>()
+      for (const row of (data ?? []) as Array<{ plan: string; price_monthly: number }>) {
+        m.set(row.plan, row.price_monthly ?? 0)
+      }
+      return m
     },
     enabled: isOpen,
   })
 
   const [tenantId, setTenantId] = useState(defaultTenantId ?? '')
+  const [plan, setPlan] = useState<PlanKey>('starter')
   const [amount, setAmount] = useState<string>('')
+  const [amountAuto, setAmountAuto] = useState(true) // becomes false the moment user types in amount
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [receivedAt, setReceivedAt] = useState(todayISO())
   const [periodStart, setPeriodStart] = useState(todayISO())
@@ -69,6 +94,31 @@ export function AddPaymentModal({ isOpen, onClose, defaultTenantId }: AddPayment
   const [notes, setNotes] = useState('')
 
   const selectedTenant = useMemo(() => tenants.find(t => t.id === tenantId), [tenants, tenantId])
+
+  // Sync tenantId when parent passes a new defaultTenantId (e.g. user
+  // clicked "Renouveler" on a different tenant). Only fires when the
+  // modal opens, otherwise typing in the dropdown would be reverted.
+  useEffect(() => {
+    if (isOpen && defaultTenantId) setTenantId(defaultTenantId)
+  }, [isOpen, defaultTenantId])
+
+  // When a tenant is selected, default the plan to whatever they're
+  // currently on. The founder can still change it (e.g., they're paying
+  // for an upgrade that hasn't been applied yet).
+  useEffect(() => {
+    if (selectedTenant?.plan) setPlan(selectedTenant.plan)
+  }, [selectedTenant])
+
+  // Auto-suggest amount = plan price × number of months, but only as
+  // long as the founder hasn't typed something custom. The moment they
+  // edit the field, we stop overwriting it.
+  useEffect(() => {
+    if (!amountAuto) return
+    const months = durationPreset === '1m' ? 1 : durationPreset === '3m' ? 3 : durationPreset === '6m' ? 6 : durationPreset === '12m' ? 12 : 0
+    if (months === 0) return // custom duration → can't auto-compute
+    const monthly = planPricing.get(plan) ?? 0
+    if (monthly > 0) setAmount(String(monthly * months))
+  }, [plan, durationPreset, planPricing, amountAuto])
 
   function applyPreset(preset: typeof durationPreset, fromStart = periodStart) {
     setDurationPreset(preset)
@@ -99,6 +149,7 @@ export function AddPaymentModal({ isOpen, onClose, defaultTenantId }: AddPayment
       const { error } = await supabase.from('invoices').insert({
         tenant_id: tenantId,
         amount: amt,
+        plan,
         payment_method: method,
         received_at: receivedAt,
         period_start: periodStart,
@@ -121,6 +172,7 @@ export function AddPaymentModal({ isOpen, onClose, defaultTenantId }: AddPayment
             tenant_name: selectedTenant?.name ?? '',
             amount: amt,
             method,
+            plan,
             period: `${periodStart} → ${periodEnd}`,
           },
         } as never)
@@ -128,10 +180,12 @@ export function AddPaymentModal({ isOpen, onClose, defaultTenantId }: AddPayment
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['super-admin-payments'] })
+      qc.invalidateQueries({ queryKey: ['super-admin-subscriptions'] })
       qc.invalidateQueries({ queryKey: ['super-admin-tenant-health'] })
       toast.success(`Paiement enregistré pour ${selectedTenant?.name ?? 'le tenant'}`)
       // Reset for next entry
       setAmount('')
+      setAmountAuto(true)
       setNotes('')
       setReceivedAt(todayISO())
       setPeriodStart(todayISO())
@@ -177,17 +231,44 @@ export function AddPaymentModal({ isOpen, onClose, defaultTenantId }: AddPayment
           </select>
         </Field>
 
+        <Field label="Plan facturé *">
+          <select
+            value={plan}
+            onChange={(e) => setPlan(e.target.value as PlanKey)}
+            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-sm text-immo-text-primary focus:border-immo-accent-blue focus:outline-none"
+          >
+            {(Object.keys(PLAN_LABELS) as PlanKey[]).map(p => {
+              const monthly = planPricing.get(p) ?? 0
+              return (
+                <option key={p} value={p}>
+                  {PLAN_LABELS[p]}{monthly > 0 ? ` — ${monthly.toLocaleString('fr-FR')} DA / mois` : ''}
+                </option>
+              )
+            })}
+          </select>
+          {selectedTenant && selectedTenant.plan !== plan && (
+            <p className="mt-1 text-[11px] text-immo-status-orange">
+              ⚠ Le tenant est actuellement en {PLAN_LABELS[selectedTenant.plan]}, vous facturez {PLAN_LABELS[plan]}
+            </p>
+          )}
+        </Field>
+
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Montant (DA) *">
+          <Field label={`Montant (DA) *${amountAuto ? ' — auto' : ''}`}>
             <input
               type="number"
               min="0"
               step="100"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => { setAmount(e.target.value); setAmountAuto(false) }}
               placeholder="ex: 5000"
               className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-sm text-immo-text-primary focus:border-immo-accent-blue focus:outline-none"
             />
+            {!amountAuto && (
+              <button type="button" onClick={() => setAmountAuto(true)} className="mt-1 text-[11px] text-immo-accent-blue hover:underline">
+                Recalculer auto (plan × durée)
+              </button>
+            )}
           </Field>
           <Field label="Mode de paiement *">
             <select
