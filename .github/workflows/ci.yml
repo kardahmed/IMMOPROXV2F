@@ -1,0 +1,45 @@
+name: CI
+
+# Cheap PR gate. Hostinger does the real deploy when main moves; this
+# job just makes sure the bundle compiles and TypeScript is clean
+# before we let the merge button go green. No tests yet — see
+# supabase/tests/TESTS_CHECKLIST.md for the manual matrix.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Type-check + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc -b --noEmit
+
+      - name: Build
+        # Vite picks up env from ".env" / ".env.production" — for the CI
+        # we don't need real Supabase keys, the build is purely static.
+        # Defaults below stop import.meta.env reads from crashing the
+        # bundler. Real values are baked at deploy time on Hostinger.
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder
+        run: npm run build

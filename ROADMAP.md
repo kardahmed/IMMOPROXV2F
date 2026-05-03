@@ -401,6 +401,59 @@ leave a half-built feature without a note here.
   actual Hostinger path. Before using as a real fallback, SSH into the
   Hostinger File Manager and confirm the docroot path.
 
+### Payments journal — manual cash workflow ✅ live (May 2026)
+- **What exists**: migrations 063 + 064 turn the legacy `invoices`
+  table into a manual payments journal (payment_method, period_start,
+  period_end, plan, notes, created_by columns + view
+  `tenant_subscription_status` for "expires in N days" lookups).
+  Super Admin `/admin/billing` rewritten as a payments journal with
+  KPI strip (cash this month / cash all-time / active subs / à
+  relancer), an "à relancer" panel, and an AddPaymentModal with
+  duration presets (1m / 3m / 6m / 1 an / custom) + auto-amount
+  (plan price × months) + plan snapshot per row + "Renouveler"
+  button on each tenant in the urgent list. Subscription expiry
+  alerts now flow through the existing HealthAlertsBanner via
+  `useTenantHealth`, surfacing critical (expired) and warning
+  (< 7d to expire) banners on every /admin/* page.
+- **Operational notes**: business model is sales-led B2B with cash
+  collection (cash / CCP / CTT / virement / chèque). No automated
+  Stripe, no due_date / overdue concept — payments are settled the
+  moment they're recorded.
+- **Edge Function `generate-invoices`** — DELETED (was orphan code
+  for an automated billing flow that didn't fit the cash model).
+  If a real automated invoicing need ever shows up, recreate from
+  scratch — don't try to revive the old function.
+
+### `whatsapp-signup` Edge Function — dormant infra (parked)
+- **What exists**: 190-line Edge Function that handles the Meta
+  WhatsApp Embedded Signup OAuth callback so a tenant can connect
+  *their own* WhatsApp Business number through IMMO PRO-X (instead
+  of every tenant going through the founder's single CallMeBot
+  number, which Meta will eventually rate-limit / ban for sending
+  to too many distinct customers).
+- **Why parked, not deleted**: each agency wanting their own brand
+  on outgoing WhatsApp is a real requirement at 5+ tenants; the
+  code is already 80% there; deleting and rewriting later costs
+  more than maintaining the dead code; deployed Edge Functions
+  cost nothing while not invoked.
+- **What's missing to activate** (~1 day of work):
+  - Frontend "Connecter mon WhatsApp" button in tenant
+    `/settings/integrations` that launches the FB Login SDK with
+    the WhatsApp Business scope.
+  - State management for the OAuth code → exchange for permanent
+    token via `whatsapp-signup` callback.
+  - Persist the per-tenant token in `whatsapp_accounts` (table
+    already exists from migration 016).
+  - Update `send-whatsapp` to look up the per-tenant token from
+    `whatsapp_accounts` instead of falling back to the global
+    `META_WHATSAPP_ACCESS_TOKEN`.
+  - Submit the IMMO PRO-X Meta App for review (required before
+    Embedded Signup works for unrelated business accounts).
+- **When to reach for it**: at the latest when a tenant explicitly
+  asks "can my clients see *my* number when I message them?" or
+  when CallMeBot starts hitting rate limits / Meta-induced
+  warnings. Don't do it speculatively.
+
 ---
 
 ## 🎯 MVP closure plan — features bloquantes avant d'arrêter le dev produit
