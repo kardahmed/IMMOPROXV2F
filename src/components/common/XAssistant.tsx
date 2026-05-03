@@ -15,7 +15,7 @@ type SR = {
   continuous: boolean
   interimResults: boolean
   onresult: ((e: { results: { [k: number]: { [k: number]: { transcript: string } } }; resultIndex: number }) => void) | null
-  onerror: ((e: unknown) => void) | null
+  onerror: ((e: { error?: string }) => void) | null
   onend: (() => void) | null
 }
 declare global {
@@ -77,7 +77,21 @@ export function XAssistant() {
         setTimeout(() => sendMessage(transcript), 50)
       }
     }
-    r.onerror = () => setRecording(false)
+    r.onerror = (e) => {
+      setRecording(false)
+      const code = e?.error ?? 'unknown'
+      const msg =
+        code === 'not-allowed' || code === 'service-not-allowed'
+          ? 'Permission micro refusée. Autorise le micro dans la barre d\'adresse Chrome puis recharge la page.'
+          : code === 'no-speech'
+          ? 'Aucune parole détectée. Réessaie en parlant plus fort.'
+          : code === 'audio-capture'
+          ? 'Aucun micro détecté. Vérifie que ton micro est branché et autorisé.'
+          : code === 'network'
+          ? 'Erreur réseau pendant la reconnaissance vocale.'
+          : `Erreur micro: ${code}`
+      setMessages(prev => [...prev, { role: 'assistant', content: msg }])
+    }
     r.onend = () => setRecording(false)
     recognitionRef.current = r
     return () => { try { r.abort() } catch { /* noop */ } }
