@@ -32,7 +32,7 @@ const NAV_SECTIONS: readonly NavSection[] = [
     title: 'Monetisation',
     items: [
       { to: '/admin/plans', icon: Layers, labelKey: 'Plans' },
-      { to: '/admin/billing', icon: CreditCard, labelKey: 'Facturation' },
+      { to: '/admin/billing', icon: CreditCard, labelKey: 'Paiements' },
       { to: '/admin/costs', icon: Receipt, labelKey: 'Couts & profit' },
     ],
   },

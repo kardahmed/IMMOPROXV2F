@@ -24,7 +24,7 @@ export interface HealthSummary {
 }
 
 export interface HealthAlert {
-  type: 'inactive_tenant' | 'late_payments' | 'expiring_reservations' | 'no_agents'
+  type: 'inactive_tenant' | 'late_payments' | 'expiring_reservations' | 'no_agents' | 'subscription_expired' | 'subscription_expiring'
   severity: 'critical' | 'warning'
   tenant_id: string
   tenant_name: string
@@ -100,6 +100,25 @@ export function useTenantHealth() {
         if (a.tenant_id) agentsByTenant.set(a.tenant_id, (agentsByTenant.get(a.tenant_id) ?? 0) + 1)
       }
 
+      // Subscription expiry per tenant — derived from invoices.period_end.
+      // Cash-collected, manually logged in the payments journal. We treat
+      // a tenant whose latest period_end is < today as expired (critical),
+      // < today+7d as expiring soon (warning), and < today+30d as a soft
+      // info reminder rolled into the warning bucket so the founder
+      // schedules the renewal call.
+      // tenant_subscription_status view ships in migration 063 — until
+      // database.generated.ts is regenerated, the typed `from()` rejects
+      // the view name. Cast through never; the row shape is asserted
+      // immediately below.
+      const { data: subStatuses } = await supabase
+        .from('tenant_subscription_status' as never)
+        .select('tenant_id, expires_on, status, days_until_expiry')
+
+      const subByTenant = new Map<string, { expires_on: string | null; status: string; days_until_expiry: number }>()
+      for (const s of (subStatuses ?? []) as unknown as Array<{ tenant_id: string; expires_on: string | null; status: string; days_until_expiry: number }>) {
+        subByTenant.set(s.tenant_id, s)
+      }
+
       // Build health per tenant
       const alerts: HealthAlert[] = []
       const healthList: TenantHealth[] = tenants.map(t => {
@@ -132,9 +151,17 @@ export function useTenantHealth() {
           issues.push(`${expiring} reservation(s) expire(nt) bientot`)
           alerts.push({ type: 'expiring_reservations', severity: 'warning', tenant_id: t.id, tenant_name: t.name, message: `${t.name} — ${expiring} reservation(s) expire(nt) sous 48h` })
         }
+        const sub = subByTenant.get(t.id)
+        if (sub?.status === 'expired') {
+          issues.push(`Abonnement expire (a relancer)`)
+          alerts.push({ type: 'subscription_expired', severity: 'critical', tenant_id: t.id, tenant_name: t.name, message: `${t.name} — abonnement expire (a relancer pour paiement)` })
+        } else if (sub?.status === 'expiring_soon') {
+          issues.push(`Renouvellement dans ${sub.days_until_expiry}j`)
+          alerts.push({ type: 'subscription_expiring', severity: 'warning', tenant_id: t.id, tenant_name: t.name, message: `${t.name} — abonnement expire dans ${sub.days_until_expiry}j` })
+        }
 
         let status: HealthStatus = 'healthy'
-        if (issues.some(i => i.includes('Inactif') || i.includes('Aucun agent'))) status = 'critical'
+        if (issues.some(i => i.includes('Inactif') || i.includes('Aucun agent') || i.includes('Abonnement expire'))) status = 'critical'
         else if (issues.length > 0) status = 'warning'
 
         return { tenant_id: t.id, tenant_name: t.name, status, issues, last_activity: lastAct, days_inactive: daysInactive, late_payments: late, expiring_reservations: expiring }

@@ -1,217 +1,239 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { DollarSign, FileText, AlertTriangle, Check, Send, Filter } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { DollarSign, FileText, AlertTriangle, Plus, Filter, Calendar, TrendingUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge, ConfirmDialog } from '@/components/common'
+import { DataTable, KPICard, PageHeader, PageSkeleton, StatusBadge } from '@/components/common'
 import type { Column } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatPriceCompact } from '@/lib/constants'
-import { format } from 'date-fns'
-import toast from 'react-hot-toast'
+import { format, differenceInDays } from 'date-fns'
+import { AddPaymentModal } from './components/AddPaymentModal'
 
-interface InvoiceLite { id: string; tenant_name: string; amount: number }
+const METHOD_LABELS: Record<string, { label: string; type: 'green' | 'orange' | 'red' | 'muted' | 'blue' }> = {
+  cash:     { label: 'Cash',     type: 'green' },
+  ccp:      { label: 'CCP',      type: 'blue' },
+  ctt:      { label: 'CTT',      type: 'blue' },
+  virement: { label: 'Virement', type: 'blue' },
+  cheque:   { label: 'Chèque',   type: 'muted' },
+  other:    { label: 'Autre',    type: 'muted' },
+}
+
+interface PaymentRow {
+  id: string
+  tenant_id: string
+  amount: number
+  payment_method: string | null
+  received_at: string | null
+  period_start: string | null
+  period_end: string | null
+  notes: string | null
+  created_at: string
+  tenants: { name: string } | null
+}
+
+interface SubStatus {
+  tenant_id: string
+  tenant_name: string
+  expires_on: string | null
+  status: 'active' | 'expiring_soon' | 'renewal_due' | 'expired' | 'no_payment'
+  days_until_expiry: number
+}
 
 export function BillingPage() {
-  const qc = useQueryClient()
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  // Audit (CRIT): markPaid / markOverdue had no confirm — a misclick
-  // falsifies revenue / MRR / overdue stats and triggers downstream
-  // automations on the tenant. Now both go through a confirm dialog.
-  const [paidConfirm, setPaidConfirm] = useState<InvoiceLite | null>(null)
-  const [overdueConfirm, setOverdueConfirm] = useState<InvoiceLite | null>(null)
+  const [methodFilter, setMethodFilter] = useState<string>('all')
+  const [addOpen, setAddOpen] = useState(false)
 
-  const { data: invoices = [], isLoading } = useQuery({
-    queryKey: ['super-admin-invoices'],
+  const { data: payments = [], isLoading } = useQuery({
+    queryKey: ['super-admin-payments'],
     queryFn: async () => {
-      const { data } = await supabase.from('invoices').select('*, tenants(name)').order('created_at', { ascending: false })
-      return (data ?? []) as Array<Record<string, unknown>>
+      const { data } = await supabase
+        .from('invoices')
+        .select('id, tenant_id, amount, payment_method, received_at, period_start, period_end, notes, created_at, tenants(name)')
+        .order('received_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+      return (data ?? []) as unknown as PaymentRow[]
     },
   })
 
-  const markPaid = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() } as never).eq('id', id)
-      if (error) throw error
+  const { data: subscriptions = [] } = useQuery({
+    queryKey: ['super-admin-subscriptions'],
+    queryFn: async () => {
+      // View shipped in migration 063 — typed entry not in
+      // database.generated.ts yet. Cast through never; the row shape
+      // is the SubStatus interface above.
+      const { data } = await supabase
+        .from('tenant_subscription_status' as never)
+        .select('*')
+      return (data ?? []) as unknown as SubStatus[]
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['super-admin-invoices'] }); toast.success('Facture marquée comme payée') },
   })
 
-  const markOverdue = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('invoices').update({ status: 'overdue' } as never).eq('id', id)
-      if (error) throw error
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['super-admin-invoices'] }); toast.success('Facture marquée en retard') },
-  })
+  const stats = useMemo(() => {
+    const now = new Date()
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const monthRevenue = payments
+      .filter(p => (p.received_at ?? '').startsWith(thisMonth))
+      .reduce((s, p) => s + (p.amount ?? 0), 0)
+    const totalRevenue = payments.reduce((s, p) => s + (p.amount ?? 0), 0)
+    const activeSubs = subscriptions.filter(s => s.status === 'active' || s.status === 'renewal_due' || s.status === 'expiring_soon').length
+    const expiringCount = subscriptions.filter(s => s.status === 'expiring_soon' || s.status === 'expired').length
+    return { monthRevenue, totalRevenue, activeSubs, expiringCount }
+  }, [payments, subscriptions])
 
-  const totalRevenue = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + ((i.amount as number) ?? 0), 0)
-  const pendingAmount = invoices.filter(i => i.status === 'pending').reduce((s, i) => s + ((i.amount as number) ?? 0), 0)
-  const overdueCount = invoices.filter(i => i.status === 'overdue').length
-  const mrrEstimate = invoices.filter(i => i.status === 'paid' || i.status === 'pending').reduce((s, i) => s + ((i.amount as number) ?? 0), 0)
-
-  const filtered = statusFilter === 'all' ? invoices : invoices.filter(i => i.status === statusFilter)
+  const filtered = methodFilter === 'all'
+    ? payments
+    : payments.filter(p => p.payment_method === methodFilter)
 
   if (isLoading) return <PageSkeleton kpiCount={4} hasTable />
 
-  const STATUS_MAP: Record<string, { label: string; type: 'green' | 'orange' | 'red' | 'muted' }> = {
-    paid: { label: 'Payé', type: 'green' },
-    pending: { label: 'En attente', type: 'orange' },
-    overdue: { label: 'En retard', type: 'red' },
-    cancelled: { label: 'Annulé', type: 'muted' },
-  }
-
   const FILTER_OPTIONS = [
-    { value: 'all', label: 'Toutes' },
-    { value: 'pending', label: 'En attente' },
-    { value: 'overdue', label: 'En retard' },
-    { value: 'paid', label: 'Payees' },
+    { value: 'all',      label: 'Tous' },
+    { value: 'cash',     label: 'Cash' },
+    { value: 'ccp',      label: 'CCP' },
+    { value: 'ctt',      label: 'CTT' },
+    { value: 'virement', label: 'Virement' },
+    { value: 'cheque',   label: 'Chèque' },
   ]
 
-  type Invoice = Record<string, unknown>
-
-  const columns: Column<Invoice>[] = [
+  const columns: Column<PaymentRow>[] = [
     {
       key: 'tenant',
       header: 'Tenant',
-      render: (inv) => <span className="text-sm text-immo-text-primary">{(inv.tenants as { name: string } | null)?.name ?? '-'}</span>,
-    },
-    {
-      key: 'period',
-      header: 'Periode',
-      render: (inv) => <span className="text-xs text-immo-text-muted">{inv.period as string}</span>,
+      render: (p) => <span className="text-sm font-medium text-immo-text-primary">{p.tenants?.name ?? '-'}</span>,
     },
     {
       key: 'amount',
       header: 'Montant',
       align: 'right',
-      render: (inv) => <span className="text-sm font-semibold text-immo-accent-green">{formatPriceCompact(inv.amount as number)} DA</span>,
+      render: (p) => <span className="text-sm font-semibold text-immo-accent-green">{formatPriceCompact(p.amount)} DA</span>,
     },
     {
-      key: 'due_date',
-      header: 'Echeance',
-      render: (inv) => <span className="text-xs text-immo-text-muted">{inv.due_date ? format(new Date(inv.due_date as string), 'dd/MM/yyyy') : '-'}</span>,
-    },
-    {
-      key: 'status',
-      header: 'Statut',
-      render: (inv) => {
-        const st = STATUS_MAP[inv.status as string] ?? STATUS_MAP.pending
-        return <StatusBadge label={st.label} type={st.type} />
+      key: 'method',
+      header: 'Mode',
+      render: (p) => {
+        const m = METHOD_LABELS[p.payment_method ?? 'other'] ?? METHOD_LABELS.other
+        return <StatusBadge label={m.label} type={m.type} />
       },
     },
     {
-      key: 'actions',
-      header: 'Actions',
-      align: 'right',
-      render: (inv) => {
-        const isPending = inv.status === 'pending'
-        const isOverdue = inv.status === 'overdue'
-        return (
-          <div className="flex justify-end gap-1.5">
-            {(isPending || isOverdue) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setPaidConfirm({
-                  id: inv.id as string,
-                  tenant_name: (inv.tenants as { name?: string } | null)?.name ?? '-',
-                  amount: (inv.amount as number) ?? 0,
-                })}
-                className="h-7 border border-immo-accent-green/30 text-[11px] text-immo-accent-green hover:bg-immo-accent-green/10"
-              >
-                <Check className="mr-1 h-3 w-3" /> Payé
-              </Button>
-            )}
-            {isPending && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setOverdueConfirm({
-                  id: inv.id as string,
-                  tenant_name: (inv.tenants as { name?: string } | null)?.name ?? '-',
-                  amount: (inv.amount as number) ?? 0,
-                })}
-                className="h-7 border border-immo-status-red/30 text-[11px] text-immo-status-red hover:bg-immo-status-red/10"
-              >
-                <Send className="mr-1 h-3 w-3" /> Relancer
-              </Button>
-            )}
-          </div>
-        )
-      },
+      key: 'received_at',
+      header: 'Reçu le',
+      render: (p) => <span className="text-xs text-immo-text-muted">{p.received_at ? format(new Date(p.received_at), 'dd/MM/yyyy') : '-'}</span>,
+    },
+    {
+      key: 'period',
+      header: 'Période couverte',
+      render: (p) => (
+        <span className="text-xs text-immo-text-muted">
+          {p.period_start && p.period_end
+            ? `${format(new Date(p.period_start), 'dd/MM/yy')} → ${format(new Date(p.period_end), 'dd/MM/yy')}`
+            : '-'}
+        </span>
+      ),
+    },
+    {
+      key: 'notes',
+      header: 'Notes',
+      render: (p) => <span className="line-clamp-1 max-w-[220px] text-xs text-immo-text-muted">{p.notes ?? '-'}</span>,
     },
   ]
+
+  // Tenants sorted by urgency: expired first, then expiring soon, etc.
+  const urgencyOrder: Record<SubStatus['status'], number> = {
+    expired: 0, expiring_soon: 1, renewal_due: 2, no_payment: 3, active: 4,
+  }
+  const urgentTenants = [...subscriptions]
+    .filter(s => s.status !== 'active')
+    .sort((a, b) => urgencyOrder[a.status] - urgencyOrder[b.status])
+    .slice(0, 8)
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Facturation"
-        subtitle="Suivi des paiements, impayes et revenus par tenant"
+        title="Paiements"
+        subtitle="Journal des paiements reçus + suivi des renouvellements"
+        actions={
+          <Button onClick={() => setAddOpen(true)} variant="blue">
+            <Plus className="mr-1.5 h-4 w-4" /> Nouveau paiement
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KPICard label="Revenus totaux" value={formatPriceCompact(totalRevenue)} accent="green" icon={<DollarSign className="h-5 w-5 text-immo-accent-green" />} />
-        <KPICard label="MRR estime" value={formatPriceCompact(mrrEstimate)} accent="blue" icon={<FileText className="h-5 w-5 text-immo-accent-blue" />} />
-        <KPICard label="En attente" value={formatPriceCompact(pendingAmount)} accent="orange" icon={<FileText className="h-5 w-5 text-immo-status-orange" />} />
-        <KPICard label="En retard" value={overdueCount} accent="red" icon={<AlertTriangle className="h-5 w-5 text-immo-status-red" />} />
+        <KPICard label="Encaissé ce mois" value={`${formatPriceCompact(stats.monthRevenue)} DA`} accent="green" icon={<DollarSign className="h-5 w-5 text-immo-accent-green" />} />
+        <KPICard label="Encaissé total" value={`${formatPriceCompact(stats.totalRevenue)} DA`} accent="blue" icon={<TrendingUp className="h-5 w-5 text-immo-accent-blue" />} />
+        <KPICard label="Abonnements actifs" value={stats.activeSubs} accent="green" icon={<Calendar className="h-5 w-5 text-immo-accent-green" />} />
+        <KPICard label="A relancer" value={stats.expiringCount} accent="red" icon={<AlertTriangle className="h-5 w-5 text-immo-status-red" />} />
       </div>
 
-      {/* Filters */}
+      {urgentTenants.length > 0 && (
+        <div className="rounded-xl border border-immo-status-orange/30 bg-immo-status-orange-bg/30 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-immo-status-orange" />
+            <h3 className="text-sm font-semibold text-immo-text-primary">Tenants à relancer</h3>
+            <span className="text-xs text-immo-text-muted">({urgentTenants.length})</span>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            {urgentTenants.map(s => {
+              const isExpired = s.status === 'expired'
+              const noPayment = s.status === 'no_payment'
+              const days = s.expires_on ? differenceInDays(new Date(s.expires_on), new Date()) : null
+              return (
+                <div
+                  key={s.tenant_id}
+                  className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                    isExpired ? 'border-immo-status-red/30 bg-immo-status-red-bg/30' : 'border-immo-border-default bg-immo-bg-primary'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-immo-text-primary">{s.tenant_name}</div>
+                    <div className="text-[11px] text-immo-text-muted">
+                      {noPayment
+                        ? 'Aucun paiement enregistré'
+                        : isExpired
+                          ? `Expiré depuis ${Math.abs(days ?? 0)}j`
+                          : s.expires_on ? `Expire dans ${days}j (${format(new Date(s.expires_on), 'dd/MM/yyyy')})` : ''}
+                    </div>
+                  </div>
+                  <StatusBadge
+                    label={isExpired ? 'Expiré' : noPayment ? 'Jamais payé' : s.status === 'expiring_soon' ? 'Bientôt' : 'Renouv.'}
+                    type={isExpired || noPayment ? 'red' : s.status === 'expiring_soon' ? 'orange' : 'muted'}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-immo-text-muted" />
         {FILTER_OPTIONS.map(opt => (
           <button
             key={opt.value}
-            onClick={() => setStatusFilter(opt.value)}
+            onClick={() => setMethodFilter(opt.value)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              statusFilter === opt.value
-                ? 'bg-immo-accent-green/10 text-immo-accent-green'
+              methodFilter === opt.value
+                ? 'bg-immo-accent-blue/10 text-immo-accent-blue'
                 : 'text-immo-text-muted hover:bg-immo-bg-card-hover'
             }`}
           >
             {opt.label}
           </button>
         ))}
-        <span className="ml-auto text-xs text-immo-text-muted">{filtered.length} facture(s)</span>
+        <span className="ml-auto text-xs text-immo-text-muted">{filtered.length} paiement(s)</span>
       </div>
 
       <DataTable
         columns={columns}
         data={filtered}
-        rowKey={(inv) => inv.id as string}
+        rowKey={(p) => p.id}
         emptyIcon={<FileText className="h-10 w-10" />}
-        emptyMessage={statusFilter === 'all' ? 'Aucune facture' : 'Aucune facture dans ce statut'}
-        emptyDescription={statusFilter === 'all' ? "Les factures apparaitront ici des qu'elles seront generees." : 'Changez de filtre pour voir d\'autres factures.'}
+        emptyMessage={methodFilter === 'all' ? 'Aucun paiement enregistré' : 'Aucun paiement avec ce mode'}
+        emptyDescription={methodFilter === 'all' ? 'Commencez par enregistrer votre premier paiement avec le bouton ci-dessus.' : 'Changez de filtre pour voir d\'autres paiements.'}
       />
 
-      <ConfirmDialog
-        isOpen={!!paidConfirm}
-        onClose={() => setPaidConfirm(null)}
-        onConfirm={() => {
-          if (paidConfirm) markPaid.mutate(paidConfirm.id)
-          setPaidConfirm(null)
-        }}
-        title="Marquer comme payée ?"
-        description={paidConfirm
-          ? `${paidConfirm.tenant_name} — ${formatPriceCompact(paidConfirm.amount)} DA. Cette action met à jour les revenus, le MRR et déclenche les automations downstream. Vérifiez avant de confirmer.`
-          : ''}
-        confirmLabel="Confirmer le paiement"
-      />
-
-      <ConfirmDialog
-        isOpen={!!overdueConfirm}
-        onClose={() => setOverdueConfirm(null)}
-        onConfirm={() => {
-          if (overdueConfirm) markOverdue.mutate(overdueConfirm.id)
-          setOverdueConfirm(null)
-        }}
-        title="Marquer en retard ?"
-        description={overdueConfirm
-          ? `${overdueConfirm.tenant_name} — ${formatPriceCompact(overdueConfirm.amount)} DA passera en statut "En retard". Le tenant peut être notifié automatiquement.`
-          : ''}
-        confirmLabel="Marquer en retard"
-        confirmVariant="danger"
-      />
+      <AddPaymentModal isOpen={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   )
 }
