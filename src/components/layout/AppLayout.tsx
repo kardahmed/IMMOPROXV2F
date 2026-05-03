@@ -55,7 +55,7 @@ export function AppLayout() {
   usePushNotifications()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-immo-bg-primary">
+    <div className="flex h-[100dvh] overflow-hidden bg-immo-bg-primary">
       {/* Desktop sidebar */}
       {!isMobile && <Sidebar />}
       {/* Mobile drawer sidebar */}

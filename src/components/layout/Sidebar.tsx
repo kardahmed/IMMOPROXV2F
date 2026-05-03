@@ -15,6 +15,7 @@ import {
   LogOut,
   CheckSquare,
   MessageSquare,
+  X,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
@@ -59,7 +60,7 @@ const NAV_KEYS: Record<string, string> = {
 }
 
 // Shared sidebar content (used by both desktop and mobile)
-function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
+function SidebarContent({ onNavClick, onClose }: { onNavClick?: () => void; onClose?: () => void }) {
   const { t } = useTranslation()
   const location = useLocation()
   const { signOut } = useAuth()
@@ -70,16 +71,25 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const inboxUnread = useInboxUnreadCount()
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Logo */}
+    <div className="flex h-full flex-col pt-[env(safe-area-inset-top)]">
+      {/* Logo + close button (mobile only) */}
       <div className="flex items-center gap-3 px-5 py-5">
         <img src={logoUrl} alt={appName} className="h-9 w-9 rounded-lg object-contain" />
-        <div>
-          <div className="text-sm font-bold tracking-tight text-immo-text-primary">
+        <div className="flex-1 min-w-0">
+          <div className="truncate text-sm font-bold tracking-tight text-immo-text-primary">
             {appName}
           </div>
           <div className="text-[10px] text-immo-text-muted">{t('common.version')}</div>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            aria-label={t('action.close', { defaultValue: 'Fermer' })}
+            className="md:hidden shrink-0 rounded-md p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover hover:text-immo-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <Separator className="bg-immo-border-default" />
@@ -162,7 +172,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 // Desktop sidebar wrapper
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex h-screen w-[220px] shrink-0 flex-col border-r border-immo-border-default bg-immo-bg-sidebar rtl:border-l rtl:border-r-0">
+    <aside className="hidden md:flex h-[100dvh] w-[220px] shrink-0 flex-col border-r border-immo-border-default bg-immo-bg-sidebar rtl:border-l rtl:border-r-0">
       <SidebarContent />
     </aside>
   )
@@ -181,10 +191,10 @@ export function MobileSidebar() {
         <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={close} />
       )}
       {/* Drawer */}
-      <aside className={`fixed left-0 top-0 z-50 h-screen w-[260px] border-r border-immo-border-default bg-immo-bg-sidebar transition-transform duration-300 md:hidden rtl:left-auto rtl:right-0 ${
+      <aside className={`fixed left-0 top-0 z-50 h-[100dvh] w-[260px] border-r border-immo-border-default bg-immo-bg-sidebar transition-transform duration-300 md:hidden rtl:left-auto rtl:right-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
       }`}>
-        <SidebarContent onNavClick={close} />
+        <SidebarContent onNavClick={close} onClose={close} />
       </aside>
     </>
   )
