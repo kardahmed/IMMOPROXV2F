@@ -1,7 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { requireServiceRole } from '../_shared/auth.ts'
-import { corsHeadersFor } from '../_shared/cors.ts'
 
 interface PlatformAlert {
   id: string
@@ -10,6 +9,24 @@ interface PlatformAlert {
   channel: string
   webhook_url: string | null
   is_active: boolean
+}
+
+// Inlined from _shared/cors.ts because the Supabase Dashboard
+// deploy flow can't upload _shared files separately. If you move
+// to `supabase functions deploy` via CLI, replace with:
+//   import { corsHeadersFor } from '../_shared/cors.ts'
+const ALLOWED_ORIGINS = new Set<string>([
+  'https://app.immoprox.io',
+  'http://localhost:5173',
+])
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://app.immoprox.io'
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 serve(async (req: Request) => {
