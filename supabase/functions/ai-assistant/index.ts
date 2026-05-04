@@ -20,15 +20,11 @@ import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackAnthropicCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 import { sanitizeForPrompt, wrapUntrusted } from '../_shared/promptSanitize.ts'
+import { corsHeadersFor } from '../_shared/cors.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
 
 const SYSTEM_PROMPT_FR = `Tu es X, l'assistant IA d'IMMO PRO-X (CRM immobilier algérien). Tu réponds aux questions de l'agent immobilier avec précision en t'appuyant UNIQUEMENT sur les données fournies dans le contexte.
 
@@ -54,6 +50,7 @@ const SYSTEM_PROMPT_AR = `أنت X، المساعد الذكي لـ IMMO PRO-X (
 - المبالغ بالدينار الجزائري، نسق بمسافات (12 500 000 دج)`
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   const json = (data: unknown, status = 200) =>
