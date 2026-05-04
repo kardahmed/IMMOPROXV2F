@@ -54,32 +54,60 @@ export function TasksPage() {
   // the field-agent workflow stays one tap.
   const [callTask, setCallTask] = useState<ClientTask | null>(null)
 
-  // Fetch all tasks with client + agent relations (post-028 unified)
-  const { data: allTasks = [], isLoading } = useQuery({
-    queryKey: ['all-tasks', tenantId],
+  // Pre-fix the page issued ONE query with limit 500 ordered by created_at desc.
+  // An agent with >500 lifetime done tasks would see their freshest pending
+  // tasks pushed out of the result set and disappear from `today/overdue/upcoming`.
+  // Split into two queries scoped by status group: pending stays in active
+  // (today/overdue/upcoming/messages tabs), done+ignored go to completed tab.
+  // Both capped at 500 — separately — so neither bucket can starve the other.
+  const buildBaseQuery = () => {
+    let q = supabase.from('tasks')
+      .select('*, clients(full_name, phone, pipeline_stage), users!tasks_agent_id_fkey(first_name, last_name)')
+      .eq('tenant_id', tenantId!)
+      .is('deleted_at', null)
+    if (isAgent && userId) q = q.eq('agent_id', userId)
+    return q
+  }
+
+  const mapRows = (rows: Record<string, unknown>[]) =>
+    rows.map(t => ({
+      ...t,
+      client: t.clients as ClientTask['client'],
+      agent: t.users as ClientTask['agent'],
+    })) as ClientTask[]
+
+  const { data: activeTasks = [], isLoading: isLoadingActive } = useQuery({
+    queryKey: ['all-tasks', tenantId, 'active'],
     queryFn: async () => {
-      let query = supabase.from('tasks')
-        .select('*, clients(full_name, phone, pipeline_stage), users!tasks_agent_id_fkey(first_name, last_name)')
-        .eq('tenant_id', tenantId!)
-        .is('deleted_at', null)
+      const { data, error } = await buildBaseQuery()
+        .eq('status', 'pending')
+        .order('scheduled_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(500)
-
-      if (isAgent && userId) {
-        query = query.eq('agent_id', userId)
-      }
-
-      const { data, error } = await query
       if (error) { handleSupabaseError(error); return [] }
-      return (data ?? []).map((t: Record<string, unknown>) => ({
-        ...t,
-        client: t.clients as ClientTask['client'],
-        agent: t.users as ClientTask['agent'],
-      })) as ClientTask[]
+      return mapRows(data ?? [])
     },
     enabled: !!tenantId,
     refetchInterval: 60_000,
   })
+
+  const { data: completedTasks = [], isLoading: isLoadingCompleted } = useQuery({
+    queryKey: ['all-tasks', tenantId, 'completed'],
+    queryFn: async () => {
+      const { data, error } = await buildBaseQuery()
+        .in('status', ['done', 'ignored'])
+        .order('completed_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .limit(500)
+      if (error) { handleSupabaseError(error); return [] }
+      return mapRows(data ?? [])
+    },
+    enabled: !!tenantId && tab === 'completed',
+    refetchInterval: 60_000,
+  })
+
+  const allTasks = useMemo(() => [...activeTasks, ...completedTasks], [activeTasks, completedTasks])
+  const isLoading = isLoadingActive || (tab === 'completed' && isLoadingCompleted)
 
   // Agents for filter
   const { data: agents = [] } = useQuery({

@@ -75,7 +75,13 @@ export function useAutoTasks() {
         scheduled_at: t.delay_minutes > 0 ? new Date(Date.now() + t.delay_minutes * 60000).toISOString() : null,
       }))
 
-      await supabase.from('tasks').insert(newTasks)
+      // Migration 075 added a unique partial index on (client_id, template_id)
+      // WHERE status='pending'. In the rare concurrent-call scenario (PipelinePage
+      // and ClientDetailPage both firing the same stage move) the second insert
+      // raises 23505 — we swallow it: the dupe was prevented, the user's intent
+      // is satisfied, no need to surface noise.
+      const { error } = await supabase.from('tasks').insert(newTasks)
+      if (error && error.code !== '23505') throw error
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] })
