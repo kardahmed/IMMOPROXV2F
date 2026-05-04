@@ -55,7 +55,6 @@ const CLIENT_COLUMNS = [
   'last_contact_at',
   'cin_verified',
   'created_at',
-  'updated_at',
 ].join(', ')
 
 /** Escape special PostgREST filter characters to prevent filter injection */

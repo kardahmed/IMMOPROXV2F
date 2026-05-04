@@ -46,14 +46,14 @@ BEGIN
 
   -- The existing helper in src/lib/clientNotes.ts PREPENDS so that
   -- the Notes tab shows newest entries at the top. Mirror that here:
-  -- the new note lands above the previous text.
+  -- the new note lands above the previous text. (clients table has
+  -- only created_at — no updated_at column to bump.)
   UPDATE clients
   SET notes = CASE
     WHEN notes IS NULL OR length(trim(notes)) = 0
       THEN p_note
     ELSE p_note || E'\n\n' || notes
-  END,
-  updated_at = NOW()
+  END
   WHERE id = p_client_id
   RETURNING notes INTO result;
 
