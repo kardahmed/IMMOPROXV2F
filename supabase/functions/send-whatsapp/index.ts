@@ -3,16 +3,13 @@ import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackWhatsAppCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
 import { rateLimitResponse } from '../_shared/rateLimit.ts'
+import { corsHeadersFor } from '../_shared/cors.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   const json = (data: unknown, status = 200) =>
@@ -38,7 +35,9 @@ Deno.serve(async (req) => {
     // minute is well above the realistic agent burst.
     const rlRes = rateLimitResponse(`send-whatsapp:${user.id}`, 60, 60_000)
     if (rlRes) {
-      rlRes.headers.set('Access-Control-Allow-Origin', '*')
+      for (const [k, v] of Object.entries(corsHeaders)) {
+        rlRes.headers.set(k, v)
+      }
       return rlRes
     }
 

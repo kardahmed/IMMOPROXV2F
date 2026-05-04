@@ -1,14 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { rateLimitDb, rateLimitDbResponse } from '../_shared/rateLimit.ts'
+import { corsHeadersFor } from '../_shared/cors.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
 
 // SHA-256 hash for CAPI user data
 async function sha256(value: string): Promise<string> {
@@ -39,6 +34,7 @@ function buildNotes(
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -59,7 +55,12 @@ Deno.serve(async (req) => {
   const rlState = await rateLimitDb(rlSupabase, `capture-lead:${clientIp}`, 10, 60_000)
   const rlBlock = rateLimitDbResponse(rlState)
   if (rlBlock) {
-    rlBlock.headers.set('Access-Control-Allow-Origin', '*')
+    // Echo the allow-listed origin instead of '*' so the browser
+    // can read the rate-limit message even when the request was
+    // credentialed.
+    for (const [k, v] of Object.entries(corsHeaders)) {
+      rlBlock.headers.set(k, v)
+    }
     return rlBlock
   }
 

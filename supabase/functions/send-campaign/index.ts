@@ -2,19 +2,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkPlanFeature } from '../_shared/checkPlanFeature.ts'
 import { trackResendCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
+import { corsHeadersFor } from '../_shared/cors.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 const BATCH_SIZE = 50
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {

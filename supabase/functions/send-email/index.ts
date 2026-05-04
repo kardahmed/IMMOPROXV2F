@@ -4,13 +4,10 @@ import { renderTemplate } from '../_shared/email-templates.ts'
 import type { TemplateName } from '../_shared/email-templates.ts'
 import { trackResendCost } from '../_shared/trackCost.ts'
 import { checkQuota, quotaErrorResponse } from '../_shared/checkQuota.ts'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeadersFor } from '../_shared/cors.ts'
 
 serve(async (req: Request) => {
+  const corsHeaders = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
