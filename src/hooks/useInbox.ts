@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/store/authStore'
 
 export interface InboxMessage {
   id: string
@@ -31,13 +32,23 @@ export interface Conversation {
 }
 
 const INBOX_FETCH_LIMIT = 500
-const POLL_INTERVAL_MS = 30_000
 
 // Fetch the latest 500 messages for the current tenant (RLS already filters
 // agent → own clients, admin → all). Then group client-side by client_id
 // or by phone for unknown senders.
+//
+// Pre-fix this hook polled every 30s (refetchInterval), pulling 500 rows
+// + nested client embeds even when the inbox was idle — constant
+// bandwidth burn per open tab and a >30s lag before a new WhatsApp
+// reply showed up. Now the initial fetch happens once and a Supabase
+// realtime channel pushes inserts/updates as they land in the DB,
+// triggering a react-query invalidation. Bandwidth ~10x lower; new
+// messages appear within ~1s of arriving on the Meta webhook.
 export function useInboxConversations() {
-  return useQuery({
+  const tenantId = useAuthStore(s => s.tenantId)
+  const qc = useQueryClient()
+
+  const query = useQuery({
     queryKey: ['inbox', 'conversations'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -50,9 +61,47 @@ export function useInboxConversations() {
       if (error) throw error
       return (data ?? []) as unknown as InboxMessage[]
     },
-    refetchInterval: POLL_INTERVAL_MS,
-    staleTime: 10_000,
+    // No refetchInterval — realtime channel below is the source of
+    // truth for freshness. staleTime 5min means tab-switching back
+    // doesn't trigger a redundant refetch when the channel is open.
+    staleTime: 5 * 60 * 1000,
   })
+
+  // Subscribe to whatsapp_messages changes for the current tenant.
+  // The filter on tenant_id keeps this scoped — we don't get
+  // notifications for other tenants' messages even though all rows
+  // exist in the same table. Channel is closed on unmount and on
+  // tenant_id change.
+  useEffect(() => {
+    if (!tenantId) return
+    const channel = supabase
+      .channel(`inbox-${tenantId}`)
+      .on(
+        // Cast on() args via unknown — typed Postgres realtime
+        // channel signatures are huge and don't add safety here.
+        'postgres_changes' as never,
+        {
+          event: '*',
+          schema: 'public',
+          table: 'whatsapp_messages',
+          filter: `tenant_id=eq.${tenantId}`,
+        } as never,
+        () => {
+          // Invalidate the conversations query so react-query refetches
+          // the latest 500 rows. Cheap because there's no polling
+          // overhead — refetch fires only when something actually
+          // changes.
+          qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] })
+          qc.invalidateQueries({ queryKey: ['inbox', 'unread-count'] })
+        },
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [tenantId, qc])
+
+  return query
 }
 
 // Group flat message list into per-client conversations, sorted by most
