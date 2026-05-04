@@ -7,6 +7,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendEmailInternal } from '../_shared/send-email-internal.ts'
+import { isAuthorizedCron, unauthorizedResponse } from '../_shared/cronAuth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -39,13 +40,7 @@ Deno.serve(async (req) => {
   // Service-role only — this cron iterates every tenant and may
   // trigger Resend emails on quota breaches. Without the gate any
   // unauthenticated caller could DoS the DB and burn Resend.
-  const authHeader = req.headers.get('Authorization') ?? ''
-  if (authHeader !== `Bearer ${serviceKey}`) {
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } },
-    )
-  }
+  if (!isAuthorizedCron(req)) return unauthorizedResponse()
 
   const supabase = createClient(supabaseUrl, serviceKey)
   const period = periodKey()

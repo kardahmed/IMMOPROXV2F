@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendEmailInternal } from '../_shared/send-email-internal.ts'
 import { dispatchAutomation } from '../_shared/dispatchAutomation.ts'
+import { isAuthorizedCron, unauthorizedResponse } from '../_shared/cronAuth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -16,11 +17,7 @@ function formatFrenchDateTime(iso: string): { date: string; time: string } {
 }
 
 Deno.serve(async (req) => {
-  // Auth: service role key required
-  const authHeader = req.headers.get('Authorization')
-  if (authHeader !== `Bearer ${supabaseServiceKey}`) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
-  }
+  if (!isAuthorizedCron(req)) return unauthorizedResponse()
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },

@@ -20,6 +20,7 @@
 //   4. Per-batch error isolation: one bad task doesn't fail the run.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { isAuthorizedCron, unauthorizedResponse } from '../_shared/cronAuth.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -47,13 +48,7 @@ Deno.serve(async (req) => {
   // Service-role only — this cron writes new tasks for every tenant
   // whose pending tasks went 48h without reply. An unauthenticated
   // caller could trigger arbitrary task creation across tenants.
-  const authHeader = req.headers.get('Authorization') ?? ''
-  if (authHeader !== `Bearer ${SERVICE_KEY}`) {
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } },
-    )
-  }
+  if (!isAuthorizedCron(req)) return unauthorizedResponse()
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
