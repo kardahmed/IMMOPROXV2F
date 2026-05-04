@@ -28,52 +28,46 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- ── RLS policies on storage.objects ────────────────────────────────
--- Files are stored under <tenant_id>/<client_id>/<filename>. Tenant
--- agents can read/write/delete only inside their own tenant's
--- folder; cross-tenant access is blocked by the prefix check.
--- super_admin gets unrestricted via the existing super_admin
--- bypass at the table level (covered by 044/046 hotfixes).
-
--- Drop and recreate so a re-run produces the canonical state.
-DROP POLICY IF EXISTS client_documents_tenant_select ON storage.objects;
-CREATE POLICY client_documents_tenant_select ON storage.objects
-  FOR SELECT TO authenticated
-  USING (
-    bucket_id = 'client-documents'
-    AND (storage.foldername(name))[1] = (
-      SELECT tenant_id::text FROM users WHERE id = auth.uid()
-    )
-  );
-
-DROP POLICY IF EXISTS client_documents_tenant_insert ON storage.objects;
-CREATE POLICY client_documents_tenant_insert ON storage.objects
-  FOR INSERT TO authenticated
-  WITH CHECK (
-    bucket_id = 'client-documents'
-    AND (storage.foldername(name))[1] = (
-      SELECT tenant_id::text FROM users WHERE id = auth.uid()
-    )
-  );
-
-DROP POLICY IF EXISTS client_documents_tenant_update ON storage.objects;
-CREATE POLICY client_documents_tenant_update ON storage.objects
-  FOR UPDATE TO authenticated
-  USING (
-    bucket_id = 'client-documents'
-    AND (storage.foldername(name))[1] = (
-      SELECT tenant_id::text FROM users WHERE id = auth.uid()
-    )
-  );
-
-DROP POLICY IF EXISTS client_documents_tenant_delete ON storage.objects;
-CREATE POLICY client_documents_tenant_delete ON storage.objects
-  FOR DELETE TO authenticated
-  USING (
-    bucket_id = 'client-documents'
-    AND (storage.foldername(name))[1] = (
-      SELECT tenant_id::text FROM users WHERE id = auth.uid()
-    )
-  );
-
-COMMENT ON POLICY client_documents_tenant_select ON storage.objects IS
-  'Authenticated users can list/read files under <their-tenant-id>/* in client-documents. Cross-tenant prefixes return 0 rows.';
+-- INTENTIONALLY NOT CREATED HERE.
+--
+-- Supabase Storage owns the storage.objects table under the
+-- supabase_storage_admin role; the postgres role (which the SQL
+-- editor uses) cannot create policies against it directly. Trying
+-- to do so produces ERROR 42501: must be owner of relation
+-- objects.
+--
+-- Create them via Supabase Dashboard → Storage → Policies →
+-- "New policy" → "For full customization":
+--
+--   Policy 1 — SELECT (read)
+--     name:   client_documents_tenant_select
+--     allowed operation: SELECT
+--     target roles: authenticated
+--     USING expression:
+--       bucket_id = 'client-documents'
+--       AND (storage.foldername(name))[1] = (
+--         SELECT tenant_id::text FROM users WHERE id = auth.uid()
+--       )
+--
+--   Policy 2 — INSERT (upload)
+--     name:   client_documents_tenant_insert
+--     operation: INSERT
+--     target roles: authenticated
+--     WITH CHECK: same expression as above
+--
+--   Policy 3 — UPDATE (replace)
+--     name:   client_documents_tenant_update
+--     operation: UPDATE
+--     target roles: authenticated
+--     USING: same expression as above
+--
+--   Policy 4 — DELETE
+--     name:   client_documents_tenant_delete
+--     operation: DELETE
+--     target roles: authenticated
+--     USING: same expression as above
+--
+-- Effect: tenant agents only see/upload/replace/delete files in
+-- their own <tenant_id>/* folder. Cross-tenant prefixes return 0
+-- rows. super_admin keeps unrestricted access via the existing
+-- super_admin bypass at the storage.objects table level.
