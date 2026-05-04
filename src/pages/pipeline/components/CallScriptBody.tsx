@@ -225,8 +225,49 @@ export function CallScriptBody({
     return <p className="py-8 text-center text-sm text-immo-text-muted">Aucun script disponible pour cette étape</p>
   }
 
+  // Post-sale stages (vente, perdue, relancement) get a colored
+  // banner so the agent doesn't accidentally treat the call as a
+  // regular prospect pitch. The script content itself is already
+  // stage-aware via the AI's stage-context block, this is a UX
+  // safety net.
+  const postSale = clientStage === 'vente' || clientStage === 'perdue' || clientStage === 'relancement'
+  const stageBanner = postSale ? (
+    <div className={`flex items-start gap-3 rounded-xl border p-3 ${
+      clientStage === 'vente'
+        ? 'border-immo-accent-green/30 bg-immo-accent-green/5 text-immo-accent-green'
+        : clientStage === 'perdue'
+          ? 'border-immo-status-red/30 bg-immo-status-red/5 text-immo-status-red'
+          : 'border-immo-status-orange/30 bg-immo-status-orange/5 text-immo-status-orange'
+    }`}>
+      <span className="text-lg">{clientStage === 'vente' ? '🎯' : clientStage === 'perdue' ? '🚪' : '🔄'}</span>
+      <div className="text-xs">
+        {clientStage === 'vente' && (
+          <>
+            <strong>Appel post-achat</strong> — ce client a déjà acheté.
+            Suivi d'échéancier, satisfaction, et demande de parrainage.
+            <br />Ne pas re-vendre, ne pas re-qualifier.
+          </>
+        )}
+        {clientStage === 'perdue' && (
+          <>
+            <strong>Appel de clôture</strong> — la vente n'a pas eu lieu.
+            Comprendre pourquoi, garder la porte ouverte sans pression.
+          </>
+        )}
+        {clientStage === 'relancement' && (
+          <>
+            <strong>Appel de réengagement</strong> — le client s'est éloigné.
+            Comprendre le frein, raviver l'intérêt sans pousser.
+          </>
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
     <div className="space-y-6">
+      {stageBanner}
+
       {/* Intro */}
       {script.intro && (
         <div className="rounded-xl border border-immo-accent-green/20 bg-immo-accent-green/5 p-4">
