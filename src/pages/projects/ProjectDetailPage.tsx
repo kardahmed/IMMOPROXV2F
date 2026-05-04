@@ -217,6 +217,7 @@ export function ProjectDetailPage() {
               variant="ghost"
               size="sm"
               onClick={() => updateProject.mutate({ id: project.id, status: 'archived' })}
+              disabled={updateProject.isPending}
               className="border border-immo-border-default text-immo-text-secondary hover:bg-immo-status-red-bg hover:text-immo-status-red"
             >
               <Archive className="me-1.5 h-3.5 w-3.5" /> Archiver
