@@ -40,7 +40,7 @@ export function useTenantHealth() {
       // critical alert — it's the expected state.
       const { data: tenants } = await supabase
         .from('tenants')
-        .select('id, name')
+        .select('id, name, created_at')
         .is('deleted_at', null)
         .is('suspended_at', null)
       if (!tenants || tenants.length === 0) {
@@ -124,15 +124,28 @@ export function useTenantHealth() {
       const healthList: TenantHealth[] = tenants.map(t => {
         const issues: string[] = []
         const lastAct = lastActivityMap.get(t.id) ?? null
+        // Tenant age — used to give a grace period to brand-new
+        // tenants. Without this, a tenant created 5 minutes ago with
+        // no history rows yet would surface as "inactif depuis 999
+        // jours" because daysInactive defaulted to 999 when lastAct
+        // was null.
+        const tenantAgeDays = t.created_at
+          ? Math.floor((now.getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24))
+          : 0
+        // If the tenant has activity, use it. If not, fall back to
+        // the tenant's age — a 2-day-old tenant with no activity is
+        // 2 days "inactive", not 999.
         const daysInactive = lastAct
           ? Math.floor((now.getTime() - new Date(lastAct).getTime()) / (1000 * 60 * 60 * 24))
-          : 999
+          : tenantAgeDays
         const late = lateByTenant.get(t.id) ?? 0
         const expiring = expiringByTenant.get(t.id) ?? 0
         const agentCount = agentsByTenant.get(t.id) ?? 0
 
         // Check issues
-        if (agentCount === 0) {
+        if (agentCount === 0 && tenantAgeDays >= 1) {
+          // Skip the alert on day-zero tenants — admin is still
+          // setting up; agents land within 24h via invite emails.
           issues.push('Aucun agent actif')
           alerts.push({ type: 'no_agents', severity: 'critical', tenant_id: t.id, tenant_name: t.name, message: `${t.name} — aucun agent actif` })
         }
