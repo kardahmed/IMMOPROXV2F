@@ -1,4 +1,5 @@
 export { CompanySection } from './CompanySection'
 export { PipelineSection } from './PipelineSection'
 export { BrandingSection } from './BrandingSection'
+export { IntegrationsSection } from './IntegrationsSection'
 export { ReservationsSection, TemplatesSection, NotificationsSection, LanguageSection, SecuritySection } from './OtherSections'

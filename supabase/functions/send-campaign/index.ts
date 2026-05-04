@@ -170,10 +170,35 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Get platform settings
+    // 5. Resolve Resend credentials — tenant first, platform fallback.
+    //    Marketing campaigns are explicitly tenant-owned (the tenant
+    //    decides who they email and pays for the volume), so if they
+    //    have configured Resend we MUST use their key. If not, we fall
+    //    back to the platform key so the campaign still goes out, but
+    //    that's the case where the tenant pays the founder for relays.
+    let effectiveApiKey: string | undefined = resendApiKey
+    let tenantFrom: { name: string; email: string } | null = null
+    {
+      const { data: tenantInteg } = await supabase
+        .from('tenant_integrations')
+        .select('api_key, config, enabled')
+        .eq('tenant_id', campaign.tenant_id)
+        .eq('type', 'resend')
+        .eq('enabled', true)
+        .maybeSingle()
+      const ti = tenantInteg as { api_key: string | null; config: { from_email?: string; from_name?: string } | null } | null
+      if (ti?.api_key && ti.config?.from_email) {
+        effectiveApiKey = ti.api_key
+        tenantFrom = {
+          name: ti.config.from_name || ti.config.from_email,
+          email: ti.config.from_email,
+        }
+      }
+    }
+
     const { data: settings } = await supabase.from('platform_settings').select('support_email, platform_name').limit(1).single()
-    const fromName = (settings as { platform_name: string } | null)?.platform_name ?? 'IMMO PRO-X'
-    const fromEmail = (settings as { support_email: string } | null)?.support_email ?? 'noreply@immoprox.com'
+    const fromName = tenantFrom?.name ?? (settings as { platform_name: string } | null)?.platform_name ?? 'IMMO PRO-X'
+    const fromEmail = tenantFrom?.email ?? (settings as { support_email: string } | null)?.support_email ?? 'noreply@immoprox.com'
 
     // 6. Get template HTML
     const template = campaign.marketing_email_templates as { html_cache: string; subject: string } | null
@@ -183,8 +208,8 @@ Deno.serve(async (req) => {
     // 7. Send in batches
     let totalSent = 0
 
-    if (!resendApiKey) {
-      console.warn('No RESEND_API_KEY — logging emails without sending')
+    if (!effectiveApiKey) {
+      console.warn('No Resend key (tenant or platform) — logging emails without sending')
     }
 
     const trackingBaseUrl = `${supabaseUrl}/functions/v1/track-email`
@@ -194,7 +219,7 @@ Deno.serve(async (req) => {
     // the response body on failure so we can debug from the function
     // logs instead of "status='failed'" with no context.
     async function sendOneWithRetry(to: string, html: string): Promise<boolean> {
-      if (!resendApiKey) return true  // log-only mode upstream
+      if (!effectiveApiKey) return true  // log-only mode upstream
       const body = JSON.stringify({
         from: `${fromName} <${fromEmail}>`,
         to: [to],
@@ -206,7 +231,7 @@ Deno.serve(async (req) => {
         try {
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${effectiveApiKey}` },
             body,
           })
           if (res.ok) return true
@@ -280,7 +305,7 @@ Deno.serve(async (req) => {
       totalSent += results.reduce((sum: number, n: number) => sum + n, 0)
     }
 
-    if (resendApiKey && totalSent > 0) {
+    if (effectiveApiKey && totalSent > 0) {
       await trackResendCost(supabase, totalSent, {
         tenantId: campaign.tenant_id,
         operation: 'send-campaign',
@@ -302,7 +327,7 @@ Deno.serve(async (req) => {
       recipient: `${totalSent} destinataires`,
       subject: emailSubject,
       status: 'sent',
-      provider: resendApiKey ? 'resend' : 'none',
+      provider: effectiveApiKey ? 'resend' : 'none',
       metadata: { campaign_id, campaign_name: campaign.name },
     })
 
