@@ -159,7 +159,7 @@ export function ClientSidePanel({ clientId, onClose }: ClientSidePanelProps) {
           onClick={() => { navigate(`/pipeline/clients/${clientId}`); onClose() }}
           className="w-full bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90"
         >
-          <ExternalLink className="mr-1.5 h-4 w-4" /> Voir la fiche complete
+          <ExternalLink className="me-1.5 h-4 w-4" /> Voir la fiche complete
         </Button>
       </div>
     </div>

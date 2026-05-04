@@ -174,7 +174,7 @@ export function MessagesPage() {
                   disabled={!subject || !body || sendMessage.isPending}
                   variant="blue"
                 >
-                  {sendMessage.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="mr-1.5 h-4 w-4" />}
+                  {sendMessage.isPending ? <div className="me-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="me-1.5 h-4 w-4" />}
                   Envoyer
                 </Button>
                 {!targetTenant && <span className="text-[10px] text-immo-status-orange">⚠ Broadcast à tous les tenants</span>}
@@ -188,7 +188,7 @@ export function MessagesPage() {
             <div className="space-y-2">
               {MESSAGE_TEMPLATES.map(tpl => (
                 <button key={tpl.id} onClick={() => applyTemplate(tpl.id)}
-                  className="flex w-full items-center gap-2.5 rounded-lg border border-immo-border-default px-3 py-2.5 text-left transition-colors hover:bg-[#0579DA]/5 hover:border-[#0579DA]/30">
+                  className="flex w-full items-center gap-2.5 rounded-lg border border-immo-border-default px-3 py-2.5 text-start transition-colors hover:bg-[#0579DA]/5 hover:border-[#0579DA]/30">
                   <FileText className="h-4 w-4 shrink-0 text-[#0579DA]" />
                   <div>
                     <p className="text-xs font-medium text-immo-text-primary">{tpl.label}</p>

@@ -106,7 +106,7 @@ export function ResetPasswordPage() {
                   autoComplete="new-password"
                   placeholder="••••••••"
                   {...register('password')}
-                  className={`h-[48px] w-full rounded-xl border bg-white pl-11 pr-12 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
+                  className={`h-[48px] w-full rounded-xl border bg-white ps-11 pe-12 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
                     errors.password ? 'border-[#CD3D64]' : 'border-[#E3E8EF] focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/10'
                   }`}
                   style={{fontFamily:'inherit'}}
@@ -131,7 +131,7 @@ export function ResetPasswordPage() {
                   autoComplete="new-password"
                   placeholder="••••••••"
                   {...register('confirm')}
-                  className={`h-[48px] w-full rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
+                  className={`h-[48px] w-full rounded-xl border bg-white ps-11 pe-4 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
                     errors.confirm ? 'border-[#CD3D64]' : 'border-[#E3E8EF] focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/10'
                   }`}
                   style={{fontFamily:'inherit'}}

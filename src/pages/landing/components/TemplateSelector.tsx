@@ -117,7 +117,7 @@ export function TemplateSelector({ isOpen, onClose, onSelect }: TemplateSelector
           <button
             key={tpl.id}
             onClick={() => { onSelect(tpl); onClose() }}
-            className="group rounded-xl border border-immo-border-default bg-immo-bg-card p-5 text-left transition-all hover:border-immo-accent-green/30 hover:shadow-md"
+            className="group rounded-xl border border-immo-border-default bg-immo-bg-card p-5 text-start transition-all hover:border-immo-accent-green/30 hover:shadow-md"
           >
             <div className="mb-3 text-4xl">{tpl.preview}</div>
             <h3 className="text-sm font-bold text-immo-text-primary">{tpl.name}</h3>

@@ -117,10 +117,10 @@ export function LandingPagesManager() {
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setShowTemplates(true)} variant="ghost" className="border border-immo-border-default text-immo-text-secondary hover:bg-immo-bg-card-hover">
-            <Layout className="mr-1.5 h-4 w-4" /> {t('landing_page.from_template')}
+            <Layout className="me-1.5 h-4 w-4" /> {t('landing_page.from_template')}
           </Button>
           <Button onClick={() => { setEditPage(null); setShowEditor(true) }} className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
-            <Plus className="mr-1.5 h-4 w-4" /> {t('landing_page.new_page')}
+            <Plus className="me-1.5 h-4 w-4" /> {t('landing_page.new_page')}
           </Button>
         </div>
       </div>

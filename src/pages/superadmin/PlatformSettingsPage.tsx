@@ -126,7 +126,7 @@ export function PlatformSettingsPage() {
                   href="https://supabase.com/dashboard/project/lbnqccsebwiifxcucflg/settings/functions"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-1 font-semibold text-[#0579DA] hover:underline"
+                  className="ms-1 font-semibold text-[#0579DA] hover:underline"
                 >
                   Dashboard → Edge Functions → Secrets
                 </a>
@@ -145,7 +145,7 @@ export function PlatformSettingsPage() {
           disabled={save.isPending}
           variant="blue"
         >
-          {save.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
+          {save.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <><Save className="me-1.5 h-4 w-4" /> Enregistrer</>}
         </Button>
       </div>
 
@@ -242,7 +242,7 @@ function AlertsSection() {
           <p className="text-sm text-immo-text-secondary">Configurez des alertes automatiques par email ou webhook</p>
         </div>
         <Button onClick={() => addAlert.mutate()} disabled={addAlert.isPending} variant="blue">
-          <Plus className="mr-1.5 h-4 w-4" /> Ajouter
+          <Plus className="me-1.5 h-4 w-4" /> Ajouter
         </Button>
       </div>
 

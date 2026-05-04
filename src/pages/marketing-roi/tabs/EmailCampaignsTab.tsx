@@ -229,7 +229,7 @@ export function EmailCampaignsTab() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setScheduledAt('')}
-                    className={`flex-1 rounded-xl border p-4 text-left transition-colors ${!scheduledAt ? 'border-immo-accent-green bg-immo-accent-green/5' : 'border-immo-border-default hover:border-immo-text-muted'}`}
+                    className={`flex-1 rounded-xl border p-4 text-start transition-colors ${!scheduledAt ? 'border-immo-accent-green bg-immo-accent-green/5' : 'border-immo-border-default hover:border-immo-text-muted'}`}
                   >
                     <Send className="h-5 w-5 text-immo-accent-green mb-1" />
                     <p className="text-sm font-medium text-immo-text-primary">Envoyer maintenant</p>
@@ -237,7 +237,7 @@ export function EmailCampaignsTab() {
                   </button>
                   <button
                     onClick={() => setScheduledAt(new Date(Date.now() + 86400000).toISOString().slice(0, 16))}
-                    className={`flex-1 rounded-xl border p-4 text-left transition-colors ${scheduledAt ? 'border-[#0579DA] bg-[#0579DA]/5' : 'border-immo-border-default hover:border-immo-text-muted'}`}
+                    className={`flex-1 rounded-xl border p-4 text-start transition-colors ${scheduledAt ? 'border-[#0579DA] bg-[#0579DA]/5' : 'border-immo-border-default hover:border-immo-text-muted'}`}
                   >
                     <Calendar className="h-5 w-5 text-[#0579DA] mb-1" />
                     <p className="text-sm font-medium text-immo-text-primary">Planifier</p>

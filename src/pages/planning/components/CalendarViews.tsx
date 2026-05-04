@@ -93,7 +93,7 @@ export function MonthView({ currentDate, events, onDayClick, onEventClick }: {
                     <button
                       key={ev.id}
                       onClick={(e) => { e.stopPropagation(); onEventClick(ev) }}
-                      className={`flex w-full items-center gap-1 rounded border-l-2 px-1 py-0.5 text-left text-[10px] transition-colors hover:brightness-125 ${v.bg} ${v.border} ${ring}`}
+                      className={`flex w-full items-center gap-1 rounded border-l-2 px-1 py-0.5 text-start text-[10px] transition-colors hover:brightness-125 ${v.bg} ${v.border} ${ring}`}
                     >
                       <Icon className={`h-2.5 w-2.5 shrink-0 ${v.text}`} />
                       <span className="text-immo-text-muted">{format(new Date(ev.at), 'HH:mm')}</span>
@@ -141,7 +141,7 @@ export function WeekView({ currentDate, events, onEventClick }: {
         {weekDays.map((d) => (
           <div key={d.toISOString()} className={`px-2 py-2 text-center ${isToday(d) ? 'bg-immo-accent-green/5' : ''}`}>
             <span className="text-[10px] text-immo-text-muted">{format(d, 'EEE', { locale: fr })}</span>
-            <span className={`ml-1 text-xs font-semibold ${isToday(d) ? 'text-immo-accent-green' : 'text-immo-text-primary'}`}>
+            <span className={`ms-1 text-xs font-semibold ${isToday(d) ? 'text-immo-accent-green' : 'text-immo-text-primary'}`}>
               {format(d, 'd')}
             </span>
           </div>
@@ -153,7 +153,7 @@ export function WeekView({ currentDate, events, onEventClick }: {
             className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
             style={{ top: `${nowTopPx}px` }}
           >
-            <span className="ml-[60px] -translate-y-1/2 rounded-full bg-immo-status-red px-1.5 py-0.5 text-[9px] font-bold text-white">
+            <span className="ms-[60px] -translate-y-1/2 rounded-full bg-immo-status-red px-1.5 py-0.5 text-[9px] font-bold text-white">
               {format(now, 'HH:mm')}
             </span>
             <div className="h-px flex-1 bg-immo-status-red" />
@@ -161,7 +161,7 @@ export function WeekView({ currentDate, events, onEventClick }: {
         )}
         {hours.map((hour) => (
           <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-t border-immo-border-default">
-            <div className="px-2 py-2 text-right text-[10px] text-immo-text-muted">{hour}:00</div>
+            <div className="px-2 py-2 text-end text-[10px] text-immo-text-muted">{hour}:00</div>
             {weekDays.map((day) => {
               const cellEvents = events.filter(e => {
                 const d = new Date(e.at)
@@ -246,7 +246,7 @@ export function DayView({ currentDate, events, onEventClick }: {
               return (
                 <button
                   onClick={() => onEventClick(ev)}
-                  className={`flex w-full items-center gap-4 rounded-xl border border-l-4 border-immo-border-default ${v.border} ${ring} bg-immo-bg-card p-4 text-left transition-colors hover:border-immo-border-glow/30`}
+                  className={`flex w-full items-center gap-4 rounded-xl border border-l-4 border-immo-border-default ${v.border} ${ring} bg-immo-bg-card p-4 text-start transition-colors hover:border-immo-border-glow/30`}
                 >
                   <div className="w-[60px] shrink-0 text-center">
                     <p className="text-lg font-bold text-immo-text-primary">{format(new Date(ev.at), 'HH:mm')}</p>

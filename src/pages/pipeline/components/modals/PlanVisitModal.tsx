@@ -283,7 +283,7 @@ export function PlanVisitModal({
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" />
             ) : (
               <>
-                <CalendarDays className="mr-1.5 h-4 w-4" />
+                <CalendarDays className="me-1.5 h-4 w-4" />
                 {t('plan_visit.plan_visit')}
               </>
             )}

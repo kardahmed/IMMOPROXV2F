@@ -286,11 +286,11 @@ export function GoalsPage() {
           { header: t('goals_page.progress'), value: r => `${r.progress}%` },
           { header: t('goals_page.status'), value: r => r.status },
         ])} className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <Download className="mr-1 h-3.5 w-3.5" /> {t('goals_page.export')}
+          <Download className="me-1 h-3.5 w-3.5" /> {t('goals_page.export')}
         </Button>
         {canManageGoals && (
-          <Button onClick={() => setShowCreate(true)} className="ml-auto bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-            <Plus className="mr-1 h-4 w-4" /> {t('goals_page.new_goal')}
+          <Button onClick={() => setShowCreate(true)} className="ms-auto bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
+            <Plus className="me-1 h-4 w-4" /> {t('goals_page.new_goal')}
           </Button>
         )}
       </div>
@@ -313,7 +313,7 @@ export function GoalsPage() {
                     t('goals_page.progress'),
                     t('goals_page.status'),
                   ].map(h => (
-                    <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+                    <th key={h} className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                   ))}
                 </tr>
               </thead>

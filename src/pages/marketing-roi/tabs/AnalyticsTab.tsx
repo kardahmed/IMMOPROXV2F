@@ -215,7 +215,7 @@ export function AnalyticsTab() {
           <table className="w-full">
             <thead><tr className="bg-immo-bg-card-hover">
               {['Source', 'Leads', 'Visites', 'Ventes', 'CA', 'Conversion', 'Dépense', 'CPL réel'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
+                <th key={h} className="px-4 py-3 text-start text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
               ))}
             </tr></thead>
             <tbody className="divide-y divide-immo-border-default">
@@ -255,7 +255,7 @@ export function AnalyticsTab() {
             <table className="w-full">
               <thead><tr className="bg-immo-bg-card-hover">
                 {['Campagne', 'Source', 'Leads', 'Ventes', 'Dépense', 'CA généré', 'CPL', 'ROI'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
+                  <th key={h} className="px-4 py-3 text-start text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
                 ))}
               </tr></thead>
               <tbody className="divide-y divide-immo-border-default">

@@ -28,7 +28,7 @@ export function SaveButton({ onClick, loading }: { onClick: () => void; loading:
   const { t } = useTranslation()
   return (
     <Button onClick={onClick} disabled={loading} className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-      {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" /> : <><Save className="mr-1.5 h-4 w-4" /> {t('action.save')}</>}
+      {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-immo-bg-primary border-t-transparent" /> : <><Save className="me-1.5 h-4 w-4" /> {t('action.save')}</>}
     </Button>
   )
 }

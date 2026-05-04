@@ -52,7 +52,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
           className="hidden h-9 items-center gap-2 rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 text-sm text-immo-text-muted transition-colors hover:border-immo-accent-green/40 hover:text-immo-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-immo-accent-green/40 md:flex md:w-[180px] lg:w-[240px]"
         >
           <Search className="h-4 w-4 shrink-0" />
-          <span className="flex-1 truncate text-left">{t('common.search_placeholder')}</span>
+          <span className="flex-1 truncate text-start">{t('common.search_placeholder')}</span>
           <span className="hidden items-center gap-0.5 rounded border border-immo-border-default bg-immo-bg-card px-1.5 py-0.5 text-[10px] lg:flex">
             <Command className="h-2.5 w-2.5" />K
           </span>

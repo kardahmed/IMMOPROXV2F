@@ -234,7 +234,7 @@ function LogsTab({
             placeholder="Rechercher par email, sujet..."
             value={search}
             onChange={e => onSearchChange(e.target.value)}
-            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-card py-2 pl-10 pr-4 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#0579DA] focus:outline-none"
+            className="w-full rounded-lg border border-immo-border-default bg-immo-bg-card py-2 ps-10 pe-4 text-sm text-immo-text-primary placeholder:text-immo-text-muted focus:border-[#0579DA] focus:outline-none"
           />
         </div>
         <select
@@ -274,12 +274,12 @@ function LogsTab({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-immo-border-default bg-immo-bg-primary/50">
-                <th className="px-4 py-3 text-left font-medium text-immo-text-secondary">Date</th>
-                <th className="px-4 py-3 text-left font-medium text-immo-text-secondary">Destinataire</th>
-                <th className="px-4 py-3 text-left font-medium text-immo-text-secondary">Sujet</th>
-                <th className="px-4 py-3 text-left font-medium text-immo-text-secondary">Template</th>
-                <th className="px-4 py-3 text-left font-medium text-immo-text-secondary">Statut</th>
-                <th className="px-4 py-3 text-left font-medium text-immo-text-secondary">Provider</th>
+                <th className="px-4 py-3 text-start font-medium text-immo-text-secondary">Date</th>
+                <th className="px-4 py-3 text-start font-medium text-immo-text-secondary">Destinataire</th>
+                <th className="px-4 py-3 text-start font-medium text-immo-text-secondary">Sujet</th>
+                <th className="px-4 py-3 text-start font-medium text-immo-text-secondary">Template</th>
+                <th className="px-4 py-3 text-start font-medium text-immo-text-secondary">Statut</th>
+                <th className="px-4 py-3 text-start font-medium text-immo-text-secondary">Provider</th>
               </tr>
             </thead>
             <tbody>
@@ -315,7 +315,7 @@ function LogsTab({
         </Card>
       )}
 
-      <p className="text-xs text-immo-text-muted text-right">{logs.length} email(s)</p>
+      <p className="text-xs text-immo-text-muted text-end">{logs.length} email(s)</p>
     </div>
   )
 }

@@ -16,7 +16,7 @@ export function ComparatorSection({ title, content, accent }: { title?: string; 
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className="border-b border-[#E3E8EF] px-4 py-3 text-left text-xs font-semibold text-[#8898AA]">Critere</th>
+                <th className="border-b border-[#E3E8EF] px-4 py-3 text-start text-xs font-semibold text-[#8898AA]">Critere</th>
                 {items.map((item, i) => (
                   <th key={i} className="border-b border-[#E3E8EF] px-4 py-3 text-center">
                     <span className="text-lg font-bold text-[#0A2540]">{item.type}</span>

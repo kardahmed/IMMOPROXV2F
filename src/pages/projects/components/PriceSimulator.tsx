@@ -104,15 +104,15 @@ export function PriceSimulator({ isOpen, onClose, unitCode, basePrice }: PriceSi
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-immo-bg-card-hover">
                 <tr>
-                  <th className="px-3 py-1.5 text-left text-immo-text-muted">#</th>
-                  <th className="px-3 py-1.5 text-right text-immo-text-muted">Montant</th>
+                  <th className="px-3 py-1.5 text-start text-immo-text-muted">#</th>
+                  <th className="px-3 py-1.5 text-end text-immo-text-muted">Montant</th>
                 </tr>
               </thead>
               <tbody>
                 {simulation.schedule.slice(0, 24).map(s => (
                   <tr key={s.number} className="border-t border-immo-bg-card-hover">
                     <td className="px-3 py-1 text-immo-text-muted">{s.number}</td>
-                    <td className="px-3 py-1 text-right text-immo-text-primary">{formatPrice(s.amount)}</td>
+                    <td className="px-3 py-1 text-end text-immo-text-primary">{formatPrice(s.amount)}</td>
                   </tr>
                 ))}
               </tbody>

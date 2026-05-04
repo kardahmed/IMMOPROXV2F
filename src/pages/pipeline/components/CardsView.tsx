@@ -63,7 +63,7 @@ export function CardsView({ clients, daysInStageMap, agentMap, projectMap, urgen
           })}
         </div>
 
-        <div className="ml-auto flex gap-1 rounded-lg border border-immo-border-default p-0.5">
+        <div className="ms-auto flex gap-1 rounded-lg border border-immo-border-default p-0.5">
           {([
             { key: 'recent' as SortKey, label: t('pipeline_table.sort_recent') },
             { key: 'oldest' as SortKey, label: t('pipeline_table.sort_oldest') },
@@ -146,7 +146,7 @@ export function CardsView({ clients, daysInStageMap, agentMap, projectMap, urgen
                       {SOURCE_LABELS[c.source as ClientSource] ?? c.source}
                     </span>
                     {c.confirmed_budget != null && (
-                      <span className="ml-auto text-xs font-medium text-immo-accent-green">
+                      <span className="ms-auto text-xs font-medium text-immo-accent-green">
                         {formatPriceCompact(c.confirmed_budget)}
                       </span>
                     )}

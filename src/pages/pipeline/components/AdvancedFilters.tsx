@@ -63,7 +63,7 @@ export function AdvancedFilters({ filters, onChange, onClear }: AdvancedFiltersP
             : 'border-immo-border-default text-immo-text-secondary hover:bg-immo-bg-card-hover'
         }`}
       >
-        <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
+        <SlidersHorizontal className="me-1.5 h-3.5 w-3.5" />
         {t('pipeline_filters.button')}{activeCount > 0 ? ` (${activeCount})` : ''}
       </Button>
 

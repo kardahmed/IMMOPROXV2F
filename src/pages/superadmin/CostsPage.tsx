@@ -220,11 +220,11 @@ export function CostsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-immo-border-default/50 bg-immo-bg-card-hover/40">
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Tenant</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Plan</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Revenu</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Coût API</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Profit</th>
+                <th className="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Tenant</th>
+                <th className="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Plan</th>
+                <th className="px-5 py-3 text-end text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Revenu</th>
+                <th className="px-5 py-3 text-end text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Coût API</th>
+                <th className="px-5 py-3 text-end text-xs font-semibold uppercase tracking-wide text-immo-text-muted">Profit</th>
               </tr>
             </thead>
             <tbody>
@@ -238,9 +238,9 @@ export function CostsPage() {
                         {t.plan ?? 'free'}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right text-sm text-immo-text-primary">{formatPrice(Number(t.revenue_da))}</td>
-                    <td className="px-5 py-3 text-right text-sm text-immo-text-secondary">{formatPrice(Number(t.cost_da))}</td>
-                    <td className={`px-5 py-3 text-right text-sm font-semibold ${isProfit ? 'text-immo-accent-green' : 'text-immo-status-red'}`}>
+                    <td className="px-5 py-3 text-end text-sm text-immo-text-primary">{formatPrice(Number(t.revenue_da))}</td>
+                    <td className="px-5 py-3 text-end text-sm text-immo-text-secondary">{formatPrice(Number(t.cost_da))}</td>
+                    <td className={`px-5 py-3 text-end text-sm font-semibold ${isProfit ? 'text-immo-accent-green' : 'text-immo-status-red'}`}>
                       {isProfit ? '+' : ''}{formatPrice(Number(t.profit_da))}
                     </td>
                   </tr>

@@ -70,10 +70,10 @@ export function ErrorLogsPage() {
         actions={
           <>
             <Button onClick={() => refetch()} disabled={isFetching} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
-              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} /> Rafraîchir
+              <RefreshCw className={`me-1.5 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} /> Rafraîchir
             </Button>
             <Button onClick={handlePurge} className="border border-immo-status-red/30 bg-immo-status-red/10 text-immo-status-red hover:bg-immo-status-red/20">
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" /> {'Purger > 90j'}
+              <Trash2 className="me-1.5 h-3.5 w-3.5" /> {'Purger > 90j'}
             </Button>
           </>
         }
@@ -107,10 +107,10 @@ export function ErrorLogsPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-immo-bg-card-hover">
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Quand</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Tenant</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Message</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">URL</th>
+                <th className="px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Quand</th>
+                <th className="px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Tenant</th>
+                <th className="px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">Message</th>
+                <th className="px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">URL</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>

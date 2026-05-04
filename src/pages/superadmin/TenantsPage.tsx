@@ -205,7 +205,7 @@ export function TenantsPage() {
             onClick={() => setShowCreate(true)}
             variant="blue"
           >
-            <Plus className="mr-1.5 h-4 w-4" /> Nouveau Tenant
+            <Plus className="me-1.5 h-4 w-4" /> Nouveau Tenant
           </Button>
         }
       />
@@ -257,7 +257,7 @@ export function TenantsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un tenant..."
-            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA]"
+            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card ps-10 pe-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA]"
           />
         </div>
         <span className="shrink-0 text-xs text-immo-text-muted">{filtered.length} tenant(s)</span>

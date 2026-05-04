@@ -81,7 +81,7 @@ export function DuplicateConfigModal({ isOpen, onClose, sourceTenantId, sourceTe
           >
             {duplicate.isPending
               ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              : <><Copy className="mr-1.5 h-4 w-4" /> Dupliquer</>
+              : <><Copy className="me-1.5 h-4 w-4" /> Dupliquer</>
             }
           </Button>
         </>

@@ -311,7 +311,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
           aria-checked={integration.enabled}
           aria-label={integration.enabled ? `Désactiver ${integration.label}` : `Activer ${integration.label}`}
           title={!integration.has_value ? 'Renseignez une valeur avant d\'activer' : undefined}
-          className={`ml-auto flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40 disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`ms-auto flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40 disabled:cursor-not-allowed disabled:opacity-50 ${
             integration.enabled ? 'bg-immo-accent-green' : 'bg-immo-border-default'
           }`}
         >

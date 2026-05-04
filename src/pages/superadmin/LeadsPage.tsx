@@ -202,7 +202,7 @@ export function LeadsPage() {
               <Compass className="h-3 w-3" />
               <span className={`font-medium ${s.isDirect ? '' : 'text-immo-text-primary'}`}>{s.main}</span>
             </span>
-            {s.sub && <span className="truncate pl-4 text-[10px] opacity-75">{s.sub}</span>}
+            {s.sub && <span className="truncate ps-4 text-[10px] opacity-75">{s.sub}</span>}
           </div>
         )
       },
@@ -317,7 +317,7 @@ export function LeadsPage() {
                   : 'border-immo-border-default text-immo-text-secondary hover:bg-immo-bg-card-hover'
               }`}
             >
-              {label} <span className="ml-1 opacity-60">{count}</span>
+              {label} <span className="ms-1 opacity-60">{count}</span>
             </button>
           )
         })}
@@ -331,7 +331,7 @@ export function LeadsPage() {
           onChange={e => setSearch(e.target.value)}
           placeholder="Recherche nom, email, telephone, agence..."
           variant="immo"
-          className="pl-9"
+          className="ps-9"
         />
       </div>
 

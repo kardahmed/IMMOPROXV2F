@@ -443,15 +443,15 @@ export function TaskDetailModal({ task, isOpen, onClose }: Props) {
           <div className="flex gap-2">
             <button onClick={() => rejectTask.mutate()} disabled={rejectTask.isPending}
               className="rounded-lg border border-immo-status-red/30 bg-immo-status-red/5 px-4 py-2 text-xs font-semibold text-immo-status-red hover:bg-immo-status-red/10 transition-colors">
-              <XCircle className="mr-1 inline h-3.5 w-3.5" /> Rejeter
+              <XCircle className="me-1 inline h-3.5 w-3.5" /> Rejeter
             </button>
             <button onClick={() => completeTask.mutate()} disabled={completeTask.isPending}
               className="rounded-lg border border-immo-accent-green/30 bg-immo-accent-green/5 px-4 py-2 text-xs font-semibold text-immo-accent-green hover:bg-immo-accent-green/10 transition-colors">
-              <CheckCircle className="mr-1 inline h-3.5 w-3.5" /> Marquer executee
+              <CheckCircle className="me-1 inline h-3.5 w-3.5" /> Marquer executee
             </button>
             <button onClick={() => { openWhatsApp(); completeTask.mutate() }} disabled={completeTask.isPending}
               className="rounded-lg bg-[#25D366] px-4 py-2 text-xs font-bold text-white hover:bg-[#20BD5A] transition-colors">
-              <MessageCircle className="mr-1 inline h-3.5 w-3.5" /> Ouvrir WhatsApp
+              <MessageCircle className="me-1 inline h-3.5 w-3.5" /> Ouvrir WhatsApp
             </button>
           </div>
         </div>

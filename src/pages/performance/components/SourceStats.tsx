@@ -86,11 +86,11 @@ export function SourceStats({ clients }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-immo-border-default bg-immo-bg-primary">
-              <th className="px-4 py-2 text-left text-[11px] font-medium text-immo-text-muted">Source</th>
-              <th className="px-4 py-2 text-right text-[11px] font-medium text-immo-text-muted">Leads</th>
-              <th className="px-4 py-2 text-right text-[11px] font-medium text-immo-text-muted">Conversions</th>
-              <th className="px-4 py-2 text-right text-[11px] font-medium text-immo-text-muted">Ventes</th>
-              <th className="px-4 py-2 text-right text-[11px] font-medium text-immo-text-muted">Taux</th>
+              <th className="px-4 py-2 text-start text-[11px] font-medium text-immo-text-muted">Source</th>
+              <th className="px-4 py-2 text-end text-[11px] font-medium text-immo-text-muted">Leads</th>
+              <th className="px-4 py-2 text-end text-[11px] font-medium text-immo-text-muted">Conversions</th>
+              <th className="px-4 py-2 text-end text-[11px] font-medium text-immo-text-muted">Ventes</th>
+              <th className="px-4 py-2 text-end text-[11px] font-medium text-immo-text-muted">Taux</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-immo-border-default">
@@ -100,10 +100,10 @@ export function SourceStats({ clients }: Props) {
                   <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                   <span className="text-immo-text-primary">{s.label}</span>
                 </td>
-                <td className="px-4 py-2 text-right text-immo-text-primary">{s.total}</td>
-                <td className="px-4 py-2 text-right text-immo-text-primary">{s.conversions}</td>
-                <td className="px-4 py-2 text-right font-medium text-immo-accent-green">{s.sales}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-end text-immo-text-primary">{s.total}</td>
+                <td className="px-4 py-2 text-end text-immo-text-primary">{s.conversions}</td>
+                <td className="px-4 py-2 text-end font-medium text-immo-accent-green">{s.sales}</td>
+                <td className="px-4 py-2 text-end">
                   <span className={`font-medium ${s.conversionRate >= 20 ? 'text-immo-accent-green' : s.conversionRate >= 10 ? 'text-immo-status-orange' : 'text-immo-status-red'}`}>
                     {s.conversionRate}%
                   </span>

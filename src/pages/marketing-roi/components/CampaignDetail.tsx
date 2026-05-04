@@ -90,12 +90,12 @@ export function CampaignDetail({ campaign, onBack }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-immo-border-default bg-immo-bg-primary/50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-immo-text-secondary">Nom</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-immo-text-secondary">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-immo-text-secondary">Statut</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-immo-text-secondary">Envoyé</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-immo-text-secondary">Ouvert</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-immo-text-secondary">Cliqué</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-immo-text-secondary">Nom</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-immo-text-secondary">Email</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-immo-text-secondary">Statut</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-immo-text-secondary">Envoyé</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-immo-text-secondary">Ouvert</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-immo-text-secondary">Cliqué</th>
                 </tr>
               </thead>
               <tbody>

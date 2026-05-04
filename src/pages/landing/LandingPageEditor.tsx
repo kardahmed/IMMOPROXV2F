@@ -154,7 +154,7 @@ export function LandingPageEditor({ isOpen, onClose, editPage }: LandingPageEdit
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Modifier la page' : 'Nouvelle page de capture'} size="xl">
-      <div className="max-h-[70vh] overflow-y-auto space-y-5 pr-2">
+      <div className="max-h-[70vh] overflow-y-auto space-y-5 pe-2">
         {/* Section: Contenu */}
         <div>
           <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-immo-accent-green">Contenu</h4>
@@ -188,7 +188,7 @@ export function LandingPageEditor({ isOpen, onClose, editPage }: LandingPageEdit
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-immo-accent-green">Questions personnalisees</h4>
             <Button onClick={() => setCustomQuestions(prev => [...prev, { id: `q${Date.now()}`, label: '', type: 'text', required: false }])} size="sm" className="h-7 bg-immo-accent-green text-[10px] text-white">
-              <Plus className="mr-1 h-3 w-3" /> Ajouter
+              <Plus className="me-1 h-3 w-3" /> Ajouter
             </Button>
           </div>
           <p className="mb-3 text-[10px] text-immo-text-muted">Ces questions s'affichent apres les champs standard du formulaire (nom, telephone, email, budget).</p>

@@ -212,7 +212,7 @@ export function AddPaymentModal({ isOpen, onClose, defaultTenantId }: AddPayment
           >
             {save.isPending
               ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              : <><CreditCard className="mr-1.5 h-4 w-4" /> Enregistrer</>}
+              : <><CreditCard className="me-1.5 h-4 w-4" /> Enregistrer</>}
           </Button>
         </>
       }

@@ -46,7 +46,7 @@ export function ChangelogPage() {
         subtitle="Publiez les notes de version visibles par tous les tenants"
         actions={
           <Button onClick={() => setShowAdd(true)} variant="blue">
-            <Plus className="mr-1.5 h-4 w-4" /> Nouvelle release
+            <Plus className="me-1.5 h-4 w-4" /> Nouvelle release
           </Button>
         }
       />
@@ -66,7 +66,7 @@ export function ChangelogPage() {
             <Card key={e.id} hoverable>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-[#0579DA]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#0579DA]">{e.version}</span>
-                <span className="ml-auto text-[11px] text-immo-text-muted">{format(new Date(e.published_at), 'dd/MM/yyyy')}</span>
+                <span className="ms-auto text-[11px] text-immo-text-muted">{format(new Date(e.published_at), 'dd/MM/yyyy')}</span>
               </div>
               <h3 className="mt-3 text-sm font-semibold text-immo-text-primary">{e.title}</h3>
               <p className="mt-2 whitespace-pre-wrap text-sm text-immo-text-secondary">{e.body}</p>
@@ -84,7 +84,7 @@ export function ChangelogPage() {
           <>
             <Button variant="ghost" onClick={() => setShowAdd(false)} className="text-immo-text-secondary">Annuler</Button>
             <Button onClick={() => create.mutate()} disabled={!version || !title || !body || create.isPending} variant="blue">
-              <Megaphone className="mr-1.5 h-4 w-4" /> Publier
+              <Megaphone className="me-1.5 h-4 w-4" /> Publier
             </Button>
           </>
         }

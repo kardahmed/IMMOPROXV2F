@@ -66,7 +66,7 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
           >
             {changePlan.isPending
               ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              : <><Zap className="mr-1.5 h-4 w-4" /> Appliquer {PLAN_LABELS[selected]?.label}</>
+              : <><Zap className="me-1.5 h-4 w-4" /> Appliquer {PLAN_LABELS[selected]?.label}</>
             }
           </Button>
         </>
@@ -82,7 +82,7 @@ export function ChangePlanModal({ isOpen, onClose, tenantId, tenantName, current
               <button
                 key={p.plan}
                 onClick={() => setSelected(p.plan)}
-                className={`relative rounded-xl border p-4 text-left transition-all ${
+                className={`relative rounded-xl border p-4 text-start transition-all ${
                   isSelected
                     ? 'border-[#0579DA] bg-[#0579DA]/5 ring-1 ring-[#0579DA]/30'
                     : 'border-immo-border-default hover:border-immo-text-secondary'

@@ -208,13 +208,13 @@ export function ProjectsPage() {
             onClick={() => setActiveTab('projects')}
             className="border-b-2 border-transparent px-4 py-2.5 text-sm text-immo-text-muted hover:text-immo-text-primary"
           >
-            <Building2 className="mr-1.5 inline h-4 w-4" /> Projets
+            <Building2 className="me-1.5 inline h-4 w-4" /> Projets
           </button>
           <button
             onClick={() => setActiveTab('units')}
             className="border-b-2 border-immo-accent-green px-4 py-2.5 text-sm font-medium text-immo-accent-green"
           >
-            <Home className="mr-1.5 inline h-4 w-4" /> Biens
+            <Home className="me-1.5 inline h-4 w-4" /> Biens
           </button>
         </div>
         <UnitsTab />
@@ -230,13 +230,13 @@ export function ProjectsPage() {
           onClick={() => setActiveTab('projects')}
           className="border-b-2 border-immo-accent-green px-4 py-2.5 text-sm font-medium text-immo-accent-green"
         >
-          <Building2 className="mr-1.5 inline h-4 w-4" /> {t('projects_extra.tab_projects')}
+          <Building2 className="me-1.5 inline h-4 w-4" /> {t('projects_extra.tab_projects')}
         </button>
         <button
           onClick={() => setActiveTab('units')}
           className="border-b-2 border-transparent px-4 py-2.5 text-sm text-immo-text-muted hover:text-immo-text-primary"
         >
-          <Home className="mr-1.5 inline h-4 w-4" /> {t('projects_extra.tab_units')}
+          <Home className="me-1.5 inline h-4 w-4" /> {t('projects_extra.tab_units')}
         </button>
       </div>
 
@@ -313,7 +313,7 @@ export function ProjectsPage() {
             className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90 disabled:opacity-50 disabled:cursor-not-allowed"
             title={!canAddProject ? t('projects_extra.limit_reached') : undefined}
           >
-            <Plus className="mr-1.5 h-4 w-4" /> {t('projects_extra.btn_new')}
+            <Plus className="me-1.5 h-4 w-4" /> {t('projects_extra.btn_new')}
           </Button>
         )}
       </div>

@@ -122,7 +122,7 @@ export function LoginPage() {
                 <Mail className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8898AA]" />
                 <input id="email" type="email" autoComplete="email" placeholder="vous@agence.com"
                   {...register('email')}
-                  className={`h-[48px] w-full rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
+                  className={`h-[48px] w-full rounded-xl border bg-white ps-11 pe-4 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
                     errors.email ? 'border-[#CD3D64]' : 'border-[#E3E8EF] focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/10'
                   }`} style={{fontFamily:'inherit'}} />
               </div>
@@ -149,7 +149,7 @@ export function LoginPage() {
                 <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8898AA]" />
                 <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••"
                   {...register('password')}
-                  className={`h-[48px] w-full rounded-xl border bg-white pl-11 pr-12 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
+                  className={`h-[48px] w-full rounded-xl border bg-white ps-11 pe-12 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
                     errors.password ? 'border-[#CD3D64]' : 'border-[#E3E8EF] focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/10'
                   }`} style={{fontFamily:'inherit'}} />
                 <button

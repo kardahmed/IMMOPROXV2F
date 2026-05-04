@@ -110,7 +110,7 @@ export function DataTable<T>({
   }
 
   const alignClass = (align?: 'left' | 'center' | 'right') =>
-    align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
+    align === 'center' ? 'text-center' : align === 'right' ? 'text-end' : 'text-start'
 
   return (
     <div className="overflow-hidden rounded-xl border border-immo-border-default">

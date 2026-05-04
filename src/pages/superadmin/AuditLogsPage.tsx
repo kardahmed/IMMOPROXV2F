@@ -158,7 +158,7 @@ export function AuditLogsPage() {
         subtitle="Historique de toutes les actions super admin"
         actions={
           <Button onClick={exportCSV} variant="ghost" className="border border-immo-border-default text-sm text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary">
-            <Download className="mr-1.5 h-4 w-4" /> Export CSV
+            <Download className="me-1.5 h-4 w-4" /> Export CSV
           </Button>
         }
       />
@@ -171,12 +171,12 @@ export function AuditLogsPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher dans les logs..."
-            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card pl-10 pr-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA]"
+            className="h-10 w-full rounded-lg border border-immo-border-default bg-immo-bg-card ps-10 pe-4 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA]"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-1">
-          <Filter className="mr-1 h-4 w-4 text-immo-text-secondary" />
+          <Filter className="me-1 h-4 w-4 text-immo-text-secondary" />
           {['all', ...Object.keys(ACTION_LABELS)].map(key => (
             <button
               key={key}
@@ -190,7 +190,7 @@ export function AuditLogsPage() {
               {key === 'all' ? 'Tous' : ACTION_LABELS[key]?.label ?? key}
             </button>
           ))}
-          <span className="ml-auto text-xs text-immo-text-muted">{filtered.length} log(s)</span>
+          <span className="ms-auto text-xs text-immo-text-muted">{filtered.length} log(s)</span>
         </div>
       </div>
 

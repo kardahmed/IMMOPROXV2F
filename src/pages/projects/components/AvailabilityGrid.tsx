@@ -83,7 +83,7 @@ export function AvailabilityGrid({ units, onUnitClick }: AvailabilityGridProps) 
           <div className="h-3 w-3 rounded bg-gray-300" />
           <span className="text-xs text-immo-text-muted">Bloque</span>
         </div>
-        <span className="ml-auto text-xs font-semibold text-immo-text-secondary">
+        <span className="ms-auto text-xs font-semibold text-immo-text-secondary">
           {stats.available}/{stats.total} disponibles
         </span>
       </div>
@@ -109,7 +109,7 @@ export function AvailabilityGrid({ units, onUnitClick }: AvailabilityGridProps) 
                       <button
                         key={unit.id}
                         onClick={() => onUnitClick?.(unit.id)}
-                        className={`group relative rounded-lg border border-transparent px-3 py-2 text-left transition-all ${st.bg}`}
+                        className={`group relative rounded-lg border border-transparent px-3 py-2 text-start transition-all ${st.bg}`}
                         title={`${unit.code} — ${st.label} — ${unit.surface ?? '?'}m² — ${unit.price ? formatPrice(unit.price) : '-'}`}
                       >
                         <p className={`text-xs font-semibold ${st.text}`}>{unit.code}</p>

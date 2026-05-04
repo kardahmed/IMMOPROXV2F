@@ -234,7 +234,7 @@ export function VisitScheduleSection() {
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-immo-text-primary">Créneaux de visite disponibles</h3>
           <Button size="sm" onClick={regenerateSlots} className="border border-immo-accent-blue/30 bg-immo-accent-blue/5 text-xs text-immo-accent-blue hover:bg-immo-accent-blue/10">
-            <RefreshCw className="mr-1 h-3 w-3" /> Régénérer auto
+            <RefreshCw className="me-1 h-3 w-3" /> Régénérer auto
           </Button>
         </div>
 
@@ -278,7 +278,7 @@ export function VisitScheduleSection() {
             className="w-32 text-sm"
           />
           <Button size="sm" onClick={addSlot} disabled={!newSlot} className="border border-immo-border-default bg-transparent text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-            <Plus className="mr-1 h-3 w-3" /> Ajouter
+            <Plus className="me-1 h-3 w-3" /> Ajouter
           </Button>
         </div>
         <p className="mt-2 text-[10px] text-immo-text-muted">
@@ -301,7 +301,7 @@ export function VisitScheduleSection() {
 
       {/* Save */}
       <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
-        <Save className="mr-1.5 h-4 w-4" /> {save.isPending ? 'Enregistrement...' : 'Enregistrer'}
+        <Save className="me-1.5 h-4 w-4" /> {save.isPending ? 'Enregistrement...' : 'Enregistrer'}
       </Button>
     </div>
   )

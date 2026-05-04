@@ -101,7 +101,7 @@ export function Wizard({
           disabled={isFirst || loading}
           className="text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary disabled:opacity-30"
         >
-          <ChevronLeft className="mr-1 h-4 w-4" />
+          <ChevronLeft className="me-1 h-4 w-4" />
           {t('action.previous')}
         </Button>
 
@@ -124,7 +124,7 @@ export function Wizard({
             className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90"
           >
             {t('action.next')}
-            <ChevronRight className="ml-1 h-4 w-4" />
+            <ChevronRight className="ms-1 h-4 w-4" />
           </Button>
         )}
       </div>

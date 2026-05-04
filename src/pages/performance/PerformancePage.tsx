@@ -225,7 +225,7 @@ export function PerformancePage() {
         </div>
         {!isAgent && <FilterDropdown label={t('performance_page.agent')} options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium ${
@@ -239,11 +239,11 @@ export function PerformancePage() {
             { header: 'Prix final', value: r => r.final_price },
             { header: 'Date', value: r => r.created_at },
           ])} className="border border-immo-border-default text-xs text-immo-text-secondary">
-            <Download className="mr-1 h-3.5 w-3.5" /> {t('performance_page.export')}
+            <Download className="me-1 h-3.5 w-3.5" /> {t('performance_page.export')}
           </Button>
           <Link to="/goals">
             <Button variant="ghost" size="sm" className="border border-immo-border-default text-xs text-immo-text-secondary">
-              <Target className="mr-1 h-3.5 w-3.5" /> {t('performance_page.goals')}
+              <Target className="me-1 h-3.5 w-3.5" /> {t('performance_page.goals')}
             </Button>
           </Link>
         </div>
@@ -333,7 +333,7 @@ export function PerformancePage() {
                     </div>
                   </div>
                 </div>
-                <span className="w-[40px] shrink-0 text-right text-[11px] text-immo-text-muted">
+                <span className="w-[40px] shrink-0 text-end text-[11px] text-immo-text-muted">
                   {pipeline.length > 0 ? Math.round((d.value / pipeline.length) * 100) : 0}%
                 </span>
               </div>
@@ -377,7 +377,7 @@ export function PerformancePage() {
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
                     <span className="flex-1 truncate text-immo-text-secondary">{d.name}</span>
                     <span className="font-medium text-immo-text-primary">{d.value}</span>
-                    <span className="w-[35px] text-right text-immo-text-muted">
+                    <span className="w-[35px] text-end text-immo-text-muted">
                       {sourceTotal > 0 ? Math.round((d.value / sourceTotal) * 100) : 0}%
                     </span>
                   </div>

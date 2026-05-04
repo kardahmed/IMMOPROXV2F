@@ -74,7 +74,7 @@ export function ReassignModal({ isOpen, onClose, clientId, currentAgentId, tenan
 
         <Button onClick={() => reassign.mutate()} disabled={!selectedAgent || selectedAgent === currentAgentId || reassign.isPending}
           className="w-full bg-immo-accent-green text-white">
-          <UserCheck className="mr-1.5 h-4 w-4" /> {t('reassign_modal.reassign')}
+          <UserCheck className="me-1.5 h-4 w-4" /> {t('reassign_modal.reassign')}
         </Button>
       </div>
     </Modal>

@@ -181,13 +181,13 @@ export function PlansConfigPage() {
         actions={
           <>
             <Button onClick={() => recomputeMutation.mutate()} disabled={recomputeMutation.isPending} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
-              <RefreshCw className={`mr-1.5 h-4 w-4 ${recomputeMutation.isPending ? 'animate-spin' : ''}`} /> Recalculer coûts
+              <RefreshCw className={`me-1.5 h-4 w-4 ${recomputeMutation.isPending ? 'animate-spin' : ''}`} /> Recalculer coûts
             </Button>
             <Button onClick={() => setShowAddPlan(true)} className="border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover">
-              <Plus className="mr-1.5 h-4 w-4" /> Nouveau plan
+              <Plus className="me-1.5 h-4 w-4" /> Nouveau plan
             </Button>
             <Button onClick={() => saveMutation.mutate()} disabled={!dirty || saveMutation.isPending} variant="blue">
-              {saveMutation.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
+              {saveMutation.isPending ? <div className="me-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="me-1.5 h-4 w-4" />}
               Enregistrer
             </Button>
           </>

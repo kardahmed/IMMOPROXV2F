@@ -183,7 +183,7 @@ export function VisitsTab({ clientId, tenantId }: { clientId: string; tenantId: 
           {upcoming.length} {t('status.planned').toLowerCase()}, {past.length} {t('status.completed').toLowerCase()}
         </p>
         <Button onClick={() => setShowCreate(true)} className="bg-immo-accent-green text-xs font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-          <Plus className="mr-1 h-3.5 w-3.5" /> Nouvelle visite
+          <Plus className="me-1 h-3.5 w-3.5" /> Nouvelle visite
         </Button>
       </div>
 
@@ -276,28 +276,28 @@ function VisitList({
                 <Button size="sm" variant="ghost" disabled={isPending}
                   onClick={() => onConfirm(v)}
                   className="h-7 border border-immo-accent-blue/30 text-[11px] text-immo-accent-blue hover:bg-immo-accent-blue/10">
-                  <Check className="mr-1 h-3 w-3" /> Confirmer
+                  <Check className="me-1 h-3 w-3" /> Confirmer
                 </Button>
               )}
               {isUpcoming && onComplete && (v.status === 'planned' || v.status === 'confirmed') && (
                 <Button size="sm" variant="ghost" disabled={isPending}
                   onClick={() => onComplete(v)}
                   className="h-7 border border-immo-accent-green/30 text-[11px] text-immo-accent-green hover:bg-immo-accent-green/10">
-                  <CheckCircle className="mr-1 h-3 w-3" /> Terminée
+                  <CheckCircle className="me-1 h-3 w-3" /> Terminée
                 </Button>
               )}
               {isUpcoming && onReschedule && v.status !== 'cancelled' && v.status !== 'completed' && (
                 <Button size="sm" variant="ghost" disabled={isPending}
                   onClick={() => onReschedule(v)}
                   className="h-7 border border-immo-status-orange/30 text-[11px] text-immo-status-orange hover:bg-immo-status-orange/10">
-                  <RotateCw className="mr-1 h-3 w-3" /> Reprogrammer
+                  <RotateCw className="me-1 h-3 w-3" /> Reprogrammer
                 </Button>
               )}
               {isUpcoming && onCancel && v.status !== 'cancelled' && v.status !== 'completed' && (
                 <Button size="sm" variant="ghost" disabled={isPending}
                   onClick={() => onCancel(v)}
                   className="h-7 border border-immo-status-red/30 text-[11px] text-immo-status-red hover:bg-immo-status-red/10">
-                  <X className="mr-1 h-3 w-3" /> Annuler
+                  <X className="me-1 h-3 w-3" /> Annuler
                 </Button>
               )}
             </div>

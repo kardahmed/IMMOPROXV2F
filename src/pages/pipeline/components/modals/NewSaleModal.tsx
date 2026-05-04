@@ -681,7 +681,7 @@ function Step1Identification({ client, projects, selectedProjectId, onSelectProj
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un projet..."
-            className={`pl-9 ${inputClass}`}
+            className={`ps-9 ${inputClass}`}
           />
         </div>
         <div className="mt-3 max-h-[280px] space-y-2 overflow-y-auto">
@@ -695,7 +695,7 @@ function Step1Identification({ client, projects, selectedProjectId, onSelectProj
                   key={p.id}
                   type="button"
                   onClick={() => onSelectProject(p.id)}
-                  className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                  className={`flex w-full items-center gap-3 rounded-xl border p-3 text-start transition-colors ${
                     selected
                       ? 'border-immo-accent-green/50 bg-immo-accent-green/5'
                       : 'border-immo-border-default bg-immo-bg-card hover:border-immo-text-muted'
@@ -815,7 +815,7 @@ function Step2Biens({ units, selectedUnits, onToggleUnit, amenities, onAddAmenit
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-immo-text-muted" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Code..." className={`h-8 w-[150px] pl-8 text-xs ${inputClass}`} />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Code..." className={`h-8 w-[150px] ps-8 text-xs ${inputClass}`} />
             </div>
             <select
               value={typeFilter}
@@ -836,7 +836,7 @@ function Step2Biens({ units, selectedUnits, onToggleUnit, amenities, onAddAmenit
               <option value="desc">Prix ↓</option>
             </select>
             {selectedUnits.length > 0 && (
-              <span className="ml-auto text-[11px] font-medium text-immo-accent-green">
+              <span className="ms-auto text-[11px] font-medium text-immo-accent-green">
                 {selectedUnits.length} sélectionnée(s)
               </span>
             )}
@@ -855,7 +855,7 @@ function Step2Biens({ units, selectedUnits, onToggleUnit, amenities, onAddAmenit
                     key={u.id}
                     type="button"
                     onClick={() => onToggleUnit(u.id)}
-                    className={`rounded-lg border p-3 text-left transition-colors ${
+                    className={`rounded-lg border p-3 text-start transition-colors ${
                       selected
                         ? 'border-immo-accent-green/50 bg-immo-accent-green/5'
                         : 'border-immo-border-default bg-immo-bg-card hover:border-immo-text-muted'
@@ -895,7 +895,7 @@ function Step2Biens({ units, selectedUnits, onToggleUnit, amenities, onAddAmenit
                   <tr className="bg-immo-bg-card-hover">
                     <th className="w-8 px-2 py-2" />
                     {['Code', 'Type', 'Étage', 'Surface', 'Prix', 'Livraison'].map((h) => (
-                      <th key={h} className="px-2 py-2 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
+                      <th key={h} className="px-2 py-2 text-start text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -956,7 +956,7 @@ function Step2Biens({ units, selectedUnits, onToggleUnit, amenities, onAddAmenit
             onClick={() => setShowAddAmenity(true)}
             className="border border-dashed border-immo-border-default text-xs text-immo-text-secondary hover:border-immo-accent-green hover:text-immo-accent-green"
           >
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Ajouter un aménagement
+            <Plus className="me-1.5 h-3.5 w-3.5" /> Ajouter un aménagement
           </Button>
 
           {/* Add amenity inline form */}
@@ -1084,7 +1084,7 @@ function Step3Finance({ formData, grandTotal, discountAmount, finalPrice, defaul
               key={mode.value}
               type="button"
               onClick={() => onChange({ financingMode: mode.value })}
-              className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+              className={`flex w-full items-center gap-3 rounded-lg border p-3 text-start transition-colors ${
                 formData.financingMode === mode.value
                   ? 'border-immo-accent-green/50 bg-immo-accent-green/5'
                   : 'border-immo-border-default hover:border-immo-text-muted'
@@ -1195,7 +1195,7 @@ function Step4Schedule({ formData, finalPrice, schedule, onChange }: Step4Props)
                 onChange={(e) => onChange({ downPaymentPct: Number(e.target.value) })}
                 className="flex-1 accent-[#00D4A0]"
               />
-              <span className="w-[120px] text-right text-xs font-medium text-immo-text-primary">
+              <span className="w-[120px] text-end text-xs font-medium text-immo-text-primary">
                 {formData.downPaymentPct}% = {formatPriceCompact(downPaymentAmount)}
               </span>
             </div>
@@ -1219,7 +1219,7 @@ function Step4Schedule({ formData, finalPrice, schedule, onChange }: Step4Props)
                 <thead>
                   <tr className="bg-immo-bg-card-hover">
                     {['#', 'Date', 'Montant', 'Description'].map((h) => (
-                      <th key={h} className="px-3 py-2 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
+                      <th key={h} className="px-3 py-2 text-start text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1291,7 +1291,7 @@ function Step5Validation({ client, projectName, selectedUnitsData, amenities, fi
                 <div key={u.id} className={`flex items-center justify-between px-3 py-2 ${i > 0 ? 'border-t border-immo-border-default' : ''}`}>
                   <div>
                     <span className="text-xs font-medium text-immo-text-primary">{u.code}</span>
-                    <span className="ml-2 text-[11px] text-immo-text-muted">{UNIT_TYPE_LABELS[u.type]}{u.subtype ? ` ${u.subtype}` : ''}</span>
+                    <span className="ms-2 text-[11px] text-immo-text-muted">{UNIT_TYPE_LABELS[u.type]}{u.subtype ? ` ${u.subtype}` : ''}</span>
                   </div>
                   <span className="text-xs font-medium text-immo-text-primary">{u.price != null ? formatPrice(u.price) : '-'}</span>
                 </div>

@@ -132,7 +132,7 @@ export function InboxPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t('inbox.search_placeholder')}
-                  className="h-8 w-full rounded-md border border-immo-border-default bg-immo-bg-primary pl-7 pr-7 text-xs text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:outline-none"
+                  className="h-8 w-full rounded-md border border-immo-border-default bg-immo-bg-primary ps-7 pe-7 text-xs text-immo-text-primary placeholder:text-immo-text-muted focus:border-immo-accent-green focus:outline-none"
                 />
                 {search && (
                   <button
@@ -176,7 +176,7 @@ export function InboxPage() {
                 </button>
 
                 {isAdmin && agents.length > 0 && (
-                  <div className="ml-auto">
+                  <div className="ms-auto">
                     <FilterDropdown
                       label={t('inbox.filter_agent')}
                       options={agentOptions}

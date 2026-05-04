@@ -149,7 +149,7 @@ export function PaymentSchedulePanel({ saleId, totalPrice, clientName }: Props) 
         <div className="flex items-center justify-between border-b border-immo-border-default px-4 py-3">
           <h3 className="text-sm font-semibold text-immo-text-primary">Echeancier — {clientName}</h3>
           <Button onClick={() => setShowAddPayment(true)} size="sm" className="h-7 bg-immo-accent-green text-xs text-white">
-            <Plus className="mr-1 h-3 w-3" /> Echeance
+            <Plus className="me-1 h-3 w-3" /> Echeance
           </Button>
         </div>
         <div className="divide-y divide-immo-border-default">
@@ -171,7 +171,7 @@ export function PaymentSchedulePanel({ saleId, totalPrice, clientName }: Props) 
                 <StatusBadge label={st.label} type={st.type} />
                 {s.status !== 'paid' && (
                   <Button onClick={() => markPaid.mutate(s.id)} disabled={markPaid.isPending} size="sm" className="h-7 border border-immo-accent-green/30 bg-transparent text-[10px] text-immo-accent-green hover:bg-immo-accent-green/10">
-                    <DollarSign className="mr-1 h-3 w-3" /> Encaisser
+                    <DollarSign className="me-1 h-3 w-3" /> Encaisser
                   </Button>
                 )}
               </div>

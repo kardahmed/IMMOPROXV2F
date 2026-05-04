@@ -65,7 +65,7 @@ export function UnitComparatorModal({ isOpen, onClose, units }: UnitComparatorMo
         <table className="w-full">
           <thead>
             <tr className="border-b border-immo-border-default">
-              <th className="px-4 py-2 text-left text-[11px] font-semibold text-immo-text-muted w-[120px]">Critere</th>
+              <th className="px-4 py-2 text-start text-[11px] font-semibold text-immo-text-muted w-[120px]">Critere</th>
               {units.map(u => (
                 <th key={u.id} className="px-4 py-2 text-center text-sm font-semibold text-immo-text-primary">{u.code}</th>
               ))}

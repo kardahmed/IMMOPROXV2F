@@ -149,13 +149,13 @@ export function ExpensesTab() {
             { header: 'Notes', value: e => e.notes ?? '' },
           ])}
           variant="ghost"
-          className="ml-auto text-xs text-immo-text-secondary"
+          className="ms-auto text-xs text-immo-text-secondary"
           disabled={filtered.length === 0}
         >
-          <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+          <Download className="me-1.5 h-3.5 w-3.5" /> Export CSV
         </Button>
         <Button onClick={() => setShowAdd(true)} className="bg-immo-accent-green text-white text-xs">
-          <Plus className="mr-1.5 h-3.5 w-3.5" /> Ajouter
+          <Plus className="me-1.5 h-3.5 w-3.5" /> Ajouter
         </Button>
       </div>
 
@@ -194,7 +194,7 @@ export function ExpensesTab() {
         <table className="w-full">
           <thead><tr className="bg-immo-bg-card-hover">
             {['Date', 'Catégorie', 'Scope', 'Detail', 'Projet / Campagne', 'Montant', ''].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
+              <th key={h} className="px-4 py-3 text-start text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>
             ))}
           </tr></thead>
           <tbody className="divide-y divide-immo-border-default">
@@ -296,7 +296,7 @@ function AddExpenseModal({ tenantId, projects, campaigns, onClose, onSaved }: {
                   key={s}
                   type="button"
                   onClick={() => setScope(s)}
-                  className={`rounded-lg border p-2.5 text-left transition-all ${
+                  className={`rounded-lg border p-2.5 text-start transition-all ${
                     active
                       ? 'border-immo-accent-green/50 bg-immo-accent-green/5'
                       : 'border-immo-border-default hover:border-immo-text-muted'
@@ -357,7 +357,7 @@ function AddExpenseModal({ tenantId, projects, campaigns, onClose, onSaved }: {
           <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optionnel" className="text-sm" />
         </div>
         <Button onClick={handleSave} disabled={saving} className="w-full bg-immo-accent-green text-white">
-          <Save className="mr-1.5 h-4 w-4" /> {saving ? 'Enregistrement…' : 'Ajouter'}
+          <Save className="me-1.5 h-4 w-4" /> {saving ? 'Enregistrement…' : 'Ajouter'}
         </Button>
       </div>
     </Modal>

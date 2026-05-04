@@ -350,7 +350,8 @@ export function TasksPage() {
                 }`}>
                 {/* Checkbox */}
                 <button onClick={() => isActionable ? completeTask.mutate(task.id) : null}
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                  disabled={completeTask.isPending}
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 ${
                     isCompleted ? 'border-immo-accent-green bg-immo-accent-green text-white' :
                     'border-immo-border-default hover:border-immo-accent-green'
                   }`}>
@@ -439,13 +440,13 @@ export function TasksPage() {
                       </button>
                     )}
                     {task.channel === 'system' && (
-                      <button onClick={() => completeTask.mutate(task.id)} title="Marquer fait"
-                        className="flex items-center gap-1 rounded-lg bg-immo-bg-card-hover px-2.5 py-1.5 text-[10px] font-semibold text-immo-text-muted hover:text-immo-accent-green transition-colors">
+                      <button onClick={() => completeTask.mutate(task.id)} disabled={completeTask.isPending} title="Marquer fait"
+                        className="flex items-center gap-1 rounded-lg bg-immo-bg-card-hover px-2.5 py-1.5 text-[10px] font-semibold text-immo-text-muted hover:text-immo-accent-green transition-colors disabled:opacity-50">
                         <CheckCircle className="h-3 w-3" /> Fait
                       </button>
                     )}
-                    <button onClick={() => skipTask.mutate(task.id)} aria-label="Ignorer la tache" title="Ignorer"
-                      className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40">
+                    <button onClick={() => skipTask.mutate(task.id)} disabled={skipTask.isPending} aria-label="Ignorer la tache" title="Ignorer"
+                      className="rounded-lg p-1.5 text-immo-text-muted transition-colors hover:bg-immo-bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40 disabled:opacity-50">
                       <SkipForward className="h-3 w-3" />
                     </button>
                   </div>

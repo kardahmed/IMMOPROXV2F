@@ -109,7 +109,7 @@ export function SectionEditor({ pageId }: { pageId: string }) {
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-immo-accent-green">Sections de la page</h4>
         <Button size="sm" onClick={() => setShowAdd(!showAdd)} className="bg-immo-accent-green text-xs text-white hover:bg-immo-accent-green/90">
-          <Plus className="mr-1 h-3.5 w-3.5" /> Ajouter
+          <Plus className="me-1 h-3.5 w-3.5" /> Ajouter
         </Button>
       </div>
 
@@ -118,7 +118,7 @@ export function SectionEditor({ pageId }: { pageId: string }) {
         <div className="grid grid-cols-3 gap-2 rounded-lg border border-immo-border-default bg-immo-bg-primary p-3">
           {SECTION_TYPES.map(st => (
             <button key={st.type} onClick={() => addSection.mutate(st.type)}
-              className="flex items-center gap-2 rounded-lg border border-immo-border-default bg-immo-bg-card px-3 py-2 text-left text-xs text-immo-text-primary hover:border-immo-accent-green/30 hover:bg-immo-accent-green/5">
+              className="flex items-center gap-2 rounded-lg border border-immo-border-default bg-immo-bg-card px-3 py-2 text-start text-xs text-immo-text-primary hover:border-immo-accent-green/30 hover:bg-immo-accent-green/5">
               <span>{st.icon}</span> {st.label}
             </button>
           ))}

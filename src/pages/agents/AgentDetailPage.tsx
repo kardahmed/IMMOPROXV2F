@@ -148,7 +148,7 @@ export function AgentDetailPage() {
         {/* Goals */}
         <div>
           <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">
-            <Target className="mr-1.5 inline h-4 w-4" />Objectifs en cours
+            <Target className="me-1.5 inline h-4 w-4" />Objectifs en cours
           </h3>
           {goals.length === 0 ? (
             <div className="rounded-xl border border-immo-border-default bg-immo-bg-card py-8 text-center text-xs text-immo-text-muted">Aucun objectif</div>
@@ -179,7 +179,7 @@ export function AgentDetailPage() {
         {/* Clients */}
         <div>
           <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">
-            <Users className="mr-1.5 inline h-4 w-4" />Clients assignés
+            <Users className="me-1.5 inline h-4 w-4" />Clients assignés
           </h3>
           {clients.length === 0 ? (
             <div className="rounded-xl border border-immo-border-default bg-immo-bg-card py-8 text-center text-xs text-immo-text-muted">Aucun client</div>
@@ -187,7 +187,7 @@ export function AgentDetailPage() {
             <div className="overflow-hidden rounded-xl border border-immo-border-default">
               <table className="w-full">
                 <thead><tr className="bg-immo-bg-card-hover">
-                  {['Nom', 'Téléphone', 'Étape'].map(h => <th key={h} className="px-3 py-2 text-left text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>)}
+                  {['Nom', 'Téléphone', 'Étape'].map(h => <th key={h} className="px-3 py-2 text-start text-[10px] font-semibold uppercase text-immo-text-muted">{h}</th>)}
                 </tr></thead>
                 <tbody className="divide-y divide-immo-border-default">
                   {clients.map(c => {
@@ -228,7 +228,7 @@ export function AgentDetailPage() {
                   <div className="h-2 w-2 shrink-0 rounded-full bg-immo-accent-green" />
                   <div className="min-w-0 flex-1">
                     <span className="text-sm text-immo-text-primary">{meta?.label ?? (h.title as string)}</span>
-                    {client && <span className="ml-2 text-[11px] text-immo-text-muted">— {client.full_name}</span>}
+                    {client && <span className="ms-2 text-[11px] text-immo-text-muted">— {client.full_name}</span>}
                   </div>
                   <span className="shrink-0 text-[11px] text-immo-text-muted">
                     {formatDistanceToNow(new Date(h.created_at as string), { addSuffix: true, locale: fr })}

@@ -75,7 +75,7 @@ export function DeletedTenantsSection() {
     <Card noPadding className="overflow-hidden">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="flex w-full items-center justify-between border-b border-immo-border-default bg-immo-bg-card-hover/40 px-5 py-3 text-left transition-colors hover:bg-immo-bg-card-hover"
+        className="flex w-full items-center justify-between border-b border-immo-border-default bg-immo-bg-card-hover/40 px-5 py-3 text-start transition-colors hover:bg-immo-bg-card-hover"
       >
         <div className="flex items-center gap-2">
           {expanded ? <ChevronDown className="h-4 w-4 text-immo-text-muted" /> : <ChevronRight className="h-4 w-4 text-immo-text-muted" />}
@@ -100,12 +100,12 @@ export function DeletedTenantsSection() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-immo-border-default/50 bg-immo-bg-primary text-[10px] uppercase tracking-wide text-immo-text-muted">
-                  <th className="px-4 py-2 text-left font-semibold">Nom</th>
-                  <th className="px-4 py-2 text-left font-semibold">Plan</th>
-                  <th className="px-4 py-2 text-left font-semibold">Supprimé le</th>
-                  <th className="px-4 py-2 text-left font-semibold">Par</th>
-                  <th className="px-4 py-2 text-left font-semibold">Raison</th>
-                  <th className="px-4 py-2 text-right font-semibold">Action</th>
+                  <th className="px-4 py-2 text-start font-semibold">Nom</th>
+                  <th className="px-4 py-2 text-start font-semibold">Plan</th>
+                  <th className="px-4 py-2 text-start font-semibold">Supprimé le</th>
+                  <th className="px-4 py-2 text-start font-semibold">Par</th>
+                  <th className="px-4 py-2 text-start font-semibold">Raison</th>
+                  <th className="px-4 py-2 text-end font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-immo-border-default/30">
@@ -115,7 +115,7 @@ export function DeletedTenantsSection() {
                     <tr key={t.id} className="hover:bg-immo-bg-primary/30">
                       <td className="px-4 py-2 font-medium text-immo-text-primary">
                         {t.name}
-                        {t.email && <span className="ml-2 text-[10px] text-immo-text-muted">{t.email}</span>}
+                        {t.email && <span className="ms-2 text-[10px] text-immo-text-muted">{t.email}</span>}
                       </td>
                       <td className="px-4 py-2 text-xs uppercase text-immo-text-secondary">{t.plan}</td>
                       <td className="px-4 py-2 text-xs text-immo-text-secondary">
@@ -127,7 +127,7 @@ export function DeletedTenantsSection() {
                       <td className="px-4 py-2 text-xs italic text-immo-text-muted">
                         {t.deletion_reason ?? '—'}
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="px-4 py-2 text-end">
                         <button
                           onClick={() => restoreMutation.mutate(t.id)}
                           disabled={isPending}

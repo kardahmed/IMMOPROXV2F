@@ -150,7 +150,7 @@ export function PlanningPage() {
           subtitle={t('planning_page.subtitle')}
         />
         <Button onClick={() => setShowTasks(true)} variant="ghost" className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <Bot className="mr-1.5 h-3.5 w-3.5 text-blue-400" /> {t('planning_page.ai_tasks')} ({aiTasks.length})
+          <Bot className="me-1.5 h-3.5 w-3.5 text-blue-400" /> {t('planning_page.ai_tasks')} ({aiTasks.length})
         </Button>
       </div>
 
@@ -219,7 +219,7 @@ export function PlanningPage() {
           ))}
         </div>
 
-        <div className="ml-auto flex gap-2">
+        <div className="ms-auto flex gap-2">
           {!isAgent && <FilterDropdown label="Agent" options={agentOptions} value={agentFilter} onChange={setAgentFilter} />}
           <FilterDropdown label="Projet" options={projectOptions} value={projectFilter} onChange={setProjectFilter} />
         </div>

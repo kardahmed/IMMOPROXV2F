@@ -153,7 +153,7 @@ export function PipelineAnalytics() {
             <thead>
               <tr className="bg-immo-bg-card-hover">
                 {['Etape', 'Clients', 'Duree moy.', 'Appels', 'WhatsApp', 'SMS', 'Emails', 'Visites', 'Total interactions', 'Sans activite', 'Conversion'].map(h => (
-                  <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+                  <th key={h} className="whitespace-nowrap px-4 py-3 text-start text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                 ))}
               </tr>
             </thead>

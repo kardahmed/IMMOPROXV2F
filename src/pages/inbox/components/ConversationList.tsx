@@ -45,7 +45,7 @@ export function ConversationList({ conversations, selectedKey, onSelect, agentMa
             <button
               type="button"
               onClick={() => onSelect(conv)}
-              className={`group flex w-full items-start gap-3 border-b border-immo-border-default px-4 py-3 text-left transition-colors ${
+              className={`group flex w-full items-start gap-3 border-b border-immo-border-default px-4 py-3 text-start transition-colors ${
                 isSelected
                   ? 'bg-immo-accent-green/10'
                   : 'hover:bg-immo-bg-card-hover'

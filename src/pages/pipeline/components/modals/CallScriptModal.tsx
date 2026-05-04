@@ -249,7 +249,7 @@ export function CallScriptModal({
             <div className="mb-4">
               {!showVisitForm ? (
                 <Button onClick={() => setShowVisitForm(true)} className="w-full border border-immo-accent-blue/30 bg-immo-accent-blue/5 text-xs font-semibold text-immo-accent-blue hover:bg-immo-accent-blue/10">
-                  <Calendar className="mr-1.5 h-3.5 w-3.5" /> {t('call_script_modal.propose_visit')}
+                  <Calendar className="me-1.5 h-3.5 w-3.5" /> {t('call_script_modal.propose_visit')}
                 </Button>
               ) : (
                 <div className="space-y-2 rounded-lg border border-immo-accent-blue/30 bg-immo-accent-blue/5 p-3">
@@ -281,7 +281,7 @@ export function CallScriptModal({
           <div className="shrink-0 border-t border-immo-border-default bg-immo-bg-card p-4">
             <Button onClick={handleSave} disabled={saving} className="w-full bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
               {saving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> :
-                <><CheckCircle className="mr-1.5 h-4 w-4" /> {t('call_script_modal.save_and_close')}</>
+                <><CheckCircle className="me-1.5 h-4 w-4" /> {t('call_script_modal.save_and_close')}</>
               }
             </Button>
           </div>

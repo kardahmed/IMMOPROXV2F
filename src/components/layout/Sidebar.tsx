@@ -129,7 +129,7 @@ function SidebarContent({ onNavClick, onClose }: { onNavClick?: () => void; onCl
               </span>
 
               {item.path === '/inbox' && inboxUnread > 0 && (
-                <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-immo-accent-green px-1.5 text-[10px] font-bold text-white">
+                <span className="ms-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-immo-accent-green px-1.5 text-[10px] font-bold text-white">
                   {inboxUnread > 99 ? '99+' : inboxUnread}
                 </span>
               )}
