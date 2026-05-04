@@ -70,32 +70,43 @@ export function useInboxConversations() {
   // Subscribe to whatsapp_messages changes for the current tenant.
   // The filter on tenant_id keeps this scoped — we don't get
   // notifications for other tenants' messages even though all rows
-  // exist in the same table. Channel is closed on unmount and on
-  // tenant_id change.
+  // exist in the same table.
+  //
+  // Channel name uses a random suffix so React 19 strict-mode's
+  // double-mount-in-dev doesn't try to reuse an already-subscribed
+  // channel and crash with "cannot add postgres_changes callbacks
+  // ... after subscribe()". Each useEffect cycle gets a fresh
+  // channel; cleanup removes it before the next one is created.
+  // Steps are also broken out into separate statements (.on() then
+  // .subscribe()) instead of chained, so any future refactor can't
+  // accidentally swap the order.
   useEffect(() => {
     if (!tenantId) return
-    const channel = supabase
-      .channel(`inbox-${tenantId}`)
-      .on(
-        // Cast on() args via unknown — typed Postgres realtime
-        // channel signatures are huge and don't add safety here.
-        'postgres_changes' as never,
-        {
-          event: '*',
-          schema: 'public',
-          table: 'whatsapp_messages',
-          filter: `tenant_id=eq.${tenantId}`,
-        } as never,
-        () => {
-          // Invalidate the conversations query so react-query refetches
-          // the latest 500 rows. Cheap because there's no polling
-          // overhead — refetch fires only when something actually
-          // changes.
-          qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] })
-          qc.invalidateQueries({ queryKey: ['inbox', 'unread-count'] })
-        },
-      )
-      .subscribe()
+    const suffix = Math.random().toString(36).slice(2, 10)
+    const channel = supabase.channel(`inbox-${tenantId}-${suffix}`)
+
+    channel.on(
+      // Cast via unknown — typed Postgres realtime channel
+      // signatures are huge and don't add safety here.
+      'postgres_changes' as never,
+      {
+        event: '*',
+        schema: 'public',
+        table: 'whatsapp_messages',
+        filter: `tenant_id=eq.${tenantId}`,
+      } as never,
+      () => {
+        // Invalidate the conversations query so react-query refetches
+        // the latest 500 rows. Cheap because there's no polling
+        // overhead — refetch fires only when something actually
+        // changes.
+        qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] })
+        qc.invalidateQueries({ queryKey: ['inbox', 'unread-count'] })
+      },
+    )
+
+    channel.subscribe()
+
     return () => {
       supabase.removeChannel(channel)
     }
