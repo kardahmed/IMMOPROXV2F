@@ -896,6 +896,7 @@ export const fr = {
     section_features: 'Fonctionnalités',
     section_quotas: 'Quotas',
     section_whatsapp: 'WhatsApp',
+    section_integrations: 'Intégrations',
     section_branding: 'Personnalisation',
     section_reservations: 'Réservations',
     section_templates: 'Documents',

@@ -127,10 +127,40 @@ serve(async (req: Request) => {
       if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
     }
 
-    // Get platform settings for from email
+    // Pick the Resend credentials in this order:
+    //   1. The tenant's own integration row (tenant_integrations type='resend',
+    //      enabled=true) — emails go from THEIR domain on THEIR quota.
+    //   2. Platform fallback (RESEND_API_KEY env var) — used for tenant
+    //      invites, founder marketing pushes, and tenants who haven't yet
+    //      configured their own Resend.
+    //
+    // Service-role callers (cron jobs, founder push) skip the lookup
+    // entirely — they always run on the platform key. Look-ups happen
+    // only when the caller is a tenant user AND tenant_id is set.
+    let effectiveApiKey = resendApiKey
+    let effectiveFrom: { name: string; email: string } | null = null
+    if (tenant_id) {
+      const { data: tenantInteg } = await supabase
+        .from('tenant_integrations')
+        .select('api_key, config, enabled')
+        .eq('tenant_id', tenant_id)
+        .eq('type', 'resend')
+        .eq('enabled', true)
+        .maybeSingle()
+      const ti = tenantInteg as { api_key: string | null; config: { from_email?: string; from_name?: string } | null; enabled: boolean } | null
+      if (ti?.api_key && ti.config?.from_email) {
+        effectiveApiKey = ti.api_key
+        effectiveFrom = {
+          name: ti.config.from_name || ti.config.from_email,
+          email: ti.config.from_email,
+        }
+      }
+    }
+
+    // Get platform settings for from email (fallback only)
     const { data: settings } = await supabase.from('platform_settings').select('support_email, platform_name').limit(1).single()
-    const fromName = (settings as { platform_name: string } | null)?.platform_name ?? 'IMMO PRO-X'
-    const fromEmail = (settings as { support_email: string } | null)?.support_email ?? 'noreply@immoprox.com'
+    const fromName = effectiveFrom?.name ?? (settings as { platform_name: string } | null)?.platform_name ?? 'IMMO PRO-X'
+    const fromEmail = effectiveFrom?.email ?? (settings as { support_email: string } | null)?.support_email ?? 'noreply@immoprox.com'
 
     // If template was used, re-render with actual platform name
     if (template && !template_data?.platform_name) {
@@ -167,7 +197,7 @@ serve(async (req: Request) => {
     // errors and stamped status='failed' with no diagnostic; now the
     // response body is logged on each non-2xx so post-mortem from
     // function logs is feasible.
-    if (resendApiKey) {
+    if (effectiveApiKey) {
       const body = JSON.stringify({
         from: `${fromName} <${fromEmail}>`,
         to: [to],
@@ -179,7 +209,7 @@ serve(async (req: Request) => {
         try {
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${effectiveApiKey}` },
             body,
           })
           if (res.ok) {
