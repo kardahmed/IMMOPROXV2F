@@ -95,10 +95,12 @@ export function LoginPage() {
 
         {/* Card */}
         <div className="rounded-2xl border border-[#E3E8EF] bg-white p-8 shadow-xl shadow-black/[0.03] sm:p-10">
-          {/* Error */}
+          {/* Error — role=alert + aria-live so screen readers announce
+              auth failures instead of the user staring at a colored
+              banner with no audible feedback. */}
           {error && (
-            <div className="mb-5 flex items-center gap-3 rounded-xl border border-[#CD3D64]/20 bg-[#FFF0F3] px-4 py-3">
-              <AlertCircle className="h-4 w-4 shrink-0 text-[#CD3D64]" />
+            <div role="alert" aria-live="polite" className="mb-5 flex items-center gap-3 rounded-xl border border-[#CD3D64]/20 bg-[#FFF0F3] px-4 py-3">
+              <AlertCircle className="h-4 w-4 shrink-0 text-[#CD3D64]" aria-hidden="true" />
               <p className="text-sm text-[#CD3D64]">{error}</p>
             </div>
           )}
@@ -150,22 +152,34 @@ export function LoginPage() {
                   className={`h-[48px] w-full rounded-xl border bg-white pl-11 pr-12 text-[14px] text-[#0A2540] placeholder-[#B0BAC5] outline-none transition-all ${
                     errors.password ? 'border-[#CD3D64]' : 'border-[#E3E8EF] focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/10'
                   }`} style={{fontFamily:'inherit'}} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8898AA] transition-colors hover:text-[#425466]">
-                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t('login.hide_password', { defaultValue: 'Masquer le mot de passe' }) : t('login.show_password', { defaultValue: 'Afficher le mot de passe' })}
+                  aria-pressed={showPassword}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8898AA] transition-colors hover:text-[#425466] focus-visible:outline-none focus-visible:text-[#0579DA]"
+                >
+                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" aria-hidden="true" /> : <Eye className="h-[18px] w-[18px]" aria-hidden="true" />}
                 </button>
               </div>
               {errors.password && <p className="mt-1 text-[11px] text-[#CD3D64]">{errors.password.message}</p>}
             </div>
 
-            {/* Remember */}
-            <div className="flex items-center gap-2.5">
-              <button type="button" onClick={() => setRememberMe(!rememberMe)}
-                className={`flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border-2 transition-all ${rememberMe ? 'border-[#0579DA] bg-[#0579DA]' : 'border-[#D0D5DD]'}`}>
-                {rememberMe && <Check className="h-3 w-3 text-white" />}
+            {/* Remember — proper checkbox semantics so screen readers
+                announce it as "checked / unchecked", not as a generic
+                button with no state. */}
+            <label className="flex cursor-pointer items-center gap-2.5">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={rememberMe}
+                onClick={() => setRememberMe(!rememberMe)}
+                className={`flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0579DA]/40 ${rememberMe ? 'border-[#0579DA] bg-[#0579DA]' : 'border-[#D0D5DD]'}`}
+              >
+                {rememberMe && <Check className="h-3 w-3 text-white" aria-hidden="true" />}
               </button>
               <span className="text-[13px] text-[#8898AA]">{t('login.remember_me')}</span>
-            </div>
+            </label>
 
             {/* Submit */}
             <button type="submit" disabled={loading}
