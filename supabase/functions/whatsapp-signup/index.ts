@@ -1,8 +1,25 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeadersFor } from '../_shared/cors.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+// Inlined from _shared/cors.ts because the Supabase Dashboard
+// deploy flow can't upload _shared files separately. If you move
+// to `supabase functions deploy` via CLI, replace with:
+//   import { corsHeadersFor } from '../_shared/cors.ts'
+const ALLOWED_ORIGINS = new Set<string>([
+  'https://app.immoprox.io',
+  'http://localhost:5173',
+])
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://app.immoprox.io'
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
+}
 
 Deno.serve(async (req) => {
   const corsHeaders = corsHeadersFor(req)

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -219,22 +221,97 @@ function StageColumn({ stage, clients, toCardClient, urgentDays, compact, select
         </button>
       </div>
 
-      <div className="flex-1 space-y-2 overflow-y-auto p-2" style={{ maxHeight: '60vh' }}>
-        {clients.length === 0 ? (
-          <div className="py-8 text-center text-[11px] text-immo-text-muted">Aucun client</div>
-        ) : (
-          clients.map(client => (
-            <DraggableCard
+      <VirtualizedColumnList
+        clients={clients}
+        toCardClient={toCardClient}
+        urgentDays={urgentDays}
+        compact={compact}
+        selectedIds={selectedIds}
+        onSelectClient={onSelectClient}
+        activeId={activeId}
+      />
+    </div>
+  )
+}
+
+// Virtualized column body — renders only the cards that are actually
+// in the viewport. Pre-fix the column dumped every row through
+// clients.map(), so a tenant with 1k+ clients in any single stage
+// would mount 1k+ DraggableCard components and DnD-Kit listeners,
+// pegging the main thread for seconds. With react-virtual the column
+// keeps a small ring buffer around the visible viewport (~10-15
+// rows) so render cost stays constant regardless of column size.
+function VirtualizedColumnList({
+  clients, toCardClient, urgentDays, compact, selectedIds, onSelectClient, activeId,
+}: {
+  clients: Client[]
+  toCardClient: (c: Client) => KanbanCardClient
+  urgentDays: number
+  compact: boolean
+  selectedIds?: Set<string>
+  onSelectClient?: (id: string) => void
+  activeId: string | null
+}) {
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  // Estimate the row height per card. Compact cards are ~52px tall
+  // (one-line title + status), full cards ~92px (title + budget +
+  // alert chips). The 8px is the space-y-2 gap between cards.
+  const estimateSize = compact ? 60 : 100
+
+  const rowVirtualizer = useVirtualizer({
+    count: clients.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => estimateSize,
+    // overscan: render N rows above/below the viewport so scrolling
+    // never reveals a flash of empty space. 5 covers a quick swipe.
+    overscan: 5,
+  })
+
+  if (clients.length === 0) {
+    return (
+      <div className="flex-1 p-2" style={{ maxHeight: '60vh' }}>
+        <div className="py-8 text-center text-[11px] text-immo-text-muted">Aucun client</div>
+      </div>
+    )
+  }
+
+  return (
+    <div ref={parentRef} className="flex-1 overflow-y-auto p-2" style={{ maxHeight: '60vh' }}>
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map(virtualRow => {
+          const client = clients[virtualRow.index]
+          return (
+            <div
               key={client.id}
-              client={toCardClient(client)}
-              urgentDays={urgentDays}
-              compact={compact}
-              selected={selectedIds?.has(client.id)}
-              onSelect={onSelectClient}
-              isDragging={activeId === client.id}
-            />
-          ))
-        )}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+                paddingBottom: '8px', // space-y-2 equivalent inside virtualized container
+              }}
+            >
+              <DraggableCard
+                client={toCardClient(client)}
+                urgentDays={urgentDays}
+                compact={compact}
+                selected={selectedIds?.has(client.id)}
+                onSelect={onSelectClient}
+                isDragging={activeId === client.id}
+              />
+            </div>
+          )
+        })}
       </div>
     </div>
   )

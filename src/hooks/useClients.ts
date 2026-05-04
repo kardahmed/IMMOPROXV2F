@@ -25,10 +25,38 @@ interface ClientFilters {
 
 const DEFAULT_PAGE_SIZE = 50
 
-// Hard ceiling when `pageSize: 'all'` is requested — PostgREST caps
-// itself anyway, but explicit bound makes the intent clear and
-// prevents a runaway query if a tenant somehow hit 100k clients.
-const ALL_LIMIT = 10_000
+// Hard ceiling when `pageSize: 'all'` is requested. Lowered from
+// 10_000 to 2_000 — the kanban + virtualization (vague 2B) renders
+// only the visible cards, so 2k is generous for any realistic tenant
+// and keeps the wire payload bounded. If you hit the cap, switch to
+// per-stage pagination.
+const ALL_LIMIT = 2_000
+
+// Columns every Kanban / list / table actually renders. Pre-fix the
+// hook did `select('*')` plus a join, dragging dozens of unused
+// columns over the wire (notes blob, extra_data jsonb, internal
+// timestamps...) — at 2k clients that's hundreds of KB of waste per
+// pipeline mount. New projection lists only what the UI uses;
+// add a column here if a new view needs it.
+const CLIENT_COLUMNS = [
+  'id',
+  'tenant_id',
+  'full_name',
+  'phone',
+  'email',
+  'pipeline_stage',
+  'pipeline_stage_changed_at',
+  'source',
+  'agent_id',
+  'confirmed_budget',
+  'desired_unit_types',
+  'interested_projects',
+  'is_priority',
+  'last_contact_at',
+  'cin_verified',
+  'created_at',
+  'updated_at',
+].join(', ')
 
 /** Escape special PostgREST filter characters to prevent filter injection */
 function sanitizeSearch(input: string): string {
@@ -42,9 +70,14 @@ export function useClients(filters?: ClientFilters) {
   const clientsQuery = useQuery({
     queryKey: ['clients', tenantId, filters],
     queryFn: async () => {
+      // count: 'planned' uses Postgres' planner estimate (≤ 1ms) instead
+      // of a full COUNT(*) (linear in row count). The pagination UI
+      // shows "≈ 1 234 résultats" — close enough for navigation,
+      // 100x cheaper. Switch back to 'exact' for surfaces that need
+      // a precise total.
       let query = supabase
         .from('clients')
-        .select('*, users!clients_agent_id_fkey(first_name, last_name)', { count: 'exact' })
+        .select(`${CLIENT_COLUMNS}, users!clients_agent_id_fkey(first_name, last_name)`, { count: 'planned' })
         .eq('tenant_id', tenantId)
         .is('deleted_at', null)
 
