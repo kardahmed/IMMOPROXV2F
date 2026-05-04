@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Mail, CheckCircle2, AlertCircle, Loader2, Plug, ExternalLink, RefreshCw, Trash2, Save } from 'lucide-react'
+import { Mail, CheckCircle2, AlertCircle, Loader2, Plug, ExternalLink, RefreshCw, Trash2, Save, Target } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,14 @@ interface ResendIntegration {
   verified_at: string | null
   last_test_at: string | null
   last_test_error: string | null
+  updated_at: string
+}
+
+interface PixelIntegration {
+  id: string
+  type: 'meta_pixel'
+  enabled: boolean
+  config: { pixel_id?: string; test_event_code?: string } | null
   updated_at: string
 }
 
@@ -45,6 +53,20 @@ export function IntegrationsSection() {
     enabled: !!tenantId,
   })
 
+  const { data: metaPixel } = useQuery({
+    queryKey: ['tenant-integration-meta-pixel', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('tenant_integrations' as never)
+        .select('id, type, enabled, config, updated_at')
+        .eq('tenant_id', tenantId!)
+        .eq('type', 'meta_pixel')
+        .maybeSingle()
+      return data as PixelIntegration | null
+    },
+    enabled: !!tenantId,
+  })
+
   if (!isAdmin) {
     return (
       <Card>
@@ -66,7 +88,10 @@ export function IntegrationsSection() {
 
       {isLoading
         ? <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-immo-text-muted" /></div>
-        : <ResendCard integration={resend ?? null} tenantId={tenantId!} userId={userId ?? null} onChange={() => qc.invalidateQueries({ queryKey: ['tenant-integration-resend'] })} />
+        : <>
+            <ResendCard integration={resend ?? null} tenantId={tenantId!} userId={userId ?? null} onChange={() => qc.invalidateQueries({ queryKey: ['tenant-integration-resend'] })} />
+            <MetaPixelCard integration={metaPixel ?? null} tenantId={tenantId!} userId={userId ?? null} onChange={() => qc.invalidateQueries({ queryKey: ['tenant-integration-meta-pixel'] })} />
+          </>
       }
     </div>
   )
@@ -347,6 +372,193 @@ function ResendCard({ integration, tenantId, userId, onChange }: {
             <div className="flex items-center gap-3 text-sm text-immo-text-muted">
               <Plug className="h-4 w-4" />
               Aucune configuration Resend — vos emails passent par la clé globale IMMO PRO-X.
+            </div>
+            <Button onClick={() => setEditing(true)} variant="blue">
+              Configurer
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+function MetaPixelCard({ integration, tenantId, userId, onChange }: {
+  integration: PixelIntegration | null
+  tenantId: string
+  userId: string | null
+  onChange: () => void
+}) {
+  const [editing, setEditing] = useState(integration === null)
+  const [pixelId, setPixelId] = useState(integration?.config?.pixel_id ?? '')
+  const [testEventCode, setTestEventCode] = useState(integration?.config?.test_event_code ?? '')
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!pixelId.trim()) throw new Error('Le Pixel ID est requis')
+      if (!/^[0-9]{10,20}$/.test(pixelId.trim())) throw new Error('Pixel ID invalide (15-16 chiffres en général)')
+
+      const config = {
+        pixel_id: pixelId.trim(),
+        test_event_code: testEventCode.trim() || null,
+      }
+
+      if (integration) {
+        const { error } = await supabase
+          .from('tenant_integrations' as never)
+          .update({ config, enabled: integration.enabled } as never)
+          .eq('id', integration.id)
+        if (error) throw error
+      } else {
+        // Pixel ID is the only thing needed for client-side tracking;
+        // there's nothing to "test" without a server, so we enable it
+        // straight away. Founder can always toggle it off.
+        const { error } = await supabase
+          .from('tenant_integrations' as never)
+          .insert({
+            tenant_id: tenantId,
+            type: 'meta_pixel',
+            config,
+            enabled: true,
+            created_by: userId,
+          } as never)
+        if (error) throw error
+      }
+    },
+    onSuccess: () => {
+      toast.success('Pixel Meta enregistré — il sera injecté sur toutes vos landing pages')
+      setEditing(false)
+      onChange()
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const toggleEnabled = useMutation({
+    mutationFn: async (next: boolean) => {
+      if (!integration) return
+      const { error } = await supabase
+        .from('tenant_integrations' as never)
+        .update({ enabled: next } as never)
+        .eq('id', integration.id)
+      if (error) throw error
+    },
+    onSuccess: () => { toast.success('Mis à jour'); onChange() },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      if (!integration) return
+      if (!window.confirm('Supprimer le Pixel Meta de toutes vos landing pages ?')) {
+        throw new Error('Annulé')
+      }
+      const { error } = await supabase
+        .from('tenant_integrations' as never)
+        .delete()
+        .eq('id', integration.id)
+      if (error) throw error
+    },
+    onSuccess: () => { toast.success('Pixel supprimé'); onChange() },
+    onError: (err: Error) => { if (err.message !== 'Annulé') toast.error(err.message) },
+  })
+
+  const status = !integration
+    ? { label: 'Non configuré', cls: 'bg-immo-text-muted/10 text-immo-text-muted' }
+    : !integration.enabled
+      ? { label: 'Désactivé', cls: 'bg-immo-status-orange/10 text-immo-status-orange' }
+      : { label: 'Actif', cls: 'bg-immo-accent-green/10 text-immo-accent-green' }
+
+  return (
+    <Card>
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1877F2]/10 text-[#1877F2]">
+            <Target className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-semibold text-immo-text-primary">Meta Pixel</h3>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.cls}`}>{status.label}</span>
+            </div>
+            <p className="mt-0.5 text-sm text-immo-text-muted">
+              Suivi des conversions Facebook / Instagram pour vos landing pages.
+              <a href="https://www.facebook.com/business/help/952192354843755" target="_blank" rel="noopener noreferrer" className="ml-1 inline-flex items-center gap-1 text-immo-accent-blue hover:underline">
+                Trouver mon Pixel ID <ExternalLink className="h-3 w-3" />
+              </a>
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-immo-border-default/60 bg-immo-bg-primary p-3">
+          <p className="text-xs font-semibold text-immo-text-secondary mb-2">Comment ça marche :</p>
+          <ul className="space-y-1 text-xs text-immo-text-muted">
+            <li>• Le Pixel ID est injecté <strong>par défaut</strong> sur toutes vos landing pages.</li>
+            <li>• Si une landing a son propre Pixel (champ <code>meta_pixel_id</code> dans son éditeur), elle l'utilise à la place.</li>
+            <li>• Le test event code (optionnel) sert à voir vos events dans Meta → Events Manager → Test Events.</li>
+          </ul>
+        </div>
+
+        {editing ? (
+          <div className="mt-4 space-y-3">
+            <Field label="Pixel ID *">
+              <input
+                type="text"
+                value={pixelId}
+                onChange={(e) => setPixelId(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="ex: 1234567890123456"
+                inputMode="numeric"
+                className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-sm font-mono text-immo-text-primary focus:border-immo-accent-blue focus:outline-none"
+              />
+            </Field>
+            <Field label="Test Event Code (optionnel)">
+              <input
+                type="text"
+                value={testEventCode}
+                onChange={(e) => setTestEventCode(e.target.value)}
+                placeholder="ex: TEST12345"
+                className="w-full rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-sm font-mono text-immo-text-primary focus:border-immo-accent-blue focus:outline-none"
+              />
+            </Field>
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+              {integration && (
+                <Button variant="ghost" onClick={() => { setEditing(false); setPixelId(integration.config?.pixel_id ?? ''); setTestEventCode(integration.config?.test_event_code ?? '') }} className="text-immo-text-secondary">
+                  Annuler
+                </Button>
+              )}
+              <Button onClick={() => save.mutate()} disabled={save.isPending} variant="blue">
+                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
+              </Button>
+            </div>
+          </div>
+        ) : integration ? (
+          <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg border border-immo-border-default/60 bg-immo-bg-primary p-3">
+              <Info label="Pixel ID" value={integration.config?.pixel_id ?? '—'} />
+              <Info label="Test Event Code" value={integration.config?.test_event_code || '—'} />
+              <Info label="Dernière modif" value={format(new Date(integration.updated_at), 'dd/MM/yyyy HH:mm')} />
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+              <Button variant="ghost" onClick={() => remove.mutate()} disabled={remove.isPending} className="text-immo-status-red hover:bg-immo-status-red/10">
+                <Trash2 className="mr-1.5 h-4 w-4" /> Supprimer
+              </Button>
+              <Button variant="ghost" onClick={() => setEditing(true)} className="text-immo-accent-blue hover:bg-immo-accent-blue/10">
+                Modifier
+              </Button>
+              <Button
+                onClick={() => toggleEnabled.mutate(!integration.enabled)}
+                disabled={toggleEnabled.isPending}
+                variant={integration.enabled ? 'ghost' : 'blue'}
+                className={integration.enabled ? 'border border-immo-status-orange/30 text-immo-status-orange hover:bg-immo-status-orange/10' : ''}
+              >
+                {integration.enabled ? 'Désactiver' : <><CheckCircle2 className="mr-1.5 h-4 w-4" /> Activer</>}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 flex items-center justify-between rounded-lg border border-dashed border-immo-border-default p-4">
+            <div className="flex items-center gap-3 text-sm text-immo-text-muted">
+              <Plug className="h-4 w-4" />
+              Aucun Pixel Meta — vos landing pages n'envoient rien à Facebook Ads.
             </div>
             <Button onClick={() => setEditing(true)} variant="blue">
               Configurer
