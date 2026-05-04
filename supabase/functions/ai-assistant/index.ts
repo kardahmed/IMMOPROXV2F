@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await supabase
       .from('users')
-      .select('tenant_id, first_name, last_name, role')
+      .select('id, tenant_id, first_name, last_name, role')
       .eq('id', user.id)
       .single()
     if (!profile?.tenant_id) return json({ error: 'No tenant' }, 403)
@@ -132,28 +132,47 @@ Deno.serve(async (req) => {
     // Agents only see context tied to clients they own; admins see the
     // whole tenant. Without this filter, an agent could ask the AI
     // "list all our hot leads" and get clients assigned to coworkers.
+    // Two bugs lived here pre-fix:
+    //   1. .order('updated_at') — clients has no updated_at column,
+    //      so the whole call 500'd and Supabase Edge Runtime
+    //      surfaced the crash as an SSE error stream that the
+    //      frontend then tried to JSON.parse, leading to the
+    //      "Unexpected token 'd', 'data: {ty'..." red toast.
+    //   2. `clientsQuery.eq(...)` was discarded because supabase-js
+    //      query builders are immutable — chaining returns a NEW
+    //      builder. The agent filter silently never applied; agents
+    //      could see all coworkers' clients.
+    // Now order by created_at, and rebuild the query with the agent
+    // filter as a single fluent chain.
     const isAgent = profile.role === 'agent'
 
-    const clientsQuery = supabase.from('clients')
-      .select('id, full_name, phone, pipeline_stage, confirmed_budget, source, agent_id, last_contact_at, is_priority')
-      .eq('tenant_id', profile.tenant_id)
-      .order('updated_at', { ascending: false })
-      .limit(50)
-    if (isAgent) clientsQuery.eq('agent_id', profile.id)
+    const buildScopedQuery = <T>(q: T): T => isAgent
+      ? (q as unknown as { eq: (k: string, v: string) => T }).eq('agent_id', profile.id)
+      : q
 
-    const visitsQuery = supabase.from('visits')
-      .select('id, client_id, scheduled_at, visit_type, status, agent_id')
-      .eq('tenant_id', profile.tenant_id)
-      .gte('scheduled_at', new Date(Date.now() - 7 * 86400000).toISOString())
-      .limit(50)
-    if (isAgent) visitsQuery.eq('agent_id', profile.id)
+    const clientsQuery = buildScopedQuery(
+      supabase.from('clients')
+        .select('id, full_name, phone, pipeline_stage, confirmed_budget, source, agent_id, last_contact_at, is_priority')
+        .eq('tenant_id', profile.tenant_id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+    )
 
-    const tasksQuery = supabase.from('tasks')
-      .select('id, client_id, title, due_date, status, priority, agent_id')
-      .eq('tenant_id', profile.tenant_id)
-      .eq('status', 'pending')
-      .limit(30)
-    if (isAgent) tasksQuery.eq('agent_id', profile.id)
+    const visitsQuery = buildScopedQuery(
+      supabase.from('visits')
+        .select('id, client_id, scheduled_at, visit_type, status, agent_id')
+        .eq('tenant_id', profile.tenant_id)
+        .gte('scheduled_at', new Date(Date.now() - 7 * 86400000).toISOString())
+        .limit(50)
+    )
+
+    const tasksQuery = buildScopedQuery(
+      supabase.from('tasks')
+        .select('id, client_id, title, due_date, status, priority, agent_id')
+        .eq('tenant_id', profile.tenant_id)
+        .eq('status', 'pending')
+        .limit(30)
+    )
 
     const [tenantRes, agentsRes, projectsRes, clientsRes, visitsRes, tasksRes] = await Promise.all([
       supabase.from('tenants').select('name, wilaya').eq('id', profile.tenant_id).single(),
