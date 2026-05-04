@@ -1,9 +1,27 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, lazy, Suspense } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Bookmark, DollarSign, CreditCard, Receipt,
   ListTodo, Clock, Plus, CheckCircle, Bot,
 } from 'lucide-react'
+
+// The two big commercial modals — lazy because each is huge
+// (CreateReservationModal ~520 lines, NewSaleModal ~1300) and most
+// tab opens won't need them.
+const CreateReservationModal = lazy(() => import('../modals/CreateReservationModal').then(m => ({ default: m.CreateReservationModal })))
+const NewSaleModal = lazy(() => import('../modals/NewSaleModal').then(m => ({ default: m.NewSaleModal })))
+
+// Shape we hand to those modals. Mirrors the ClientInfo interface
+// declared inside both modals — we narrow pipeline_stage to the
+// PipelineStage union (the modals do too).
+interface ClientInfoForModal {
+  id: string
+  full_name: string
+  phone: string
+  nin_cin: string | null
+  pipeline_stage: PipelineStage
+  tenant_id: string
+}
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
@@ -26,10 +44,14 @@ import type { PaymentStatus, TaskStatus } from '@/types'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { inputClass } from './shared'
+import type { PipelineStage } from '@/types'
 
 /* ═══ Reservation ═══ */
-export function ReservationTab({ clientId }: { clientId: string }) {
+export function ReservationTab({ clientId, clientInfo }: { clientId: string; clientInfo: ClientInfoForModal | null }) {
   const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [showCreate, setShowCreate] = useState(false)
+
   const { data: reservations = [] } = useQuery({
     queryKey: ['client-reservations', clientId],
     queryFn: async () => {
@@ -39,30 +61,63 @@ export function ReservationTab({ clientId }: { clientId: string }) {
     },
   })
 
-  if (reservations.length === 0) return <EmptyState icon={<Bookmark className="h-10 w-10" />} title={t('common.no_data')} />
+  function handleClose() {
+    setShowCreate(false)
+    // Refresh reservation list + client (modal may have flipped
+    // pipeline_stage), and units/sales because reservation creation
+    // touches units.status via DB trigger.
+    qc.invalidateQueries({ queryKey: ['client-reservations', clientId] })
+    qc.invalidateQueries({ queryKey: ['client-info-tabs', clientId] })
+    qc.invalidateQueries({ queryKey: ['clients'] })
+  }
 
   return (
-    <div className="space-y-2">
-      {reservations.map((r) => (
-        <div key={r.id as string} className="rounded-lg border border-immo-border-default bg-immo-bg-card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-immo-text-primary">{(r.units as { code: string })?.code} — {(r.projects as { name: string })?.name}</p>
-              <p className="text-xs text-immo-text-muted">
-                {t('status.expired')} {format(new Date(r.expires_at as string), 'dd/MM/yyyy')} · {t('field.deposit')} : {formatPrice((r.deposit_amount as number) ?? 0)}
-              </p>
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button
+          onClick={() => setShowCreate(true)}
+          disabled={!clientInfo}
+          className="bg-immo-accent-green text-xs font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90"
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" /> Créer réservation
+        </Button>
+      </div>
+
+      {reservations.length === 0 ? (
+        <EmptyState icon={<Bookmark className="h-10 w-10" />} title={t('common.no_data')} />
+      ) : (
+        <div className="space-y-2">
+          {reservations.map((r) => (
+            <div key={r.id as string} className="rounded-lg border border-immo-border-default bg-immo-bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-immo-text-primary">{(r.units as { code: string })?.code} — {(r.projects as { name: string })?.name}</p>
+                  <p className="text-xs text-immo-text-muted">
+                    {t('status.expired')} {format(new Date(r.expires_at as string), 'dd/MM/yyyy')} · {t('field.deposit')} : {formatPrice((r.deposit_amount as number) ?? 0)}
+                  </p>
+                </div>
+                <StatusBadge label={r.status as string} type={r.status === 'active' ? 'green' : r.status === 'converted' ? 'blue' : 'red'} />
+              </div>
             </div>
-            <StatusBadge label={r.status as string} type={r.status === 'active' ? 'green' : r.status === 'converted' ? 'blue' : 'red'} />
-          </div>
+          ))}
         </div>
-      ))}
+      )}
+
+      {clientInfo && (
+        <Suspense fallback={null}>
+          <CreateReservationModal isOpen={showCreate} onClose={handleClose} client={clientInfo} />
+        </Suspense>
+      )}
     </div>
   )
 }
 
 /* ═══ Sale ═══ */
-export function SaleTab({ clientId }: { clientId: string }) {
+export function SaleTab({ clientId, clientInfo }: { clientId: string; clientInfo: ClientInfoForModal | null }) {
   const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [showCreate, setShowCreate] = useState(false)
+
   const { data: sales = [] } = useQuery({
     queryKey: ['client-sales', clientId],
     queryFn: async () => {
@@ -72,21 +127,49 @@ export function SaleTab({ clientId }: { clientId: string }) {
     },
   })
 
-  if (sales.length === 0) return <EmptyState icon={<DollarSign className="h-10 w-10" />} title={t('common.no_data')} />
+  function handleClose() {
+    setShowCreate(false)
+    qc.invalidateQueries({ queryKey: ['client-sales', clientId] })
+    qc.invalidateQueries({ queryKey: ['client-info-tabs', clientId] })
+    qc.invalidateQueries({ queryKey: ['client-schedules', clientId] })
+    qc.invalidateQueries({ queryKey: ['clients'] })
+  }
 
   return (
-    <div className="space-y-2">
-      {sales.map((s) => (
-        <div key={s.id as string} className="rounded-lg border border-immo-border-default bg-immo-bg-card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-immo-text-primary">{(s.units as { code: string })?.code} — {(s.projects as { name: string })?.name}</p>
-              <p className="text-xs text-immo-text-muted">{t('field.price')} : {formatPrice(s.final_price as number)} · {s.financing_mode as string}</p>
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button
+          onClick={() => setShowCreate(true)}
+          disabled={!clientInfo}
+          className="bg-immo-accent-green text-xs font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90"
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" /> Créer vente
+        </Button>
+      </div>
+
+      {sales.length === 0 ? (
+        <EmptyState icon={<DollarSign className="h-10 w-10" />} title={t('common.no_data')} />
+      ) : (
+        <div className="space-y-2">
+          {sales.map((s) => (
+            <div key={s.id as string} className="rounded-lg border border-immo-border-default bg-immo-bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-immo-text-primary">{(s.units as { code: string })?.code} — {(s.projects as { name: string })?.name}</p>
+                  <p className="text-xs text-immo-text-muted">{t('field.price')} : {formatPrice(s.final_price as number)} · {s.financing_mode as string}</p>
+                </div>
+                <StatusBadge label={s.status === 'active' ? t('status.active') : t('status.cancelled')} type={s.status === 'active' ? 'green' : 'red'} />
+              </div>
             </div>
-            <StatusBadge label={s.status === 'active' ? t('status.active') : t('status.cancelled')} type={s.status === 'active' ? 'green' : 'red'} />
-          </div>
+          ))}
         </div>
-      ))}
+      )}
+
+      {clientInfo && (
+        <Suspense fallback={null}>
+          <NewSaleModal isOpen={showCreate} onClose={handleClose} client={clientInfo} />
+        </Suspense>
+      )}
     </div>
   )
 }
@@ -94,12 +177,42 @@ export function SaleTab({ clientId }: { clientId: string }) {
 /* ═══ Schedule ═══ */
 export function ScheduleTab({ clientId }: { clientId: string }) {
   const { t } = useTranslation()
+  const qc = useQueryClient()
+
   const { data: schedules = [] } = useQuery({
     queryKey: ['client-schedules', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('payment_schedules').select('*, sales(units(code))').eq('tenant_id', (await supabase.from('clients').select('tenant_id').eq('id', clientId).single()).data?.tenant_id ?? '').order('due_date')
+      // Pull schedules for THIS client by joining through sales:
+      //   payment_schedules → sales (where client_id = this client)
+      // The previous query joined by tenant_id which leaked every
+      // tenant schedule into the client view.
+      const { data: sales } = await supabase.from('sales').select('id').eq('client_id', clientId)
+      const saleIds = ((sales ?? []) as Array<{ id: string }>).map(s => s.id)
+      if (saleIds.length === 0) return []
+      const { data, error } = await supabase
+        .from('payment_schedules')
+        .select('*, sales(units(code))')
+        .in('sale_id', saleIds)
+        .order('due_date')
       if (error) return []
       return data as unknown as Array<Record<string, unknown>>
+    },
+  })
+
+  // Mark a single échéance as paid. Stamps paid_at = now() so the
+  // payment dashboard counts it.
+  const markPaid = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      const { error } = await supabase
+        .from('payment_schedules')
+        .update({ status: 'paid', paid_at: new Date().toISOString() } as never)
+        .eq('id', scheduleId)
+      if (error) { handleSupabaseError(error); throw error }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['client-schedules', clientId] })
+      qc.invalidateQueries({ queryKey: ['client-payments', clientId] })
+      toast.success('Échéance marquée comme payée')
     },
   })
 
@@ -109,19 +222,32 @@ export function ScheduleTab({ clientId }: { clientId: string }) {
     <div className="overflow-hidden rounded-xl border border-immo-border-default">
       <table className="w-full">
         <thead><tr className="bg-immo-bg-card-hover">
-          {['#', t('field.due_date'), t('field.amount'), t('field.status')].map(h => (
-            <th key={h} className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+          {['#', t('field.due_date'), t('field.amount'), t('field.status'), ''].map((h, i) => (
+            <th key={i} className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
           ))}
         </tr></thead>
         <tbody className="divide-y divide-immo-border-default">
           {schedules.map((s) => {
             const pst = PAYMENT_STATUS_LABELS[s.status as PaymentStatus] ?? { label: s.status as string, color: '#7F96B7' }
+            const isPending = s.status === 'pending' || s.status === 'late'
             return (
               <tr key={s.id as string} className="bg-immo-bg-card">
                 <td className="px-4 py-3 text-sm text-immo-text-muted">{s.installment_number as number}</td>
                 <td className="px-4 py-3 text-sm text-immo-text-primary">{format(new Date(s.due_date as string), 'dd/MM/yyyy')}</td>
                 <td className="px-4 py-3 text-sm font-medium text-immo-text-primary">{formatPrice(s.amount as number)}</td>
                 <td className="px-4 py-3"><StatusBadge label={pst.label} type={pst.color === '#00D4A0' ? 'green' : pst.color === '#FF4949' ? 'red' : 'orange'} /></td>
+                <td className="px-4 py-3 text-right">
+                  {isPending && (
+                    <Button
+                      size="sm"
+                      onClick={() => markPaid.mutate(s.id as string)}
+                      disabled={markPaid.isPending}
+                      className="h-7 border border-immo-accent-green/30 text-[11px] text-immo-accent-green hover:bg-immo-accent-green/10"
+                    >
+                      <CheckCircle className="mr-1 h-3 w-3" /> Marquer payé
+                    </Button>
+                  )}
+                </td>
               </tr>
             )
           })}

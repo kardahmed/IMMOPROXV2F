@@ -20,6 +20,7 @@ import {
 import { ClientTasksTab } from './ClientTasksTab'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import type { PipelineStage } from '@/types'
 
 interface ClientTabsProps {
   clientId: string
@@ -60,12 +61,26 @@ export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
     }
   }, [urlTab])
 
-  // Fetch client info for tasks tab
+  // Fetch client info — needed by tasks tab AND by the
+  // CreateReservationModal / NewSaleModal that reservation/sale tabs
+  // open. Modals expect id, nin_cin, tenant_id, pipeline_stage in
+  // addition to the display fields.
   const { data: clientInfo } = useQuery({
     queryKey: ['client-info-tabs', clientId],
     queryFn: async () => {
-      const { data } = await supabase.from('clients').select('full_name, phone, pipeline_stage').eq('id', clientId).single()
-      return data as { full_name: string; phone: string; pipeline_stage: string } | null
+      const { data } = await supabase
+        .from('clients')
+        .select('id, full_name, phone, nin_cin, pipeline_stage, tenant_id')
+        .eq('id', clientId)
+        .single()
+      return data as {
+        id: string
+        full_name: string
+        phone: string
+        nin_cin: string | null
+        pipeline_stage: PipelineStage
+        tenant_id: string
+      } | null
     },
   })
 
@@ -95,8 +110,8 @@ export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
       {/* Tab content */}
       <div className="pt-5">
         {activeTab === 'visits' && <VisitsTab clientId={clientId} tenantId={tenantId} />}
-        {activeTab === 'reservation' && <ReservationTab clientId={clientId} />}
-        {activeTab === 'sale' && <SaleTab clientId={clientId} />}
+        {activeTab === 'reservation' && <ReservationTab clientId={clientId} clientInfo={clientInfo ?? null} />}
+        {activeTab === 'sale' && <SaleTab clientId={clientId} clientInfo={clientInfo ?? null} />}
         {activeTab === 'schedule' && <ScheduleTab clientId={clientId} />}
         {activeTab === 'payment' && <PaymentTab clientId={clientId} />}
         {activeTab === 'documents' && <DocumentsTab clientId={clientId} />}
