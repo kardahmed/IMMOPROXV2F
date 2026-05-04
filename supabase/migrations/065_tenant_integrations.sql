@@ -84,6 +84,7 @@ ALTER TABLE tenant_integrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_integrations FORCE ROW LEVEL SECURITY;
 
 -- SELECT: tenant admin sees their tenant's rows; super_admin sees all.
+DROP POLICY IF EXISTS tenant_integrations_select ON tenant_integrations;
 CREATE POLICY tenant_integrations_select ON tenant_integrations FOR SELECT
   USING (
     EXISTS (
@@ -96,6 +97,7 @@ CREATE POLICY tenant_integrations_select ON tenant_integrations FOR SELECT
     )
   );
 
+DROP POLICY IF EXISTS tenant_integrations_insert ON tenant_integrations;
 CREATE POLICY tenant_integrations_insert ON tenant_integrations FOR INSERT
   WITH CHECK (
     EXISTS (
@@ -108,6 +110,7 @@ CREATE POLICY tenant_integrations_insert ON tenant_integrations FOR INSERT
     )
   );
 
+DROP POLICY IF EXISTS tenant_integrations_update ON tenant_integrations;
 CREATE POLICY tenant_integrations_update ON tenant_integrations FOR UPDATE
   USING (
     EXISTS (
@@ -126,6 +129,7 @@ CREATE POLICY tenant_integrations_update ON tenant_integrations FOR UPDATE
     OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'super_admin')
   );
 
+DROP POLICY IF EXISTS tenant_integrations_delete ON tenant_integrations;
 CREATE POLICY tenant_integrations_delete ON tenant_integrations FOR DELETE
   USING (
     EXISTS (
