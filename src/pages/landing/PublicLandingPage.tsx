@@ -74,6 +74,19 @@ export function PublicLandingPage() {
       // Increment views
       supabase.from('landing_pages').update({ views_count: (d.views_count ?? 0) + 1 } as never).eq('id', d.id)
 
+      // Pull tenant default pixels via the public-safe view (migration
+      // 066). The view exposes only pixel_id / measurement_id /
+      // tracking_id — no secrets — and is GRANTed to anon. We use the
+      // tenant default when the landing page has no explicit override.
+      const { data: tenantPixels } = await supabase
+        .from('tenant_pixels_public' as never)
+        .select('type, pixel_id')
+        .eq('tenant_id', d.tenant_id)
+      const pixelMap = new Map<string, string>()
+      for (const p of (tenantPixels ?? []) as Array<{ type: string; pixel_id: string | null }>) {
+        if (p.pixel_id) pixelMap.set(p.type, p.pixel_id)
+      }
+
       return {
         id: d.id,
         title: d.title,
@@ -83,9 +96,11 @@ export function PublicLandingPage() {
         form_fields: d.form_fields ?? ['full_name', 'phone', 'email', 'budget', 'message'],
         custom_questions: (d.custom_questions ?? []) as CustomQuestion[],
         slug: d.slug,
-        meta_pixel_id: d.meta_pixel_id,
-        google_tag_id: d.google_tag_id,
-        tiktok_pixel_id: d.tiktok_pixel_id,
+        // Per-landing override wins; otherwise inherit from the
+        // tenant default pixel configured in /settings → Intégrations.
+        meta_pixel_id: d.meta_pixel_id ?? pixelMap.get('meta_pixel') ?? null,
+        google_tag_id: d.google_tag_id ?? pixelMap.get('google_analytics') ?? null,
+        tiktok_pixel_id: d.tiktok_pixel_id ?? pixelMap.get('tiktok_pixel') ?? null,
         project: d.projects ?? null,
         tenant: d.tenants ?? null,
       } as PageData
