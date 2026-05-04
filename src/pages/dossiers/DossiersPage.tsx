@@ -120,9 +120,16 @@ export function DossiersPage() {
   const schedules = data?.schedules ?? []
   const projectsList = data?.projects ?? []
 
-  // Build schedule aggregates per sale
+  // Build schedule aggregates per sale.
+  // `due` was pre-fix summed from pending + late schedule lines —
+  // wrong, because if a sale has total_price=120M and a single paid
+  // 40K échéance, the panel would show "Restant 0" (no unpaid lines)
+  // while 119,960,000 was actually still owed. The dossier row needs
+  // total_price to compute the true `due`, which we don't have in
+  // this hook — defer to the consumer (dossiers loop below merges
+  // sale.total_price + this aggregate).
   const scheduleAgg = useMemo(() => {
-    const map = new Map<string, { paid: number; due: number; late: number; nextDate: string | null; nextAmount: number }>()
+    const map = new Map<string, { paid: number; pending_due: number; late: number; nextDate: string | null; nextAmount: number }>()
     const bySale = new Map<string, typeof schedules>()
 
     for (const s of schedules) {
@@ -134,7 +141,10 @@ export function DossiersPage() {
       const paid = lines.filter(l => l.status === 'paid').reduce((s, l) => s + l.amount, 0)
       const pending = lines.filter(l => l.status === 'pending')
       const lateLines = lines.filter(l => l.status === 'late')
-      const due = pending.reduce((s, l) => s + l.amount, 0) + lateLines.reduce((s, l) => s + l.amount, 0)
+      // Renamed to pending_due to make it explicit this is "what the
+      // schedule rows ADD UP TO" and NOT "what the buyer still owes".
+      // True restant lives in the dossier row builder below.
+      const pending_due = pending.reduce((s, l) => s + l.amount, 0) + lateLines.reduce((s, l) => s + l.amount, 0)
       const late = lateLines.reduce((s, l) => s + l.amount, 0)
 
       const upcoming = pending.sort((a, b) => a.due_date.localeCompare(b.due_date))
@@ -142,7 +152,7 @@ export function DossiersPage() {
 
       map.set(saleId, {
         paid,
-        due,
+        pending_due,
         late,
         nextDate: next?.due_date ?? null,
         nextAmount: next?.amount ?? 0,
@@ -174,7 +184,12 @@ export function DossiersPage() {
         agent_name: agent ? `${agent.first_name} ${agent.last_name}` : '-',
         total_price: s.final_price as number,
         paid: agg?.paid ?? 0,
-        due: agg?.due ?? 0,
+        // Restant = total contract price - what's actually been paid,
+        // not "sum of unpaid schedule rows". A sale with no schedule
+        // yet rendered as restant=0 even when the buyer owed the full
+        // 120M; now restant === total_price in that case until
+        // payments are recorded.
+        due: Math.max(0, (s.final_price as number) - (agg?.paid ?? 0)),
         late: agg?.late ?? 0,
         next_payment_date: agg?.nextDate ?? null,
         next_payment_amount: agg?.nextAmount ?? 0,

@@ -104,10 +104,18 @@ export function PaymentSchedulePanel({ saleId, totalPrice, clientName }: Props) 
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sale-charges', saleId] }),
   })
 
+  // Pre-fix `totalDue` summed only NON-paid schedules. For a sale of
+  // 120M with a single paid 40K échéance, that returned 0 — the agent
+  // saw "Restant 0 DA" while still owing 119,960,000. The right
+  // formula is total contract price minus what's actually been paid;
+  // the schedules table is just a planning aid, not the source of
+  // truth for what's owed.
   const totalPaid = schedules.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.amount, 0)
-  const totalDue = schedules.filter(s => s.status !== 'paid').reduce((sum, s) => sum + s.amount, 0)
+  const totalDue = Math.max(0, totalPrice - totalPaid)
   const totalLate = schedules.filter(s => s.status === 'late').reduce((sum, s) => sum + s.amount, 0)
-  const progress = totalPrice > 0 ? Math.round((totalPaid / totalPrice) * 100) : 0
+  // 1-decimal precision so a 40K / 120M payment shows 0.0% instead of
+  // floor-rounding to 0%. Small payments stay visible on the bar.
+  const progress = totalPrice > 0 ? Number(((totalPaid / totalPrice) * 100).toFixed(1)) : 0
 
   return (
     <div className="space-y-4">

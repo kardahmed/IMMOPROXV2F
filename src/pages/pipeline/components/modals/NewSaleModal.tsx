@@ -269,9 +269,23 @@ export function NewSaleModal({ isOpen, onClose, client, onSuccess }: NewSaleModa
         } as never).select().single()
         if (saleErr) { handleSupabaseError(saleErr); throw saleErr }
 
+        const saleId = (sale as { id: string }).id
+
         // 2. Payment schedules
-        if (formData.installments && schedule.length > 0 && sale) {
-          const saleId = (sale as { id: string }).id
+        // Pre-fix: only generated when installments=true. Comptant
+        // sales were saved with NO schedule rows at all, so the
+        // Dossiers échéancier panel was empty until the agent
+        // manually clicked "+ Echeance" for every payment received.
+        // Now we always insert at least one row so the dossier has
+        // a paper trail to mark paid:
+        //
+        //   - installments + valid plan → insert each installment
+        //   - comptant OR installments without plan → insert ONE
+        //     schedule row at today, due_date=delivery_date or
+        //     today+30, amount=unitFinal, status=pending. Agent
+        //     marks it paid the day cash is received via the
+        //     "Marquer payé" button on ScheduleTab.
+        if (formData.installments && schedule.length > 0) {
           for (const line of schedule) {
             await supabase.from('payment_schedules').insert({
               tenant_id: client.tenant_id,
@@ -282,11 +296,25 @@ export function NewSaleModal({ isOpen, onClose, client, onSuccess }: NewSaleModa
               description: line.description,
             } as never)
           }
+        } else {
+          // Single schedule covering the full price. Due "today" for
+          // comptant; due in 30 days if no delivery date given.
+          const fallbackDate = formData.deliveryDate || formData.firstPaymentDate
+            || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+          await supabase.from('payment_schedules').insert({
+            tenant_id: client.tenant_id,
+            sale_id: saleId,
+            installment_number: 1,
+            due_date: fallbackDate,
+            amount: unitFinal,
+            description: formData.financingMode === 'comptant'
+              ? 'Paiement comptant'
+              : 'Paiement total',
+          } as never)
         }
 
         // 3. Amenities
-        if (formData.amenities.length > 0 && sale) {
-          const saleId = (sale as { id: string }).id
+        if (formData.amenities.length > 0) {
           for (const a of formData.amenities) {
             await supabase.from('sale_amenities').insert({
               tenant_id: client.tenant_id,
