@@ -34,6 +34,10 @@ interface CreateReservationModalProps {
   isOpen: boolean
   onClose: () => void
   client: ClientInfo | null
+  /** Fired after a successful reservation insert (before the modal
+   *  closes). Lets the caller trigger downstream effects like
+   *  auto-task generation for the new stage. */
+  onSuccess?: () => void
 }
 
 interface AvailableUnit {
@@ -63,7 +67,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pd
 const inputClass = 'border-immo-border-default bg-immo-bg-primary text-immo-text-primary placeholder:text-immo-text-muted'
 const labelClass = 'text-[11px] font-medium text-immo-text-muted'
 
-export function CreateReservationModal({ isOpen, onClose, client }: CreateReservationModalProps) {
+export function CreateReservationModal({ isOpen, onClose, client, onSuccess }: CreateReservationModalProps) {
   const { t } = useTranslation()
   const userId = useAuthStore((s) => s.session?.user?.id)
   const { projects } = useProjects()
@@ -227,6 +231,7 @@ export function CreateReservationModal({ isOpen, onClose, client }: CreateReserv
       qc.invalidateQueries({ queryKey: ['units'] })
       qc.invalidateQueries({ queryKey: ['pipeline-stats'] })
       toast.success(t('reservation_modal.success'))
+      onSuccess?.()
       resetAndClose()
     },
   })

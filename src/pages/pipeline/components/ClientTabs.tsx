@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Calendar, Bookmark, DollarSign, CreditCard, FileText, Receipt,
-  StickyNote, ListTodo, Clock, CheckSquare,
+  StickyNote, ListTodo, Clock,
 } from 'lucide-react'
 import {
   VisitsTab,
@@ -17,18 +17,26 @@ import {
   TasksTab,
   HistoryTab,
 } from './tabs'
-import { ClientTasksTab } from './ClientTasksTab'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import type { PipelineStage } from '@/types'
+// ClientTasksTab and CheckSquare were used by the removed
+// `auto_tasks` tab — pruned along with the duplicate.
 
 interface ClientTabsProps {
   clientId: string
   tenantId: string
 }
 
+// `auto_tasks` ("Suivi 360") was a duplicate of `tasks` — both
+// rendered task lists, with auto_tasks scoping to per-stage tasks
+// from task_templates. The user's report: same content shown twice
+// under different labels. Keep `tasks` (single tab covers both
+// manual and auto-generated since they're all rows in the same
+// `tasks` table) and drop `auto_tasks`.
 const TAB_KEYS = [
   'visits', 'reservation', 'sale', 'schedule', 'payment',
-  'documents', 'charges', 'notes', 'tasks', 'auto_tasks', 'history',
+  'documents', 'charges', 'notes', 'tasks', 'history',
 ] as const
 
 type TabKey = (typeof TAB_KEYS)[number]
@@ -43,7 +51,6 @@ const TAB_ICONS: Record<TabKey, typeof Calendar> = {
   charges: Receipt,
   notes: StickyNote,
   tasks: ListTodo,
-  auto_tasks: CheckSquare,
   history: Clock,
 }
 
@@ -60,12 +67,26 @@ export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
     }
   }, [urlTab])
 
-  // Fetch client info for tasks tab
+  // Fetch client info — needed by tasks tab AND by the
+  // CreateReservationModal / NewSaleModal that reservation/sale tabs
+  // open. Modals expect id, nin_cin, tenant_id, pipeline_stage in
+  // addition to the display fields.
   const { data: clientInfo } = useQuery({
     queryKey: ['client-info-tabs', clientId],
     queryFn: async () => {
-      const { data } = await supabase.from('clients').select('full_name, phone, pipeline_stage').eq('id', clientId).single()
-      return data as { full_name: string; phone: string; pipeline_stage: string } | null
+      const { data } = await supabase
+        .from('clients')
+        .select('id, full_name, phone, nin_cin, pipeline_stage, tenant_id')
+        .eq('id', clientId)
+        .single()
+      return data as {
+        id: string
+        full_name: string
+        phone: string
+        nin_cin: string | null
+        pipeline_stage: PipelineStage
+        tenant_id: string
+      } | null
     },
   })
 
@@ -95,17 +116,14 @@ export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
       {/* Tab content */}
       <div className="pt-5">
         {activeTab === 'visits' && <VisitsTab clientId={clientId} tenantId={tenantId} />}
-        {activeTab === 'reservation' && <ReservationTab clientId={clientId} />}
-        {activeTab === 'sale' && <SaleTab clientId={clientId} />}
+        {activeTab === 'reservation' && <ReservationTab clientId={clientId} clientInfo={clientInfo ?? null} />}
+        {activeTab === 'sale' && <SaleTab clientId={clientId} clientInfo={clientInfo ?? null} />}
         {activeTab === 'schedule' && <ScheduleTab clientId={clientId} />}
         {activeTab === 'payment' && <PaymentTab clientId={clientId} />}
         {activeTab === 'documents' && <DocumentsTab clientId={clientId} />}
         {activeTab === 'charges' && <ChargesTab clientId={clientId} tenantId={tenantId} />}
         {activeTab === 'notes' && <NotesTab clientId={clientId} />}
         {activeTab === 'tasks' && <TasksTab clientId={clientId} tenantId={tenantId} clientPhone={clientInfo?.phone} />}
-        {activeTab === 'auto_tasks' && clientInfo && (
-          <ClientTasksTab clientId={clientId} clientName={clientInfo.full_name} clientPhone={clientInfo.phone} clientStage={clientInfo.pipeline_stage} tenantId={tenantId} />
-        )}
         {activeTab === 'history' && <HistoryTab clientId={clientId} />}
       </div>
     </div>

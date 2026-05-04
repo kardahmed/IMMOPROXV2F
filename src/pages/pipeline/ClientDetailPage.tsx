@@ -486,7 +486,7 @@ function InfoField({
           {value}
         </span>
       ) : (
-        <p className={`mt-0.5 text-sm ${
+        <p className={`mt-0.5 text-sm whitespace-pre-line ${
           empty
             ? 'text-immo-text-muted italic'
             : highlight

@@ -35,7 +35,7 @@ import { formatPriceCompact } from '@/lib/constants'
 import { PIPELINE_ORDER } from '@/lib/constants'
 import type { PipelineStage, Client } from '@/types'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { handleSupabaseError } from '@/lib/errors'
@@ -48,6 +48,8 @@ import { CardsView } from './components/CardsView'
 import { TableView } from './components/TableView'
 const ClientFormModal = lazy(() => import('./components/ClientFormModal').then(m => ({ default: m.ClientFormModal })))
 const SmartStageDialog = lazy(() => import('./components/SmartStageDialog').then(m => ({ default: m.SmartStageDialog })))
+const CreateReservationModal = lazy(() => import('./components/modals/CreateReservationModal').then(m => ({ default: m.CreateReservationModal })))
+const NewSaleModal = lazy(() => import('./components/modals/NewSaleModal').then(m => ({ default: m.NewSaleModal })))
 import { ClientSidePanel } from './components/ClientSidePanel'
 import { AdvancedFilters, EMPTY_FILTERS } from './components/AdvancedFilters'
 import type { AdvancedFilterValues } from './components/AdvancedFilters'
@@ -59,6 +61,7 @@ type ViewMode = 'kanban' | 'cards' | 'table' | 'analytics'
 export function PipelinePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const qc = useQueryClient()
   // The Kanban renders every active client across 9 stage columns —
   // the default page size of 50 was capping the entire pipeline at
   // 50 rows total. Pass 'all' so each column gets its true count.
@@ -130,6 +133,15 @@ export function PipelinePage() {
   const [reassignAgent, setReassignAgent] = useState('')
   const [advFilters, setAdvFilters] = useState<AdvancedFilterValues>(EMPTY_FILTERS)
   const [pendingMove, setPendingMove] = useState<{ clientId: string; clientName: string; fromStage: PipelineStage; toStage: PipelineStage } | null>(null)
+  // Drag-to-reservation / drag-to-vente surface the dedicated modals
+  // instead of the SmartStageDialog "simple" branch (which silently
+  // moved the stage without creating a reservations / sales row).
+  // The modal itself flips clients.pipeline_stage on success — no
+  // need for confirmMoveClient afterwards.
+  const [commercialMove, setCommercialMove] = useState<{
+    type: 'reservation' | 'vente'
+    client: { id: string; full_name: string; phone: string; nin_cin: string | null; pipeline_stage: PipelineStage; tenant_id: string }
+  } | null>(null)
 
   // Filter clients
   const filtered = useMemo(() => {
@@ -193,12 +205,38 @@ export function PipelinePage() {
     if (!client || client.pipeline_stage === newStage) return
 
     // Reject illegal funnel transitions before opening the dialog.
-    // Without this, dragging an `accueil` lead straight to `vente`
-    // would skip qualification, visit, and negotiation — silently
-    // corrupting funnel KPIs and skipping the touchpoint automations
-    // that depend on stage_changed_at moving in order.
     if (!isValidTransition(client.pipeline_stage, newStage)) {
       toast.error(explainRefusedTransition(client.pipeline_stage, newStage))
+      return
+    }
+
+    // Commercial transitions need the full modals — moving a card
+    // into `reservation` or `vente` without recording the unit /
+    // deposit / final price / CIN / payment schedule produced a
+    // ghost client at that stage with no row in reservations/sales,
+    // so every KPI (CA, agent perf, MRR) read 0 for the deal.
+    // The modals themselves flip clients.pipeline_stage on success;
+    // confirmMoveClient is not called here.
+    if (newStage === 'reservation' || newStage === 'vente') {
+      // The Client object loaded into PipelinePage doesn't carry
+      // tenant_id / nin_cin (those aren't in the Kanban projection).
+      // Pull a fresh row before opening so the modal gets the right
+      // shape. tenantId is the page-level value — same tenant for
+      // every client visible here.
+      void supabase.from('clients')
+        .select('id, full_name, phone, nin_cin, pipeline_stage, tenant_id')
+        .eq('id', clientId)
+        .single()
+        .then(({ data }) => {
+          if (!data) {
+            toast.error('Impossible de charger le client')
+            return
+          }
+          setCommercialMove({
+            type: newStage === 'reservation' ? 'reservation' : 'vente',
+            client: data as never,
+          })
+        })
       return
     }
 
@@ -552,6 +590,54 @@ export function PipelinePage() {
             fromStage={pendingMove.fromStage}
             toStage={pendingMove.toStage}
             loading={updateClientStage.isPending}
+          />
+        </Suspense>
+      )}
+
+      {commercialMove && commercialMove.type === 'reservation' && (
+        <Suspense fallback={null}>
+          <CreateReservationModal
+            isOpen
+            client={commercialMove.client}
+            onSuccess={() => {
+              // Modal succeeded — fire auto-task generation for the
+              // new stage if the tenant has templates configured.
+              // generateForStage no-ops silently when there are
+              // none, so it's safe to always call here.
+              generateForStage.mutate({
+                clientId: commercialMove.client.id,
+                newStage: 'reservation',
+                oldStage: commercialMove.client.pipeline_stage,
+              })
+            }}
+            onClose={() => {
+              // Called both on success (after onSuccess) and on
+              // cancel. Invalidate clients so the kanban re-renders
+              // — on cancel the card stays put because no DB write
+              // happened.
+              setCommercialMove(null)
+              qc.invalidateQueries({ queryKey: ['clients'] })
+            }}
+          />
+        </Suspense>
+      )}
+
+      {commercialMove && commercialMove.type === 'vente' && (
+        <Suspense fallback={null}>
+          <NewSaleModal
+            isOpen
+            client={commercialMove.client}
+            onSuccess={() => {
+              generateForStage.mutate({
+                clientId: commercialMove.client.id,
+                newStage: 'vente',
+                oldStage: commercialMove.client.pipeline_stage,
+              })
+            }}
+            onClose={() => {
+              setCommercialMove(null)
+              qc.invalidateQueries({ queryKey: ['clients'] })
+            }}
           />
         </Suspense>
       )}
