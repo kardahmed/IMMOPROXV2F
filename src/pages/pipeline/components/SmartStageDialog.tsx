@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PIPELINE_STAGES } from '@/types'
 import type { PipelineStage } from '@/types'
+import { algerianDateTimeToISO } from '@/lib/algerianDate'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -57,7 +58,11 @@ export function SmartStageDialog({ isOpen, onClose, onConfirm, clientId, clientN
       if (!visitDate || !visitTime) return
       await supabase.from('visits').insert({
         tenant_id: tenantId, client_id: clientId, agent_id: userId,
-        scheduled_at: `${visitDate}T${visitTime}:00`,
+        // Anchor in Algiers (+01:00). Without the offset the
+        // browser's local TZ leaks into Postgres, so 14:00 Algiers
+        // got persisted as 14:00 UTC and rendered as 15:00 by
+        // locale-aware formatters. See src/lib/algerianDate.ts.
+        scheduled_at: algerianDateTimeToISO(visitDate, visitTime),
         visit_type: visitType, status: 'planned',
       } as never)
     },

@@ -20,6 +20,7 @@ import { useClients } from '@/hooks/useClients'
 import { useAutoTasks } from '@/hooks/useAutoTasks'
 import { exportToCsv } from '@/lib/exportCsv'
 import { appendClientNote } from '@/lib/clientNotes'
+import { isValidTransition, explainRefusedTransition } from '@/lib/pipelineTransitions'
 import { usePipelineStats } from '@/hooks/usePipelineStats'
 import type { PipelineAlert } from '@/hooks/usePipelineStats'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -190,6 +191,16 @@ export function PipelinePage() {
   function handleMoveClient(clientId: string, newStage: PipelineStage) {
     const client = clients.find(c => c.id === clientId)
     if (!client || client.pipeline_stage === newStage) return
+
+    // Reject illegal funnel transitions before opening the dialog.
+    // Without this, dragging an `accueil` lead straight to `vente`
+    // would skip qualification, visit, and negotiation — silently
+    // corrupting funnel KPIs and skipping the touchpoint automations
+    // that depend on stage_changed_at moving in order.
+    if (!isValidTransition(client.pipeline_stage, newStage)) {
+      toast.error(explainRefusedTransition(client.pipeline_stage, newStage))
+      return
+    }
 
     setPendingMove({
       clientId,

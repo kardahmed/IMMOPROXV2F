@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { CalendarDays, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
+import { algerianDateTimeToISO } from '@/lib/algerianDate'
 import { Modal } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -71,8 +72,11 @@ export function PutOnLeaveModal({ isOpen, onClose, agent }: Props) {
 
       const { error } = await supabase.from('users').update({
         status: 'on_leave',
-        leave_starts_at: new Date(`${startDate}T00:00:00`).toISOString(),
-        leave_ends_at: new Date(`${endDate}T23:59:59`).toISOString(),
+        // Anchor leave boundaries in Algiers so the cron checks at
+        // local midnight don't misfire by a day. See
+        // src/lib/algerianDate.ts.
+        leave_starts_at: algerianDateTimeToISO(startDate, '00:00'),
+        leave_ends_at:   algerianDateTimeToISO(endDate,   '23:59'),
         backup_agent_id: backupId || null,
         leave_reason: reason.trim() || null,
       } as never).eq('id', agent.id)
