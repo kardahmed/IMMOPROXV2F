@@ -241,7 +241,7 @@ export function BrandingSection() {
 
       {/* Save */}
       <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-immo-accent-green font-semibold text-white hover:bg-immo-accent-green/90">
-        {save.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
+        {save.isPending ? <div className="me-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="me-1.5 h-4 w-4" />}
         Sauvegarder le branding
       </Button>
     </div>

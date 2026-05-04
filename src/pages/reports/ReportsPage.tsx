@@ -251,10 +251,10 @@ export function ReportsPage() {
           { header: t('reports_page.detail_client'), value: r => r.client_name },
           { header: 'Description', value: r => r.description },
         ])} className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <Download className="mr-1 h-3.5 w-3.5" /> {t('reports_page.export')}
+          <Download className="me-1 h-3.5 w-3.5" /> {t('reports_page.export')}
         </Button>
 
-        <div className="ml-auto flex gap-1 rounded-lg border border-immo-border-default p-0.5">
+        <div className="ms-auto flex gap-1 rounded-lg border border-immo-border-default p-0.5">
           <button onClick={() => setView('team')} className={`rounded-md px-3 py-1 text-[11px] font-medium ${view === 'team' ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted'}`}>
             {t('reports_page.view_team')}
           </button>
@@ -271,7 +271,7 @@ export function ReportsPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-immo-bg-card-hover">
-                  <th className="sticky left-0 z-10 whitespace-nowrap bg-immo-bg-card-hover px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('reports_page.agent')}</th>
+                  <th className="sticky left-0 z-10 whitespace-nowrap bg-immo-bg-card-hover px-4 py-3 text-start text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('reports_page.agent')}</th>
                   {ACTION_TYPES.map(at => (
                     <th key={at.key} className="whitespace-nowrap px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-immo-text-muted">{at.label}</th>
                   ))}
@@ -379,7 +379,7 @@ export function ReportsPage() {
                           t('reports_page.detail_client'),
                           t('reports_page.detail_note'),
                         ].map(h => (
-                          <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+                          <th key={h} className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                         ))}
                       </tr>
                     </thead>

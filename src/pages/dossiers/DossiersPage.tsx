@@ -312,7 +312,7 @@ export function DossiersPage() {
         <SearchInput placeholder={t('dossiers_extra.search_placeholder')} value={search} onChange={setSearch} className="w-[240px]" />
         <FilterDropdown label={t('dossiers_extra.header_project')} options={projectOptions} value={projectFilter} onChange={setProjectFilter} />
         <Button variant="ghost" size="sm" onClick={() => toast(t('dossiers_extra.import_soon'))} className="border border-immo-border-default text-xs text-immo-text-muted">
-          <Upload className="mr-1 h-3.5 w-3.5" /> {t('dossiers_extra.import_csv')}
+          <Upload className="me-1 h-3.5 w-3.5" /> {t('dossiers_extra.import_csv')}
         </Button>
       </div>
 
@@ -358,7 +358,7 @@ export function DossiersPage() {
                     t('dossiers_extra.header_status'),
                     t('dossiers_extra.header_agent'),
                   ].map((h) => (
-                    <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+                    <th key={h} className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                   ))}
                 </tr>
               </thead>

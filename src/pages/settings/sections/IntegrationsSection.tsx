@@ -258,7 +258,7 @@ function ResendCard({ integration, tenantId, userId, onChange }: {
             </div>
             <p className="mt-0.5 text-sm text-immo-text-muted">
               Envoyez vos emails marketing et automatiques depuis votre propre domaine.
-              <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="ml-1 inline-flex items-center gap-1 text-immo-accent-blue hover:underline">
+              <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="ms-1 inline-flex items-center gap-1 text-immo-accent-blue hover:underline">
                 Documentation Resend <ExternalLink className="h-3 w-3" />
               </a>
             </p>
@@ -315,7 +315,7 @@ function ResendCard({ integration, tenantId, userId, onChange }: {
                 </Button>
               )}
               <Button onClick={() => save.mutate()} disabled={save.isPending} variant="blue">
-                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
+                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="me-1.5 h-4 w-4" /> Enregistrer</>}
               </Button>
             </div>
           </div>
@@ -347,10 +347,10 @@ function ResendCard({ integration, tenantId, userId, onChange }: {
 
             <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <Button variant="ghost" onClick={() => remove.mutate()} disabled={remove.isPending} className="text-immo-status-red hover:bg-immo-status-red/10">
-                <Trash2 className="mr-1.5 h-4 w-4" /> Supprimer
+                <Trash2 className="me-1.5 h-4 w-4" /> Supprimer
               </Button>
               <Button variant="ghost" onClick={() => test.mutate()} disabled={test.isPending} className="text-immo-text-secondary">
-                {test.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><RefreshCw className="mr-1.5 h-4 w-4" /> Tester l'envoi</>}
+                {test.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><RefreshCw className="me-1.5 h-4 w-4" /> Tester l'envoi</>}
               </Button>
               <Button variant="ghost" onClick={() => setEditing(true)} className="text-immo-accent-blue hover:bg-immo-accent-blue/10">
                 Modifier
@@ -363,7 +363,7 @@ function ResendCard({ integration, tenantId, userId, onChange }: {
               >
                 {integration.enabled
                   ? 'Désactiver'
-                  : <><CheckCircle2 className="mr-1.5 h-4 w-4" /> Activer</>}
+                  : <><CheckCircle2 className="me-1.5 h-4 w-4" /> Activer</>}
               </Button>
             </div>
           </div>
@@ -482,7 +482,7 @@ function MetaPixelCard({ integration, tenantId, userId, onChange }: {
             </div>
             <p className="mt-0.5 text-sm text-immo-text-muted">
               Suivi des conversions Facebook / Instagram pour vos landing pages.
-              <a href="https://www.facebook.com/business/help/952192354843755" target="_blank" rel="noopener noreferrer" className="ml-1 inline-flex items-center gap-1 text-immo-accent-blue hover:underline">
+              <a href="https://www.facebook.com/business/help/952192354843755" target="_blank" rel="noopener noreferrer" className="ms-1 inline-flex items-center gap-1 text-immo-accent-blue hover:underline">
                 Trouver mon Pixel ID <ExternalLink className="h-3 w-3" />
               </a>
             </p>
@@ -526,7 +526,7 @@ function MetaPixelCard({ integration, tenantId, userId, onChange }: {
                 </Button>
               )}
               <Button onClick={() => save.mutate()} disabled={save.isPending} variant="blue">
-                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="mr-1.5 h-4 w-4" /> Enregistrer</>}
+                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="me-1.5 h-4 w-4" /> Enregistrer</>}
               </Button>
             </div>
           </div>
@@ -539,7 +539,7 @@ function MetaPixelCard({ integration, tenantId, userId, onChange }: {
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <Button variant="ghost" onClick={() => remove.mutate()} disabled={remove.isPending} className="text-immo-status-red hover:bg-immo-status-red/10">
-                <Trash2 className="mr-1.5 h-4 w-4" /> Supprimer
+                <Trash2 className="me-1.5 h-4 w-4" /> Supprimer
               </Button>
               <Button variant="ghost" onClick={() => setEditing(true)} className="text-immo-accent-blue hover:bg-immo-accent-blue/10">
                 Modifier
@@ -550,7 +550,7 @@ function MetaPixelCard({ integration, tenantId, userId, onChange }: {
                 variant={integration.enabled ? 'ghost' : 'blue'}
                 className={integration.enabled ? 'border border-immo-status-orange/30 text-immo-status-orange hover:bg-immo-status-orange/10' : ''}
               >
-                {integration.enabled ? 'Désactiver' : <><CheckCircle2 className="mr-1.5 h-4 w-4" /> Activer</>}
+                {integration.enabled ? 'Désactiver' : <><CheckCircle2 className="me-1.5 h-4 w-4" /> Activer</>}
               </Button>
             </div>
           </div>

@@ -211,7 +211,7 @@ export function ProjectDetailPage() {
               onClick={() => { setEditName(project.name); setEditLocation(project.location ?? ''); setEditMode(!editMode) }}
               className="border border-immo-border-default text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
             >
-              <Pencil className="mr-1.5 h-3.5 w-3.5" /> Modifier
+              <Pencil className="me-1.5 h-3.5 w-3.5" /> Modifier
             </Button>
             <Button
               variant="ghost"
@@ -219,7 +219,7 @@ export function ProjectDetailPage() {
               onClick={() => updateProject.mutate({ id: project.id, status: 'archived' })}
               className="border border-immo-border-default text-immo-text-secondary hover:bg-immo-status-red-bg hover:text-immo-status-red"
             >
-              <Archive className="mr-1.5 h-3.5 w-3.5" /> Archiver
+              <Archive className="me-1.5 h-3.5 w-3.5" /> Archiver
             </Button>
           </div>
         )}
@@ -344,7 +344,7 @@ export function ProjectDetailPage() {
                   <tr className="bg-immo-bg-card-hover">
                     <th className="w-10 px-3 py-3" />
                     {['Code', 'Type', 'Bâtiment', 'Étage', 'Surface', 'Prix', 'Statut'].map((h) => (
-                      <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">
+                      <th key={h} className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">
                         {h}
                       </th>
                     ))}

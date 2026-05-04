@@ -455,14 +455,14 @@ export function PipelinePage() {
             { header: 'Cree le', value: c => c.created_at?.split('T')[0] },
           ])}
         >
-          <Download className="mr-1.5 h-3.5 w-3.5" /> {t('pipeline_page.export')}
+          <Download className="me-1.5 h-3.5 w-3.5" /> {t('pipeline_page.export')}
         </Button>
 
         {/* Compact toggle */}
         {view === 'kanban' && (
           <button
             onClick={() => { setCompact(!compact); localStorage.setItem('pipeline-compact', String(!compact)) }}
-            className={`ml-2 rounded-md border px-2 py-1.5 text-[10px] font-medium transition-colors ${
+            className={`ms-2 rounded-md border px-2 py-1.5 text-[10px] font-medium transition-colors ${
               compact
                 ? 'border-immo-accent-green/30 bg-immo-accent-green/10 text-immo-accent-green'
                 : 'border-immo-border-default text-immo-text-muted hover:text-immo-text-secondary'
@@ -473,7 +473,7 @@ export function PipelinePage() {
         )}
 
         {/* View toggle */}
-        <div className="ml-auto flex items-center gap-1 rounded-lg border border-immo-border-default">
+        <div className="ms-auto flex items-center gap-1 rounded-lg border border-immo-border-default">
           {([
             { mode: 'kanban' as ViewMode, icon: Kanban, labelKey: 'pipeline_page.view_kanban' },
             { mode: 'cards' as ViewMode, icon: LayoutGrid, labelKey: 'pipeline_page.view_cards' },
@@ -496,7 +496,7 @@ export function PipelinePage() {
 
         {canManageProjects && (
           <Button onClick={() => setShowClientForm(true)} className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-            <Plus className="mr-1.5 h-4 w-4" /> {t('pipeline_page.btn_client')}
+            <Plus className="me-1.5 h-4 w-4" /> {t('pipeline_page.btn_client')}
           </Button>
         )}
       </div>

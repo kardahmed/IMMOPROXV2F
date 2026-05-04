@@ -85,10 +85,10 @@ export function QuotasSection() {
         <h2 className="text-lg font-bold text-immo-text-primary">Quotas & consommation</h2>
         <p className="text-xs text-immo-text-muted">
           Limites mensuelles de votre plan
-          <span className="ml-2 rounded-full bg-immo-accent-blue/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-immo-accent-blue">
+          <span className="ms-2 rounded-full bg-immo-accent-blue/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-immo-accent-blue">
             {data.plan}
           </span>
-          <span className="ml-2 text-immo-text-muted">— réinitialisation au {resetDate}</span>
+          <span className="ms-2 text-immo-text-muted">— réinitialisation au {resetDate}</span>
         </p>
       </div>
 

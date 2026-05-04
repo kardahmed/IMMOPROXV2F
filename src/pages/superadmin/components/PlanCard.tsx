@@ -198,7 +198,7 @@ export function PlanCard({ plan, index: idx, count, isProtected, catalog, onUpda
             return (
               <button key={f.slug} onClick={() => onToggleFeature(idx, f.slug)}
                 title={f.is_implemented ? f.description_fr ?? '' : 'Pas encore implemente'}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-[11px] transition-colors ${
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-start text-[11px] transition-colors ${
                   enabled ? 'bg-immo-accent-green/10 text-immo-accent-green' : 'text-immo-text-muted hover:bg-immo-bg-card-hover'
                 } ${!f.is_implemented ? 'opacity-50' : ''}`}>
                 {enabled ? <Check className="h-3 w-3 shrink-0" /> : <X className="h-3 w-3 shrink-0" />}

@@ -143,8 +143,8 @@ export function PutOnLeaveModal({ isOpen, onClose, agent }: Props) {
           className="w-full bg-immo-status-orange font-semibold text-white hover:bg-immo-status-orange/90"
         >
           {submit.isPending
-            ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Enregistrement…</>
-            : <><CalendarDays className="mr-1.5 h-4 w-4" /> Mettre en congé</>}
+            ? <><Loader2 className="me-1.5 h-4 w-4 animate-spin" /> Enregistrement…</>
+            : <><CalendarDays className="me-1.5 h-4 w-4" /> Mettre en congé</>}
         </Button>
       </div>
     </Modal>

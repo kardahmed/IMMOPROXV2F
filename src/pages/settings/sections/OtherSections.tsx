@@ -111,9 +111,9 @@ export function TemplatesSection() {
       </div>
       <textarea value={content} onChange={e => setContent(e.target.value)} rows={15} placeholder="..." className={`w-full resize-none rounded-xl border p-4 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-immo-accent-green ${inputClass}`} />
       <div className="flex gap-2">
-        <Button variant="ghost" onClick={() => setContent('')} className="text-xs text-immo-text-muted hover:text-immo-status-red"><RotateCcw className="mr-1 h-3.5 w-3.5" /> {t('action.reset')}</Button>
+        <Button variant="ghost" onClick={() => setContent('')} className="text-xs text-immo-text-muted hover:text-immo-status-red"><RotateCcw className="me-1 h-3.5 w-3.5" /> {t('action.reset')}</Button>
         <div className="flex-1" />
-        <Button variant="ghost" className="border border-immo-border-default text-xs text-immo-text-secondary"><Eye className="mr-1 h-3.5 w-3.5" /> {t('action.view')}</Button>
+        <Button variant="ghost" className="border border-immo-border-default text-xs text-immo-text-secondary"><Eye className="me-1 h-3.5 w-3.5" /> {t('action.view')}</Button>
         <SaveButton onClick={() => save.mutate()} loading={save.isPending} />
       </div>
     </div>
@@ -209,8 +209,8 @@ export function NotificationsSection() {
       </div>
 
       <p className="text-xs text-immo-text-muted">
-        <Bell className="inline h-3 w-3 mr-1" />App = notification dans l'application &nbsp;|&nbsp;
-        <Mail className="inline h-3 w-3 mr-1" />Email = email envoye a l'agent ou admin
+        <Bell className="inline h-3 w-3 me-1" />App = notification dans l'application &nbsp;|&nbsp;
+        <Mail className="inline h-3 w-3 me-1" />Email = email envoye a l'agent ou admin
       </p>
 
       <SaveButton onClick={() => save.mutate()} loading={save.isPending} />
@@ -239,7 +239,7 @@ export function LanguageSection() {
             className={`flex items-center gap-3 rounded-xl border p-4 transition-colors ${current === lang.code ? 'border-immo-accent-green bg-immo-accent-green/5' : 'border-immo-border-default hover:border-immo-text-muted'}`}>
             <span className="text-lg font-bold text-immo-text-muted">{lang.flag}</span>
             <p className="text-sm font-medium text-immo-text-primary">{lang.label}</p>
-            {current === lang.code && <div className="ml-2 h-3 w-3 rounded-full bg-immo-accent-green" />}
+            {current === lang.code && <div className="ms-2 h-3 w-3 rounded-full bg-immo-accent-green" />}
           </button>
         ))}
       </div>
@@ -297,7 +297,7 @@ export function SecuritySection() {
         </Field>
         <Button onClick={() => changePassword.mutate()} disabled={!oldPass || !newPass || !confirmPass || newPass !== confirmPass || newPass.length < 8 || changePassword.isPending}
           className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-          <Lock className="mr-1.5 h-4 w-4" />
+          <Lock className="me-1.5 h-4 w-4" />
           {changePassword.isPending ? t('common.loading') : 'Modifier le mot de passe'}
         </Button>
       </div>

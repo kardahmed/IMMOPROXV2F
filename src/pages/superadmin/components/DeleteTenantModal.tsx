@@ -125,7 +125,7 @@ export function DeleteTenantModal({ isOpen, onClose, onSuccess, tenant }: Delete
             disabled={!canSubmit}
             className="bg-immo-status-red font-semibold text-white hover:bg-immo-status-red/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1.5 h-4 w-4" />}
+            {loading ? <Loader2 className="me-1.5 h-4 w-4 animate-spin" /> : <Trash2 className="me-1.5 h-4 w-4" />}
             Supprimer définitivement
           </Button>
         </div>

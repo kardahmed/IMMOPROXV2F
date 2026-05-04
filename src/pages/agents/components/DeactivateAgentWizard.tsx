@@ -191,7 +191,7 @@ export function DeactivateAgentWizard({ isOpen, onClose, agent }: Props) {
                 <Button variant="ghost" onClick={onClose} className="text-immo-text-muted">Annuler</Button>
                 {hasAnything ? (
                   <Button onClick={() => setStep(2)} className="bg-immo-accent-green text-white">
-                    Continuer <ArrowRight className="ml-1.5 h-4 w-4" />
+                    Continuer <ArrowRight className="ms-1.5 h-4 w-4" />
                   </Button>
                 ) : (
                   <Button onClick={() => setStep(4)} className="bg-immo-status-red text-white">
@@ -233,7 +233,7 @@ export function DeactivateAgentWizard({ isOpen, onClose, agent }: Props) {
                   disabled={!targetAgentId}
                   className="bg-immo-accent-green text-white"
                 >
-                  Suivant <ArrowRight className="ml-1.5 h-4 w-4" />
+                  Suivant <ArrowRight className="ms-1.5 h-4 w-4" />
                 </Button>
               </div>
             </>
@@ -281,7 +281,7 @@ export function DeactivateAgentWizard({ isOpen, onClose, agent }: Props) {
               <div className="flex justify-between gap-2">
                 <Button variant="ghost" onClick={() => setStep(2)} className="text-immo-text-muted">Retour</Button>
                 <Button onClick={() => setStep(4)} className="bg-immo-accent-green text-white">
-                  Aperçu <ArrowRight className="ml-1.5 h-4 w-4" />
+                  Aperçu <ArrowRight className="ms-1.5 h-4 w-4" />
                 </Button>
               </div>
             </>
@@ -335,7 +335,7 @@ export function DeactivateAgentWizard({ isOpen, onClose, agent }: Props) {
                   className="bg-immo-status-red font-semibold text-white"
                 >
                   {submitting
-                    ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Application…</>
+                    ? <><Loader2 className="me-1.5 h-4 w-4 animate-spin" /> Application…</>
                     : 'Confirmer la désactivation'}
                 </Button>
               </div>

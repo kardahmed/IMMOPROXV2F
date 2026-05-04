@@ -155,7 +155,7 @@ export function TenantDetailPage() {
               : 'border border-immo-border-default bg-transparent text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary'
             }
           >
-            <Power className="mr-1.5 h-4 w-4" />
+            <Power className="me-1.5 h-4 w-4" />
             {isMaintenance ? 'Desactiver maintenance' : 'Maintenance'}
           </Button>
           <Button onClick={() => { enterTenant(tenantId!, tenant.name as string); navigate('/dashboard') }} variant="blue">
@@ -312,7 +312,7 @@ function ExportPanel({ tenantId, tenantName }: { tenantId: string; tenantName: s
         disabled={exporting}
         variant="blue-outline"
       >
-        {exporting ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#0579DA] border-t-transparent" /> : <Download className="mr-1.5 h-4 w-4" />}
+        {exporting ? <div className="me-2 h-4 w-4 animate-spin rounded-full border-2 border-[#0579DA] border-t-transparent" /> : <Download className="me-1.5 h-4 w-4" />}
         {exporting ? 'Export en cours...' : 'Exporter'}
       </Button>
       {downloadUrl && (

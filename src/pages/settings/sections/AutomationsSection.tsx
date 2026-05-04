@@ -190,7 +190,7 @@ export function AutomationsSection() {
             >
               <span className="text-lg" aria-hidden>{stageInfo.emoji}</span>
               <h3 className="font-semibold text-immo-text-primary">{stageInfo.label}</h3>
-              <span className="ml-auto text-xs text-immo-text-secondary">
+              <span className="ms-auto text-xs text-immo-text-secondary">
                 {items.length} touchpoint{items.length > 1 ? 's' : ''}
               </span>
             </header>
@@ -209,7 +209,7 @@ export function AutomationsSection() {
                         <p className="truncate text-sm font-medium text-immo-text-primary">{def.label}</p>
                         <p className="text-xs text-immo-text-tertiary">
                           {CHANNEL_LABELS[def.channel]} · {def.offsetLabel}
-                          {isPending && <span className="ml-2 text-blue-600">• modifié</span>}
+                          {isPending && <span className="ms-2 text-blue-600">• modifié</span>}
                         </p>
                       </div>
                     </div>

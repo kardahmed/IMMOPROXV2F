@@ -32,9 +32,9 @@ export function StageProgress({ stats }: StageProgressProps) {
                   />
                 </div>
               </div>
-              <div className="w-[70px] shrink-0 text-right">
+              <div className="w-[70px] shrink-0 text-end">
                 <span className="text-xs font-semibold text-immo-text-primary">{s.count}</span>
-                <span className="ml-1 text-[10px] text-immo-text-muted">({s.percentage.toFixed(0)}%)</span>
+                <span className="ms-1 text-[10px] text-immo-text-muted">({s.percentage.toFixed(0)}%)</span>
               </div>
             </div>
           )

@@ -109,16 +109,16 @@ export function EconomicsSimulator({ editPlans, tenantCounts }: Props) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-immo-border-default bg-immo-bg-primary text-[10px] uppercase tracking-wide text-immo-text-muted">
-              <th className="px-4 py-2 text-left font-semibold">Plan</th>
-              <th className="px-4 py-2 text-right font-semibold">Revenu</th>
-              <th className="px-4 py-2 text-right font-semibold"><Bot className="mr-0.5 inline h-3 w-3" /> IA</th>
-              <th className="px-4 py-2 text-right font-semibold"><Mail className="mr-0.5 inline h-3 w-3" /> Emails</th>
-              <th className="px-4 py-2 text-right font-semibold"><MessageCircle className="mr-0.5 inline h-3 w-3" /> WhatsApp</th>
-              <th className="px-4 py-2 text-right font-semibold"><Database className="mr-0.5 inline h-3 w-3" /> Supabase</th>
-              <th className="px-4 py-2 text-right font-semibold">Coût total</th>
-              <th className="px-4 py-2 text-right font-semibold">Profit max</th>
-              <th className="px-4 py-2 text-right font-semibold">Marge</th>
-              <th className="px-4 py-2 text-right font-semibold">Rupture</th>
+              <th className="px-4 py-2 text-start font-semibold">Plan</th>
+              <th className="px-4 py-2 text-end font-semibold">Revenu</th>
+              <th className="px-4 py-2 text-end font-semibold"><Bot className="me-0.5 inline h-3 w-3" /> IA</th>
+              <th className="px-4 py-2 text-end font-semibold"><Mail className="me-0.5 inline h-3 w-3" /> Emails</th>
+              <th className="px-4 py-2 text-end font-semibold"><MessageCircle className="me-0.5 inline h-3 w-3" /> WhatsApp</th>
+              <th className="px-4 py-2 text-end font-semibold"><Database className="me-0.5 inline h-3 w-3" /> Supabase</th>
+              <th className="px-4 py-2 text-end font-semibold">Coût total</th>
+              <th className="px-4 py-2 text-end font-semibold">Profit max</th>
+              <th className="px-4 py-2 text-end font-semibold">Marge</th>
+              <th className="px-4 py-2 text-end font-semibold">Rupture</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-immo-border-default">
@@ -128,20 +128,20 @@ export function EconomicsSimulator({ editPlans, tenantCounts }: Props) {
               return (
                 <tr key={eco.plan} className="hover:bg-immo-bg-primary/40">
                   <td className="px-4 py-2 font-bold capitalize" style={{ color: PLAN_COLORS[eco.plan] ?? '#0579DA' }}>{eco.plan}</td>
-                  <td className="px-4 py-2 text-right text-immo-text-primary">{formatPrice(eco.revenueMonthly)}</td>
-                  <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costAnthropicMax).toLocaleString('fr-FR')} DA</td>
-                  <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costResendMax).toLocaleString('fr-FR')} DA</td>
-                  <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costWhatsappMax).toLocaleString('fr-FR')} DA</td>
-                  <td className="px-4 py-2 text-right text-immo-text-secondary">−{Math.round(eco.costSupabase).toLocaleString('fr-FR')} DA</td>
-                  <td className="px-4 py-2 text-right font-medium text-immo-status-red">−{Math.round(eco.costsTotal).toLocaleString('fr-FR')} DA</td>
-                  <td className={`px-4 py-2 text-right font-bold ${profitColor}`}>
+                  <td className="px-4 py-2 text-end text-immo-text-primary">{formatPrice(eco.revenueMonthly)}</td>
+                  <td className="px-4 py-2 text-end text-immo-text-secondary">−{Math.round(eco.costAnthropicMax).toLocaleString('fr-FR')} DA</td>
+                  <td className="px-4 py-2 text-end text-immo-text-secondary">−{Math.round(eco.costResendMax).toLocaleString('fr-FR')} DA</td>
+                  <td className="px-4 py-2 text-end text-immo-text-secondary">−{Math.round(eco.costWhatsappMax).toLocaleString('fr-FR')} DA</td>
+                  <td className="px-4 py-2 text-end text-immo-text-secondary">−{Math.round(eco.costSupabase).toLocaleString('fr-FR')} DA</td>
+                  <td className="px-4 py-2 text-end font-medium text-immo-status-red">−{Math.round(eco.costsTotal).toLocaleString('fr-FR')} DA</td>
+                  <td className={`px-4 py-2 text-end font-bold ${profitColor}`}>
                     {eco.profitMax >= 0
-                      ? <TrendingUp className="mr-0.5 inline h-3 w-3" />
-                      : <TrendingDown className="mr-0.5 inline h-3 w-3" />}
+                      ? <TrendingUp className="me-0.5 inline h-3 w-3" />
+                      : <TrendingDown className="me-0.5 inline h-3 w-3" />}
                     {eco.profitMax >= 0 ? '+' : ''}{Math.round(eco.profitMax).toLocaleString('fr-FR')} DA
                   </td>
-                  <td className={`px-4 py-2 text-right font-semibold ${marginColor}`}>{eco.marginPct.toFixed(0)}%</td>
-                  <td className="px-4 py-2 text-right text-[11px] text-immo-text-muted">
+                  <td className={`px-4 py-2 text-end font-semibold ${marginColor}`}>{eco.marginPct.toFixed(0)}%</td>
+                  <td className="px-4 py-2 text-end text-[11px] text-immo-text-muted">
                     {eco.breakevenPct === Infinity ? '∞' : `${Math.max(0, eco.breakevenPct).toFixed(0)}%`}
                   </td>
                 </tr>

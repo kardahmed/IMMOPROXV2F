@@ -130,7 +130,7 @@ export function TaskConfigSection() {
               className="flex w-full items-center gap-3 px-5 py-3 hover:bg-immo-bg-card-hover transition-colors">
               {isExpanded ? <ChevronDown className="h-4 w-4 text-immo-text-muted" /> : <ChevronRight className="h-4 w-4 text-immo-text-muted" />}
               <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stageColor }} />
-              <span className="text-sm font-semibold text-immo-text-primary flex-1 text-left">{stageLabel}</span>
+              <span className="text-sm font-semibold text-immo-text-primary flex-1 text-start">{stageLabel}</span>
               <span className="text-[10px] text-immo-text-muted">{activeCount}/{stageTasks.length} actives</span>
             </button>
 
@@ -257,7 +257,7 @@ export function TaskConfigSection() {
             )}
 
             <Button onClick={() => saveMessage.mutate()} disabled={saveMessage.isPending} className="w-full bg-immo-accent-green text-white">
-              <Save className="mr-1.5 h-4 w-4" /> Sauvegarder
+              <Save className="me-1.5 h-4 w-4" /> Sauvegarder
             </Button>
           </div>
         )}

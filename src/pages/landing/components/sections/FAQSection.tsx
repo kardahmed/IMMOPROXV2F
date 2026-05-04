@@ -19,7 +19,7 @@ export function FAQSection({ title, content }: { title?: string; content: FAQCon
             <div key={i} className="overflow-hidden rounded-xl border border-[#E3E8EF] bg-white">
               <button
                 onClick={() => setOpenIdx(openIdx === i ? null : i)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left"
+                className="flex w-full items-center justify-between px-5 py-4 text-start"
               >
                 <span className="text-sm font-semibold text-[#0A2540]">{item.question}</span>
                 <ChevronDown className={`h-4 w-4 shrink-0 text-[#8898AA] transition-transform ${openIdx === i ? 'rotate-180' : ''}`} />

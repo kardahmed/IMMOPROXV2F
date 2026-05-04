@@ -155,7 +155,7 @@ export function ClientTasksTab({ clientId, clientName, clientPhone, clientStage,
           {tasks.length === 0 && (
             <Button onClick={() => generateTasks.mutate()} disabled={generateTasks.isPending}
               className="h-7 bg-immo-accent-green text-[10px] text-white">
-              <Zap className="mr-1 h-3 w-3" /> Generer les taches
+              <Zap className="me-1 h-3 w-3" /> Generer les taches
             </Button>
           )}
           <div className="flex rounded-lg border border-immo-border-default p-0.5">

@@ -277,18 +277,18 @@ export function MonitoringPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-immo-border-default bg-immo-bg-primary">
-                    <th className="px-4 py-2 text-left text-[11px] font-medium text-immo-text-muted">Tenant ID</th>
-                    <th className="px-4 py-2 text-right text-[11px] font-medium text-immo-text-muted">API Calls</th>
-                    <th className="px-4 py-2 text-right text-[11px] font-medium text-immo-text-muted">Stockage (MB)</th>
-                    <th className="px-4 py-2 text-right text-[11px] font-medium text-immo-text-muted">Tokens IA</th>
+                    <th className="px-4 py-2 text-start text-[11px] font-medium text-immo-text-muted">Tenant ID</th>
+                    <th className="px-4 py-2 text-end text-[11px] font-medium text-immo-text-muted">API Calls</th>
+                    <th className="px-4 py-2 text-end text-[11px] font-medium text-immo-text-muted">Stockage (MB)</th>
+                    <th className="px-4 py-2 text-end text-[11px] font-medium text-immo-text-muted">Tokens IA</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-immo-border-default">
                   {data.tenantUsage.sort((a, b) => b.api_calls_count - a.api_calls_count).map(t => (
                     <tr key={t.tenant_id} className="hover:bg-immo-bg-card-hover">
                       <td className="px-4 py-2 font-mono text-xs text-immo-text-primary">{t.tenant_id.slice(0, 8)}...</td>
-                      <td className="px-4 py-2 text-right text-xs text-immo-text-primary">{t.api_calls_count.toLocaleString('fr')}</td>
-                      <td className="px-4 py-2 text-right text-xs text-immo-text-primary">
+                      <td className="px-4 py-2 text-end text-xs text-immo-text-primary">{t.api_calls_count.toLocaleString('fr')}</td>
+                      <td className="px-4 py-2 text-end text-xs text-immo-text-primary">
                         <div className="flex items-center justify-end gap-2">
                           <div className="h-1.5 w-20 rounded-full bg-immo-border-default">
                             <div className="h-full rounded-full bg-immo-accent-blue" style={{ width: `${Math.min(100, (t.storage_used_mb / 500) * 100)}%` }} />
@@ -296,7 +296,7 @@ export function MonitoringPage() {
                           {t.storage_used_mb}
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-right text-xs text-immo-text-primary">{t.ai_tokens_used.toLocaleString('fr')}</td>
+                      <td className="px-4 py-2 text-end text-xs text-immo-text-primary">{t.ai_tokens_used.toLocaleString('fr')}</td>
                     </tr>
                   ))}
                   {data.tenantUsage.length === 0 && (

@@ -65,7 +65,7 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
     const active = sortCol === col
     return (
       <th
-        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted hover:text-immo-text-secondary ${className ?? ''}`}
+        className={`cursor-pointer select-none whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted hover:text-immo-text-secondary ${className ?? ''}`}
         onClick={() => toggleSort(col)}
       >
         <span className="flex items-center gap-1">
@@ -84,16 +84,16 @@ export function TableView({ clients, daysInStageMap, agentMap, projectMap, urgen
             <thead>
               <tr className="bg-immo-bg-card-hover">
                 <SortHeader col="full_name" label={t('pipeline_table.client')} />
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.score')}</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.phone')}</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.source')}</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.project')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.score')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.phone')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.source')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.project')}</th>
                 <SortHeader col="confirmed_budget" label={t('pipeline_table.budget')} />
                 <SortHeader col="pipeline_stage" label={t('pipeline_table.stage')} />
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.agent')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.agent')}</th>
                 <SortHeader col="days" label={t('pipeline_table.days')} />
                 <SortHeader col="created_at" label={t('pipeline_table.last_action')} />
-                <th className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.actions')}</th>
+                <th className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{t('pipeline_table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-immo-border-default">

@@ -213,10 +213,10 @@ export function AgentsPage() {
           <Button
             onClick={() => setShowCreate(true)}
             disabled={!canAddAgent}
-            className="ml-auto bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="ms-auto bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90 disabled:opacity-50 disabled:cursor-not-allowed"
             title={!canAddAgent ? 'Limite atteinte — Passez au plan superieur' : undefined}
           >
-            <Plus className="mr-1.5 h-4 w-4" /> Ajouter un agent
+            <Plus className="me-1.5 h-4 w-4" /> Ajouter un agent
           </Button>
         )}
       </div>
@@ -228,7 +228,7 @@ export function AgentsPage() {
             <thead>
               <tr className="bg-immo-bg-card-hover">
                 {['Agent', 'Rôle', 'Téléphone', 'Email', 'Clients', 'Ventes', 'Dernière activité', 'Statut', ''].map(h => (
-                  <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+                  <th key={h} className="whitespace-nowrap px-4 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -279,35 +279,35 @@ export function AgentsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="border-immo-border-default bg-immo-bg-card">
                           <DropdownMenuItem onClick={() => navigate(`/agents/${a.id}`)} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                            <Eye className="mr-2 h-3.5 w-3.5" /> Voir profil
+                            <Eye className="me-2 h-3.5 w-3.5" /> Voir profil
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/agents/${a.id}`)} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                            <Pencil className="mr-2 h-3.5 w-3.5" /> Modifier
+                            <Pencil className="me-2 h-3.5 w-3.5" /> Modifier
                           </DropdownMenuItem>
 
                           {canManageAgents && a.status === 'active' && (
                             <>
                               <DropdownMenuItem onClick={() => setLeaveAgent(a)} className="text-sm text-immo-status-orange focus:bg-immo-status-orange/5">
-                                <CalendarDays className="mr-2 h-3.5 w-3.5" /> Mettre en congé
+                                <CalendarDays className="me-2 h-3.5 w-3.5" /> Mettre en congé
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setSuspendAgent(a)} className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                                <Lock className="mr-2 h-3.5 w-3.5" /> Suspendre
+                                <Lock className="me-2 h-3.5 w-3.5" /> Suspendre
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setDeactivateAgent(a)} className="text-sm text-immo-status-red focus:bg-immo-status-red/5">
-                                <Ban className="mr-2 h-3.5 w-3.5" /> Désactiver…
+                                <Ban className="me-2 h-3.5 w-3.5" /> Désactiver…
                               </DropdownMenuItem>
                             </>
                           )}
 
                           {canManageAgents && (a.status === 'on_leave' || a.status === 'suspended') && (
                             <DropdownMenuItem onClick={() => reactivate.mutate(a.id)} className="text-sm text-immo-accent-green focus:bg-immo-accent-green/5">
-                              <RotateCcw className="mr-2 h-3.5 w-3.5" /> Réactiver
+                              <RotateCcw className="me-2 h-3.5 w-3.5" /> Réactiver
                             </DropdownMenuItem>
                           )}
 
                           {canManageAgents && a.status === 'inactive' && (
                             <DropdownMenuItem onClick={() => reactivate.mutate(a.id)} className="text-sm text-immo-text-secondary focus:bg-immo-bg-card-hover">
-                              <RotateCcw className="mr-2 h-3.5 w-3.5" /> Réactiver le compte
+                              <RotateCcw className="me-2 h-3.5 w-3.5" /> Réactiver le compte
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>

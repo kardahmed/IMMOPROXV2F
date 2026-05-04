@@ -83,7 +83,7 @@ function AlertRow({ alert, onNavigate }: { alert: HealthAlert; onNavigate: () =>
   return (
     <button
       onClick={onNavigate}
-      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-immo-status-red/5"
+      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start hover:bg-immo-status-red/5"
     >
       <div className={`h-2 w-2 shrink-0 rounded-full ${alert.severity === 'critical' ? 'bg-immo-status-red' : 'bg-immo-status-orange'}`} />
       <span className="flex-1 text-xs text-immo-status-red">{alert.message}</span>

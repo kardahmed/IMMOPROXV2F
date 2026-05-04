@@ -112,7 +112,7 @@ export function HistoryTab({ clientId }: { clientId: string }) {
           <span className="rounded-full bg-immo-bg-card-hover px-2 py-0.5 text-[11px] font-semibold text-immo-text-muted">{entries.length}</span>
         </div>
         <Button onClick={() => setShowAdd(true)} variant="ghost" className="border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-          <Plus className="mr-1 h-3.5 w-3.5" /> {t('action.add')}
+          <Plus className="me-1 h-3.5 w-3.5" /> {t('action.add')}
         </Button>
       </div>
 
@@ -137,7 +137,7 @@ export function HistoryTab({ clientId }: { clientId: string }) {
               {/* Vertical timeline. Each row gets a colored circle
                   icon, a dashed connector line down to the next, the
                   type label + description + agent + time. */}
-              <div className="relative space-y-3 pl-2">
+              <div className="relative space-y-3 ps-2">
                 {items.map((e, idx) => {
                   const type = e.type as HistoryType
                   const meta = HISTORY_TYPE_LABELS[type]

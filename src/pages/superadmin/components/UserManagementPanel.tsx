@@ -114,7 +114,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
       <div className="flex items-center justify-between border-b border-immo-border-default px-5 py-4">
         <h3 className="text-sm font-semibold text-immo-text-primary">Utilisateurs ({users.length})</h3>
         <Button onClick={() => setShowCreate(true)} size="sm" variant="blue" className="text-xs">
-          <Plus className="mr-1 h-3.5 w-3.5" /> Ajouter
+          <Plus className="me-1 h-3.5 w-3.5" /> Ajouter
         </Button>
       </div>
 
@@ -149,7 +149,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
                   onClick={() => changeRole.mutate({ userId: u.id, newRole: u.role === 'admin' ? 'agent' : 'admin' })}
                   className="text-sm text-immo-text-secondary focus:bg-immo-bg-card-hover focus:text-immo-text-primary"
                 >
-                  {u.role === 'admin' ? <Shield className="mr-2 h-4 w-4" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                  {u.role === 'admin' ? <Shield className="me-2 h-4 w-4" /> : <ShieldCheck className="me-2 h-4 w-4" />}
                   {u.role === 'admin' ? 'Passer en Agent' : 'Passer en Admin'}
                 </DropdownMenuItem>
 
@@ -161,7 +161,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
                   })}
                   className="text-sm text-immo-text-secondary focus:bg-immo-bg-card-hover focus:text-immo-text-primary"
                 >
-                  <UserX className="mr-2 h-4 w-4" />
+                  <UserX className="me-2 h-4 w-4" />
                   {u.status === 'active' ? 'Desactiver' : 'Reactiver'}
                 </DropdownMenuItem>
 
@@ -170,7 +170,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
                   onClick={() => setConfirmAction({ type: 'reset_password', user: u })}
                   className="text-sm text-immo-text-secondary focus:bg-immo-bg-card-hover focus:text-immo-text-primary"
                 >
-                  <KeyRound className="mr-2 h-4 w-4" />
+                  <KeyRound className="me-2 h-4 w-4" />
                   Reset mot de passe
                 </DropdownMenuItem>
 
@@ -179,7 +179,7 @@ export function UserManagementPanel({ tenantId }: { tenantId: string }) {
                   onClick={() => setConfirmAction({ type: 'delete_user', user: u })}
                   className="text-sm text-immo-status-red focus:bg-immo-status-red-bg focus:text-immo-status-red"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="me-2 h-4 w-4" />
                   Supprimer
                 </DropdownMenuItem>
               </DropdownMenuContent>

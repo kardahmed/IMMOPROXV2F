@@ -162,11 +162,11 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-immo-accent-green/15">
                 <CheckCircle className="h-5 w-5 text-immo-accent-green" />
               </div>
-              <div className="text-left">
+              <div className="text-start">
                 <p className="text-sm font-medium text-immo-text-primary">{t('manage_visit_modal.confirm_visit')}</p>
                 <p className="text-[11px] text-immo-text-muted">{t('manage_visit_modal.confirm_desc')}</p>
               </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-immo-text-muted" />
+              <ArrowRight className="ms-auto h-4 w-4 text-immo-text-muted" />
             </button>
 
             {/* Reschedule */}
@@ -177,11 +177,11 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-immo-status-orange/15">
                 <CalendarClock className="h-5 w-5 text-immo-status-orange" />
               </div>
-              <div className="text-left">
+              <div className="text-start">
                 <p className="text-sm font-medium text-immo-text-primary">{t('manage_visit_modal.reschedule')}</p>
                 <p className="text-[11px] text-immo-text-muted">{t('manage_visit_modal.reschedule_desc')}</p>
               </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-immo-text-muted" />
+              <ArrowRight className="ms-auto h-4 w-4 text-immo-text-muted" />
             </button>
 
             {/* Cancel */}
@@ -192,11 +192,11 @@ export function ManageVisitModal({ isOpen, onClose, visit, client }: ManageVisit
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-immo-status-red/15">
                 <XCircle className="h-5 w-5 text-immo-status-red" />
               </div>
-              <div className="text-left">
+              <div className="text-start">
                 <p className="text-sm font-medium text-immo-text-primary">{t('manage_visit_modal.cancel_visit')}</p>
                 <p className="text-[11px] text-immo-text-muted">{t('manage_visit_modal.cancel_desc')}</p>
               </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-immo-text-muted" />
+              <ArrowRight className="ms-auto h-4 w-4 text-immo-text-muted" />
             </button>
           </div>
         </div>

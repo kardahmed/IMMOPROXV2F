@@ -114,7 +114,7 @@ export function GlobalSearch() {
           onFocus={() => setOpen(true)}
           aria-label="Recherche globale"
           placeholder="Recherche globale... (Ctrl+K)"
-          className="h-9 w-[320px] rounded-lg border border-immo-border-default bg-immo-bg-primary pl-9 pr-8 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/20"
+          className="h-9 w-[320px] rounded-lg border border-immo-border-default bg-immo-bg-primary ps-9 pe-8 text-sm text-immo-text-primary placeholder-immo-text-muted outline-none focus:border-[#0579DA] focus:ring-2 focus:ring-[#0579DA]/20"
         />
         {query && (
           <button
@@ -144,7 +144,7 @@ export function GlobalSearch() {
                   <button
                     key={`${r.type}-${r.id}-${i}`}
                     onClick={() => handleSelect(r)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-immo-bg-card-hover"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-immo-bg-card-hover"
                   >
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0579DA]/10">
                       <Icon className="h-4 w-4 text-[#0579DA]" />

@@ -136,7 +136,7 @@ export function MessageComposer({
       <div className="flex flex-wrap items-center justify-end gap-2">
         {showCopy && (
           <Button variant="ghost" onClick={handleCopy} className="text-immo-text-secondary">
-            {copied ? <Check className="mr-1.5 h-4 w-4 text-immo-accent-green" /> : <Copy className="mr-1.5 h-4 w-4" />}
+            {copied ? <Check className="me-1.5 h-4 w-4 text-immo-accent-green" /> : <Copy className="me-1.5 h-4 w-4" />}
             {copied ? 'Copié !' : 'Copier'}
           </Button>
         )}
@@ -146,13 +146,13 @@ export function MessageComposer({
             disabled={isSendingViaCrm || !message.trim()}
             className="bg-[#25D366] font-semibold text-white hover:bg-[#128C7E]"
           >
-            <Send className="mr-1.5 h-4 w-4" />
+            <Send className="me-1.5 h-4 w-4" />
             {isSendingViaCrm ? 'Envoi…' : 'Envoyer via CRM'}
           </Button>
         )}
         {showWhatsAppDeeplink && (
           <Button onClick={handleWhatsApp} className="bg-[#25D366] font-semibold text-white hover:bg-[#128C7E]">
-            <Send className="mr-1.5 h-4 w-4" /> Envoyer via WhatsApp
+            <Send className="me-1.5 h-4 w-4" /> Envoyer via WhatsApp
           </Button>
         )}
       </div>

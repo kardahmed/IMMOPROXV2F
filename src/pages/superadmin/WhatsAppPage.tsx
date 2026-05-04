@@ -291,7 +291,7 @@ export function WhatsAppPage() {
             </div>
           </div>
           <Button onClick={() => saveConfig.mutate()} disabled={saveConfig.isPending} className="bg-green-500 text-white hover:bg-green-600">
-            <Check className="mr-1.5 h-4 w-4" /> Enregistrer
+            <Check className="me-1.5 h-4 w-4" /> Enregistrer
           </Button>
         </Card>
       )}

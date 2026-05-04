@@ -109,7 +109,7 @@ export function SupportPage() {
             const tenant = t.tenants as { name: string } | null
             return (
               <button key={t.id as string} onClick={() => setSelectedTicket(t.id as string)}
-                className={`w-full rounded-lg border p-3 text-left transition-all ${selectedTicket === t.id ? 'border-[#0579DA] bg-[#0579DA]/5' : 'border-immo-border-default bg-immo-bg-card hover:bg-immo-bg-card-hover'}`}>
+                className={`w-full rounded-lg border p-3 text-start transition-all ${selectedTicket === t.id ? 'border-[#0579DA] bg-[#0579DA]/5' : 'border-immo-border-default bg-immo-bg-card hover:bg-immo-bg-card-hover'}`}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium text-immo-text-primary">{t.subject as string}</p>
                   <StatusBadge label={st.label} type={st.type} />

@@ -237,7 +237,7 @@ export function XAssistant() {
                     <button
                       key={i}
                       onClick={() => sendMessage(ex)}
-                      className="rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-left text-xs text-immo-text-secondary transition-colors hover:border-[#0579DA]/40 hover:text-immo-text-primary"
+                      className="rounded-lg border border-immo-border-default bg-immo-bg-primary px-3 py-2 text-start text-xs text-immo-text-secondary transition-colors hover:border-[#0579DA]/40 hover:text-immo-text-primary"
                     >
                       {ex}
                     </button>

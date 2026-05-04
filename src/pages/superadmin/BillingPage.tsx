@@ -171,7 +171,7 @@ export function BillingPage() {
         subtitle="Journal des paiements reçus + suivi des renouvellements"
         actions={
           <Button onClick={() => setAddOpen(true)} variant="blue">
-            <Plus className="mr-1.5 h-4 w-4" /> Nouveau paiement
+            <Plus className="me-1.5 h-4 w-4" /> Nouveau paiement
           </Button>
         }
       />
@@ -248,7 +248,7 @@ export function BillingPage() {
             {opt.label}
           </button>
         ))}
-        <span className="ml-auto text-xs text-immo-text-muted">{filtered.length} paiement(s)</span>
+        <span className="ms-auto text-xs text-immo-text-muted">{filtered.length} paiement(s)</span>
       </div>
 
       <DataTable

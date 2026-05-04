@@ -103,7 +103,7 @@ Phrases de closing :
             disabled={!dirty || save.isPending}
             variant="blue"
           >
-            {save.isPending ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="mr-1.5 h-4 w-4" />}
+            {save.isPending ? <div className="me-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save className="me-1.5 h-4 w-4" />}
             {save.isPending ? 'Sauvegarde…' : 'Sauvegarder pour toute la plateforme'}
           </Button>
         </div>

@@ -116,7 +116,7 @@ export function FeaturesSection() {
         <h2 className="text-lg font-bold text-immo-text-primary">Fonctionnalites</h2>
         <p className="text-xs text-immo-text-muted">
           Activez ou desactivez les modules selon les besoins de votre agence ({activeCount}/{FEATURES.length} actifs)
-          {tenantPlan && <span className="ml-2 rounded-full bg-immo-accent-blue/10 px-2 py-0.5 text-[10px] font-semibold text-immo-accent-blue">Plan {PLAN_LABELS[tenantPlan] ?? tenantPlan}</span>}
+          {tenantPlan && <span className="ms-2 rounded-full bg-immo-accent-blue/10 px-2 py-0.5 text-[10px] font-semibold text-immo-accent-blue">Plan {PLAN_LABELS[tenantPlan] ?? tenantPlan}</span>}
         </p>
       </div>
 
@@ -171,7 +171,7 @@ export function FeaturesSection() {
       </div>
 
       <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-immo-accent-green text-white text-xs hover:bg-immo-accent-green/90">
-        <Save className="mr-1.5 h-4 w-4" /> {save.isPending ? 'Enregistrement...' : 'Enregistrer'}
+        <Save className="me-1.5 h-4 w-4" /> {save.isPending ? 'Enregistrement...' : 'Enregistrer'}
       </Button>
     </div>
   )

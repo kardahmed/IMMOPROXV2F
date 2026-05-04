@@ -100,14 +100,14 @@ export function SignaturePad({ onSave, onCancel, width = 500, height = 200 }: Pr
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           <Button onClick={clear} size="sm" className="border border-immo-border-default bg-transparent text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-            <Eraser className="mr-1 h-3 w-3" /> Effacer
+            <Eraser className="me-1 h-3 w-3" /> Effacer
           </Button>
           <Button onClick={() => { clear(); onCancel() }} size="sm" className="border border-immo-border-default bg-transparent text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover">
-            <RotateCcw className="mr-1 h-3 w-3" /> Annuler
+            <RotateCcw className="me-1 h-3 w-3" /> Annuler
           </Button>
         </div>
         <Button onClick={save} disabled={!hasDrawn} size="sm" className="bg-immo-accent-green text-xs text-white disabled:opacity-50">
-          <Check className="mr-1 h-3 w-3" /> Valider la signature
+          <Check className="me-1 h-3 w-3" /> Valider la signature
         </Button>
       </div>
     </div>

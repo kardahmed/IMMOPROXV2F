@@ -183,7 +183,7 @@ export function CampaignsTab() {
             ))}
           </div>
           <Button onClick={() => setShowCreate(true)} className="bg-immo-accent-green text-xs text-white">
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Nouvelle campagne
+            <Plus className="me-1.5 h-3.5 w-3.5" /> Nouvelle campagne
           </Button>
         </div>
       </div>
@@ -263,7 +263,7 @@ export function CampaignsTab() {
                     </p>
                     <p className="text-sm font-bold text-immo-text-primary">
                       {metrics.leads}
-                      {c.target_leads > 0 && <span className="ml-1 text-[10px] font-normal text-immo-text-muted">/ {c.target_leads}</span>}
+                      {c.target_leads > 0 && <span className="ms-1 text-[10px] font-normal text-immo-text-muted">/ {c.target_leads}</span>}
                     </p>
                   </div>
                   <div className="rounded-lg bg-immo-bg-primary p-2">
@@ -301,7 +301,7 @@ export function CampaignsTab() {
                     <span className="text-immo-text-muted">
                       Budget consommé
                       {c.target_leads > 0 && (
-                        <span className="ml-1.5 text-immo-text-muted">· Leads {leadsPct.toFixed(0)}% de l'objectif</span>
+                        <span className="ms-1.5 text-immo-text-muted">· Leads {leadsPct.toFixed(0)}% de l'objectif</span>
                       )}
                     </span>
                     <span className="font-semibold text-immo-text-primary">
@@ -321,7 +321,7 @@ export function CampaignsTab() {
                     {expenses.length} depense(s) — {isExpanded ? 'Masquer' : 'Voir detail'}
                   </button>
                   <Button size="sm" onClick={() => setShowAddExpense(c.id)} className="h-7 bg-immo-accent-green/10 text-[10px] text-immo-accent-green hover:bg-immo-accent-green/20">
-                    <Plus className="mr-1 h-3 w-3" /> Ajouter depense
+                    <Plus className="me-1 h-3 w-3" /> Ajouter depense
                   </Button>
                 </div>
               </div>
@@ -337,7 +337,7 @@ export function CampaignsTab() {
                     <table className="w-full">
                       <thead><tr className="bg-immo-bg-card-hover">
                         {['Date', 'Catégorie', 'Detail', 'Montant', ''].map(h => (
-                          <th key={h} className="px-5 py-2 text-left text-[9px] font-semibold uppercase text-immo-text-muted">{h}</th>
+                          <th key={h} className="px-5 py-2 text-start text-[9px] font-semibold uppercase text-immo-text-muted">{h}</th>
                         ))}
                       </tr></thead>
                       <tbody className="divide-y divide-immo-border-default">
@@ -363,7 +363,7 @@ export function CampaignsTab() {
                         })}
                         {/* Total row */}
                         <tr className="bg-immo-bg-card-hover">
-                          <td colSpan={3} className="px-5 py-2.5 text-xs font-semibold text-immo-text-primary text-right">Total campagne</td>
+                          <td colSpan={3} className="px-5 py-2.5 text-xs font-semibold text-immo-text-primary text-end">Total campagne</td>
                           <td className="px-5 py-2.5 text-sm font-bold text-immo-accent-green">{spent.toLocaleString('fr')} DA</td>
                           <td />
                         </tr>
@@ -494,7 +494,7 @@ function CreateCampaignModal({ tenantId, onClose, onSaved }: { tenantId: string;
           </p>
         </div>
         <Button onClick={handleSave} disabled={saving} className="w-full bg-immo-accent-green text-white">
-          <Save className="mr-1.5 h-4 w-4" /> {saving ? 'Création…' : 'Créer la campagne'}
+          <Save className="me-1.5 h-4 w-4" /> {saving ? 'Création…' : 'Créer la campagne'}
         </Button>
       </div>
     </Modal>
@@ -591,7 +591,7 @@ function AddExpenseToCampaignModal({ tenantId, campaignId, onClose, onSaved }: {
           <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optionnel" className="text-sm" />
         </div>
         <Button onClick={handleSave} disabled={saving} className="w-full bg-immo-accent-green text-white">
-          <Receipt className="mr-1.5 h-4 w-4" /> {saving ? 'Ajout...' : 'Ajouter la depense'}
+          <Receipt className="me-1.5 h-4 w-4" /> {saving ? 'Ajout...' : 'Ajouter la depense'}
         </Button>
       </div>
     </Modal>

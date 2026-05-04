@@ -86,20 +86,20 @@ export function ProjectCard({
                   onClick={() => onEdit(project.id)}
                   className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover"
                 >
-                  <Pencil className="mr-2 h-3.5 w-3.5" /> Modifier
+                  <Pencil className="me-2 h-3.5 w-3.5" /> Modifier
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onArchive(project.id)}
                   className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover"
                 >
-                  <Archive className="mr-2 h-3.5 w-3.5" /> Archiver
+                  <Archive className="me-2 h-3.5 w-3.5" /> Archiver
                 </DropdownMenuItem>
                 {canDeleteData && (
                   <DropdownMenuItem
                     onClick={() => onDelete(project.id)}
                     className="text-sm text-immo-status-red focus:bg-immo-status-red-bg"
                   >
-                    <Trash2 className="mr-2 h-3.5 w-3.5" /> Supprimer
+                    <Trash2 className="me-2 h-3.5 w-3.5" /> Supprimer
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -134,7 +134,7 @@ export function ProjectCard({
           <span className="text-immo-accent-green">{project.sold} vendues</span>
           <span className="text-immo-status-orange">{project.reserved} réservées</span>
           <span className="text-immo-text-muted">{project.available} dispos</span>
-          <span className="text-immo-text-muted ml-auto">{project.total} total</span>
+          <span className="text-immo-text-muted ms-auto">{project.total} total</span>
         </div>
 
         {/* Progress */}
@@ -155,7 +155,7 @@ export function ProjectCard({
               )}
             </div>
           </div>
-          <div className="mt-1 text-right text-[10px] text-immo-text-muted">
+          <div className="mt-1 text-end text-[10px] text-immo-text-muted">
             {progress.toFixed(0)}% commercialisé
           </div>
         </div>
@@ -168,14 +168,14 @@ export function ProjectCard({
             onClick={() => onView(project.id)}
             className="flex-1 border border-immo-border-default text-xs text-immo-text-secondary hover:bg-immo-bg-card-hover hover:text-immo-text-primary"
           >
-            <Eye className="mr-1.5 h-3.5 w-3.5" /> Détails
+            <Eye className="me-1.5 h-3.5 w-3.5" /> Détails
           </Button>
           <Button
             size="sm"
             onClick={() => onViewUnits(project.id)}
             className="flex-1 bg-immo-accent-green/10 text-xs text-immo-accent-green hover:bg-immo-accent-green/20"
           >
-            <Home className="mr-1.5 h-3.5 w-3.5" /> Biens
+            <Home className="me-1.5 h-3.5 w-3.5" /> Biens
           </Button>
         </div>
       </div>

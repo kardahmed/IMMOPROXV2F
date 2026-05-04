@@ -64,7 +64,7 @@ export function PermissionProfilesSection() {
           <p className="text-xs text-immo-text-muted">Creez des profils d'acces et assignez-les a vos agents</p>
         </div>
         <Button onClick={() => setShowCreate(true)} className="bg-immo-accent-green text-white text-xs hover:bg-immo-accent-green/90">
-          <Plus className="mr-1.5 h-3.5 w-3.5" /> Nouveau profil
+          <Plus className="me-1.5 h-3.5 w-3.5" /> Nouveau profil
         </Button>
       </div>
 
@@ -94,7 +94,7 @@ export function PermissionProfilesSection() {
                 </div>
                 <div className="flex gap-1.5">
                   <Button size="sm" variant="ghost" onClick={() => setEditProfile(profile)} className="h-8 border border-immo-border-default text-xs text-immo-text-secondary">
-                    <Pencil className="mr-1 h-3 w-3" /> Modifier
+                    <Pencil className="me-1 h-3 w-3" /> Modifier
                   </Button>
                   {!profile.is_default && agents === 0 && (
                     <Button size="sm" variant="ghost" onClick={() => deleteProfile.mutate(profile.id)} className="h-8 border border-immo-status-red/20 text-xs text-immo-status-red hover:bg-immo-status-red/5">
@@ -271,7 +271,7 @@ function ProfileEditor({ profile, tenantId, onClose, onSaved }: {
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="ghost" onClick={onClose} className="text-xs">Annuler</Button>
         <Button onClick={handleSave} disabled={saving} className="bg-immo-accent-green text-white text-xs hover:bg-immo-accent-green/90">
-          <Save className="mr-1.5 h-3.5 w-3.5" /> {saving ? 'Enregistrement...' : 'Enregistrer'}
+          <Save className="me-1.5 h-3.5 w-3.5" /> {saving ? 'Enregistrement...' : 'Enregistrer'}
         </Button>
       </div>
     </Modal>

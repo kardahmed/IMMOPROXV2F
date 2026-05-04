@@ -364,7 +364,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
           <FilterDropdown label="Type" options={typeOptions} value={typeFilter} onChange={v => { setTypeFilter(v); setAiScoreMap(new Map()) }} />
           <FilterDropdown label="Sous-type" options={subtypeOptions} value={subtypeFilter} onChange={v => { setSubtypeFilter(v); setAiScoreMap(new Map()) }} />
           <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs text-immo-text-muted hover:text-immo-text-primary">
-            <RotateCcw className="mr-1 h-3 w-3" /> Réinitialiser
+            <RotateCcw className="me-1 h-3 w-3" /> Réinitialiser
           </Button>
         </div>
 
@@ -410,7 +410,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
             {aiScoreMap.size > 0 ? 'Re-classer IA' : 'Classer avec IA'}
           </button>
 
-          <span className="ml-auto text-[11px] text-immo-text-muted">
+          <span className="ms-auto text-[11px] text-immo-text-muted">
             {sorted.length} disponible{sorted.length > 1 ? 's' : ''}
           </span>
         </div>
@@ -452,7 +452,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                 {rawUnits.length} unité{rawUnits.length > 1 ? 's' : ''} disponible{rawUnits.length > 1 ? 's' : ''} en tout — élargissez les critères.
               </p>
               <Button onClick={resetFilters} variant="ghost" size="sm" className="mt-3 text-xs text-immo-accent-green hover:bg-immo-accent-green/10">
-                <RotateCcw className="mr-1 h-3 w-3" /> Réinitialiser les filtres
+                <RotateCcw className="me-1 h-3 w-3" /> Réinitialiser les filtres
               </Button>
             </div>
           )
@@ -469,7 +469,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                   key={u.id}
                   type="button"
                   onClick={() => toggleUnit(u.id)}
-                  className={`relative rounded-xl border p-3 text-left transition-all ${
+                  className={`relative rounded-xl border p-3 text-start transition-all ${
                     selected
                       ? 'border-immo-accent-green/50 bg-immo-accent-green/5 ring-1 ring-immo-accent-green/20'
                       : 'border-immo-border-default bg-immo-bg-card hover:border-immo-text-muted'
@@ -489,7 +489,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                     <span className="text-sm font-semibold text-immo-text-primary">{u.code}</span>
                     {u.subtype && <span className="text-[11px] text-immo-text-muted">{UNIT_SUBTYPE_LABELS[u.subtype] ?? u.subtype}</span>}
                     {aiScoreMap.has(u.id) && (
-                      <span className="ml-auto flex items-center gap-0.5 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600">
+                      <span className="ms-auto flex items-center gap-0.5 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600">
                         <Sparkles className="h-2.5 w-2.5" /> IA
                       </span>
                     )}
@@ -579,7 +579,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                 <h3 className="text-xs font-semibold text-immo-text-primary">
                   Comparatif des {selectedUnits.length} unités sélectionnées
                 </h3>
-                <span className="ml-auto hidden text-[10px] text-immo-text-muted sm:inline">Meilleure valeur surlignée par ligne</span>
+                <span className="ms-auto hidden text-[10px] text-immo-text-muted sm:inline">Meilleure valeur surlignée par ligne</span>
                 <button
                   type="button"
                   onClick={exportPDF}
@@ -595,11 +595,11 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-immo-border-default/30 bg-immo-bg-primary">
-                      <th className="px-3 py-2 text-left font-semibold text-immo-text-muted">Critère</th>
+                      <th className="px-3 py-2 text-start font-semibold text-immo-text-muted">Critère</th>
                       {selectedUnits.map(u => (
-                        <th key={u.id} className="px-3 py-2 text-left font-semibold text-immo-text-primary">
+                        <th key={u.id} className="px-3 py-2 text-start font-semibold text-immo-text-primary">
                           {u.code}
-                          <span className="ml-1 text-[10px] font-normal text-immo-text-muted">{u.subtype ? UNIT_SUBTYPE_LABELS[u.subtype] ?? u.subtype : ''}</span>
+                          <span className="ms-1 text-[10px] font-normal text-immo-text-muted">{u.subtype ? UNIT_SUBTYPE_LABELS[u.subtype] ?? u.subtype : ''}</span>
                         </th>
                       ))}
                     </tr>
@@ -627,7 +627,7 @@ export function AISuggestionsModal({ isOpen, onClose, client, onSelectUnits }: A
                                 }`}
                               >
                                 {row.format(v)}
-                                {isBest && <span className="ml-1 text-[9px]">✓</span>}
+                                {isBest && <span className="ms-1 text-[9px]">✓</span>}
                               </td>
                             )
                           })}

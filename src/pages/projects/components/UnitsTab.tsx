@@ -226,16 +226,16 @@ export function UnitsTab() {
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="text-xs text-immo-text-muted hover:text-immo-text-primary"
           >
-            <ArrowUpDown className="mr-1 h-3.5 w-3.5" />
+            <ArrowUpDown className="me-1 h-3.5 w-3.5" />
             {showAdvanced ? 'Masquer filtres' : 'Plus de filtres'}
           </Button>
-          <div className="ml-auto">
+          <div className="ms-auto">
             {canManageProjects && (
               <Button
                 onClick={() => setShowCreate(true)}
                 className="bg-immo-accent-green font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90"
               >
-                <Plus className="mr-1.5 h-4 w-4" /> Nouvelle unité
+                <Plus className="me-1.5 h-4 w-4" /> Nouvelle unité
               </Button>
             )}
           </div>
@@ -247,7 +247,7 @@ export function UnitsTab() {
             <Input type="number" placeholder="Min" value={surfaceMin} onChange={(e) => setSurfaceMin(e.target.value)} className={inputClass} />
             <span className="text-xs text-immo-text-muted">—</span>
             <Input type="number" placeholder="Max" value={surfaceMax} onChange={(e) => setSurfaceMax(e.target.value)} className={inputClass} />
-            <span className="ml-3 text-xs text-immo-text-muted">Prix (DA) :</span>
+            <span className="ms-3 text-xs text-immo-text-muted">Prix (DA) :</span>
             <Input type="number" placeholder="Min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className={inputClass} />
             <span className="text-xs text-immo-text-muted">—</span>
             <Input type="number" placeholder="Max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className={inputClass} />
@@ -262,7 +262,7 @@ export function UnitsTab() {
             <thead>
               <tr className="bg-immo-bg-card-hover">
                 {['Code', 'Projet', 'Type', 'Sous-type', 'Bâtiment', 'Étage', 'Surface', 'Prix', 'Livraison', 'Agent', 'Client', 'Plan 2D', 'Statut', ''].map((h) => (
-                  <th key={h} className="whitespace-nowrap px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">
+                  <th key={h} className="whitespace-nowrap px-3 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">
                     {h}
                   </th>
                 ))}
@@ -310,11 +310,11 @@ export function UnitsTab() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="border-immo-border-default bg-immo-bg-card">
                             <DropdownMenuItem className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                              <Eye className="mr-2 h-3.5 w-3.5" /> Voir détail
+                              <Eye className="me-2 h-3.5 w-3.5" /> Voir détail
                             </DropdownMenuItem>
                             {canManageProjects && (
                               <DropdownMenuItem className="text-sm text-immo-text-primary focus:bg-immo-bg-card-hover">
-                                <Pencil className="mr-2 h-3.5 w-3.5" /> Modifier
+                                <Pencil className="me-2 h-3.5 w-3.5" /> Modifier
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator className="bg-immo-border-default" />
@@ -341,7 +341,7 @@ export function UnitsTab() {
                                   onClick={() => setDeleteId(u.id)}
                                   className="text-sm text-immo-status-red focus:bg-immo-status-red-bg"
                                 >
-                                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Supprimer
+                                  <Trash2 className="me-2 h-3.5 w-3.5" /> Supprimer
                                 </DropdownMenuItem>
                               </>
                             )}

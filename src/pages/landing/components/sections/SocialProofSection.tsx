@@ -43,7 +43,7 @@ export function SocialProofPopup({ content }: { content: SocialProofContent }) {
           <p className="text-sm font-medium text-[#0A2540]">{item.name} {item.action}</p>
           <p className="text-[11px] text-[#8898AA]">{item.time}</p>
         </div>
-        <button onClick={() => setVisible(false)} className="ml-2 text-[#8898AA] hover:text-[#0A2540]">
+        <button onClick={() => setVisible(false)} className="ms-2 text-[#8898AA] hover:text-[#0A2540]">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>

@@ -64,7 +64,7 @@ export function DashboardPage() {
                   <div className="flex-1 h-5 rounded-full bg-immo-bg-primary overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(s.percentage, 2)}%`, backgroundColor: stage.color }} />
                   </div>
-                  <div className="w-16 text-right text-xs font-semibold text-immo-text-primary">{s.count} <span className="text-immo-text-muted font-normal">({s.percentage.toFixed(0)}%)</span></div>
+                  <div className="w-16 text-end text-xs font-semibold text-immo-text-primary">{s.count} <span className="text-immo-text-muted font-normal">({s.percentage.toFixed(0)}%)</span></div>
                 </div>
               )
             })}
@@ -143,7 +143,7 @@ export function DashboardPage() {
                   <div className="flex-1 h-3 rounded-full bg-immo-bg-primary overflow-hidden">
                     <div className="h-full rounded-full bg-immo-accent-green/60" style={{ width: `${Math.max(pct, 3)}%` }} />
                   </div>
-                  <div className="w-12 text-right text-[11px] font-semibold text-immo-text-primary">{s.count}</div>
+                  <div className="w-12 text-end text-[11px] font-semibold text-immo-text-primary">{s.count}</div>
                 </div>
               )
             })}
@@ -171,7 +171,7 @@ export function DashboardPage() {
                   <div className="mb-2 flex items-center justify-between">
                     <div>
                       <span className="text-sm font-medium text-immo-text-primary">{p.name}</span>
-                      <span className="ml-2 text-xs text-immo-text-muted">{p.code}</span>
+                      <span className="ms-2 text-xs text-immo-text-muted">{p.code}</span>
                     </div>
                     <span className="text-xs font-semibold text-immo-text-secondary">{progress.toFixed(0)}%</span>
                   </div>
@@ -232,7 +232,7 @@ export function DashboardPage() {
               <thead>
                 <tr className="bg-immo-bg-card-hover">
                   {[t('field.agent'), t('kpi.reservations'), t('kpi.sales'), t('kpi.revenue'), t('dashboard.last_activity')].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+                    <th key={h} className="px-5 py-3 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
                   ))}
                 </tr>
               </thead>

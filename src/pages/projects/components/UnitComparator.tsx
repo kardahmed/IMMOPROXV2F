@@ -53,7 +53,7 @@ export function UnitComparator({ units, onRemove, onClose }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-immo-border-default">
-                <th className="pb-2 text-left text-xs font-medium text-immo-text-muted w-[120px]">Critere</th>
+                <th className="pb-2 text-start text-xs font-medium text-immo-text-muted w-[120px]">Critere</th>
                 {units.map(u => (
                   <th key={u.id} className="pb-2 text-center">
                     <div className="flex items-center justify-center gap-1">
@@ -73,7 +73,7 @@ export function UnitComparator({ units, onRemove, onClose }: Props) {
                     {row.values.map((val, ci) => (
                       <td key={ci} className={`py-2 text-center text-xs ${bestIdx === ci ? 'font-bold text-immo-accent-green' : row.label === 'Statut' ? UNIT_STATUS_COLORS[units[ci].status] ?? '' : 'text-immo-text-primary'}`}>
                         {val}
-                        {bestIdx === ci && row.label !== 'Statut' && <CheckCircle className="ml-1 inline h-3 w-3" />}
+                        {bestIdx === ci && row.label !== 'Statut' && <CheckCircle className="ms-1 inline h-3 w-3" />}
                       </td>
                     ))}
                   </tr>

@@ -79,7 +79,7 @@ export function ReservationTab({ clientId, clientInfo }: { clientId: string; cli
           disabled={!clientInfo}
           className="bg-immo-accent-green text-xs font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90"
         >
-          <Plus className="mr-1 h-3.5 w-3.5" /> Créer réservation
+          <Plus className="me-1 h-3.5 w-3.5" /> Créer réservation
         </Button>
       </div>
 
@@ -143,7 +143,7 @@ export function SaleTab({ clientId, clientInfo }: { clientId: string; clientInfo
           disabled={!clientInfo}
           className="bg-immo-accent-green text-xs font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90"
         >
-          <Plus className="mr-1 h-3.5 w-3.5" /> Créer vente
+          <Plus className="me-1 h-3.5 w-3.5" /> Créer vente
         </Button>
       </div>
 
@@ -223,7 +223,7 @@ export function ScheduleTab({ clientId }: { clientId: string }) {
       <table className="w-full">
         <thead><tr className="bg-immo-bg-card-hover">
           {['#', t('field.due_date'), t('field.amount'), t('field.status'), ''].map((h, i) => (
-            <th key={i} className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+            <th key={i} className="px-4 py-2.5 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
           ))}
         </tr></thead>
         <tbody className="divide-y divide-immo-border-default">
@@ -236,7 +236,7 @@ export function ScheduleTab({ clientId }: { clientId: string }) {
                 <td className="px-4 py-3 text-sm text-immo-text-primary">{format(new Date(s.due_date as string), 'dd/MM/yyyy')}</td>
                 <td className="px-4 py-3 text-sm font-medium text-immo-text-primary">{formatPrice(s.amount as number)}</td>
                 <td className="px-4 py-3"><StatusBadge label={pst.label} type={pst.color === '#00D4A0' ? 'green' : pst.color === '#FF4949' ? 'red' : 'orange'} /></td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3 text-end">
                   {isPending && (
                     <Button
                       size="sm"
@@ -244,7 +244,7 @@ export function ScheduleTab({ clientId }: { clientId: string }) {
                       disabled={markPaid.isPending}
                       className="h-7 border border-immo-accent-green/30 text-[11px] text-immo-accent-green hover:bg-immo-accent-green/10"
                     >
-                      <CheckCircle className="mr-1 h-3 w-3" /> Marquer payé
+                      <CheckCircle className="me-1 h-3 w-3" /> Marquer payé
                     </Button>
                   )}
                 </td>
@@ -346,7 +346,7 @@ export function ChargesTab({ clientId, tenantId }: { clientId: string; tenantId:
     <div className="space-y-4">
       <div className="flex justify-end">
         <Button onClick={() => setShowCreate(true)} className="bg-immo-accent-green text-xs font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-          <Plus className="mr-1 h-3.5 w-3.5" /> {t('action.add')}
+          <Plus className="me-1 h-3.5 w-3.5" /> {t('action.add')}
         </Button>
       </div>
 
@@ -357,7 +357,7 @@ export function ChargesTab({ clientId, tenantId }: { clientId: string; tenantId:
           <table className="w-full">
             <thead><tr className="bg-immo-bg-card-hover">
               {[t('field.name'), t('field.type'), t('field.amount'), t('field.date'), t('field.status')].map(h => (
-                <th key={h} className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
+                <th key={h} className="px-4 py-2.5 text-start text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">{h}</th>
               ))}
             </tr></thead>
             <tbody className="divide-y divide-immo-border-default">
@@ -512,7 +512,7 @@ export function TasksTab({ clientId, tenantId, clientPhone }: { clientId: string
     <div className="space-y-4">
       <div className="flex justify-end">
         <Button onClick={() => setShowCreate(true)} className="bg-immo-accent-green text-xs font-semibold text-immo-bg-primary hover:bg-immo-accent-green/90">
-          <Plus className="mr-1 h-3.5 w-3.5" /> {t('action.add')}
+          <Plus className="me-1 h-3.5 w-3.5" /> {t('action.add')}
         </Button>
       </div>
 

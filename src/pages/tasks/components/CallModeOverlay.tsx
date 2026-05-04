@@ -208,7 +208,7 @@ export function CallModeOverlay({ isOpen, onClose, task }: Props) {
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-immo-accent-blue">
             <Phone className="h-3.5 w-3.5" /> Mode Appel
-            {script?.mode === 'ai' && <span className="ml-1 flex items-center gap-1 text-blue-500"><Sparkles className="h-3 w-3" /> IA</span>}
+            {script?.mode === 'ai' && <span className="ms-1 flex items-center gap-1 text-blue-500"><Sparkles className="h-3 w-3" /> IA</span>}
           </div>
           <h1 className="mt-1 truncate text-lg font-semibold text-immo-text-primary">{task.title}</h1>
         </div>

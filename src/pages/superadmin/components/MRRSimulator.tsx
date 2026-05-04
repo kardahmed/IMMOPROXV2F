@@ -83,15 +83,15 @@ export function MRRSimulator({ editPlans, tenantCounts }: Props) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-immo-border-default bg-immo-bg-primary text-[10px] uppercase tracking-wide text-immo-text-muted">
-              <th className="px-4 py-2 text-left font-semibold">Plan</th>
-              <th className="px-4 py-2 text-left font-semibold">Actuel</th>
-              <th className="px-4 py-2 text-left font-semibold">Projection</th>
-              <th className="px-4 py-2 text-right font-semibold">Prix unitaire</th>
-              <th className="px-4 py-2 text-right font-semibold">Coût unitaire</th>
-              <th className="px-4 py-2 text-right font-semibold">MRR</th>
-              <th className="px-4 py-2 text-right font-semibold">Coût mensuel</th>
-              <th className="px-4 py-2 text-right font-semibold">Profit mensuel</th>
-              <th className="px-4 py-2 text-right font-semibold">Marge</th>
+              <th className="px-4 py-2 text-start font-semibold">Plan</th>
+              <th className="px-4 py-2 text-start font-semibold">Actuel</th>
+              <th className="px-4 py-2 text-start font-semibold">Projection</th>
+              <th className="px-4 py-2 text-end font-semibold">Prix unitaire</th>
+              <th className="px-4 py-2 text-end font-semibold">Coût unitaire</th>
+              <th className="px-4 py-2 text-end font-semibold">MRR</th>
+              <th className="px-4 py-2 text-end font-semibold">Coût mensuel</th>
+              <th className="px-4 py-2 text-end font-semibold">Profit mensuel</th>
+              <th className="px-4 py-2 text-end font-semibold">Marge</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-immo-border-default">
@@ -113,17 +113,17 @@ export function MRRSimulator({ editPlans, tenantCounts }: Props) {
                       className="h-7 w-[80px] border-immo-border-default bg-immo-bg-primary text-xs text-immo-text-primary"
                     />
                   </td>
-                  <td className="px-4 py-2 text-right text-immo-text-secondary">{fmt(plan.price_monthly)}</td>
-                  <td className="px-4 py-2 text-right text-immo-text-secondary">{fmt(plan.estimated_cost_da_monthly ?? 0)}</td>
-                  <td className="px-4 py-2 text-right font-medium text-immo-text-primary">{fmt(r.revenue)}</td>
-                  <td className="px-4 py-2 text-right text-immo-status-red">−{fmt(r.cost)}</td>
-                  <td className={`px-4 py-2 text-right font-bold ${profitColor}`}>
+                  <td className="px-4 py-2 text-end text-immo-text-secondary">{fmt(plan.price_monthly)}</td>
+                  <td className="px-4 py-2 text-end text-immo-text-secondary">{fmt(plan.estimated_cost_da_monthly ?? 0)}</td>
+                  <td className="px-4 py-2 text-end font-medium text-immo-text-primary">{fmt(r.revenue)}</td>
+                  <td className="px-4 py-2 text-end text-immo-status-red">−{fmt(r.cost)}</td>
+                  <td className={`px-4 py-2 text-end font-bold ${profitColor}`}>
                     {r.profit >= 0
-                      ? <TrendingUp className="mr-0.5 inline h-3 w-3" />
-                      : <TrendingDown className="mr-0.5 inline h-3 w-3" />}
+                      ? <TrendingUp className="me-0.5 inline h-3 w-3" />
+                      : <TrendingDown className="me-0.5 inline h-3 w-3" />}
                     {r.profit >= 0 ? '+' : ''}{fmt(r.profit)}
                   </td>
-                  <td className={`px-4 py-2 text-right font-semibold ${marginColor}`}>{r.margin.toFixed(0)}%</td>
+                  <td className={`px-4 py-2 text-end font-semibold ${marginColor}`}>{r.margin.toFixed(0)}%</td>
                 </tr>
               )
             })}
@@ -132,12 +132,12 @@ export function MRRSimulator({ editPlans, tenantCounts }: Props) {
               <td className="px-4 py-3 text-immo-text-primary" colSpan={2}>TOTAL</td>
               <td className="px-4 py-3 text-immo-accent-green">{totals.tenants} tenants</td>
               <td colSpan={2} />
-              <td className="px-4 py-3 text-right text-immo-text-primary">{fmt(totals.revenue)}</td>
-              <td className="px-4 py-3 text-right text-immo-status-red">−{fmt(totals.cost)}</td>
-              <td className={`px-4 py-3 text-right ${totals.profit >= 0 ? 'text-immo-accent-green' : 'text-immo-status-red'}`}>
+              <td className="px-4 py-3 text-end text-immo-text-primary">{fmt(totals.revenue)}</td>
+              <td className="px-4 py-3 text-end text-immo-status-red">−{fmt(totals.cost)}</td>
+              <td className={`px-4 py-3 text-end ${totals.profit >= 0 ? 'text-immo-accent-green' : 'text-immo-status-red'}`}>
                 {totals.profit >= 0 ? '+' : ''}{fmt(totals.profit)}
               </td>
-              <td className="px-4 py-3 text-right text-immo-accent-green">{totals.margin.toFixed(0)}%</td>
+              <td className="px-4 py-3 text-end text-immo-accent-green">{totals.margin.toFixed(0)}%</td>
             </tr>
           </tbody>
         </table>

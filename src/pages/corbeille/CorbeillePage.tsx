@@ -71,7 +71,7 @@ export function CorbeillePage() {
           disabled={restoreClient.isPending}
           className="h-7 text-[11px] border border-immo-border-default"
         >
-          <RotateCcw className="mr-1 h-3 w-3" /> Restaurer
+          <RotateCcw className="me-1 h-3 w-3" /> Restaurer
         </Button>
       ),
     },

@@ -86,7 +86,7 @@ export function OnboardingWizard() {
             key={step.key}
             onClick={step.action}
             disabled={step.done}
-            className={`flex flex-1 items-center gap-3 rounded-lg border p-3 text-left transition-all ${
+            className={`flex flex-1 items-center gap-3 rounded-lg border p-3 text-start transition-all ${
               step.done
                 ? 'border-immo-accent-green/30 bg-immo-accent-green/10'
                 : 'border-immo-border-default bg-immo-bg-card hover:border-immo-accent-green/30'

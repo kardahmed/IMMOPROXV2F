@@ -180,7 +180,7 @@ export function SecurityAuditPage() {
             placeholder="Rechercher tenant, utilisateur, cible..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 text-sm"
+            className="ps-9 text-sm"
           />
         </div>
 

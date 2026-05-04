@@ -308,7 +308,7 @@ export function CreateReservationModal({ isOpen, onClose, client, onSuccess }: C
                         key={u.id}
                         type="button"
                         onClick={() => toggleUnit(u.id)}
-                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors ${
+                        className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-start transition-colors ${
                           selected
                             ? 'bg-immo-accent-green/10 ring-1 ring-immo-accent-green/30'
                             : 'hover:bg-immo-bg-card-hover'
@@ -321,7 +321,7 @@ export function CreateReservationModal({ isOpen, onClose, client, onSuccess }: C
                         )}
                         <div className="min-w-0 flex-1">
                           <span className="text-xs font-medium text-immo-text-primary">{u.code}</span>
-                          <span className="ml-2 text-[11px] text-immo-text-muted">
+                          <span className="ms-2 text-[11px] text-immo-text-muted">
                             {UNIT_TYPE_LABELS[u.type]}{u.subtype ? ` ${u.subtype}` : ''}
                           </span>
                         </div>
@@ -486,7 +486,7 @@ export function CreateReservationModal({ isOpen, onClose, client, onSuccess }: C
               <p className="text-sm font-semibold text-immo-text-primary">{t('reservation_modal.total', { amount: formatPrice(totalPrice) })}</p>
             </div>
             {showDeposit && depositAmount > 0 && (
-              <div className="text-right">
+              <div className="text-end">
                 <p className="text-xs text-immo-text-muted">{t('reservation_modal.deposit')}</p>
                 <p className="text-sm font-semibold text-immo-accent-green">{formatPrice(depositAmount)}</p>
               </div>

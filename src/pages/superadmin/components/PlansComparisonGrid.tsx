@@ -39,7 +39,7 @@ export function PlansComparisonGrid({ editPlans, tenantCounts, catalog }: Props)
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-immo-border-default bg-immo-bg-primary">
-              <th className="px-4 py-2 text-left text-[11px] font-medium text-immo-text-muted">Critere</th>
+              <th className="px-4 py-2 text-start text-[11px] font-medium text-immo-text-muted">Critere</th>
               {editPlans.map(p => (
                 <th key={p.plan} className="px-4 py-2 text-center text-[11px] font-bold capitalize" style={{ color: PLAN_COLORS[p.plan] ?? '#0579DA' }}>
                   {p.plan}
@@ -80,7 +80,7 @@ export function PlansComparisonGrid({ editPlans, tenantCounts, catalog }: Props)
               <tr key={f.slug} className={!f.is_implemented ? 'opacity-40' : ''}>
                 <td className="px-4 py-2 text-immo-text-secondary">
                   {f.label_fr}
-                  {!f.is_implemented && <span className="ml-2 text-[9px] uppercase text-immo-text-muted">À venir</span>}
+                  {!f.is_implemented && <span className="ms-2 text-[9px] uppercase text-immo-text-muted">À venir</span>}
                 </td>
                 {editPlans.map(p => (
                   <td key={p.plan} className="px-4 py-2 text-center">

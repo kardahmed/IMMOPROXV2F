@@ -123,7 +123,7 @@ export function MultiStepFormSection({ title, accent, slug, content }: MultiStep
                   <div className="grid grid-cols-1 gap-2">
                     {field.options.map(opt => (
                       <button key={opt} type="button" onClick={() => setValues({ ...values, [field.id]: opt })}
-                        className={`rounded-xl border px-4 py-3 text-left text-sm transition-all ${
+                        className={`rounded-xl border px-4 py-3 text-start text-sm transition-all ${
                           values[field.id] === opt
                             ? 'border-2 font-medium' : 'border-[#E3E8EF] text-[#425466] hover:border-[#C1C9D2]'
                         }`}
