@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Clock, Save, Plus, X } from 'lucide-react'
+import { Clock, Save, Plus, X, AlertTriangle, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,35 @@ const ALL_DAYS = [
   { value: 5, label: 'Vendredi' },
   { value: 6, label: 'Samedi' },
 ]
+
+// Build the canonical slot list from work hours + lunch break +
+// duration. Mirrors the slot generator in VisitsTab so the visit
+// modal and the settings page agree on what's a valid slot.
+function computeAutoSlots(startH: number, endH: number, durationMin: number, lunchStart: number, lunchEnd: number): string[] {
+  const out: string[] = []
+  const startMin = startH * 60
+  const endMin = endH * 60
+  const lunchStartMin = lunchStart * 60
+  const lunchEndMin = lunchEnd * 60
+  for (let m = startMin; m + durationMin <= endMin; m += durationMin) {
+    // Skip slots that fall inside the lunch break (any overlap).
+    if (m < lunchEndMin && m + durationMin > lunchStartMin) continue
+    const h = Math.floor(m / 60)
+    const mm = m % 60
+    out.push(`${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`)
+  }
+  return out
+}
+
+function isSlotValid(slot: string, startH: number, endH: number, durationMin: number, lunchStart: number, lunchEnd: number): { ok: boolean; reason?: string } {
+  const m = parseInt(slot.slice(0, 2)) * 60 + parseInt(slot.slice(3, 5))
+  if (m < startH * 60) return { ok: false, reason: `Avant ouverture (${startH}h)` }
+  if (m + durationMin > endH * 60) return { ok: false, reason: `Dépasse fermeture (${endH}h)` }
+  if (m < lunchEnd * 60 && m + durationMin > lunchStart * 60) {
+    return { ok: false, reason: `Dans la pause déjeuner (${lunchStart}h-${lunchEnd}h)` }
+  }
+  return { ok: true }
+}
 
 export function VisitScheduleSection() {
   const tenantId = useAuthStore(s => s.tenantId)
@@ -84,10 +113,32 @@ export function VisitScheduleSection() {
   }
 
   function addSlot() {
-    if (newSlot && !slots.includes(newSlot)) {
-      setSlots(prev => [...prev, newSlot].sort())
-      setNewSlot('')
+    if (!newSlot || slots.includes(newSlot)) return
+    const valid = isSlotValid(newSlot, startHour, endHour, duration, lunchStart, lunchEnd)
+    if (!valid.ok) {
+      toast.error(`Créneau ${newSlot} invalide : ${valid.reason}`)
+      return
     }
+    setSlots(prev => [...prev, newSlot].sort())
+    setNewSlot('')
+  }
+
+  // Slots that fall outside work hours / inside lunch / past closing
+  // — we surface them with a warning chip so the user notices before
+  // saving. The "Régénérer auto" button rebuilds from scratch.
+  const slotIssues = useMemo(() => {
+    const out: Record<string, string> = {}
+    for (const s of slots) {
+      const v = isSlotValid(s, startHour, endHour, duration, lunchStart, lunchEnd)
+      if (!v.ok && v.reason) out[s] = v.reason
+    }
+    return out
+  }, [slots, startHour, endHour, duration, lunchStart, lunchEnd])
+
+  function regenerateSlots() {
+    const auto = computeAutoSlots(startHour, endHour, duration, lunchStart, lunchEnd)
+    setSlots(auto)
+    toast.success(`${auto.length} créneaux générés depuis vos horaires`)
   }
 
   return (
@@ -180,16 +231,44 @@ export function VisitScheduleSection() {
 
       {/* Creneaux de visite */}
       <div className="rounded-xl border border-immo-border-default bg-immo-bg-card p-5">
-        <h3 className="mb-3 text-sm font-semibold text-immo-text-primary">Creneaux de visite disponibles</h3>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {slots.map(slot => (
-            <div key={slot} className="flex items-center gap-1 rounded-lg border border-immo-accent-green/30 bg-immo-accent-green/5 px-3 py-1.5">
-              <span className="text-xs font-medium text-immo-accent-green">{slot}</span>
-              <button onClick={() => setSlots(prev => prev.filter(s => s !== slot))} className="text-immo-text-muted hover:text-immo-status-red">
-                <X className="h-3 w-3" />
-              </button>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-immo-text-primary">Créneaux de visite disponibles</h3>
+          <Button size="sm" onClick={regenerateSlots} className="border border-immo-accent-blue/30 bg-immo-accent-blue/5 text-xs text-immo-accent-blue hover:bg-immo-accent-blue/10">
+            <RefreshCw className="mr-1 h-3 w-3" /> Régénérer auto
+          </Button>
+        </div>
+
+        {Object.keys(slotIssues).length > 0 && (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-immo-status-orange/30 bg-immo-status-orange/5 p-2.5 text-[11px] text-immo-status-orange">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div>
+              <p className="font-semibold">{Object.keys(slotIssues).length} créneau(x) incohérent(s) avec vos horaires.</p>
+              <p>Cliquez "Régénérer auto" pour recalculer depuis ouverture/fermeture/pause/durée.</p>
             </div>
-          ))}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          {slots.map(slot => {
+            const issue = slotIssues[slot]
+            return (
+              <div
+                key={slot}
+                title={issue ?? ''}
+                className={`flex items-center gap-1 rounded-lg border px-3 py-1.5 ${
+                  issue
+                    ? 'border-immo-status-orange/50 bg-immo-status-orange/10'
+                    : 'border-immo-accent-green/30 bg-immo-accent-green/5'
+                }`}
+              >
+                {issue && <AlertTriangle className="h-3 w-3 text-immo-status-orange" />}
+                <span className={`text-xs font-medium ${issue ? 'text-immo-status-orange' : 'text-immo-accent-green'}`}>{slot}</span>
+                <button onClick={() => setSlots(prev => prev.filter(s => s !== slot))} className="text-immo-text-muted hover:text-immo-status-red">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )
+          })}
         </div>
         <div className="flex gap-2">
           <Input
@@ -203,7 +282,7 @@ export function VisitScheduleSection() {
           </Button>
         </div>
         <p className="mt-2 text-[10px] text-immo-text-muted">
-          Ces creneaux seront proposes aux agents dans le script d'appel et le calendrier de visite.
+          Ces créneaux sont proposés aux agents dans le calendrier de visite. Hors horaires de travail / pause = invalides.
         </p>
       </div>
 
