@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Clock, Plus } from 'lucide-react'
+import {
+  Clock, Plus, Phone, MessageCircle, Mail, GitBranch, Calendar,
+  CheckCircle, Bookmark, DollarSign, CreditCard, FileText, StickyNote, Sparkles,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { handleSupabaseError } from '@/lib/errors'
@@ -17,6 +20,27 @@ import { fr as frLocale } from 'date-fns/locale'
 import { ar as arLocale } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import { inputClass } from './shared'
+
+// Per-type visual metadata. Drives the timeline icon + colored
+// outline so an agent skimming the history can identify the kind
+// of entry at a glance instead of reading every label.
+const TYPE_VISUAL: Record<string, { icon: typeof Clock; color: string; bg: string }> = {
+  call:              { icon: Phone,        color: '#0579DA', bg: '#0579DA15' },
+  whatsapp_call:     { icon: Phone,        color: '#25D366', bg: '#25D36615' },
+  whatsapp_message:  { icon: MessageCircle, color: '#25D366', bg: '#25D36615' },
+  sms:               { icon: MessageCircle, color: '#3782FF', bg: '#3782FF15' },
+  email:             { icon: Mail,         color: '#A855F7', bg: '#A855F715' },
+  stage_change:      { icon: GitBranch,    color: '#FF9A1E', bg: '#FF9A1E15' },
+  visit_planned:     { icon: Calendar,     color: '#FF9A1E', bg: '#FF9A1E15' },
+  visit_confirmed:   { icon: Calendar,     color: '#3782FF', bg: '#3782FF15' },
+  visit_completed:   { icon: CheckCircle,  color: '#A855F7', bg: '#A855F715' },
+  reservation:       { icon: Bookmark,     color: '#06B6D4', bg: '#06B6D415' },
+  sale:              { icon: DollarSign,   color: '#00D4A0', bg: '#00D4A015' },
+  payment:           { icon: CreditCard,   color: '#00D4A0', bg: '#00D4A015' },
+  document:          { icon: FileText,     color: '#7F96B7', bg: '#7F96B715' },
+  note:              { icon: StickyNote,   color: '#7F96B7', bg: '#7F96B715' },
+  ai_task:           { icon: Sparkles,     color: '#A855F7', bg: '#A855F715' },
+}
 
 export function HistoryTab({ clientId }: { clientId: string }) {
   const { t, i18n } = useTranslation()
@@ -104,24 +128,71 @@ export function HistoryTab({ clientId }: { clientId: string }) {
       {entries.length === 0 ? (
         <EmptyState icon={<Clock className="h-10 w-10" />} title={t('common.no_data')} />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {Array.from(grouped.entries()).map(([day, items]) => (
             <div key={day}>
-              <p className="mb-2 text-[11px] font-semibold text-immo-text-muted">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-immo-text-muted">
                 {format(new Date(day), 'EEEE d MMMM yyyy', { locale: dateLocale })}
               </p>
-              <div className="space-y-1.5">
-                {items.map((e) => {
-                  const meta = HISTORY_TYPE_LABELS[(e.type as HistoryType)]
+              {/* Vertical timeline. Each row gets a colored circle
+                  icon, a dashed connector line down to the next, the
+                  type label + description + agent + time. */}
+              <div className="relative space-y-3 pl-2">
+                {items.map((e, idx) => {
+                  const type = e.type as HistoryType
+                  const meta = HISTORY_TYPE_LABELS[type]
+                  const visual = TYPE_VISUAL[type] ?? TYPE_VISUAL.note
+                  const Icon = visual.icon
                   const agent = e.users as { first_name: string; last_name: string } | null
+                  const title = (e.title as string) ?? meta?.label ?? type
+                  const description = e.description as string | null
+                  const isLast = idx === items.length - 1
                   return (
-                    <div key={e.id as string} className="flex items-center gap-3 rounded-lg border border-immo-border-default bg-immo-bg-card px-4 py-2.5">
-                      <div className="h-2 w-2 shrink-0 rounded-full bg-immo-accent-green" />
-                      <div className="min-w-0 flex-1">
-                        <span className="text-sm text-immo-text-primary">{meta?.label ?? (e.title as string)}</span>
-                        {agent && <span className="ml-2 text-[11px] text-immo-text-muted">{agent.first_name}</span>}
+                    <div key={e.id as string} className="relative flex gap-3">
+                      {/* Vertical line connecting timeline dots */}
+                      {!isLast && (
+                        <span
+                          className="absolute left-[15px] top-8 bottom-[-12px] w-px bg-immo-border-default"
+                          aria-hidden
+                        />
+                      )}
+                      {/* Icon disc */}
+                      <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                        style={{ background: visual.bg, color: visual.color }}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
                       </div>
-                      <span className="shrink-0 text-[11px] text-immo-text-muted">{format(new Date(e.created_at as string), 'HH:mm')}</span>
+                      {/* Body */}
+                      <div className="min-w-0 flex-1 rounded-lg border border-immo-border-default bg-immo-bg-card px-3 py-2">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="text-sm font-medium text-immo-text-primary">
+                            {meta?.label ?? type}
+                          </span>
+                          <span className="text-[11px] text-immo-text-muted">
+                            {format(new Date(e.created_at as string), 'HH:mm')}
+                          </span>
+                          {agent && (
+                            <span className="text-[11px] text-immo-text-muted">
+                              · {agent.first_name} {agent.last_name}
+                            </span>
+                          )}
+                        </div>
+                        {/* Title (the free-text description from the
+                            history row) + optional description body.
+                            whitespace-pre-line so multi-line metadata
+                            (e.g. visit feedback) renders properly. */}
+                        {title && title !== meta?.label && (
+                          <p className="mt-1 whitespace-pre-line text-sm text-immo-text-secondary">
+                            {title}
+                          </p>
+                        )}
+                        {description && (
+                          <p className="mt-1 whitespace-pre-line text-xs text-immo-text-muted">
+                            {description}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )
                 })}
@@ -130,7 +201,7 @@ export function HistoryTab({ clientId }: { clientId: string }) {
           ))}
           {entries.length >= limit && (
             <button onClick={() => setLimit((l) => l + 20)} className="w-full rounded-lg border border-immo-border-default py-2 text-xs text-immo-text-muted hover:bg-immo-bg-card-hover">
-              {t('common.loading')}
+              Voir plus
             </button>
           )}
         </div>

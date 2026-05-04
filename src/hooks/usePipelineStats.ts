@@ -41,8 +41,13 @@ export function usePipelineStats() {
     queryFn: async () => {
       if (!tenantId) throw new Error('No tenant')
 
-      // Fetch settings, clients, tasks in parallel
-      const [settingsRes, clientsRes, tasksRes] = await Promise.all([
+      // Fetch settings, clients, tasks, AND sales in parallel.
+      // Sales is the source of truth for the "converted" KPI (final
+      // price, after discount). Clients.confirmed_budget is the
+      // declarative number entered at the start of negotiation —
+      // useful as "potential pipeline value" but it should NEVER
+      // appear as actual revenue in dashboards.
+      const [settingsRes, clientsRes, tasksRes, salesRes] = await Promise.all([
         supabase.from('tenant_settings').select('*').eq('tenant_id', tenantId).maybeSingle(),
         (() => {
           let q = supabase.from('clients').select('id, pipeline_stage, confirmed_budget, last_contact_at, created_at, is_priority, interest_level').eq('tenant_id', tenantId)
@@ -51,6 +56,11 @@ export function usePipelineStats() {
         })(),
         supabase.from('tasks').select('id').eq('tenant_id', tenantId).eq('status', 'pending')
           .then(r => isAgent && userId ? { ...r, data: r.data } : r), // RLS handles filtering
+        (() => {
+          let q = supabase.from('sales').select('agent_id, final_price').eq('tenant_id', tenantId).eq('status', 'active')
+          if (isAgent && userId) q = q.eq('agent_id', userId)
+          return q
+        })(),
       ])
 
       const settings = settingsRes.data
@@ -102,7 +112,15 @@ export function usePipelineStats() {
       const withBudget = clients.filter(c => c.confirmed_budget != null)
       const totalPotential = withBudget.reduce((s, c) => s + (c.confirmed_budget ?? 0), 0)
       const negotiationValue = withBudget.filter(c => negoStages.includes(c.pipeline_stage)).reduce((s, c) => s + (c.confirmed_budget ?? 0), 0)
-      const convertedValue = withBudget.filter(c => convertedStages.includes(c.pipeline_stage)).reduce((s, c) => s + (c.confirmed_budget ?? 0), 0)
+
+      // convertedValue used to also sum confirmed_budget on clients
+      // in stage 'vente' / 'reservation' — that's the declared budget
+      // at qualification time, NOT the actual sale price. With the
+      // commercial modal flow now creating real sales rows, sum
+      // sales.final_price for the truth.
+      const sales = (salesRes.data ?? []) as Array<{ agent_id: string; final_price: number }>
+      const convertedValue = sales.reduce((s, sale) => s + (sale.final_price ?? 0), 0)
+
       const avgBudget = withBudget.length > 0 ? totalPotential / withBudget.length : 0
 
       const kpis: PipelineKPIs = {
