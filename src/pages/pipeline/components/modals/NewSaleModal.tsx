@@ -157,9 +157,17 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
     const freqMonths = formData.frequency === 'monthly' ? 1 : formData.frequency === 'quarterly' ? 3 : 6
     const deliveryD = new Date(formData.deliveryDate)
     const firstD = new Date(formData.firstPaymentDate)
-    const totalMonths = Math.max(1, Math.round((deliveryD.getTime() - firstD.getTime()) / (30 * 86400000)))
+    // Use calendar months from date-fns. The previous `(deliveryD -
+    // firstD) / (30 * 86400000)` was a 30-day-month approximation
+    // and drifted ~5 days on a 12-month plan, pushing the last
+    // installment past the actual delivery date.
+    const totalMonths = Math.max(1, differenceInMonths(deliveryD, firstD))
     const numInstallments = Math.max(1, Math.floor(totalMonths / freqMonths))
-    const installmentAmount = Math.round(remaining / numInstallments)
+    // Guard against `remaining < numInstallments` which would round
+    // installmentAmount to 0 and dump everything onto the last row.
+    const installmentAmount = numInstallments > 0
+      ? Math.max(1, Math.round(remaining / numInstallments))
+      : remaining
 
     const lines: ScheduleLine[] = [
       { number: 1, date: formData.firstPaymentDate, amount: downPayment, description: `Acompte (${formData.downPaymentPct}%)` },
@@ -209,14 +217,36 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
     mutationFn: async () => {
       if (!client || !userId) return
 
+      // Pre-compute per-unit discounts up-front so the sum across
+      // units exactly matches formData.discountValue (in DZD,
+      // integer DA only). Naïve `discountValue / N` lost (N-1) DA
+      // to integer-floor on multi-unit fixed discounts. Distribute
+      // the rounding remainder across the first units.
+      const unitPrices = formData.selectedUnits.map(uid =>
+        units.find(u => u.id === uid)?.price ?? 0
+      )
+      const perUnitDiscount: number[] = unitPrices.map(p => {
+        if (formData.discountType === 'percentage') {
+          return Math.round((p * formData.discountValue) / 100)
+        }
+        return 0  // populated below for fixed
+      })
+      if (formData.discountType === 'fixed' && unitPrices.length > 0) {
+        const each = Math.floor(formData.discountValue / unitPrices.length)
+        const remainder = formData.discountValue - each * unitPrices.length
+        for (let i = 0; i < unitPrices.length; i++) {
+          // Front-load the remainder so the first `remainder` units
+          // each get +1 DA; total matches formData.discountValue
+          // to the DA.
+          perUnitDiscount[i] = each + (i < remainder ? 1 : 0)
+        }
+      }
+
       // 1. Insert sale for each unit
-      for (const unitId of formData.selectedUnits) {
-        const unitPrice = units.find(u => u.id === unitId)?.price ?? 0
-        const unitDiscount = formData.discountType === 'percentage'
-          ? (unitPrice * formData.discountValue) / 100
-          : formData.discountType === 'fixed'
-            ? formData.discountValue / formData.selectedUnits.length
-            : 0
+      for (let unitIdx = 0; unitIdx < formData.selectedUnits.length; unitIdx++) {
+        const unitId = formData.selectedUnits[unitIdx]
+        const unitPrice = unitPrices[unitIdx]
+        const unitDiscount = perUnitDiscount[unitIdx]
         const unitFinal = unitPrice - unitDiscount
 
         const { data: sale, error: saleErr } = await supabase.from('sales').insert({

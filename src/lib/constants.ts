@@ -22,11 +22,17 @@ export const CURRENCY = {
 } as const
 
 export function formatPrice(amount: number): string {
+  // Algerian Dinar (DZD) is officially a no-decimal currency. Bank
+  // transfers, real-estate contracts and CCP/CTT cash transactions
+  // are all integer DA. Allowing decimals here was a bug — float
+  // math elsewhere (multi-unit discount split, percentage deposits)
+  // would leak fractional DA into the UI and the contract printout.
+  // Round at the format boundary so callers can stay numeric.
   return new Intl.NumberFormat('fr-DZ', {
     style: 'decimal',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount) + ' DA'
+    maximumFractionDigits: 0,
+  }).format(Math.round(amount)) + ' DA'
 }
 
 export function formatPriceCompact(amount: number): string {
