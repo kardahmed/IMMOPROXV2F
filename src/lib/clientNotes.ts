@@ -1,23 +1,29 @@
-// Single helper for appending a timestamped entry to clients.notes.
+// Single helper for prepending a timestamped entry to clients.notes.
 //
 // The Notes tab on the client detail page renders the free-form
-// `clients.notes` TEXT column. The audit on 29-04-2026 found that
-// many UI surfaces capture notes (CallModeOverlay outcomes, visit
-// feedback in SmartStageDialog, message bodies in WhatsAppButton,
-// task responses in TaskDetailModal, etc.) but those notes never
-// landed back in the Notes tab — agents had to retype them there or
-// dig through the History feed to find old context.
+// `clients.notes` TEXT column. Many UI surfaces capture notes
+// (CallModeOverlay outcomes, visit feedback in SmartStageDialog,
+// message bodies in WhatsAppButton, task responses in
+// TaskDetailModal, etc.) — they all funnel through this helper so
+// the trace lands back in the Notes tab with consistent formatting.
 //
-// Every surface that captures any free-text response from / about a
-// client should call appendClientNote() here. Newest entries land at
-// the top, separated by a blank line, so scrolling down in the Notes
-// tab walks chronologically backwards. The agent can still edit the
-// notes freely afterwards — this only PREPENDS, never overwrites.
+// IMPORTANT: pre-068 this helper did a read-modify-write
+// (`select notes` → format → `update notes`). Two concurrent calls
+// (e.g. an agent moving the stage at the same instant a WhatsApp
+// send fires) clobbered each other and lost notes. Migration 068
+// introduced the `append_client_note` RPC which performs the merge
+// inside a single UPDATE; Postgres' row-level write lock makes it
+// atomic. We now build the formatted block client-side and hand it
+// to the RPC.
+//
+// New entries land at the top, so scrolling down walks
+// chronologically backwards. The agent can still edit the notes
+// freely afterwards — this only PREPENDS, never overwrites.
 
 import { supabase } from './supabase'
 
 /**
- * Prepend a timestamped block to clients.notes.
+ * Prepend a timestamped block to clients.notes atomically.
  *
  * @param clientId  The client whose notes should be updated. Pass null
  *                  / undefined and the call becomes a no-op (some
@@ -37,17 +43,6 @@ export async function appendClientNote(
 ): Promise<void> {
   if (!clientId) return
 
-  const { data: row, error: readErr } = await supabase
-    .from('clients')
-    .select('notes')
-    .eq('id', clientId)
-    .single()
-  if (readErr) {
-    console.warn('[appendClientNote] read failed:', readErr.message)
-    return
-  }
-
-  const existing = (row as { notes?: string | null } | null)?.notes ?? ''
   const stamp = new Date().toLocaleString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
@@ -55,16 +50,23 @@ export async function appendClientNote(
     hour: '2-digit',
     minute: '2-digit',
   })
-
   const cleanedBody = (body ?? '').trim()
   const block = `─── ${stamp} — ${header} ───\n${cleanedBody || '(aucune note)'}\n`
-  const next = existing ? `${block}\n${existing}` : block
 
-  const { error: writeErr } = await supabase
-    .from('clients')
-    .update({ notes: next } as never)
-    .eq('id', clientId)
-  if (writeErr) {
-    console.warn('[appendClientNote] write failed:', writeErr.message)
+  // Single atomic UPDATE inside the RPC — replaces the broken
+  // read-modify-write that was here before. RLS on clients applies
+  // because the function is SECURITY INVOKER, so an agent can only
+  // append to clients in their tenant.
+  // RPC signature isn't in database.generated.ts yet — cast via
+  // unknown so the call type-checks until types are regenerated.
+  const { error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: { p_client_id: string; p_note: string },
+  ) => Promise<{ error: { message: string } | null }>)('append_client_note', {
+    p_client_id: clientId,
+    p_note: block,
+  })
+  if (error) {
+    console.warn('[appendClientNote] RPC failed:', error.message)
   }
 }
