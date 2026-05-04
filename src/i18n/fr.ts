@@ -814,6 +814,8 @@ export const fr = {
     connect_to: 'Connectez-vous à votre espace',
     subtitle: 'Entrez vos identifiants pour accéder à votre espace.',
     forgot_password: 'Mot de passe oublié ?',
+    show_password: 'Afficher le mot de passe',
+    hide_password: 'Masquer le mot de passe',
     forgot_password_sending: 'Envoi…',
     forgot_password_no_email: 'Entrez votre email en haut, puis cliquez sur "Mot de passe oublié ?"',
     forgot_password_invalid: 'Email invalide',

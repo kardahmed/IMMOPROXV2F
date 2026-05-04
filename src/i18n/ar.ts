@@ -794,6 +794,8 @@ export const ar = {
     connect_to: 'تسجيل الدخول إلى حسابك',
     subtitle: 'أدخل بيانات الدخول للوصول إلى حسابك.',
     forgot_password: 'نسيت كلمة المرور ؟',
+    show_password: 'إظهار كلمة المرور',
+    hide_password: 'إخفاء كلمة المرور',
     forgot_password_sending: 'جاري الإرسال…',
     forgot_password_no_email: 'أدخل بريدك الإلكتروني في الأعلى ثم اضغط على "نسيت كلمة المرور ؟"',
     forgot_password_invalid: 'البريد الإلكتروني غير صحيح',
