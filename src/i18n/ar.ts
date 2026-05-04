@@ -875,7 +875,6 @@ export const ar = {
     section_features: 'الميزات',
     section_quotas: 'الحصص',
     section_whatsapp: 'واتساب',
-    section_call_scripts: 'سكريبتات المكالمات',
     section_integrations: 'التكاملات',
     section_branding: 'التخصيص',
     section_reservations: 'الحجوزات',

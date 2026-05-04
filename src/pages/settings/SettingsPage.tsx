@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, MessageCircle, Calendar, ToggleLeft, Gauge, Bot, Plug, Phone } from 'lucide-react'
+import { Building2, GitBranch, Bookmark, FileText, Bell, Globe, Shield, Palette, MessageCircle, Calendar, ToggleLeft, Gauge, Bot, Plug } from 'lucide-react'
 // Lazy-load sections — only the active section is rendered, no point bundling all 13 up-front
 const CompanySection = lazy(() => import('./sections').then(m => ({ default: m.CompanySection })))
 const PipelineSection = lazy(() => import('./sections').then(m => ({ default: m.PipelineSection })))
@@ -19,13 +19,12 @@ const PermissionProfilesSection = lazy(() => import('./sections/PermissionProfil
 const FeaturesSection = lazy(() => import('./sections/FeaturesSection').then(m => ({ default: m.FeaturesSection })))
 const QuotasSection = lazy(() => import('./sections/QuotasSection').then(m => ({ default: m.QuotasSection })))
 const AutomationsSection = lazy(() => import('./sections/AutomationsSection').then(m => ({ default: m.AutomationsSection })))
-const CallScriptOverridesSection = lazy(() => import('./sections/CallScriptOverridesSection').then(m => ({ default: m.CallScriptOverridesSection })))
 
 function SectionFallback() {
   return <div className="flex justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-immo-accent-green border-t-transparent" /></div>
 }
 
-type Section = 'company' | 'pipeline' | 'automations' | 'tasks' | 'visits' | 'profiles' | 'features' | 'quotas' | 'whatsapp' | 'call_scripts' | 'integrations' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
+type Section = 'company' | 'pipeline' | 'automations' | 'tasks' | 'visits' | 'profiles' | 'features' | 'quotas' | 'whatsapp' | 'integrations' | 'branding' | 'reservations' | 'templates' | 'notifications' | 'language' | 'security'
 
 const SECTION_ICONS: Record<Section, typeof Building2> = {
   company: Building2,
@@ -37,7 +36,6 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   features: ToggleLeft,
   quotas: Gauge,
   whatsapp: MessageCircle,
-  call_scripts: Phone,
   integrations: Plug,
   branding: Palette,
   reservations: Bookmark,
@@ -47,7 +45,7 @@ const SECTION_ICONS: Record<Section, typeof Building2> = {
   security: Shield,
 }
 
-const SECTION_KEYS: Section[] = ['company', 'pipeline', 'automations', 'tasks', 'visits', 'features', 'quotas', 'whatsapp', 'call_scripts', 'integrations', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
+const SECTION_KEYS: Section[] = ['company', 'pipeline', 'automations', 'tasks', 'visits', 'features', 'quotas', 'whatsapp', 'integrations', 'branding', 'reservations', 'templates', 'notifications', 'language', 'security']
 
 export function SettingsPage() {
   const { t } = useTranslation()
@@ -94,7 +92,6 @@ export function SettingsPage() {
           {section === 'features' && <FeaturesSection />}
           {section === 'quotas' && <QuotasSection />}
           {section === 'whatsapp' && <WhatsAppSection />}
-          {section === 'call_scripts' && <CallScriptOverridesSection />}
           {section === 'integrations' && <IntegrationsSection />}
           {section === 'branding' && <BrandingSection />}
           {section === 'reservations' && <ReservationsSection />}

@@ -202,8 +202,9 @@ Deno.serve(async (req) => {
       })),
     }
 
-    // 4. Load global playbook (single platform-wide system prompt set by founder)
-    const playbookPrompt = await getGlobalPlaybook(supabase)
+    // 4. Load global playbook (single platform-wide system prompt + per-stage overrides set by founder)
+    const playbook = await getGlobalPlaybook(supabase)
+    const playbookPrompt = playbook.systemPrompt
 
     // 5. If no AI key, return template
     if (!anthropicKey) {
@@ -252,17 +253,10 @@ Deno.serve(async (req) => {
     // current stage" and let Claude improvise — which produced absurd
     // scripts like "are you interested in our properties?" for a
     // client whose pipeline_stage is `vente` (already bought). Now we
-    // inject an explicit goal + dos/don'ts per stage. Tenants can
-    // override the default block via call_script_overrides
-    // (migration 073) — useful for agencies with their own playbook.
-    const { data: overrideRow } = await supabase
-      .from('call_script_overrides' as never)
-      .select('custom_instructions')
-      .eq('tenant_id', tenantId)
-      .eq('pipeline_stage', client.pipeline_stage as string)
-      .eq('enabled', true)
-      .maybeSingle()
-    const stageOverride = (overrideRow as { custom_instructions: string } | null)?.custom_instructions ?? null
+    // inject an explicit goal + dos/don'ts per stage. The founder can
+    // override the default per-stage block via global_playbook.stage_overrides
+    // (migration 074) — propagates to ALL tenants instantly.
+    const stageOverride = playbook.stageOverrides[client.pipeline_stage as string] ?? null
     const stageBlock = buildStagePromptBlock(
       client.pipeline_stage as PipelineStage,
       'fr',

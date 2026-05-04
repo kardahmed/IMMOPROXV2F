@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     if (!quota.allowed) return quotaErrorResponse(quota, corsHeaders)
 
     // 3b. Inject the global playbook (founder's expertise) into the system prompt.
-    const playbookPrompt = await getGlobalPlaybook(supabase)
+    const { systemPrompt: playbookPrompt } = await getGlobalPlaybook(supabase)
     const baseSystem = 'Tu es un expert immobilier algerien. Classe ces unites selon leur adequation avec le profil client. Criteres : budget, type souhaite, rapport qualite/prix, etage, surface. Reponds UNIQUEMENT avec un JSON array : [{"unit_id":"...","rank":1},...]'
     const systemPrompt = playbookPrompt
       ? `${playbookPrompt}\n\n---\n\n${baseSystem}`
