@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Calendar, Bookmark, DollarSign, CreditCard, FileText, Receipt,
-  StickyNote, ListTodo, Clock, CheckSquare,
+  StickyNote, ListTodo, Clock,
 } from 'lucide-react'
 import {
   VisitsTab,
@@ -17,19 +17,26 @@ import {
   TasksTab,
   HistoryTab,
 } from './tabs'
-import { ClientTasksTab } from './ClientTasksTab'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { PipelineStage } from '@/types'
+// ClientTasksTab and CheckSquare were used by the removed
+// `auto_tasks` tab — pruned along with the duplicate.
 
 interface ClientTabsProps {
   clientId: string
   tenantId: string
 }
 
+// `auto_tasks` ("Suivi 360") was a duplicate of `tasks` — both
+// rendered task lists, with auto_tasks scoping to per-stage tasks
+// from task_templates. The user's report: same content shown twice
+// under different labels. Keep `tasks` (single tab covers both
+// manual and auto-generated since they're all rows in the same
+// `tasks` table) and drop `auto_tasks`.
 const TAB_KEYS = [
   'visits', 'reservation', 'sale', 'schedule', 'payment',
-  'documents', 'charges', 'notes', 'tasks', 'auto_tasks', 'history',
+  'documents', 'charges', 'notes', 'tasks', 'history',
 ] as const
 
 type TabKey = (typeof TAB_KEYS)[number]
@@ -44,7 +51,6 @@ const TAB_ICONS: Record<TabKey, typeof Calendar> = {
   charges: Receipt,
   notes: StickyNote,
   tasks: ListTodo,
-  auto_tasks: CheckSquare,
   history: Clock,
 }
 
@@ -118,9 +124,6 @@ export function ClientTabs({ clientId, tenantId }: ClientTabsProps) {
         {activeTab === 'charges' && <ChargesTab clientId={clientId} tenantId={tenantId} />}
         {activeTab === 'notes' && <NotesTab clientId={clientId} />}
         {activeTab === 'tasks' && <TasksTab clientId={clientId} tenantId={tenantId} clientPhone={clientInfo?.phone} />}
-        {activeTab === 'auto_tasks' && clientInfo && (
-          <ClientTasksTab clientId={clientId} clientName={clientInfo.full_name} clientPhone={clientInfo.phone} clientStage={clientInfo.pipeline_stage} tenantId={tenantId} />
-        )}
         {activeTab === 'history' && <HistoryTab clientId={clientId} />}
       </div>
     </div>

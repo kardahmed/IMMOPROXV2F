@@ -33,14 +33,20 @@ export function useAutoTasks() {
           .eq('status', 'pending')
       }
 
-      // 2. Check if non-cancelled tasks already exist for new stage
+      // 2. Skip generation only when there are still ACTIVELY PENDING
+      //    tasks for this stage. The previous filter
+      //    `.or('status.neq.ignored,auto_cancelled.eq.false')` matched
+      //    almost everything — including completed (`status='done'`)
+      //    tasks — so a client re-entering a stage they'd already
+      //    cleared got NO fresh tasks. Now we only block on the
+      //    `pending` status; done/ignored tasks don't block re-entry.
       const { count } = await supabase.from('tasks')
         .select('id', { count: 'exact', head: true })
         .eq('client_id', clientId)
         .eq('stage', newStage)
-        .or('status.neq.ignored,auto_cancelled.eq.false')
+        .eq('status', 'pending')
 
-      if ((count ?? 0) > 0) return // Already has tasks for this stage
+      if ((count ?? 0) > 0) return // Stage already has live tasks
 
       // 3. Fetch active templates for new stage
       const { data: templates } = await supabase.from('task_templates')

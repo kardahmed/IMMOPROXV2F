@@ -78,6 +78,10 @@ interface SaleFormData {
 interface NewSaleModalProps {
   isOpen: boolean
   onClose: () => void
+  /** Fired after a successful sale insert (before the modal closes).
+   *  Lets the caller trigger downstream effects like auto-task
+   *  generation for the new stage. */
+  onSuccess?: () => void
   client: ClientInfo | null
 }
 
@@ -96,7 +100,7 @@ const labelClass = 'text-[11px] font-medium text-immo-text-muted'
 
 /* ═══ Main Component ═══ */
 
-export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
+export function NewSaleModal({ isOpen, onClose, client, onSuccess }: NewSaleModalProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState(0)
   const [formData, setFormData] = useState<SaleFormData>({
@@ -325,6 +329,7 @@ export function NewSaleModal({ isOpen, onClose, client }: NewSaleModalProps) {
       qc.invalidateQueries({ queryKey: ['pipeline-stats'] })
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] })
       toast.success(t('sale_modal.success'))
+      onSuccess?.()
       handleClose()
     },
   })

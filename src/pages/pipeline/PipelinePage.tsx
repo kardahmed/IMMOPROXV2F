@@ -599,11 +599,22 @@ export function PipelinePage() {
           <CreateReservationModal
             isOpen
             client={commercialMove.client}
+            onSuccess={() => {
+              // Modal succeeded — fire auto-task generation for the
+              // new stage if the tenant has templates configured.
+              // generateForStage no-ops silently when there are
+              // none, so it's safe to always call here.
+              generateForStage.mutate({
+                clientId: commercialMove.client.id,
+                newStage: 'reservation',
+                oldStage: commercialMove.client.pipeline_stage,
+              })
+            }}
             onClose={() => {
-              // Modal flips clients.pipeline_stage on success itself,
-              // and refreshes its own queries. Just close + invalidate
-              // the pipeline list so the kanban re-renders the moved
-              // (or unchanged, on cancel) card at the right stage.
+              // Called both on success (after onSuccess) and on
+              // cancel. Invalidate clients so the kanban re-renders
+              // — on cancel the card stays put because no DB write
+              // happened.
               setCommercialMove(null)
               qc.invalidateQueries({ queryKey: ['clients'] })
             }}
@@ -616,6 +627,13 @@ export function PipelinePage() {
           <NewSaleModal
             isOpen
             client={commercialMove.client}
+            onSuccess={() => {
+              generateForStage.mutate({
+                clientId: commercialMove.client.id,
+                newStage: 'vente',
+                oldStage: commercialMove.client.pipeline_stage,
+              })
+            }}
             onClose={() => {
               setCommercialMove(null)
               qc.invalidateQueries({ queryKey: ['clients'] })
